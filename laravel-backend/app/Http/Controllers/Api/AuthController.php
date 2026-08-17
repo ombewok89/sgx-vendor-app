@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
@@ -19,12 +18,12 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::with('vendor')->where('email', strtolower($request->email))->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Email atau kata sandi tidak valid.',
+                'message' => 'Email atau kata sandi tidak sesuai.',
             ], 401);
         }
 
@@ -45,19 +44,22 @@ class AuthController extends Controller
 
         AuditService::log($user, 'LOGIN', 'USER', $user->id, null, ['ip' => $request->ip()]);
 
+        $userData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $role,
+            'vendor_id' => $user->vendor_id,
+            'vendor_name' => $user->vendor?->name,
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+        ];
+
         return response()->json([
             'success' => true,
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'role' => $role,
-                'vendor_id' => $user->vendor_id,
-                'vendor_name' => $user->vendor?->name,
-                'permissions' => $user->getAllPermissions()->pluck('name'),
-            ]
+            'user' => $userData,
+            'data' => $userData,
         ]);
     }
 
@@ -66,18 +68,21 @@ class AuthController extends Controller
         $user = $request->user()->load('vendor');
         $role = $user->roles->first()?->name ?? 'FIELD_TEAM';
 
+        $userData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $role,
+            'vendor_id' => $user->vendor_id,
+            'vendor_name' => $user->vendor?->name,
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+        ];
+
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'role' => $role,
-                'vendor_id' => $user->vendor_id,
-                'vendor_name' => $user->vendor?->name,
-                'permissions' => $user->getAllPermissions()->pluck('name'),
-            ]
+            'user' => $userData,
+            'data' => $userData,
         ]);
     }
 
@@ -90,33 +95,28 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Berhasil keluar dari sistem.',
+            'message' => 'Anda telah berhasil keluar dari sistem.',
         ]);
     }
 
     public function users(Request $request)
     {
-        $query = User::with(['vendor', 'roles'])->orderBy('name');
-
-        if ($request->filled('role')) {
-            $query->role($request->role);
-        }
-        if ($request->filled('vendor_id')) {
-            $query->where('vendor_id', $request->vendor_id);
-        }
-
-        $users = $query->get()->map(function ($u) {
-            return [
-                'id' => $u->id,
-                'name' => $u->name,
-                'email' => $u->email,
-                'phone' => $u->phone,
-                'role' => $u->roles->first()?->name ?? 'FIELD_TEAM',
-                'vendor_id' => $u->vendor_id,
-                'vendor_name' => $u->vendor?->name,
-                'is_active' => $u->is_active,
-            ];
-        });
+        $users = User::with(['roles', 'vendor'])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'phone' => $u->phone,
+                    'role' => $u->roles->first()?->name ?? 'FIELD_TEAM',
+                    'vendor_id' => $u->vendor_id,
+                    'vendor_name' => $u->vendor?->name,
+                    'is_active' => $u->is_active,
+                    'created_at' => $u->created_at,
+                ];
+            });
 
         return response()->json([
             'success' => true,
@@ -126,7 +126,7 @@ class AuthController extends Controller
 
     public function roles()
     {
-        $roles = Role::where('guard_name', 'sanctum')->get(['id', 'name']);
+        $roles = Role::all()->pluck('name');
         return response()->json([
             'success' => true,
             'data' => $roles,

@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\BaDocumentController;
 use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\PermissionController;
 
 // Public Health Check
 Route::get('/health', function () {
@@ -29,6 +30,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth & Profile
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+    // Permissions & RBAC Matrix
+    Route::get('/permissions/my-permissions', [PermissionController::class, 'myPermissions']);
+    Route::get('/permissions/matrix', [PermissionController::class, 'matrix']);
+    Route::post('/permissions/matrix', [PermissionController::class, 'updateMatrix']);
 
     // Reports & Dashboard KPIs
     Route::get('/reports/dashboard-kpis', [ReportController::class, 'dashboardKpis']);
