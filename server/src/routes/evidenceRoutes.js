@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const evidenceService = require('../services/evidenceService');
 const { authenticate } = require('../middleware/auth');
-const { requireRoles } = require('../middleware/rbac');
+const { requireRoles, checkPermission } = require('../middleware/rbac');
 const { uploadEvidence } = require('../middleware/upload');
 
 router.use(authenticate);
