@@ -4,7 +4,8 @@ header('Content-Type: text/html; charset=utf-8');
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-echo "<h2>🔧 SGX Vendor Server Diagnostics</h2>";
+echo "<div style='font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);'>";
+echo "<h2 style='color: #1e3a8a;'>🔧 SGX Vendor System & Database Diagnostics</h2>";
 echo "<b>PHP Version:</b> " . PHP_VERSION . "<br>";
 
 if (version_compare(PHP_VERSION, '8.2.0', '<')) {
@@ -12,18 +13,6 @@ if (version_compare(PHP_VERSION, '8.2.0', '<')) {
 } else {
     echo "<p style='color:green;'><b>✅ Versi PHP Sesuai:</b> " . PHP_VERSION . "</p>";
 }
-
-// Check Extensions
-$requiredExts = ['openssl', 'pdo', 'mbstring', 'tokenizer', 'xml', 'ctype', 'json', 'bcmath', 'pdo_mysql', 'fileinfo'];
-echo "<h3>📦 PHP Extensions Check:</h3><ul>";
-foreach ($requiredExts as $ext) {
-    if (extension_loaded($ext)) {
-        echo "<li style='color:green;'>✅ Extension <b>{$ext}</b>: Loaded</li>";
-    } else {
-        echo "<li style='color:red;'>❌ Extension <b>{$ext}</b>: NOT LOADED</li>";
-    }
-}
-echo "</ul>";
 
 // Check .env
 echo "<h3>📄 Environment (.env) Check:</h3>";
@@ -61,16 +50,45 @@ if (file_exists($envPath)) {
         $stmt = $pdo->query("SHOW TABLES");
         $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
         echo "<p>Jumlah Tabel Terdaftar: <b>" . count($tables) . " tabel</b></p>";
+        
         if (count($tables) > 0) {
-            echo "<ul>";
-            foreach (array_slice($tables, 0, 10) as $t) {
+            echo "<p style='color:green;'><b>✅ Database sudah terisi tabel:</b></p><ul>";
+            foreach (array_slice($tables, 0, 8) as $t) {
                 echo "<li>" . htmlspecialchars($t) . "</li>";
             }
-            if (count($tables) > 10) echo "<li>... dan " . (count($tables) - 10) . " tabel lainnya.</li>";
+            if (count($tables) > 8) echo "<li>... dan " . (count($tables) - 8) . " tabel lainnya.</li>";
+            echo "</ul>";
+
+            // Check users
+            $userStmt = $pdo->query("SELECT id, name, email FROM users");
+            $users = $userStmt->fetchAll(PDO::FETCH_ASSOC);
+            echo "<p>Jumlah Akun Pengguna: <b>" . count($users) . " akun</b></p><ul>";
+            foreach ($users as $u) {
+                echo "<li><b>" . htmlspecialchars($u['name']) . "</b> (" . htmlspecialchars($u['email']) . ")</li>";
+            }
             echo "</ul>";
         } else {
-            echo "<p style='color:orange;'>⚠️ Database masih kosong. Perlu menjalankan <code>php artisan migrate --seed</code>.</p>";
+            echo "<p style='color:orange;'>⚠️ Database masih kosong. Klik tombol di bawah untuk menjalankan migrasi otomatis via browser:</p>";
         }
+
+        // Action: Auto Migration Button
+        if (isset($_GET['action']) && $_GET['action'] === 'migrate') {
+            echo "<hr><h3>🚀 Menjalankan Migrasi & Seeding...</h3>";
+            require __DIR__ . '/laravel-backend/vendor/autoload.php';
+            $app = require_once __DIR__ . '/laravel-backend/bootstrap/app.php';
+            $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+            $kernel->bootstrap();
+
+            \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
+            $output = \Illuminate\Support\Facades\Artisan::output();
+            echo "<pre style='background:#1e293b; color:#10b981; padding:15px; border-radius:8px; overflow-x:auto;'>" . htmlspecialchars($output) . "</pre>";
+            echo "<p style='color:green; font-weight:bold;'>🎉 MIGRASI DAN PENGISIAN AKUN SELESAI! Silakan coba login sekarang.</p>";
+        } else {
+            echo "<div style='margin-top: 20px;'>";
+            echo "<a href='?action=migrate' style='display:inline-block; padding: 12px 24px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>⚡ Klik di Sini untuk Migrasi Database & Isi Akun Otomatis</a>";
+            echo "</div>";
+        }
+
     } catch (Exception $e) {
         echo "<p style='color:red;'><b>❌ GAGAL KONEK DATABASE:</b> " . htmlspecialchars($e->getMessage()) . "</p>";
     }
@@ -78,13 +96,5 @@ if (file_exists($envPath)) {
     echo "<p style='color:red;'>❌ File <code>laravel-backend/.env</code> TIDAK DITEMUKAN.</p>";
 }
 
-// Check storage permissions
-echo "<h3>🔒 Storage Permissions:</h3>";
-$storagePath = __DIR__ . '/laravel-backend/storage';
-if (is_writable($storagePath)) {
-    echo "<p style='color:green;'>✅ Folder storage dapat ditulisi (Writable).</p>";
-} else {
-    echo "<p style='color:red;'>❌ Folder storage TIDAK DAPAT DITULISI. Jalankan <code>chmod -R 777 laravel-backend/storage</code>.</p>";
-}
-
-echo "<hr><p><i>SGX Vendor Diagnostics Tool</i></p>";
+echo "<hr><p><a href='/' style='color:#4f46e5; font-weight:bold;'>← Kembali ke Halaman Login SGX Vendor</a></p>";
+echo "</div>";
