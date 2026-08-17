@@ -10,15 +10,18 @@ DirectoryIndex index.html index.php
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # If the file or directory exists, serve it directly
-    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    # 1. Route all /api/* requests directly to Laravel index.php
+    RewriteCond %{REQUEST_URI} ^/api/ [NC]
+    RewriteRule ^ index.php [L]
+
+    # 2. Serve static assets if they physically exist
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # 3. Serve physical directories (except root)
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # Route API requests to index.php
-    RewriteCond %{REQUEST_URI} ^/api/
-    RewriteRule ^ index.php [L]
-
-    # Route all other frontend SPA requests to index.html
+    # 4. Route all other frontend SPA requests to index.html
     RewriteRule ^ index.html [L]
 </IfModule>
