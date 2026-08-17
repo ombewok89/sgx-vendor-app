@@ -1,0 +1,641 @@
+# MASTER PROMPT
+
+## PROFESSIONAL UI/UX REDESIGN
+
+### SGX Client Work Evidence & Management
+
+Anda bertindak sebagai:
+
+* Senior Product Designer
+* UX Architect
+* UI/UX Engineer
+* SaaS Dashboard Specialist
+* Enterprise Application Designer
+* Design System Architect
+
+Gunakan secara maksimal kemampuan **UI UX Pro Max / UI UX Pro Max Skill** yang tersedia di environment Antigravity.
+
+Referensi design intelligence:
+https://uupm.cc/
+
+==================================================
+
+# 1. KONTEKS APLIKASI
+
+==================================================
+
+Nama aplikasi:
+
+**SGX Client Work Evidence & Management**
+
+Subtitle:
+
+**Digital Evidence & Client Operational Reporting System**
+
+Aplikasi ini merupakan platform enterprise untuk mengelola:
+
+* pekerjaan / SPK
+* project
+* client
+* tim lapangan
+* dokumentasi pekerjaan
+* evidence foto
+* review dan verifikasi
+* kendala lapangan
+* berita acara
+* laporan pekerjaan
+* analitik pekerjaan
+* master data
+* user & permission
+* audit trail
+* konfigurasi sistem
+
+Aplikasi digunakan oleh beberapa role:
+
+1. SUPERUSER
+2. ADMIN
+3. SUPERVISOR
+4. LAPANGAN
+5. CLIENT
+
+Aplikasi bukan aplikasi consumer.
+
+Aplikasi harus terasa seperti:
+
+* Enterprise SaaS
+* Professional Operations Platform
+* Project Management System
+* Field Service Management System
+* Evidence Management Platform
+* Client Reporting Platform
+
+Jangan membuat desain seperti template admin dashboard generik.
+
+==================================================
+
+# 2. VISUAL DIRECTION (DARK THEME PREMIUM)
+
+==================================================
+
+Gunakan **dark theme enterprise premium** dengan karakter:
+
+* deep navy base (bukan hitam pekat)
+* midnight blue surface layering
+* subtle indigo depth
+* controlled contrast
+* soft glow accent (bukan neon berlebihan)
+* data-first readability
+
+### COLOR SYSTEM (DARK + PREMIUM)
+
+**Base Colors**
+
+* Background: #0B1220 (Deep Navy Black)
+* Surface 1: #111A2E
+* Surface 2: #16213A
+* Surface 3: #1C2A4A
+
+**Primary Accent**
+
+* Royal Blue: #3B82F6
+* Indigo: #6366F1
+
+**Secondary Accent**
+
+* Purple Soft: #8B5CF6
+* Cyan Data Accent: #22D3EE (very limited use)
+
+**Semantic Colors**
+
+* Success: #22C55E (Emerald)
+* Warning: #F59E0B (Amber)
+* Critical: #EF4444 (Red)
+* Info: #38BDF8 (Sky Blue)
+
+**Neutral Text**
+
+* Primary Text: #E5E7EB
+* Secondary Text: #9CA3AF
+* Muted Text: #6B7280
+
+> Semua warna harus digunakan secara **fungsional, bukan dekoratif**
+
+==================================================
+
+# 3. TYPOGRAPHY (DARK OPTIMIZED)
+
+==================================================
+
+Gunakan:
+
+* Inter / Geist / Plus Jakarta Sans
+
+Hierarchy:
+
+* Display: bold, large, minimal
+* H1: semi-bold
+* H2: medium
+* H3: medium
+* Body: regular
+* Caption: muted
+* KPI Number: semi-bold + tabular numerals
+
+KPI angka harus sangat kontras di dark mode.
+
+==================================================
+
+# 4. DESIGN DIRECTION
+
+==================================================
+
+Gunakan pendekatan:
+
+**Dark Enterprise SaaS + Operational Intelligence System**
+
+Karakter visual:
+
+* calm dark UI (bukan gaming UI)
+* high readability
+* structured grid system
+* minimal glow
+* subtle borders instead of heavy shadows
+* data clarity first
+
+Hindari:
+
+* neon berlebihan
+* gradient ramai
+* glassmorphism ekstrem
+* background terlalu hitam (#000000 full)
+* dekorasi tidak fungsional
+* UI seperti crypto trading berlebihan
+
+==================================================
+
+# 5. APPLICATION SHELL (DARK MODE REDESIGN)
+
+==================================================
+
+## LAYOUT
+
+LEFT SIDEBAR + TOP HEADER + MAIN CONTENT + CONTEXT PANEL
+
+### SIDEBAR (DARK PREMIUM)
+
+* background: Surface 1 (#111A2E)
+* active state: indigo glow subtle
+* icon + label
+* collapsible compact mode
+* section grouping jelas
+
+SECTION:
+
+EXECUTIVE
+WORK MANAGEMENT
+EVIDENCE & FIELD
+REPORTING
+MASTER DATA
+SYSTEM CONTROL
+
+Active item indicator:
+
+* left border accent + soft glow
+
+### TOP HEADER
+
+* breadcrumb (muted)
+* page title (bright)
+* global search (command palette style)
+* notification bell
+* role badge (semantic color)
+* profile menu
+
+Tambahkan:
+
+**Command Palette (Ctrl + K)**
+Dark modal with blurred backdrop (subtle only)
+
+==================================================
+
+# 6. DASHBOARD EXECUTIVE (DARK INTELLIGENCE UI)
+
+==================================================
+
+Dashboard harus terasa seperti:
+
+**Operational Command Center**
+
+## ROW STRUCTURE
+
+### ROW 1 — HEADER
+
+* Title: Dashboard Eksekutif
+* Subtitle: Operational intelligence overview
+* Right actions:
+
+  * Date range
+  * Export
+  * Customize
+
+---
+
+### ROW 2 — KPI CARDS (DARK PREMIUM)
+
+Card style:
+
+* surface 2
+* border subtle (#1C2A4A)
+* hover lift minimal
+
+KPI:
+
+* Active Projects
+* Completed Projects
+* SLA Compliance
+* Pending Verification
+* Evidence Integrity
+* Contract Value
+
+Each KPI:
+
+* number (bright white)
+* trend (green/red)
+* sparkline subtle (cyan/indigo)
+* status label
+
+---
+
+### ROW 3 — PERFORMANCE
+
+LEFT (65%)
+
+* SLA Trend (Line Chart indigo + cyan accent)
+
+RIGHT (35%)
+
+* Project Status (Stacked bar dark semantic colors)
+
+---
+
+### ROW 4 — EVIDENCE INTELLIGENCE
+
+LEFT:
+
+* Evidence Verification Flow (funnel / progress)
+
+RIGHT:
+
+* Field Issue Summary (bar chart + severity color)
+
+---
+
+### ROW 5 — CLIENT & WORKLOAD
+
+LEFT:
+
+* Top Clients (bar horizontal, indigo highlight)
+
+RIGHT:
+
+* Work Category Distribution (donut minimal glow)
+
+---
+
+### ROW 6 — ATTENTION PANEL (CRITICAL UX)
+
+Section title:
+**Requires Attention**
+
+Cards list:
+
+* Overdue SPK (red accent)
+* Pending Evidence (amber)
+* Rejected Evidence (red muted)
+* SLA Risk (orange)
+* Approval Pending (blue muted)
+
+Each item:
+
+* compact row
+* severity left border
+* quick action button
+
+---
+
+### ROW 7 — ACTIVITY TIMELINE
+
+Dark timeline:
+
+* SPK created
+* assignment
+* evidence upload
+* review
+* approval
+* completion
+
+Use vertical line subtle indigo glow
+
+==================================================
+
+# 7. KPI CARD DESIGN (DARK PREMIUM)
+
+==================================================
+
+Structure:
+
+* Label (muted)
+* Value (bright)
+* Trend (green/red)
+* Context (small)
+* Mini chart (subtle glow)
+
+Style:
+
+* background: surface 2
+* border: 1px subtle
+* hover: slight elevation + glow indigo
+
+==================================================
+
+# 8. DATA VISUALIZATION (DARK OPTIMIZED)
+
+==================================================
+
+Chart rules:
+
+* background transparent
+* grid line very subtle (#1C2A4A)
+* primary line: indigo
+* secondary: cyan
+* warning: amber
+* critical: red
+
+Use:
+
+* Line: SLA trend
+* Bar: workload
+* Stacked: status
+* Funnel: workflow
+* Heatmap: workload density
+* Donut: limited categories only
+
+Tooltip:
+dark floating card with blur + border
+
+==================================================
+
+# 9. TABLE UX (DARK ENTERPRISE)
+
+==================================================
+
+Table style:
+
+* background surface 1
+* row hover: surface 2 highlight
+* border minimal
+* sticky header dark elevated
+
+Status badge:
+
+* DRAFT (gray)
+* IN PROGRESS (blue)
+* OVERDUE (red)
+* APPROVED (green)
+* REJECTED (red muted)
+* WAITING (amber)
+
+Features:
+
+* column toggle
+* filter drawer (right side dark panel)
+* bulk action bar floating
+
+==================================================
+
+# 10. EVIDENCE GALLERY (CORE FEATURE)
+
+==================================================
+
+Transform into:
+
+**Dark Evidence Intelligence Workspace**
+
+Layout:
+
+Grid masonry dark cards
+
+Each card:
+
+* image preview
+* status badge
+* timestamp
+* location icon
+* verification state
+
+Hover:
+
+* reveal metadata overlay
+
+Viewer:
+
+* full dark viewer
+* right panel metadata
+* before/after compare slider
+
+==================================================
+
+# 11. EVIDENCE VIEWER (DARK FOCUS MODE)
+
+==================================================
+
+* full blackened backdrop (#0B1220)
+* image centered
+* right sidebar:
+
+Evidence Info:
+
+* SPK
+* uploader
+* GPS map mini
+* hash integrity
+* status
+
+Actions:
+
+* Approve (green)
+* Reject (red)
+* Request revision (amber)
+
+==================================================
+
+# 12. UX PRINCIPLE (DARK MODE)
+
+==================================================
+
+* reduce eye strain
+* maximize contrast only where needed
+* avoid pure white backgrounds
+* prioritize hierarchy via brightness, not color overload
+* semantic color only for meaning
+
+==================================================
+
+# 13. EMPTY STATE (DARK PREMIUM)
+
+==================================================
+
+Use:
+
+* subtle illustration line icon
+* muted text
+* CTA button indigo
+
+Example:
+
+“Belum ada evidence yang tersedia”
+
+CTA:
+Upload Evidence
+
+==================================================
+
+# 14. LOADING STATE
+
+==================================================
+
+* skeleton dark blocks
+* shimmer subtle indigo
+* no spinner full screen
+
+==================================================
+
+# 15. FINAL DESIGN TARGET
+
+==================================================
+
+SGX dalam dark mode harus terasa:
+
+**A high-end operational intelligence system for enterprise field work and evidence management**
+
+Bukan dashboard biasa.
+
+Melainkan:
+
+* command center
+* audit system
+* evidence intelligence platform
+
+Visual:
+
+* premium dark
+* calm
+* structured
+* data-driven
+* highly readable
+* enterprise-grade
+
+==================================================
+
+# 16. FIRST TASK
+
+==================================================
+
+### TASK 01 — DARK MODE UI/UX AUDIT
+
+Analisis:
+
+1. Current UI Architecture
+2. UX Problems
+3. Visual Hierarchy Issues
+4. Navigation Issues
+5. Dashboard Issues
+6. Evidence UX Issues
+7. Table UX Issues
+8. Dark Mode Readiness
+9. Accessibility Issues
+10. Design System Gaps
+11. Recommended Dark Design Direction
+12. Proposed Dark Dashboard Wireframe
+13. Implementation Plan
+
+Setelah audit:
+
+lanjut ke:
+
+### TASK 02 — DARK DESIGN SYSTEM + APPLICATION SHELL
+
+kemudian:
+
+### TASK 03 — DARK EXECUTIVE DASHBOARD
+
+==================================================
+
+# RULE FINAL
+
+==================================================
+
+Jangan membuat UI “sekadar gelap”.
+
+Harus:
+
+**Dark Enterprise Intelligence System, bukan inverted UI**
+
+Prioritas:
+
+Usability > Clarity > Hierarchy > Performance > Aesthetic
+
+==================================================
+
+# DAFTAR AKUN & KATA SANDI LOGIN APLIKASI (CREDENTIALS)
+
+==================================================
+
+Default Password untuk seluruh akun seed: admin123
+
+1. SUPERUSER (Super Administrator)
+   - Email    : superuser@sgx.com
+   - Password : admin123
+   - Nama     : Super Admin SGX
+   - WhatsApp : 081100000001
+   - Deskripsi: Akses penuh tidak terbatas ke seluruh sistem, audit log, konfigurasi WhatsApp, dan Permission Matrix.
+
+2. ADMIN (Admin Operasional)
+   - Email    : admin@sgx.com
+   - Password : admin123
+   - Nama     : Dian Anggraini (Admin)
+   - WhatsApp : 081100000002
+   - Deskripsi: Pembuatan SPK, penugasan tim, review & persetujuan evidensi foto, penerbitan BA Opname, master data.
+
+3. FIELD_TEAM (Tim Lapangan / Teknisi)
+   - Akun 1:
+     * Email    : andi.lapangan@sgx.com
+     * Password : admin123
+     * Nama     : Andi Pratama (PIC Lapangan)
+     * WhatsApp : 081211112222
+   - Akun 2:
+     * Email    : budi.lapangan@sgx.com
+     * Password : admin123
+     * Nama     : Budi Santoso (Teknisi)
+     * WhatsApp : 081211113333
+   - Akun 3:
+     * Email    : candra.lapangan@sgx.com
+     * Password : admin123
+     * Nama     : Candra Wijaya (Teknisi)
+     * WhatsApp : 081211114444
+   - Deskripsi: Check-in GPS lokasi cabang, upload foto Before/Process/After, pelaporan kendala teknis, submit SPK.
+
+4. VENDOR (Klien / Pemberi Tugas)
+   - Akun 1 (PT Indomarco Prismatama - Indomaret):
+     * Email    : reza.indomarco@sgx-partner.com
+     * Password : admin123
+     * Nama     : Bapak Reza (PIC Indomarco)
+     * WhatsApp : 081234567890
+   - Akun 2 (PT Smartfren Telecom Tbk):
+     * Email    : maya.smartfren@sgx-partner.com
+     * Password : admin123
+     * Nama     : Ibu Maya (Project Manager Smartfren)
+     * WhatsApp : 081398765432
+   - Deskripsi: Portal isolasi klien, tracking progress live, review foto evidensi pekerjaan, unduh dokumen BA Opname.
+
+==================================================
+

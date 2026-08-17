@@ -1,0 +1,23 @@
+{
+  "name": "sgx-vendor-work-evidence",
+  "version": "1.0.0",
+  "description": "SGX Vendor Work Evidence - Digital Evidence & Reporting System",
+  "scripts": {
+    "start": "node start.js",
+    "dev": "node start.js",
+    "server": "cd server && npm start",
+    "client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "test": "cd server && npm test",
+    "build": "cd client && npm run build"
+  },
+  "keywords": [
+    "sgx",
+    "vendor-evidence",
+    "work-order",
+    "gps-checkin",
+    "ba-opname"
+  ],
+  "author": "Google Deepmind & Antigravity IDE",
+  "license": "ISC"
+}
