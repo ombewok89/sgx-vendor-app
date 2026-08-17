@@ -16,9 +16,9 @@ if (version_compare(PHP_VERSION, '8.2.0', '<')) {
 
 // Check .env
 echo "<h3>📄 Environment (.env) Check:</h3>";
-$envPath = __DIR__ . '/laravel-backend/.env';
+$envPath = file_exists(__DIR__ . '/laravel-backend/.env') ? __DIR__ . '/laravel-backend/.env' : __DIR__ . '/.env';
 if (file_exists($envPath)) {
-    echo "<p style='color:green;'>✅ File <code>laravel-backend/.env</code> ditemukan (" . filesize($envPath) . " bytes).</p>";
+    echo "<p style='color:green;'>✅ File <code>{$envPath}</code> ditemukan (" . filesize($envPath) . " bytes).</p>";
     $envContent = file_get_contents($envPath);
     preg_match('/DB_DATABASE=(.*)/', $envContent, $dbMatch);
     preg_match('/DB_USERNAME=(.*)/', $envContent, $userMatch);
