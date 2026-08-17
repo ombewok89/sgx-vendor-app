@@ -34,6 +34,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reports/dashboard-kpis', [ReportController::class, 'dashboardKpis']);
     Route::get('/reports/audit-logs', [MasterDataController::class, 'auditLogs']);
 
+    // System Settings & Audit Logs (Superuser Console)
+    Route::get('/system/settings', [MasterDataController::class, 'settings']);
+    Route::put('/system/settings', [MasterDataController::class, 'updateSetting']);
+    Route::get('/system/audit-logs', [MasterDataController::class, 'auditLogs']);
+
     // Work Orders
     Route::get('/work-orders', [WorkOrderController::class, 'index']);
     Route::get('/work-orders/{id}', [WorkOrderController::class, 'show']);

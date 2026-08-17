@@ -220,5 +220,61 @@ class DatabaseSeeder extends Seeder
             'weight_percent' => 50,
             'status' => 'PENDING',
         ]);
+
+        // 8. System Settings
+        $settings = [
+            [
+                'key' => 'fonnte_api_key',
+                'value' => 'FONNTE_DEMO_KEY_SGX_2026',
+                'description' => 'API Token untuk WhatsApp Gateway Fonnte',
+            ],
+            [
+                'key' => 'app_name',
+                'value' => 'SGX Vendor Work Evidence',
+                'description' => 'Nama resmi platform aplikasi',
+            ],
+            [
+                'key' => 'require_strict_gps',
+                'value' => '1',
+                'description' => 'Wajibkan GPS browser terverifikasi saat check-in',
+            ],
+            [
+                'key' => 'geofence_default_radius_meters',
+                'value' => '200',
+                'description' => 'Radius toleransi geofencing default dalam meter',
+            ],
+            [
+                'key' => 'sha256_integrity_lock',
+                'value' => '1',
+                'description' => 'Segel integritas kriptografi bukti foto',
+            ],
+        ];
+
+        foreach ($settings as $s) {
+            \App\Models\SystemSetting::firstOrCreate(['key' => $s['key']], $s);
+        }
+
+        // 9. Initial Audit Logs
+        \App\Models\AuditLog::firstOrCreate([
+            'action' => 'SYSTEM_INIT',
+            'entity_type' => 'SYSTEM',
+        ], [
+            'user_id' => $uSuper->id,
+            'entity_id' => 1,
+            'old_value' => null,
+            'new_value' => ['status' => 'Database initialized successfully with Laravel native schema'],
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        \App\Models\AuditLog::firstOrCreate([
+            'action' => 'CREATE_WORK_ORDER',
+            'entity_type' => 'WORK_ORDER',
+            'entity_id' => $wo1->id,
+        ], [
+            'user_id' => $uAdmin->id,
+            'old_value' => null,
+            'new_value' => ['spk_number' => $wo1->spk_number, 'title' => $wo1->title],
+            'ip_address' => '127.0.0.1',
+        ]);
     }
 }

@@ -19,7 +19,7 @@ class MasterDataController extends Controller
         $user = $request->user();
         $query = Vendor::query();
 
-        // Vendor Isolation (Point 3.2): VENDOR role only sees their own vendor
+        // Vendor Isolation: VENDOR role only sees their own vendor
         if ($user && $user->hasRole('VENDOR') && $user->vendor_id) {
             $query->where('id', $user->vendor_id);
         }
@@ -59,13 +59,53 @@ class MasterDataController extends Controller
         $logs = AuditLog::with('user:id,name,email')
             ->orderByDesc('id')
             ->limit(100)
-            ->get();
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'created_at' => $log->created_at,
+                    'user_id' => $log->user_id,
+                    'user_name' => $log->user?->name ?? 'System',
+                    'action' => $log->action,
+                    'entity_type' => $log->entity_type,
+                    'entity_id' => $log->entity_id,
+                    'old_value' => $log->old_value,
+                    'new_value' => $log->new_value,
+                    'ip_address' => $log->ip_address ?? '127.0.0.1',
+                ];
+            });
+
         return response()->json(['success' => true, 'data' => $logs]);
     }
 
     public function settings()
     {
-        $settings = SystemSetting::all()->pluck('value', 'key');
+        $settings = SystemSetting::orderBy('id')->get();
         return response()->json(['success' => true, 'data' => $settings]);
+    }
+
+    public function updateSetting(Request $request)
+    {
+        $request->validate([
+            'key' => 'required|string',
+            'value' => 'required',
+        ]);
+
+        $setting = SystemSetting::where('key', $request->key)->first();
+        if ($setting) {
+            $old = $setting->value;
+            $setting->update(['value' => $request->value]);
+            AuditService::log($request->user(), 'UPDATE_SETTING', 'SYSTEM_SETTING', $setting->id, ['value' => $old], ['value' => $request->value]);
+        } else {
+            $setting = SystemSetting::create([
+                'key' => $request->key,
+                'value' => $request->value,
+                'group' => 'GENERAL',
+                'description' => $request->key,
+            ]);
+            AuditService::log($request->user(), 'CREATE_SETTING', 'SYSTEM_SETTING', $setting->id, null, $setting->toArray());
+        }
+
+        return response()->json(['success' => true, 'data' => $setting]);
     }
 }
