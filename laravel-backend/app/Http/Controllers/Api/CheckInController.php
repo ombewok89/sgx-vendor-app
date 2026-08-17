@@ -9,6 +9,18 @@ use Illuminate\Http\Request;
 
 class CheckInController extends Controller
 {
+    public function store(Request $request)
+    {
+        $request->validate([
+            'work_order_id' => 'required|exists:work_orders,id',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'accuracy' => 'required|numeric',
+        ]);
+
+        return $this->checkIn($request, $request->work_order_id);
+    }
+
     public function checkIn(Request $request, $workOrderId)
     {
         $user = $request->user();

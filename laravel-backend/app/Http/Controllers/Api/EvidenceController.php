@@ -113,6 +113,19 @@ class EvidenceController extends Controller
         ]);
     }
 
+    public function issuesList(Request $request)
+    {
+        $query = Issue::with(['workOrder:id,spk_number,title,location_name', 'user:id,name', 'resolver:id,name']);
+        if ($request->filled('work_order_id')) {
+            $query->where('work_order_id', $request->work_order_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        $issues = $query->orderByDesc('id')->get();
+        return response()->json(['success' => true, 'data' => $issues]);
+    }
+
     public function reportIssue(Request $request)
     {
         $request->validate([

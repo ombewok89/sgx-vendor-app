@@ -12,8 +12,21 @@ use Illuminate\Http\Request;
 
 class BaDocumentController extends Controller
 {
-    public function generate(Request $request, $workOrderId)
+    public function index(Request $request)
     {
+        $bas = BaDocument::with(['workOrder.vendor', 'template', 'generator'])
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $bas,
+        ]);
+    }
+
+    public function generate(Request $request, $workOrderId = null)
+    {
+        $id = $workOrderId ?: $request->work_order_id;
         $user = $request->user();
         if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
             return response()->json([
@@ -22,7 +35,7 @@ class BaDocumentController extends Controller
             ], 403);
         }
 
-        $workOrder = WorkOrder::findOrFail($workOrderId);
+        $workOrder = WorkOrder::findOrFail($id);
         $templateId = $request->template_id;
 
         try {
@@ -41,10 +54,11 @@ class BaDocumentController extends Controller
         }
     }
 
-    public function show($workOrderId)
+    public function show($identifier)
     {
         $ba = BaDocument::with(['workOrder.vendor', 'template', 'generator'])
-            ->where('work_order_id', $workOrderId)
+            ->where('work_order_id', $identifier)
+            ->orWhere('id', $identifier)
             ->first();
 
         if (!$ba) {
@@ -69,10 +83,11 @@ class BaDocumentController extends Controller
         ]);
     }
 
-    public function downloadPdf($workOrderId)
+    public function downloadPdf($identifier)
     {
         $ba = BaDocument::with(['workOrder.vendor', 'template', 'generator'])
-            ->where('work_order_id', $workOrderId)
+            ->where('work_order_id', $identifier)
+            ->orWhere('id', $identifier)
             ->firstOrFail();
 
         $data = [

@@ -13,8 +13,9 @@ use Illuminate\Support\Facades\DB;
 
 class ReviewController extends Controller
 {
-    public function approve(Request $request, $workOrderId)
+    public function approve(Request $request, $workOrderId = null)
     {
+        $id = $workOrderId ?: $request->work_order_id;
         $user = $request->user();
         if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
             return response()->json([
@@ -23,7 +24,7 @@ class ReviewController extends Controller
             ], 403);
         }
 
-        $workOrder = WorkOrder::findOrFail($workOrderId);
+        $workOrder = WorkOrder::findOrFail($id);
 
         return DB::transaction(function () use ($user, $workOrder, $request) {
             $review = Review::create([
@@ -54,8 +55,9 @@ class ReviewController extends Controller
         });
     }
 
-    public function requestRevision(Request $request, $workOrderId)
+    public function requestRevision(Request $request, $workOrderId = null)
     {
+        $id = $workOrderId ?: $request->work_order_id;
         $user = $request->user();
         if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
             return response()->json([
@@ -69,7 +71,7 @@ class ReviewController extends Controller
             'reason' => 'required|string',
         ]);
 
-        $workOrder = WorkOrder::findOrFail($workOrderId);
+        $workOrder = WorkOrder::findOrFail($id);
 
         return DB::transaction(function () use ($user, $workOrder, $request) {
             $review = Review::create([
