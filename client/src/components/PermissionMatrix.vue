@@ -246,7 +246,8 @@ import {
 const roles = ref([
   { code: 'ADMIN', name: 'Admin Operasional' },
   { code: 'FIELD_TEAM', name: 'Tim Lapangan (Mobile)' },
-  { code: 'VENDOR', name: 'Mitra Vendor' }
+  { code: 'VENDOR', name: 'Mitra Vendor' },
+  { code: 'CLIENT', name: 'Client QA & Monitoring' }
 ]);
 
 const selectedRole = ref('ADMIN');
@@ -300,30 +301,30 @@ function selectRole(roleCode) {
 function setBatchPermissions(mode) {
   matrix.value.forEach(item => {
     if (mode === 'all') {
-      item.can_view = true;
-      item.can_create = true;
-      item.can_update = true;
-      item.can_delete = true;
+      item.can_view = 1;
+      item.can_create = 1;
+      item.can_update = 1;
+      item.can_delete = 1;
     } else if (mode === 'read_only') {
-      item.can_view = true;
-      item.can_create = false;
-      item.can_update = false;
-      item.can_delete = false;
+      item.can_view = 1;
+      item.can_create = 0;
+      item.can_update = 0;
+      item.can_delete = 0;
     } else if (mode === 'clear') {
-      item.can_view = false;
-      item.can_create = false;
-      item.can_update = false;
-      item.can_delete = false;
+      item.can_view = 0;
+      item.can_create = 0;
+      item.can_update = 0;
+      item.can_delete = 0;
     }
   });
 }
 
 function toggleRow(item) {
   const isAll = item.can_view && item.can_create && item.can_update && item.can_delete;
-  item.can_view = !isAll;
-  item.can_create = !isAll;
-  item.can_update = !isAll;
-  item.can_delete = !isAll;
+  item.can_view = isAll ? 0 : 1;
+  item.can_create = isAll ? 0 : 1;
+  item.can_update = isAll ? 0 : 1;
+  item.can_delete = isAll ? 0 : 1;
 }
 
 async function savePermissions() {
@@ -331,9 +332,11 @@ async function savePermissions() {
   try {
     await api.updateRolePermissions({
       role_code: selectedRole.value,
+      matrix: matrix.value,
       permissions: matrix.value
     });
-    toastMessage.value = `Pengaturan hak akses untuk role '${selectedRole.value}' berhasil disimpan!`;
+    toastMessage.value = `Pengaturan hak akses untuk role '${selectedRole.value}' berhasil disimpan permanen!`;
+    await loadMatrix(selectedRole.value);
     setTimeout(() => {
       toastMessage.value = null;
     }, 4000);

@@ -259,6 +259,19 @@ class DatabaseSeeder extends Seeder
             \App\Models\SystemSetting::firstOrCreate(['key' => $s['key']], $s);
         }
 
+        // Seed default RBAC Matrices for all 4 roles
+        $rolesToSeed = ['ADMIN', 'FIELD_TEAM', 'VENDOR', 'CLIENT'];
+        foreach ($rolesToSeed as $rCode) {
+            $defaultMatrix = \App\Http\Controllers\Api\PermissionController::getDefaultMatrixForRole($rCode);
+            \App\Models\SystemSetting::updateOrCreate(
+                ['key' => "rbac_matrix_{$rCode}"],
+                [
+                    'value' => json_encode($defaultMatrix),
+                    'description' => "Default RBAC permissions matrix for {$rCode}",
+                ]
+            );
+        }
+
         // 9. Initial Audit Logs
         \App\Models\AuditLog::firstOrCreate([
             'action' => 'SYSTEM_INIT',

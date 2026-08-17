@@ -34,6 +34,42 @@ class PermissionController extends Controller
         ['id' => 'client_ba', 'name' => 'Dokumen BA Opname Klien', 'section' => 'CLIENT', 'icon' => 'FileCheck2', 'sort_order' => 20],
     ];
 
+    public static function getDefaultMatrixForRole(string $roleCode): array
+    {
+        $matrix = [];
+        foreach (self::$defaultModules as $mod) {
+            $isField = ($mod['section'] === 'FIELD TEAM');
+            $isClient = ($mod['section'] === 'CLIENT');
+            $canView = 0; $canCreate = 0; $canUpdate = 0; $canDelete = 0;
+
+            if ($roleCode === 'ADMIN' && !$isField && !$isClient) {
+                $canView = 1;
+                $canCreate = in_array($mod['id'], ['admin_spk', 'admin_review', 'admin_ba', 'admin_vendors', 'admin_teams', 'admin_areas', 'admin_jobtypes', 'admin_templates']) ? 1 : 0;
+                $canUpdate = in_array($mod['id'], ['admin_spk', 'admin_review', 'admin_issues', 'admin_ba', 'admin_vendors', 'admin_teams', 'admin_areas', 'admin_jobtypes', 'admin_templates']) ? 1 : 0;
+                $canDelete = in_array($mod['id'], ['admin_spk', 'admin_evidence', 'admin_vendors', 'admin_teams', 'admin_areas', 'admin_jobtypes', 'admin_templates']) ? 1 : 0;
+            } elseif ($roleCode === 'FIELD_TEAM' && $isField) {
+                $canView = 1;
+                $canCreate = in_array($mod['id'], ['field_dashboard', 'field_tasks']) ? 1 : 0;
+                $canUpdate = in_array($mod['id'], ['field_dashboard', 'field_tasks']) ? 1 : 0;
+                $canDelete = 0;
+            } elseif (($roleCode === 'VENDOR' || $roleCode === 'CLIENT') && $isClient) {
+                $canView = 1;
+                $canCreate = 0;
+                $canUpdate = 0;
+                $canDelete = 0;
+            }
+
+            $matrix[] = array_merge($mod, [
+                'module_id' => $mod['id'],
+                'can_view' => $canView,
+                'can_create' => $canCreate,
+                'can_update' => $canUpdate,
+                'can_delete' => $canDelete,
+            ]);
+        }
+        return $matrix;
+    }
+
     public function myPermissions(Request $request)
     {
         $user = $request->user();
@@ -50,33 +86,33 @@ class PermissionController extends Controller
         $savedMatrix = SystemSetting::where('key', "rbac_matrix_{$role}")->first();
         if ($savedMatrix && $savedMatrix->value) {
             $decoded = json_decode($savedMatrix->value, true);
-            $permMap = [];
-            foreach ($decoded as $item) {
-                $permMap[$item['module_id']] = [
-                    'can_view' => $item['can_view'] ?? 0,
-                    'can_create' => $item['can_create'] ?? 0,
-                    'can_update' => $item['can_update'] ?? 0,
-                    'can_delete' => $item['can_delete'] ?? 0,
-                ];
+            if (is_array($decoded)) {
+                $permMap = [];
+                foreach ($decoded as $item) {
+                    $mId = $item['module_id'] ?? $item['id'] ?? null;
+                    if ($mId) {
+                        $permMap[$mId] = [
+                            'can_view' => !empty($item['can_view']) ? 1 : 0,
+                            'can_create' => !empty($item['can_create']) ? 1 : 0,
+                            'can_update' => !empty($item['can_update']) ? 1 : 0,
+                            'can_delete' => !empty($item['can_delete']) ? 1 : 0,
+                        ];
+                    }
+                }
+                return response()->json(['success' => true, 'data' => $permMap]);
             }
-            return response()->json(['success' => true, 'data' => $permMap]);
         }
 
         // Default permissions based on role
+        $defaults = self::getDefaultMatrixForRole($role);
         $permMap = [];
-        foreach (self::$defaultModules as $m) {
-            $isField = ($m['section'] === 'FIELD TEAM');
-            $isClient = ($m['section'] === 'CLIENT');
-            if ($role === 'ADMIN') {
-                $canView = (!$isField && !$isClient) ? 1 : 0;
-                $permMap[$m['id']] = ['can_view' => $canView, 'can_create' => $canView, 'can_update' => $canView, 'can_delete' => $canView];
-            } elseif ($role === 'FIELD_TEAM') {
-                $canView = $isField ? 1 : 0;
-                $permMap[$m['id']] = ['can_view' => $canView, 'can_create' => $canView, 'can_update' => $canView, 'can_delete' => 0];
-            } elseif ($role === 'VENDOR' || $role === 'CLIENT') {
-                $canView = $isClient ? 1 : 0;
-                $permMap[$m['id']] = ['can_view' => $canView, 'can_create' => 0, 'can_update' => 0, 'can_delete' => 0];
-            }
+        foreach ($defaults as $item) {
+            $permMap[$item['module_id']] = [
+                'can_view' => $item['can_view'],
+                'can_create' => $item['can_create'],
+                'can_update' => $item['can_update'],
+                'can_delete' => $item['can_delete'],
+            ];
         }
 
         return response()->json(['success' => true, 'data' => $permMap]);
@@ -103,44 +139,29 @@ class PermissionController extends Controller
         $customMap = [];
         if ($savedMatrix && $savedMatrix->value) {
             $decoded = json_decode($savedMatrix->value, true);
-            foreach ($decoded as $item) {
-                $customMap[$item['module_id']] = $item;
+            if (is_array($decoded)) {
+                foreach ($decoded as $item) {
+                    $mId = $item['module_id'] ?? $item['id'] ?? null;
+                    if ($mId) {
+                        $customMap[$mId] = $item;
+                    }
+                }
             }
         }
 
+        $defaults = self::getDefaultMatrixForRole($roleCode);
         $matrix = [];
-        foreach (self::$defaultModules as $mod) {
-            if (isset($customMap[$mod['id']])) {
+        foreach ($defaults as $mod) {
+            $mId = $mod['module_id'];
+            if (isset($customMap[$mId])) {
                 $matrix[] = array_merge($mod, [
-                    'module_id' => $mod['id'],
-                    'can_view' => $customMap[$mod['id']]['can_view'] ?? 0,
-                    'can_create' => $customMap[$mod['id']]['can_create'] ?? 0,
-                    'can_update' => $customMap[$mod['id']]['can_update'] ?? 0,
-                    'can_delete' => $customMap[$mod['id']]['can_delete'] ?? 0,
+                    'can_view' => !empty($customMap[$mId]['can_view']) ? 1 : 0,
+                    'can_create' => !empty($customMap[$mId]['can_create']) ? 1 : 0,
+                    'can_update' => !empty($customMap[$mId]['can_update']) ? 1 : 0,
+                    'can_delete' => !empty($customMap[$mId]['can_delete']) ? 1 : 0,
                 ]);
             } else {
-                $isField = ($mod['section'] === 'FIELD TEAM');
-                $isClient = ($mod['section'] === 'CLIENT');
-                $canView = 0;
-                $canCreate = 0;
-                $canUpdate = 0;
-                $canDelete = 0;
-
-                if ($roleCode === 'ADMIN' && !$isField && !$isClient) {
-                    $canView = 1; $canCreate = 1; $canUpdate = 1; $canDelete = 1;
-                } elseif ($roleCode === 'FIELD_TEAM' && $isField) {
-                    $canView = 1; $canCreate = 1; $canUpdate = 1; $canDelete = 0;
-                } elseif (($roleCode === 'VENDOR' || $roleCode === 'CLIENT') && $isClient) {
-                    $canView = 1; $canCreate = 0; $canUpdate = 0; $canDelete = 0;
-                }
-
-                $matrix[] = array_merge($mod, [
-                    'module_id' => $mod['id'],
-                    'can_view' => $canView,
-                    'can_create' => $canCreate,
-                    'can_update' => $canUpdate,
-                    'can_delete' => $canDelete,
-                ]);
+                $matrix[] = $mod;
             }
         }
 
@@ -165,24 +186,31 @@ class PermissionController extends Controller
 
         $request->validate([
             'role_code' => 'required|string',
-            'matrix' => 'required|array',
         ]);
+
+        $matrixData = $request->matrix ?? $request->permissions;
+        if (!is_array($matrixData)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Format matriks izin tidak valid.',
+            ], 422);
+        }
 
         $roleCode = $request->role_code;
         $setting = SystemSetting::firstOrNew(['key' => "rbac_matrix_{$roleCode}"]);
-        $setting->value = json_encode($request->matrix);
+        $setting->value = json_encode($matrixData);
         $setting->description = "Dynamic RBAC permissions matrix for {$roleCode}";
         $setting->save();
 
         AuditService::log($request->user(), 'UPDATE_RBAC_MATRIX', 'ROLE_PERMISSIONS', null, null, [
             'role_code' => $roleCode,
-            'modules_count' => count($request->matrix),
+            'modules_count' => count($matrixData),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => "Hak akses role '{$roleCode}' berhasil diperbarui!",
-            'data' => $request->matrix,
+            'message' => "Hak akses role '{$roleCode}' berhasil diperbarui dan disimpan permanen!",
+            'data' => $matrixData,
         ]);
     }
 }
