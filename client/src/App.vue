@@ -95,7 +95,10 @@ import WorkOrderCreateModal from './pages/admin/WorkOrderCreateModal.vue';
 import WorkOrderDetailModal from './pages/admin/WorkOrderDetailModal.vue';
 import ReviewConsole from './pages/admin/ReviewConsole.vue';
 import BaOpnameList from './pages/admin/BaOpnameList.vue';
-import MasterData from './pages/admin/MasterData.vue';
+import MasterVendors from './pages/admin/MasterVendors.vue';
+import MasterTeams from './pages/admin/MasterTeams.vue';
+import MasterAreas from './pages/admin/MasterAreas.vue';
+import MasterJobTypes from './pages/admin/MasterJobTypes.vue';
 import DocumentTemplateManager from './pages/admin/DocumentTemplateManager.vue';
 import EvidenceGallery from './pages/admin/EvidenceGallery.vue';
 import FieldIssuesManager from './pages/admin/FieldIssuesManager.vue';
@@ -186,10 +189,13 @@ const currentView = computed(() => {
     case 'admin_audit':
       return Reports;
     case 'admin_vendors':
+      return MasterVendors;
     case 'admin_teams':
+      return MasterTeams;
     case 'admin_areas':
+      return MasterAreas;
     case 'admin_jobtypes':
-      return MasterData;
+      return MasterJobTypes;
     case 'admin_templates':
       return DocumentTemplateManager;
     case 'admin_notifications':
