@@ -119,11 +119,11 @@
               <div class="space-y-2 text-slate-600">
                 <div class="flex justify-between">
                   <span>Perusahaan Client:</span>
-                  <span class="font-bold text-slate-900">{{ workOrder.vendor_name }} ({{ workOrder.vendor_code }})</span>
+                  <span class="font-bold text-slate-900">{{ workOrder.vendor?.name || workOrder.vendor_name || 'Client' }} {{ (workOrder.vendor?.code || workOrder.vendor_code) ? `(${workOrder.vendor?.code || workOrder.vendor_code})` : '' }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span>Area Operasional:</span>
-                  <span class="font-bold text-slate-900">{{ workOrder.area_name }}</span>
+                  <span class="font-bold text-slate-900">{{ workOrder.area?.name || workOrder.area_name || '-' }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span>Nilai Kontrak (Rp):</span>
@@ -227,16 +227,16 @@
               <Navigation class="w-4 h-4 text-brand-600" />
               <span>Riwayat Check-In GPS Lapangan</span>
             </h4>
-            <div v-if="workOrder.check_ins && workOrder.check_ins.length > 0" class="space-y-2">
+            <div v-if="(workOrder.check_ins || workOrder.checkIns || []).length > 0" class="space-y-2">
               <div
-                v-for="ci in workOrder.check_ins"
+                v-for="ci in (workOrder.check_ins || workOrder.checkIns || [])"
                 :key="ci.id"
                 class="p-3 bg-white/90 border border-slate-200/80 rounded-xl flex items-center justify-between shadow-xs"
               >
                 <div>
-                  <div class="font-bold text-slate-900">{{ ci.user_name }}</div>
+                  <div class="font-bold text-slate-900">{{ ci.user_name || ci.user?.name || 'Teknisi Lapangan' }}</div>
                   <div class="text-[11px] text-slate-500 font-mono mt-0.5">
-                    GPS: {{ ci.latitude?.toFixed(6) }}, {{ ci.longitude?.toFixed(6) }} (±{{ ci.accuracy }}m)
+                    GPS: {{ Number(ci.latitude || 0).toFixed(6) }}, {{ Number(ci.longitude || 0).toFixed(6) }} (±{{ ci.accuracy || 0 }}m)
                   </div>
                   <div v-if="ci.address_note" class="text-[10px] text-slate-400 italic mt-0.5">"{{ ci.address_note }}"</div>
                 </div>
@@ -245,7 +245,7 @@
                     TERVERIFIKASI ✓
                   </span>
                   <div class="text-[10px] text-slate-400 font-mono mt-1">
-                    {{ new Date(ci.server_timestamp).toLocaleString('id-ID') }}
+                    {{ ci.server_timestamp ? new Date(ci.server_timestamp).toLocaleString('id-ID') : '-' }}
                   </div>
                 </div>
               </div>
@@ -427,19 +427,23 @@ async function loadDetail() {
   if (!props.workOrderId) return;
   loading.value = true;
   try {
-    const [woRes, usersRes] = await Promise.all([
-      api.getWorkOrderById(props.workOrderId),
-      api.getUsers({ role: 'FIELD_TEAM' })
-    ]);
-    workOrder.value = woRes.data;
-    fieldUsers.value = usersRes.data || [];
-    selectedPic.value = woRes.data?.pic_user_id || '';
-    const memberIds = (woRes.data?.assignments || [])
-      .filter(a => a.role_in_team === 'MEMBER')
-      .map(a => a.user_id);
+    const woRes = await api.getWorkOrderById(props.workOrderId);
+    workOrder.value = woRes.data || woRes;
+    selectedPic.value = workOrder.value?.pic_user_id || '';
+    const memberIds = (workOrder.value?.assignments || [])
+      .filter(a => (a.pivot?.role_in_team || a.role_in_team) === 'MEMBER')
+      .map(a => a.id || a.user_id);
     selectedMembers.value = memberIds;
+
+    try {
+      const usersRes = await api.getUsers({ role: 'FIELD_TEAM' });
+      fieldUsers.value = usersRes.data || [];
+    } catch (uErr) {
+      console.warn('Field users load failed:', uErr);
+    }
   } catch (err) {
     console.error('Failed to load work order detail:', err);
+    alert('Gagal memuat detail SPK: ' + (err.message || 'Koneksi bermasalah'));
   } finally {
     loading.value = false;
   }
