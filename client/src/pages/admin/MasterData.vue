@@ -1,43 +1,53 @@
 <template>
   <div class="space-y-5">
-    <!-- Title -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <!-- Dynamic Header & Section Title -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/80 p-5 rounded-3xl border border-slate-200/80 shadow-xs">
       <div>
-        <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-900 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-900/20">
-            <Building2 class="w-4 h-4" />
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-brand-900 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-900/20">
+            <component :is="currentSectionIcon" class="w-5 h-5" />
           </div>
-          <span>Master Data Management</span>
-        </h2>
-        <p class="text-xs text-slate-500 mt-1 font-medium">Kelola entitas inti: Perusahaan Client (Indomarco, Smartfren, dll), Tim Lapangan, Area Operasional, dan Jenis Pekerjaan.</p>
+          <div>
+            <h2 class="text-lg font-black text-slate-900 tracking-tight">
+              {{ currentSectionHeading }}
+            </h2>
+            <p class="text-xs text-slate-500 font-medium">
+              {{ currentSectionDescription }}
+            </p>
+          </div>
+        </div>
       </div>
       <button
         @click="openAddModal"
-        class="px-4 py-2 bg-gradient-to-r from-brand-900 via-brand-800 to-brand-700 hover:from-brand-800 hover:to-brand-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-brand-900/20 active:scale-95 transition-all self-start sm:self-auto cursor-pointer"
+        class="px-4 py-2.5 bg-gradient-to-r from-brand-900 via-brand-800 to-brand-700 hover:from-brand-800 hover:to-brand-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-brand-900/20 active:scale-95 transition-all self-start sm:self-auto cursor-pointer"
       >
         <Plus class="w-4 h-4" />
         <span>Tambah {{ currentSectionLabel }}</span>
       </button>
     </div>
 
-    <!-- Tabs -->
+    <!-- Section Switcher Tabs -->
     <div class="flex gap-2 border-b border-slate-200/80 pb-2.5 overflow-x-auto text-xs font-bold">
       <button
-        @click="section = 'vendors'"
+        @click="switchSection('vendors')"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer',
-          section === 'vendors' ? 'bg-brand-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100/80'
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer border',
+          section === 'vendors'
+            ? 'bg-brand-900 text-white border-brand-900 shadow-md shadow-brand-900/20'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
         ]"
       >
         <Building2 class="w-4 h-4" />
-        <span>Client ({{ section === 'vendors' ? data.length : '' }})</span>
+        <span>Master Client / Klien ({{ section === 'vendors' ? data.length : '' }})</span>
       </button>
 
       <button
-        @click="section = 'teams'"
+        @click="switchSection('teams')"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer',
-          section === 'teams' ? 'bg-brand-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100/80'
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer border',
+          section === 'teams'
+            ? 'bg-brand-900 text-white border-brand-900 shadow-md shadow-brand-900/20'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
         ]"
       >
         <Users class="w-4 h-4" />
@@ -45,25 +55,29 @@
       </button>
 
       <button
-        @click="section = 'areas'"
+        @click="switchSection('areas')"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer',
-          section === 'areas' ? 'bg-brand-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100/80'
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer border',
+          section === 'areas'
+            ? 'bg-brand-900 text-white border-brand-900 shadow-md shadow-brand-900/20'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
         ]"
       >
         <MapPin class="w-4 h-4" />
-        <span>Area ({{ section === 'areas' ? data.length : '' }})</span>
+        <span>Master Area ({{ section === 'areas' ? data.length : '' }})</span>
       </button>
 
       <button
-        @click="section = 'jobtypes'"
+        @click="switchSection('jobtypes')"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer',
-          section === 'jobtypes' ? 'bg-brand-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100/80'
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer border',
+          section === 'jobtypes'
+            ? 'bg-brand-900 text-white border-brand-900 shadow-md shadow-brand-900/20'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
         ]"
       >
         <Briefcase class="w-4 h-4" />
-        <span>Jenis Pekerjaan ({{ section === 'jobtypes' ? data.length : '' }})</span>
+        <span>Jenis Pekerjaan & Tarif ({{ section === 'jobtypes' ? data.length : '' }})</span>
       </button>
     </div>
 
@@ -106,7 +120,10 @@
           <tbody class="divide-y divide-slate-100/80 text-slate-700">
             <template v-if="loading">
               <tr>
-                <td colspan="6" class="py-10 text-center text-slate-400 font-medium">Memuat data master...</td>
+                <td colspan="6" class="py-12 text-center text-slate-400 font-medium flex flex-col items-center justify-center gap-2">
+                  <div class="w-6 h-6 border-2 border-brand-900 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Memuat data {{ currentSectionLabel }}...</span>
+                </td>
               </tr>
             </template>
             <template v-else-if="data.length > 0">
@@ -171,7 +188,7 @@
             </template>
             <template v-else>
               <tr>
-                <td colspan="6" class="py-10 text-center text-slate-400 font-medium">Belum ada data.</td>
+                <td colspan="6" class="py-10 text-center text-slate-400 font-medium">Belum ada data {{ currentSectionLabel }}.</td>
               </tr>
             </template>
           </tbody>
@@ -261,29 +278,35 @@
               <input
                 required
                 type="text"
-                placeholder="Contoh: Tim Alpha - Bandung Raya"
+                placeholder="Contoh: Tim Alpha Jakarta"
                 v-model="formInput.name"
                 class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
-              <label class="block font-bold mb-1">Ketua Tim / PIC Utama</label>
+              <label class="block font-bold mb-1">Ketua Tim / PIC *</label>
               <select
-                v-model="formInput.leader_user_id"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
+                required
+                v-model="formInput.leader_id"
+                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs font-bold"
               >
-                <option value="">-- Pilih PIC Lapangan --</option>
-                <option v-for="u in fieldUsers" :key="u.id" :value="u.id">{{ u.name }} ({{ u.phone }})</option>
+                <option value="" disabled>Pilih Teknisi / PIC</option>
+                <option v-for="u in fieldUsers" :key="u.id" :value="u.id">
+                  {{ u.name }} ({{ u.phone }})
+                </option>
               </select>
             </div>
             <div>
-              <label class="block font-bold mb-1">Area Operasional Penugasan</label>
+              <label class="block font-bold mb-1">Area Operasional Penugasan *</label>
               <select
+                required
                 v-model="formInput.area_id"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
+                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs font-bold"
               >
-                <option value="">-- Pilih Area --</option>
-                <option v-for="a in areasList" :key="a.id" :value="a.id">{{ a.name }} ({{ a.city }})</option>
+                <option value="" disabled>Pilih Area</option>
+                <option v-for="a in areasList" :key="a.id" :value="a.id">
+                  {{ a.name }} ({{ a.city }})
+                </option>
               </select>
             </div>
           </template>
@@ -291,47 +314,49 @@
           <!-- Area Form -->
           <template v-else-if="section === 'areas'">
             <div>
-              <label class="block font-bold mb-1">Nama Wilayah Area *</label>
+              <label class="block font-bold mb-1">Nama Area *</label>
               <input
                 required
                 type="text"
-                placeholder="Contoh: Bandung Raya"
+                placeholder="Contoh: Jakarta Barat"
                 v-model="formInput.name"
                 class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block font-bold mb-1">Kota / Kabupaten</label>
+                <label class="block font-bold mb-1">Kota / Kabupaten *</label>
                 <input
+                  required
                   type="text"
-                  placeholder="Bandung"
+                  placeholder="Jakarta Barat"
                   v-model="formInput.city"
                   class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
                 />
               </div>
               <div>
-                <label class="block font-bold mb-1">Provinsi</label>
+                <label class="block font-bold mb-1">Provinsi *</label>
                 <input
+                  required
                   type="text"
-                  placeholder="Jawa Barat"
+                  placeholder="DKI Jakarta"
                   v-model="formInput.province"
                   class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
             <div>
-              <label class="block font-bold mb-1">Kecamatan / District</label>
+              <label class="block font-bold mb-1">Kecamatan (Opsional)</label>
               <input
                 type="text"
-                placeholder="Contoh: Coblong, Sukajadi, dll"
+                placeholder="Grogol Petamburan"
                 v-model="formInput.district"
                 class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
               />
             </div>
           </template>
 
-          <!-- Job Types Form -->
+          <!-- Job Type Form -->
           <template v-else-if="section === 'jobtypes'">
             <div class="grid grid-cols-2 gap-2">
               <div>
@@ -339,14 +364,15 @@
                 <input
                   required
                   type="text"
-                  placeholder="SIGNBOARD"
+                  placeholder="STK, NEON, FAC"
                   v-model="formInput.code"
-                  class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 font-mono"
+                  class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 font-mono uppercase"
                 />
               </div>
               <div>
-                <label class="block font-bold mb-1">Mode Evidence *</label>
+                <label class="block font-bold mb-1">Mode Dokumentasi *</label>
                 <select
+                  required
                   v-model="formInput.doc_mode"
                   class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs font-bold"
                 >
@@ -424,7 +450,9 @@ const props = defineProps({
   }
 });
 
-const section = ref(props.activeSection);
+const emit = defineEmits(['switch-tab']);
+
+const section = ref(props.activeSection || 'vendors');
 const data = ref([]);
 const loading = ref(true);
 
@@ -435,6 +463,26 @@ const formInput = ref({});
 const fieldUsers = ref([]);
 const areasList = ref([]);
 
+const currentSectionHeading = computed(() => {
+  switch (section.value) {
+    case 'vendors': return 'Master Client / Pemberi Tugas';
+    case 'teams': return 'Master Tim & Teknisi Lapangan';
+    case 'areas': return 'Master Area & Wilayah Operasional';
+    case 'jobtypes': return 'Master Jenis Pekerjaan & Tarif Acuan';
+    default: return 'Master Data Management';
+  }
+});
+
+const currentSectionDescription = computed(() => {
+  switch (section.value) {
+    case 'vendors': return 'Daftar perusahaan client resmi (Indomaret, Alfamart, Smartfren, Perbankan).';
+    case 'teams': return 'Pengelolaan tim kerja lapangan, penanggung jawab (PIC), dan penempatan wilayah.';
+    case 'areas': return 'Cakupan wilayah operasional, kota, kabupaten, dan provinsi pengerjaan SPK.';
+    case 'jobtypes': return 'Katalog jenis pekerjaan instalasi, tarif acuan standar, dan mode dokumentasi foto.';
+    default: return 'Kelola entitas data master operasional SGX Vendor.';
+  }
+});
+
 const currentSectionLabel = computed(() => {
   switch (section.value) {
     case 'vendors': return 'Client / Pemberi Tugas';
@@ -444,6 +492,21 @@ const currentSectionLabel = computed(() => {
     default: return 'Data';
   }
 });
+
+const currentSectionIcon = computed(() => {
+  switch (section.value) {
+    case 'vendors': return Building2;
+    case 'teams': return Users;
+    case 'areas': return MapPin;
+    case 'jobtypes': return Briefcase;
+    default: return Building2;
+  }
+});
+
+function switchSection(targetSec) {
+  section.value = targetSec;
+  emit('switch-tab', `admin_${targetSec}`);
+}
 
 async function loadSectionData(targetSection) {
   loading.value = true;
@@ -475,7 +538,7 @@ async function loadSectionData(targetSection) {
 }
 
 watch(() => props.activeSection, (newSec) => {
-  if (newSec) {
+  if (newSec && newSec !== section.value) {
     section.value = newSec;
   }
 }, { immediate: true });
@@ -503,7 +566,6 @@ function openEditModal(item) {
 async function handleSubmit() {
   try {
     if (isEditing.value) {
-      // UPDATE
       if (section.value === 'vendors') {
         await api.updateVendor(formInput.value.id, formInput.value);
       } else if (section.value === 'areas') {
@@ -515,7 +577,6 @@ async function handleSubmit() {
       }
       alert('Perubahan data berhasil disimpan!');
     } else {
-      // CREATE
       if (section.value === 'vendors') {
         await api.createVendor(formInput.value);
       } else if (section.value === 'areas') {
