@@ -191,20 +191,29 @@ class PermissionController extends Controller
             ], 403);
         }
 
-        $matrix = $request->input('matrix', $request->input('permissions', []));
+        $raw = $request->all();
+        $matrix = $request->input('matrix') ?? $request->input('permissions') ?? $request->input('data') ?? [];
+
         if (empty($matrix) || !is_array($matrix)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Matriks perizinan tidak valid atau kosong.',
-            ], 422);
+            if (is_array($raw) && isset($raw[0])) {
+                $matrix = $raw;
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data matriks perizinan tidak boleh kosong.',
+                ], 422);
+            }
         }
 
-        $roleCode = $request->input('role_code', $request->input('role', 'ADMIN'));
+        $roleCode = $request->input('role_code') ?? $request->input('role') ?? 'ADMIN';
 
         // Normalize boolean/integers for each item
-        $normalized = array_map(function ($item) {
+        $normalized = [];
+        foreach ($matrix as $item) {
+            if (!is_array($item)) continue;
             $mId = $item['module_id'] ?? $item['id'] ?? '';
-            return [
+            if (!$mId) continue;
+            $normalized[] = [
                 'id' => $mId,
                 'module_id' => $mId,
                 'name' => $item['name'] ?? '',
@@ -216,7 +225,7 @@ class PermissionController extends Controller
                 'can_update' => !empty($item['can_update']) ? 1 : 0,
                 'can_delete' => !empty($item['can_delete']) ? 1 : 0,
             ];
-        }, $matrix);
+        }
 
         $setting = SystemSetting::firstOrNew(['key' => "rbac_matrix_{$roleCode}"]);
         $setting->value = json_encode($normalized);
