@@ -59,6 +59,8 @@ export const api = {
   getWorkOrderById: (id) => request(`/work-orders/${id}`),
   createWorkOrder: (data) => request('/work-orders', { method: 'POST', body: JSON.stringify(data) }),
   updateWorkOrder: (id, data) => request(`/work-orders/${id}/update`, { method: 'POST', body: JSON.stringify(data) }),
+  updateWorkOrderLocation: (id, lat, lng) => request('/work-orders/update-location', { method: 'POST', body: JSON.stringify({ work_order_id: id, target_lat: lat, target_lng: lng }) }),
+  toggleWorkOrderCheckin: (id, require_checkin) => request('/work-orders/toggle-checkin', { method: 'POST', body: JSON.stringify({ work_order_id: id, require_checkin }) }),
   assignTeam: (id, data) => request(`/work-orders/${id}/assign`, { method: 'POST', body: JSON.stringify(data) }),
   submitWorkOrder: (id) => request(`/work-orders/${id}/submit`, { method: 'POST' }),
 

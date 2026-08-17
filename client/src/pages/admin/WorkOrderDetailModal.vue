@@ -484,10 +484,7 @@ async function syncCurrentGpsToSpk() {
       const lat = parseFloat(pos.coords.latitude.toFixed(6));
       const lng = parseFloat(pos.coords.longitude.toFixed(6));
       try {
-        await api.updateWorkOrder(props.workOrderId, {
-          target_lat: lat,
-          target_lng: lng
-        });
+        await api.updateWorkOrderLocation(props.workOrderId, lat, lng);
         await loadDetail();
         emit('refresh-list');
         alert(`Target GPS SPK berhasil disinkronkan ke lokasi Anda: ${lat}, ${lng}`);
@@ -503,9 +500,7 @@ async function syncCurrentGpsToSpk() {
 async function toggleRequireCheckin() {
   const newVal = !workOrder.value.require_checkin;
   try {
-    await api.updateWorkOrder(props.workOrderId, {
-      require_checkin: newVal
-    });
+    await api.toggleWorkOrderCheckin(props.workOrderId, newVal);
     await loadDetail();
     emit('refresh-list');
     alert(`Status Wajib Cek Lokasi berhasil diubah menjadi: ${newVal ? 'AKTIF' : 'NONAKTIF'}`);

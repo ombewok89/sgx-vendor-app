@@ -179,6 +179,65 @@ class WorkOrderController extends Controller
         ]);
     }
 
+    public function updateLocation(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang mengubah lokasi SPK.',
+            ], 403);
+        }
+
+        $id = $request->input('work_order_id', $request->input('id'));
+        $workOrder = WorkOrder::findOrFail($id);
+
+        $workOrder->update([
+            'target_lat' => $request->target_lat,
+            'target_lng' => $request->target_lng,
+        ]);
+
+        AuditService::log($user, 'UPDATE_LOCATION', 'WORK_ORDER', $workOrder->id, null, [
+            'target_lat' => $request->target_lat,
+            'target_lng' => $request->target_lng,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Koordinat target GPS SPK berhasil disinkronkan.',
+            'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+        ]);
+    }
+
+    public function toggleCheckin(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang mengubah aturan check-in.',
+            ], 403);
+        }
+
+        $id = $request->input('work_order_id', $request->input('id'));
+        $workOrder = WorkOrder::findOrFail($id);
+
+        $requireCheckin = $request->boolean('require_checkin');
+        $workOrder->update([
+            'require_checkin' => $requireCheckin,
+        ]);
+
+        AuditService::log($user, 'TOGGLE_CHECKIN_REQUIREMENT', 'WORK_ORDER', $workOrder->id, null, [
+            'require_checkin' => $requireCheckin,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pengaturan wajib cek lokasi berhasil diperbarui.',
+            'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+        ]);
+    }
+
     public function assignTeam(Request $request, $id)
     {
         $user = $request->user();

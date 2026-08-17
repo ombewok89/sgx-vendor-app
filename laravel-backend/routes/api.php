@@ -58,6 +58,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/work-orders', [WorkOrderController::class, 'index']);
     Route::get('/work-orders/{id}', [WorkOrderController::class, 'show']);
     Route::post('/work-orders', [WorkOrderController::class, 'store']);
+    Route::post('/work-orders/update-location', [WorkOrderController::class, 'updateLocation']);
+    Route::post('/work-orders/toggle-checkin', [WorkOrderController::class, 'toggleCheckin']);
     Route::match(['put', 'post'], '/work-orders/{id}', [WorkOrderController::class, 'update']);
     Route::post('/work-orders/{id}/update', [WorkOrderController::class, 'update']);
     Route::post('/work-orders/{id}/assign', [WorkOrderController::class, 'assignTeam']);

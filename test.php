@@ -83,9 +83,26 @@ if (file_exists($envPath)) {
             $output = \Illuminate\Support\Facades\Artisan::output();
             echo "<pre style='background:#1e293b; color:#10b981; padding:15px; border-radius:8px; overflow-x:auto;'>" . htmlspecialchars($output) . "</pre>";
             echo "<p style='color:green; font-weight:bold;'>🎉 MIGRASI DAN PENGISIAN AKUN SELESAI! Silakan coba login sekarang.</p>";
+        } elseif (isset($_GET['action']) && $_GET['action'] === 'clearcache') {
+            echo "<hr><h3>🧹 Membersihkan Cache Rute & Aplikasi...</h3>";
+            require __DIR__ . '/laravel-backend/vendor/autoload.php';
+            $app = require_once __DIR__ . '/laravel-backend/bootstrap/app.php';
+            $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+            $kernel->bootstrap();
+
+            \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+            $output = \Illuminate\Support\Facades\Artisan::output();
+
+            foreach (glob(__DIR__ . '/laravel-backend/bootstrap/cache/*.php') as $f) {
+                @unlink($f);
+            }
+
+            echo "<pre style='background:#1e293b; color:#10b981; padding:15px; border-radius:8px; overflow-x:auto;'>" . htmlspecialchars($output) . "</pre>";
+            echo "<p style='color:green; font-weight:bold;'>✅ SELURUH CACHE RUTE & CONFIG TELAH DIBERSIHKAN TOTAL!</p>";
         } else {
-            echo "<div style='margin-top: 20px;'>";
-            echo "<a href='?action=migrate' style='display:inline-block; padding: 12px 24px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>⚡ Klik di Sini untuk Migrasi Database & Isi Akun Otomatis</a>";
+            echo "<div style='margin-top: 20px; display:flex; gap:10px; flex-wrap:wrap;'>";
+            echo "<a href='?action=clearcache' style='display:inline-block; padding: 12px 20px; background: #059669; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>🧹 1-Klik Bersihkan Cache Rute & Server</a>";
+            echo "<a href='?action=migrate' style='display:inline-block; padding: 12px 20px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>⚡ Migrasi Ulang Database</a>";
             echo "</div>";
         }
 
