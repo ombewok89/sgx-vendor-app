@@ -37,6 +37,7 @@
       <main class="flex-1 lg:pl-64 p-4 sm:p-6 md:p-8 max-w-[1600px] w-full mx-auto animate-fade-in">
         <component
           :is="currentView"
+          :key="activeTab"
           v-bind="currentViewProps"
           @open-create-spk="showCreateModal = true"
           @open-create="showCreateModal = true"

@@ -474,6 +474,12 @@ async function loadSectionData(targetSection) {
   }
 }
 
+watch(() => props.activeSection, (newSec) => {
+  if (newSec) {
+    section.value = newSec;
+  }
+}, { immediate: true });
+
 watch(section, (newSec) => {
   loadSectionData(newSec);
 });
