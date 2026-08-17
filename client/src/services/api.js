@@ -58,6 +58,7 @@ export const api = {
   },
   getWorkOrderById: (id) => request(`/work-orders/${id}`),
   createWorkOrder: (data) => request('/work-orders', { method: 'POST', body: JSON.stringify(data) }),
+  updateWorkOrder: (id, data) => request(`/work-orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   assignTeam: (id, data) => request(`/work-orders/${id}/assign`, { method: 'POST', body: JSON.stringify(data) }),
   submitWorkOrder: (id) => request(`/work-orders/${id}/submit`, { method: 'POST' }),
 

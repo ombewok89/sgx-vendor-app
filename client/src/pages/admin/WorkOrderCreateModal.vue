@@ -209,6 +209,50 @@
           </div>
         </div>
 
+        <!-- Row 5.5: Target GPS Coordinates with Auto-Detect -->
+        <div class="p-3 bg-brand-50/40 border border-brand-200/80 rounded-2xl space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block font-bold text-slate-800 text-xs flex items-center gap-1.5">
+              <MapPin class="w-3.5 h-3.5 text-brand-700" />
+              <span>Titik Target Koordinat GPS Cabang</span>
+            </label>
+            <button
+              type="button"
+              @click="detectCurrentLocation"
+              :disabled="detectingGps"
+              class="px-2.5 py-1 bg-gradient-to-r from-indigo-700 to-brand-800 hover:from-indigo-600 hover:to-brand-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition-all"
+            >
+              <Navigation class="w-3 h-3" />
+              <span>{{ detectingGps ? 'Mendeteksi GPS...' : '📍 Gunakan Lokasi GPS Saya Saat Ini' }}</span>
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="block text-[10px] text-slate-500 font-bold mb-0.5">Latitude:</span>
+              <input
+                type="number"
+                step="any"
+                v-model="formData.target_lat"
+                placeholder="-3.79284"
+                class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono"
+              />
+            </div>
+            <div>
+              <span class="block text-[10px] text-slate-500 font-bold mb-0.5">Longitude:</span>
+              <input
+                type="number"
+                step="any"
+                v-model="formData.target_lng"
+                placeholder="102.2607"
+                class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono"
+              />
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-500">
+            * Koordinat ini digunakan sebagai acuan radius check-in teknisi lapangan.
+          </p>
+        </div>
+
         <!-- Row 6: Check-In Requirement & Geofencing Verification (Point 3.1) -->
         <div class="space-y-2 p-3 bg-slate-50/90 border border-slate-200/80 rounded-2xl">
           <div class="flex items-center gap-2">
@@ -244,10 +288,10 @@
                 v-model="formData.geofence_radius"
                 class="px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold text-purple-900 focus:outline-none"
               >
-                <option :value="100">100 Meter (Sangat Ketat)</option>
-                <option :value="200">200 Meter (Standar Retail)</option>
-                <option :value="500">500 Meter (Area Luas / Tower)</option>
-                <option :value="1000">1.000 Meter (Kawasan Industri)</option>
+                <option :value="250">250 Meter (Standar Cabang Retail)</option>
+                <option :value="500">500 Meter (Area Kantor / Ruko)</option>
+                <option :value="1000">1.000 Meter (Area Luas / Kawasan)</option>
+                <option :value="5000">5.000 Meter (Kota / Wilayah Luas)</option>
               </select>
             </div>
           </div>
@@ -289,7 +333,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { api } from '../../services/api';
-import { X, FileText, AlertCircle, Layers, Plus, Trash2 } from 'lucide-vue-next';
+import { X, FileText, AlertCircle, Layers, Plus, Trash2, MapPin, Navigation } from 'lucide-vue-next';
 
 const emit = defineEmits(['close', 'success']);
 
@@ -298,6 +342,7 @@ const areas = ref([]);
 const jobTypes = ref([]);
 const fieldUsers = ref([]);
 const loading = ref(false);
+const detectingGps = ref(false);
 const error = ref(null);
 
 const subItems = ref([
@@ -312,16 +357,37 @@ const formData = reactive({
   job_type_id: '',
   contract_value: 0,
   location_name: '',
-  target_lat: -6.8850,
-  target_lng: 107.6136,
+  target_lat: null,
+  target_lng: null,
   pic_user_id: '',
   start_date: new Date().toISOString().split('T')[0],
   deadline: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
   require_checkin: true,
-  require_geofence: true,
-  geofence_radius: 200,
+  require_geofence: false,
+  geofence_radius: 500,
   notes: ''
 });
+
+function detectCurrentLocation() {
+  if (!navigator.geolocation) {
+    alert('Browser Anda tidak mendukung deteksi lokasi otomatis.');
+    return;
+  }
+  detectingGps.value = true;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      formData.target_lat = parseFloat(pos.coords.latitude.toFixed(6));
+      formData.target_lng = parseFloat(pos.coords.longitude.toFixed(6));
+      detectingGps.value = false;
+      alert(`Lokasi GPS terdeteksi: ${formData.target_lat}, ${formData.target_lng}`);
+    },
+    (err) => {
+      detectingGps.value = false;
+      alert('Gagal mendeteksi lokasi: ' + err.message);
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
 
 function handleJobTypeChange() {
   const selected = jobTypes.value.find(j => j.id === formData.job_type_id);

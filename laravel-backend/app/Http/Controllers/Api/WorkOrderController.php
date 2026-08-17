@@ -146,6 +146,39 @@ class WorkOrderController extends Controller
         });
     }
 
+    public function update(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang mengubah SPK.',
+            ], 403);
+        }
+
+        $workOrder = WorkOrder::findOrFail($id);
+
+        $data = $request->only([
+            'title', 'vendor_id', 'area_id', 'job_type_id', 'location_name',
+            'target_lat', 'target_lng', 'start_date', 'deadline', 'notes',
+            'doc_mode'
+        ]);
+
+        if ($request->has('require_checkin')) {
+            $data['require_checkin'] = $request->boolean('require_checkin');
+        }
+
+        $workOrder->update($data);
+
+        AuditService::log($user, 'UPDATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, $data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data SPK berhasil diperbarui.',
+            'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+        ]);
+    }
+
     public function assignTeam(Request $request, $id)
     {
         $user = $request->user();

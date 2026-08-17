@@ -135,6 +135,33 @@
                   <span>Titik Lokasi:</span>
                   <span class="font-bold text-slate-900 text-right max-w-[200px]">{{ workOrder.location_name }}</span>
                 </div>
+                <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
+                  <span class="text-slate-500">Target GPS:</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-mono text-slate-800 font-bold">
+                      {{ workOrder.target_lat ? `${Number(workOrder.target_lat).toFixed(4)}, ${Number(workOrder.target_lng).toFixed(4)}` : 'Belum di-set' }}
+                    </span>
+                    <button
+                      type="button"
+                      @click="syncCurrentGpsToSpk"
+                      class="px-2 py-0.5 bg-brand-100 hover:bg-brand-200 text-brand-900 text-[10px] font-bold rounded-md transition-all active:scale-95 cursor-pointer"
+                      title="Update target koordinat SPK ini sesuai posisi GPS saya saat ini"
+                    >
+                      📍 Set GPS Saya
+                    </button>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-500">Wajib Cek Lokasi:</span>
+                  <button
+                    type="button"
+                    @click="toggleRequireCheckin"
+                    class="px-2 py-0.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer"
+                    :class="workOrder.require_checkin ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-300'"
+                  >
+                    {{ workOrder.require_checkin ? 'AKTIF (Wajib Check-In)' : 'NONAKTIF (Bebas Lokasi)' }}
+                  </button>
+                </div>
                 <div class="flex justify-between">
                   <span>Periode:</span>
                   <span class="font-mono text-slate-900 font-bold">{{ workOrder.start_date }} s/d {{ workOrder.deadline }}</span>
@@ -444,6 +471,46 @@ async function handleSaveAssignment() {
     alert(`Gagal assign tim: ${err.message}`);
   } finally {
     assigning.value = false;
+  }
+}
+
+async function syncCurrentGpsToSpk() {
+  if (!navigator.geolocation) {
+    alert('Browser tidak mendukung deteksi lokasi.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const lat = parseFloat(pos.coords.latitude.toFixed(6));
+      const lng = parseFloat(pos.coords.longitude.toFixed(6));
+      try {
+        await api.updateWorkOrder(props.workOrderId, {
+          target_lat: lat,
+          target_lng: lng
+        });
+        await loadDetail();
+        emit('refresh-list');
+        alert(`Target GPS SPK berhasil disinkronkan ke lokasi Anda: ${lat}, ${lng}`);
+      } catch (err) {
+        alert('Gagal update GPS: ' + err.message);
+      }
+    },
+    (err) => alert('Gagal mendeteksi GPS: ' + err.message),
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+async function toggleRequireCheckin() {
+  const newVal = !workOrder.value.require_checkin;
+  try {
+    await api.updateWorkOrder(props.workOrderId, {
+      require_checkin: newVal
+    });
+    await loadDetail();
+    emit('refresh-list');
+    alert(`Status Wajib Cek Lokasi berhasil diubah menjadi: ${newVal ? 'AKTIF' : 'NONAKTIF'}`);
+  } catch (err) {
+    alert('Gagal mengubah pengaturan: ' + err.message);
   }
 }
 
