@@ -1,4 +1,20 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const BACKEND_BASE = API_BASE.replace(/\/api\/?$/, '');
+
+export function getFileUrl(filePath) {
+  if (!filePath) return '';
+  if (filePath.startsWith('http://') || filePath.startsWith('https://') || filePath.startsWith('data:')) {
+    return filePath;
+  }
+  const token = localStorage.getItem('sgx_token');
+  const cleanPath = filePath.startsWith('/') ? filePath : `/${filePath}`;
+  const fullUrl = `${BACKEND_BASE}${cleanPath}`;
+  if (token && !fullUrl.includes('token=')) {
+    const separator = fullUrl.includes('?') ? '&' : '?';
+    return `${fullUrl}${separator}token=${token}`;
+  }
+  return fullUrl;
+}
 
 function getAuthHeaders() {
   const token = localStorage.getItem('sgx_token');
