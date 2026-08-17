@@ -60,95 +60,82 @@
         </button>
       </div>
 
-      <div class="flex items-center gap-2.5 self-end sm:self-auto">
+      <div class="flex items-center gap-2 self-end sm:self-auto">
+        <button
+          type="button"
+          @click="loadMatrix(selectedRole)"
+          :disabled="loading || saving"
+          class="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
+        >
+          <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
+          <span>Muat Ulang</span>
+        </button>
+
         <button
           type="button"
           @click="savePermissions"
           :disabled="saving"
-          class="px-5 py-2.5 bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-md shadow-purple-900/30 flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
+          class="px-5 py-2 bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white text-xs font-black rounded-xl shadow-md shadow-purple-900/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
         >
           <Save class="w-4 h-4" />
-          <span>{{ saving ? 'Menyimpan Matriks...' : 'Simpan Pengaturan Hak Akses' }}</span>
+          <span>{{ saving ? 'Menyimpan...' : 'Simpan Perubahan' }}</span>
         </button>
       </div>
     </div>
 
-    <!-- Success / Error Toast -->
-    <div v-if="toastMessage" class="p-3.5 bg-emerald-600 text-white font-semibold text-xs rounded-2xl shadow-lg flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <CheckCircle2 class="w-4 h-4 text-emerald-200" />
-        <span>{{ toastMessage }}</span>
-      </div>
-      <button @click="toastMessage = null" class="p-1 hover:bg-emerald-700 rounded-lg">
-        <X class="w-4 h-4" />
-      </button>
+    <!-- Success Toast Alert -->
+    <div
+      v-if="toastMessage"
+      class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center gap-2.5 shadow-sm transition-all duration-300"
+    >
+      <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
+      <span>{{ toastMessage }}</span>
     </div>
 
-    <!-- Permission Matrix Table -->
+    <!-- Matrix Table (Glassmorphic) -->
     <div class="glass-card rounded-3xl border border-white/80 shadow-glass overflow-hidden">
-      <table class="w-full text-left text-xs border-collapse">
-        <thead class="bg-slate-100/90 text-slate-700 font-bold border-b border-slate-200/80 text-[11px] uppercase tracking-wider">
+      <div v-if="loading" class="py-20 text-center text-slate-400 font-medium flex flex-col items-center gap-2">
+        <RefreshCw class="w-6 h-6 animate-spin text-purple-700" />
+        <span class="text-xs">Memuat konfigurasi hak akses...</span>
+      </div>
+
+      <table v-else class="w-full text-left text-xs border-collapse">
+        <thead class="bg-slate-100/70 text-slate-600 font-bold border-b border-slate-200/80">
           <tr>
-            <th class="py-3.5 px-5 w-[38%]">Modul / Menu Sistem</th>
-            <th class="py-3.5 px-3 w-[13%] text-center">
-              <div class="flex flex-col items-center">
-                <span class="text-slate-800 font-bold">Lihat (Read)</span>
-                <span class="text-[9px] text-slate-400 font-normal">Buka Menu</span>
-              </div>
-            </th>
-            <th class="py-3.5 px-3 w-[13%] text-center">
-              <div class="flex flex-col items-center">
-                <span class="text-blue-900 font-bold">Tambah (Create)</span>
-                <span class="text-[9px] text-slate-400 font-normal">Buat Data</span>
-              </div>
-            </th>
-            <th class="py-3.5 px-3 w-[13%] text-center">
-              <div class="flex flex-col items-center">
-                <span class="text-amber-900 font-bold">Ubah (Update)</span>
-                <span class="text-[9px] text-slate-400 font-normal">Edit & Proses</span>
-              </div>
-            </th>
-            <th class="py-3.5 px-3 w-[13%] text-center">
-              <div class="flex flex-col items-center">
-                <span class="text-rose-900 font-bold">Hapus (Delete)</span>
-                <span class="text-[9px] text-slate-400 font-normal">Hapus Entitas</span>
-              </div>
-            </th>
-            <th class="py-3.5 px-4 w-[10%] text-center">Aksi Cepat</th>
+            <th class="py-3 px-4 w-72">Modul / Menu Aplikasi</th>
+            <th class="py-3 px-3 text-center w-28">Lihat (Read)</th>
+            <th class="py-3 px-3 text-center w-28">Tambah (Create)</th>
+            <th class="py-3 px-3 text-center w-28">Ubah (Update)</th>
+            <th class="py-3 px-3 text-center w-28">Hapus (Delete)</th>
+            <th class="py-3 px-4 text-center w-24">Aksi Baris</th>
           </tr>
         </thead>
-
-        <tbody class="divide-y divide-slate-100 text-slate-700 bg-white/70">
-          <template v-if="loading">
-            <tr>
-              <td colspan="6" class="py-14 text-center text-slate-400">
-                <div class="flex flex-col items-center justify-center gap-2">
-                  <RefreshCw class="w-6 h-6 animate-spin text-purple-700" />
-                  <span>Memuat matriks hak akses...</span>
-                </div>
+        <tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
+          <template v-for="(item, idx) in matrix" :key="item.id || item.module_id">
+            <!-- Section Divider -->
+            <tr
+              v-if="idx === 0 || matrix[idx - 1].section !== item.section"
+              class="bg-slate-50/80 font-black text-[11px] text-purple-950 uppercase tracking-wider"
+            >
+              <td colspan="6" class="py-2.5 px-4">
+                {{ item.section }}
               </td>
             </tr>
-          </template>
 
-          <template v-else>
-            <tr
-              v-for="item in matrix"
-              :key="item.id"
-              class="hover:bg-purple-50/40 transition-colors"
-            >
-              <!-- Module Name & Section -->
-              <td class="py-3.5 px-5 align-middle">
+            <tr class="hover:bg-purple-50/30 transition-colors duration-150">
+              <!-- Module Name & Icon -->
+              <td class="py-3.5 px-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-xl bg-purple-100/70 text-purple-900 flex items-center justify-center font-bold text-xs shrink-0">
+                  <div class="w-8 h-8 rounded-xl bg-purple-100/70 text-purple-800 flex items-center justify-center shadow-xs">
                     <component :is="getModuleIcon(item.icon)" class="w-4 h-4" />
                   </div>
                   <div>
-                    <div class="font-bold text-slate-900 text-sm">{{ item.name }}</div>
-                    <div class="flex items-center gap-2 mt-0.5 text-[10px]">
-                      <span class="font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200">
+                    <div class="font-bold text-slate-900 text-xs">{{ item.name }}</div>
+                    <div class="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                      <span class="px-1.5 py-0.2 bg-slate-100 rounded text-[9px] font-mono text-slate-500">
                         {{ item.section }}
                       </span>
-                      <span class="font-mono text-slate-400">id: {{ item.id }}</span>
+                      <span class="font-mono text-slate-400">id: {{ item.id || item.module_id }}</span>
                     </div>
                   </div>
                 </div>
@@ -246,7 +233,8 @@ import {
 const roles = ref([
   { code: 'ADMIN', name: 'Admin Operasional' },
   { code: 'FIELD_TEAM', name: 'Tim Lapangan (Mobile)' },
-  { code: 'VENDOR', name: 'Mitra Vendor' }
+  { code: 'VENDOR', name: 'Mitra Vendor' },
+  { code: 'CLIENT', name: 'Client QA & Monitoring' }
 ]);
 
 const selectedRole = ref('ADMIN');
@@ -281,8 +269,15 @@ async function loadMatrix(role) {
   loading.value = true;
   try {
     const res = await api.getPermissionMatrix(role);
-    matrix.value = res.data.matrix || [];
-    if (res.data.roles && res.data.roles.length > 0) {
+    const rawMatrix = res.data?.matrix || [];
+    matrix.value = rawMatrix.map(item => ({
+      ...item,
+      can_view: Boolean(item.can_view),
+      can_create: Boolean(item.can_create),
+      can_update: Boolean(item.can_update),
+      can_delete: Boolean(item.can_delete)
+    }));
+    if (res.data?.roles && res.data.roles.length > 0) {
       roles.value = res.data.roles.filter(r => r.code !== 'SUPERUSER');
     }
   } catch (err) {
@@ -331,9 +326,11 @@ async function savePermissions() {
   try {
     await api.updateRolePermissions({
       role_code: selectedRole.value,
+      matrix: matrix.value,
       permissions: matrix.value
     });
-    toastMessage.value = `Pengaturan hak akses untuk role '${selectedRole.value}' berhasil disimpan!`;
+    toastMessage.value = `Pengaturan hak akses untuk role '${selectedRole.value}' berhasil disimpan ke database!`;
+    await loadMatrix(selectedRole.value);
     setTimeout(() => {
       toastMessage.value = null;
     }, 4000);

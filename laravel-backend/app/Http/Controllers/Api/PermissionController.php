@@ -87,12 +87,15 @@ class PermissionController extends Controller
             $decoded = json_decode($savedMatrix->value, true);
             $permMap = [];
             foreach ($decoded as $item) {
-                $permMap[$item['module_id']] = [
-                    'can_view' => $item['can_view'] ?? 0,
-                    'can_create' => $item['can_create'] ?? 0,
-                    'can_update' => $item['can_update'] ?? 0,
-                    'can_delete' => $item['can_delete'] ?? 0,
-                ];
+                $moduleId = $item['module_id'] ?? $item['id'] ?? '';
+                if ($moduleId) {
+                    $permMap[$moduleId] = [
+                        'can_view' => !empty($item['can_view']) ? 1 : 0,
+                        'can_create' => !empty($item['can_create']) ? 1 : 0,
+                        'can_update' => !empty($item['can_update']) ? 1 : 0,
+                        'can_delete' => !empty($item['can_delete']) ? 1 : 0,
+                    ];
+                }
             }
             return response()->json(['success' => true, 'data' => $permMap]);
         }
@@ -136,7 +139,35 @@ class PermissionController extends Controller
 
         $savedMatrix = SystemSetting::where('key', "rbac_matrix_{$roleCode}")->first();
         if ($savedMatrix && $savedMatrix->value) {
-            $matrix = json_decode($savedMatrix->value, true);
+            $decoded = json_decode($savedMatrix->value, true);
+            $customMap = [];
+            foreach ($decoded as $item) {
+                $mId = $item['module_id'] ?? $item['id'] ?? '';
+                if ($mId) {
+                    $customMap[$mId] = $item;
+                }
+            }
+
+            $matrix = [];
+            foreach (self::$defaultModules as $mod) {
+                if (isset($customMap[$mod['id']])) {
+                    $matrix[] = array_merge($mod, [
+                        'module_id' => $mod['id'],
+                        'can_view' => !empty($customMap[$mod['id']]['can_view']) ? 1 : 0,
+                        'can_create' => !empty($customMap[$mod['id']]['can_create']) ? 1 : 0,
+                        'can_update' => !empty($customMap[$mod['id']]['can_update']) ? 1 : 0,
+                        'can_delete' => !empty($customMap[$mod['id']]['can_delete']) ? 1 : 0,
+                    ]);
+                } else {
+                    $matrix[] = array_merge($mod, [
+                        'module_id' => $mod['id'],
+                        'can_view' => 0,
+                        'can_create' => 0,
+                        'can_update' => 0,
+                        'can_delete' => 0,
+                    ]);
+                }
+            }
         } else {
             $matrix = self::getDefaultMatrixForRole($roleCode);
         }
@@ -160,26 +191,47 @@ class PermissionController extends Controller
             ], 403);
         }
 
-        $request->validate([
-            'role_code' => 'required|string',
-            'matrix' => 'required|array',
-        ]);
+        $matrix = $request->input('matrix', $request->input('permissions', []));
+        if (empty($matrix) || !is_array($matrix)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Matriks perizinan tidak valid atau kosong.',
+            ], 422);
+        }
 
-        $roleCode = $request->role_code;
+        $roleCode = $request->input('role_code', $request->input('role', 'ADMIN'));
+
+        // Normalize boolean/integers for each item
+        $normalized = array_map(function ($item) {
+            $mId = $item['module_id'] ?? $item['id'] ?? '';
+            return [
+                'id' => $mId,
+                'module_id' => $mId,
+                'name' => $item['name'] ?? '',
+                'section' => $item['section'] ?? '',
+                'icon' => $item['icon'] ?? 'LayoutDashboard',
+                'sort_order' => $item['sort_order'] ?? 1,
+                'can_view' => !empty($item['can_view']) ? 1 : 0,
+                'can_create' => !empty($item['can_create']) ? 1 : 0,
+                'can_update' => !empty($item['can_update']) ? 1 : 0,
+                'can_delete' => !empty($item['can_delete']) ? 1 : 0,
+            ];
+        }, $matrix);
+
         $setting = SystemSetting::firstOrNew(['key' => "rbac_matrix_{$roleCode}"]);
-        $setting->value = json_encode($request->matrix);
+        $setting->value = json_encode($normalized);
         $setting->description = "Dynamic RBAC permissions matrix for {$roleCode}";
         $setting->save();
 
         AuditService::log($request->user(), 'UPDATE_RBAC_MATRIX', 'ROLE_PERMISSIONS', null, null, [
             'role_code' => $roleCode,
-            'modules_count' => count($request->matrix),
+            'modules_count' => count($normalized),
         ]);
 
         return response()->json([
             'success' => true,
             'message' => "Hak akses role '{$roleCode}' berhasil diperbarui!",
-            'data' => $request->matrix,
+            'data' => $normalized,
         ]);
     }
 }
