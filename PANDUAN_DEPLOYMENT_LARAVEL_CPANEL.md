@@ -1,46 +1,31 @@
-# Panduan Deployment SGX VENDOR (Laravel Native 100% Standalone di cPanel)
+# Panduan Deployment & Pembaruan SGX VENDOR (Laravel Native Standalone di cPanel)
 
-Aplikasi **SGX Vendor Work Evidence & Digital Reporting System** kini telah **100% berbasis Laravel + MySQL/SQLite Native**, sehingga dapat berjalan secara mandiri di cPanel Shared Hosting tanpa memerlukan Node.js atau Railway.
-
----
-
-## 📁 Struktur File Deployment di cPanel
-
-Ada **2 Cara Praktis** untuk meletakkan file di cPanel File Manager:
-
-### OPSI 1: Cara Paling Cepat & Praktis (Folder Subdomain Langsung)
-Letakkan seluruh isi folder project ke dalam folder subdomain `/home/username/vendor.sinargrafika.my.id/`.
-
-Di dalam folder `vendor.sinargrafika.my.id/` buat file `.htaccess` utama di root folder untuk mengarahkan traffic ke subfolder `public/`:
-
-```apache
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^(.*)$ public/$1 [L]
-</IfModule>
-```
+Aplikasi **SGX Vendor Work Evidence & Digital Reporting System** kini telah **100% berbasis Laravel + MySQL/SQLite Native**, berjalan mandiri di cPanel Shared Hosting tanpa memerlukan Node.js atau Railway.
 
 ---
 
-### OPSI 2: Standar Keamanan Enterprise Laravel (Folder Terpisah)
-1. Buat folder baru di luar `public_html`, misalnya `/home/username/sgx_vendor_core/`.
-2. Upload seluruh isi folder backend Laravel (kecuali folder `public/`) ke `/home/username/sgx_vendor_core/`.
-3. Upload seluruh isi folder `public/` ke folder subdomain `/home/username/vendor.sinargrafika.my.id/`.
-4. Buka file `vendor.sinargrafika.my.id/index.php` dan sesuaikan 2 baris path:
-   ```php
-   require __DIR__.'/../sgx_vendor_core/vendor/autoload.php';
-   $app = require_once __DIR__.'/../sgx_vendor_core/bootstrap/app.php';
-   ```
+## 🚀 BAGIAN 1: Langkah Upload Awal (Pertama Kali)
+
+### Cara Paling Cepat & Praktis (Rekomendasi)
+1. Buka **cPanel File Manager** → buka folder subdomain: **`vendor.sinargrafika.my.id`**.
+2. **Upload** file:
+   📁 **`d:\ANTIGRAFYTI\SGX_VENDOR\DEPLOY_LARAVEL_VENDOR_SINARGRAFIKA.zip`**
+3. Klik kanan file `.zip` tersebut di File Manager → pilih **Extract**.
+4. **Selesai!** Anda bisa langsung membuka website di **[https://vendor.sinargrafika.my.id](https://vendor.sinargrafika.my.id)**.
 
 ---
 
-## 🗄️ Pengaturan Database di cPanel
+## 🗄️ BAGIAN 2: Pilihan Database di cPanel
 
-### A. Menggunakan MySQL (Disarankan untuk Produksi)
-1. Buka cPanel → **MySQL Database Wizard**.
-2. Buat database (contoh: `sinargra_sgx_vendor`), user (contoh: `sinargra_sgx_user`), dan password.
+### Opsi A: Menggunakan SQLite Bawaan (Zero Setup - Langsung Jalan)
+- Di dalam file ZIP sudah tersedia database `database/database.sqlite` yang terisi data seed dan akun awal.
+- Tidak perlu membuat database apa pun di cPanel, aplikasi langsung siap digunakan.
+
+### Opsi B: Menggunakan MySQL cPanel (Rekomendasi Produksi)
+1. Buka cPanel → menu **MySQL Database Wizard**.
+2. Buat nama database (contoh: `sinargra_sgx_vendor`), username (contoh: `sinargra_sgx_user`), dan kata sandi.
 3. Berikan hak akses **ALL PRIVILEGES**.
-4. Buka file `.env` di File Manager dan sesuaikan:
+4. Buka file `.env` di File Manager cPanel (aktifkan *Show Hidden Files* di Settings File Manager) dan sesuaikan:
    ```env
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
@@ -49,27 +34,40 @@ Di dalam folder `vendor.sinargrafika.my.id/` buat file `.htaccess` utama di root
    DB_USERNAME=sinargra_sgx_user
    DB_PASSWORD=PasswordDatabaseAnda
    ```
-5. Buka cPanel **Terminal** (jika ada) dan jalankan:
+5. Buka cPanel **Terminal** (jika tersedia di cPanel Anda) lalu jalankan:
    ```bash
    php artisan migrate --seed --force
    ```
-   *(Atau jika tidak ada Terminal, import file `database_schema_and_seed.sql` langsung melalui **phpMyAdmin**)*.
-
-### B. Menggunakan SQLite (Zero Setup - Langsung Jalan Tanpa MySQL Wizard)
-Jika Anda tidak ingin membuat database MySQL manual di cPanel, aplikasi sudah dilengkapi SQLite bawaan:
-```env
-DB_CONNECTION=sqlite
-DB_DATABASE=/home/username/vendor.sinargrafika.my.id/database/database.sqlite
-```
 
 ---
 
-## 🔑 Akun Bawaan (Default Credentials)
+## 🔄 BAGIAN 3: Panduan Update / Pembaruan di Masa Mendatang
+
+Jika di kemudian hari Anda meminta Antigravity melakukan pembaruan/perubahan:
+
+### 1. Jika Ada Perubahan pada Tampilan / Frontend (Desain, Tombol, Form, UI):
+File yang perlu di-upload ke cPanel hanyalah folder `public/`:
+- 📁 `public/assets/` *(folder CSS dan JS baru)*
+- 📄 `public/index.html`
+
+### 2. Jika Ada Perubahan pada Logika Server / Backend (Fitur API, Validasi):
+File yang perlu di-upload ke cPanel hanyalah file yang diubah di:
+- 📁 `app/Http/Controllers/Api/`
+- 📁 `app/Services/`
+- 📄 `routes/api.php`
+
+### 3. Cara Paling Praktis (One-Click Update):
+Antigravity akan selalu membuatkan file **`DEPLOY_LARAVEL_VENDOR_SINARGRAFIKA.zip`** versi terbaru. Anda cukup meng-upload dan mengekstrak file ZIP tersebut di cPanel.
+*(Catatan: Foto-foto bukti kerja di folder `storage/` dan data di database Anda **TIDAK AKAN HILANG** saat diekstrak ulang)*.
+
+---
+
+## 🔑 Daftar Akun & Password Default
 
 | Role | Email | Password | Deskripsi |
 | :--- | :--- | :--- | :--- |
-| **SUPERUSER** | `superuser@sgx.com` | `admin123` | Akses penuh sistem & audit log |
-| **ADMIN** | `admin@sgx.com` | `admin123` | Penerbitan SPK, review evidensi, BA Opname |
-| **FIELD_TEAM** | `andi.lapangan@sgx.com` | `admin123` | Presensi GPS Geofencing & upload foto |
+| **SUPERUSER** | `superuser@sgx.com` | `admin123` | Akses penuh seluruh sistem & audit log |
+| **ADMIN** | `admin@sgx.com` | `admin123` | Penerbitan SPK, review evidensi, cetak BA |
+| **FIELD_TEAM** | `andi.lapangan@sgx.com` | `admin123` | Presensi GPS Geofencing & upload foto bukti |
 | **VENDOR** | `vendor@sgx.com` | `admin123` | Monitoring SPK internal mitra vendor |
 | **CLIENT** | `client@sgx.com` | `admin123` | QA Client & verifikasi hasil pekerjaan |
