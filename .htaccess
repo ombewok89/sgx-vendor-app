@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Serve static assets from laravel-backend/public if they exist
+    RewriteCond %{REQUEST_URI} ^/assets/ [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/storage/ [NC,OR]
+    RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot)$ [NC]
+    RewriteCond %{DOCUMENT_ROOT}/laravel-backend/public%{REQUEST_URI} -f
+    RewriteRule ^(.*)$ /laravel-backend/public/$1 [L]
+
+    # Handle all other requests via root index.php
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
