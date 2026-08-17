@@ -183,7 +183,7 @@
               class="group relative rounded-xl overflow-hidden bg-slate-900 border border-slate-200 aspect-video shadow-xs"
             >
               <img
-                :src="p.file_path"
+                :src="getFileUrl(p.file_path)"
                 :alt="p.stage"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=300&auto=format&fit=crop&q=60'"
@@ -231,7 +231,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { api } from '../../services/api';
+import { api, getFileUrl } from '../../services/api';
 import { useAuth } from '../../composables/useAuth';
 import StatusBadge from '../../components/StatusBadge.vue';
 import {

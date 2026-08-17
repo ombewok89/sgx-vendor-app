@@ -150,7 +150,7 @@
           <div class="grid grid-cols-3 gap-3">
             <div v-for="(p, idx) in photos.slice(0, 6)" :key="idx" class="border border-slate-200 rounded-xl p-1.5 text-center bg-white/95 shadow-xs">
               <img
-                :src="p.file_path"
+                :src="getFileUrl(p.file_path)"
                 :alt="`Bukti ${p.stage}`"
                 class="w-full h-24 object-cover rounded-lg mb-1.5"
                 @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=300&auto=format&fit=crop&q=60'"
@@ -190,6 +190,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Printer, ShieldCheck } from 'lucide-vue-next';
+import { getFileUrl } from '../services/api';
 
 const props = defineProps({
   baData: {

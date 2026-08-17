@@ -322,7 +322,7 @@
                     class="bg-slate-900 rounded-xl overflow-hidden p-1 shadow-xs group relative cursor-pointer hover:shadow-md transition-all"
                   >
                     <img
-                      :src="p.file_path"
+                      :src="getFileUrl(p.file_path)"
                       :alt="p.file_name"
                       class="w-full h-24 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
                       @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=400&auto=format&fit=crop&q=60'"
@@ -364,7 +364,7 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { api } from '../../services/api';
+import { api, getFileUrl } from '../../services/api';
 import StatusBadge from '../../components/StatusBadge.vue';
 import StepperProgress from '../../components/StepperProgress.vue';
 import PhotoLightboxModal from '../../components/PhotoLightboxModal.vue';

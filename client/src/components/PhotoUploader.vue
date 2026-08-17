@@ -129,7 +129,7 @@
       >
         <!-- Photo Image Thumbnail -->
         <img
-          :src="photo.file_path"
+          :src="getFileUrl(photo.file_path)"
           :alt="`Evidence ${stage} ${idx + 1}`"
           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
@@ -242,7 +242,7 @@ import {
   Download,
   MapPin
 } from 'lucide-vue-next';
-import { api } from '../services/api';
+import { api, getFileUrl } from '../services/api';
 import PhotoLightboxModal from './PhotoLightboxModal.vue';
 import { stampGpsWatermark } from '../utils/watermarkEngine';
 

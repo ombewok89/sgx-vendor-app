@@ -172,7 +172,7 @@
                 class="glass-card rounded-2xl overflow-hidden p-2 border border-white/70 shadow-xs"
               >
                 <img
-                  :src="p.file_path"
+                  :src="getFileUrl(p.file_path)"
                   :alt="`Bukti ${p.stage}`"
                   class="w-full h-28 object-cover rounded-xl mb-1.5"
                   @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=400&auto=format&fit=crop&q=60'"
@@ -196,7 +196,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { api } from '../../services/api';
+import { api, getFileUrl } from '../../services/api';
 import { useAuth } from '../../composables/useAuth';
 import StatusBadge from '../../components/StatusBadge.vue';
 import StepperProgress from '../../components/StepperProgress.vue';

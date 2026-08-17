@@ -97,7 +97,7 @@
         <div class="w-full h-full flex items-center justify-center overflow-auto p-2">
           <img
             v-if="currentPhoto?.file_path"
-            :src="currentPhoto.file_path"
+            :src="getFileUrl(currentPhoto.file_path)"
             :alt="currentPhoto.file_name || 'Evidence Photo'"
             :style="{ transform: `scale(${zoom})`, transformOrigin: 'center center' }"
             class="max-w-full max-h-full object-contain rounded-xl shadow-2xl transition-transform duration-200 pointer-events-auto select-none"
@@ -177,6 +177,7 @@ import {
   ShieldCheck,
   ExternalLink
 } from 'lucide-vue-next';
+import { getFileUrl } from '../services/api';
 
 const props = defineProps({
   isOpen: {
@@ -261,7 +262,8 @@ function formatDateTime(dateStr) {
 function handleDownload(photo) {
   if (!photo?.file_path) return;
   const link = document.createElement('a');
-  link.href = photo.file_path;
+  link.href = getFileUrl(photo.file_path);
+  link.target = '_blank';
   const ext = photo.file_name?.split('.').pop() || 'jpg';
   const spk = photo.spk_number ? `${photo.spk_number}_` : '';
   link.download = `${spk}${photo.stage || 'EVIDENCE'}_${photo.sequence || currentIndex.value + 1}.${ext}`;

@@ -213,7 +213,7 @@
                   class="bg-slate-900 rounded-2xl overflow-hidden shadow-xs group relative cursor-pointer hover:shadow-md transition-all"
                 >
                   <img
-                    :src="photo.file_path"
+                    :src="getFileUrl(photo.file_path)"
                     :alt="`Evidence ${stage}`"
                     class="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -383,7 +383,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { api } from '../../services/api';
+import { api, getFileUrl } from '../../services/api';
 import StatusBadge from '../../components/StatusBadge.vue';
 import PhotoLightboxModal from '../../components/PhotoLightboxModal.vue';
 import {

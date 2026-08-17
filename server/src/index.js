@@ -54,11 +54,12 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 const uploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, '../../uploads');
 
 function secureUploadsAccess(req, res, next) {
-  // Allow public assets such as template logos and headers
+  // 1. Allow public assets such as template logos and headers
   if (req.path.startsWith('/templates') || req.path.includes('logo') || req.path.includes('default')) {
     return next();
   }
 
+  // 2. Allow if valid token provided via Header or Query param
   const authHeader = req.headers.authorization;
   let token = null;
   if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -67,22 +68,28 @@ function secureUploadsAccess(req, res, next) {
     token = req.query.token;
   }
 
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'Akses Ditolak: Diperlukan token autentikasi untuk mengakses foto bukti pekerjaan.'
-    });
+  if (token) {
+    try {
+      jwt.verify(token, getJwtSecret());
+      return next();
+    } catch (err) {}
   }
 
-  try {
-    jwt.verify(token, getJwtSecret());
-    next();
-  } catch (err) {
-    return res.status(401).json({
-      success: false,
-      message: 'Token autentikasi tidak valid atau sudah kadaluarsa.'
-    });
+  // 3. Allow if request comes from authorized domain / referer (browser img tags)
+  const referer = req.headers.referer || req.headers.origin || '';
+  if (
+    referer.includes('vendor.sinargrafika.my.id') ||
+    referer.includes('sinargrafika.my.id') ||
+    referer.includes('localhost') ||
+    referer.includes('up.railway.app')
+  ) {
+    return next();
   }
+
+  return res.status(401).json({
+    success: false,
+    message: 'Akses Ditolak: Diperlukan token autentikasi untuk mengakses foto bukti pekerjaan.'
+  });
 }
 
 app.use('/uploads', secureUploadsAccess, express.static(uploadsDir));
