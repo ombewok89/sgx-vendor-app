@@ -5,8 +5,8 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Sync root .env into laravel-backend/.env if needed
-if (file_exists(__DIR__.'/.env') && !file_exists(__DIR__.'/laravel-backend/.env')) {
+// Always sync root .env into laravel-backend/.env if root .env exists
+if (file_exists(__DIR__.'/.env')) {
     @copy(__DIR__.'/.env', __DIR__.'/laravel-backend/.env');
 }
 
