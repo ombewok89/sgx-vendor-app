@@ -14,14 +14,29 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Enable Strict CORS with Whitelist Origin (Point 2.2)
-const rawOrigins = process.env.CORS_ORIGIN || 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000';
-const allowedOrigins = rawOrigins.split(',').map(o => o.trim()).filter(Boolean);
+const defaultAllowed = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5000',
+  'https://vendor.sinargrafika.my.id',
+  'http://vendor.sinargrafika.my.id',
+  'https://sinargrafika.my.id',
+  'https://sgx-vendor-app-production.up.railway.app'
+];
+
+const rawOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean) : [];
+const allowedOrigins = Array.from(new Set([...defaultAllowed, ...rawOrigins]));
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow non-browser requests (mobile clients, curl, server-to-server)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+    if (
+      allowedOrigins.includes('*') ||
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('sinargrafika.my.id') ||
+      origin.endsWith('up.railway.app')
+    ) {
       return callback(null, true);
     }
     return callback(new Error(`CORS Policy: Origin '${origin}' is not allowed by CORS_ORIGIN whitelist.`));
