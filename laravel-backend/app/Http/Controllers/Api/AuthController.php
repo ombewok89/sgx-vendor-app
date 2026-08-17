@@ -134,6 +134,14 @@ class AuthController extends Controller
 
     public function users(Request $request)
     {
+        $currentUser = $request->user();
+        if (!$currentUser->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Anda tidak memiliki izin untuk melihat daftar pengguna.',
+            ], 403);
+        }
+
         $query = User::with(['roles', 'vendor']);
 
         if ($request->filled('role')) {
@@ -164,12 +172,28 @@ class AuthController extends Controller
 
     public function storeUser(Request $request)
     {
+        $currentUser = $request->user();
+        if (!$currentUser->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator/Superuser yang berwenang membuat pengguna baru.',
+            ], 403);
+        }
+
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
             'role' => 'required|string',
         ]);
+
+        // Only SUPERUSER can create SUPERUSER accounts
+        if ($request->role === 'SUPERUSER' && !$currentUser->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser yang berwenang membuat akun dengan role SUPERUSER.',
+            ], 403);
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -182,7 +206,7 @@ class AuthController extends Controller
 
         $user->syncRoles([$request->role]);
 
-        AuditService::log($request->user(), 'CREATE_USER', 'USER', $user->id, null, $user->toArray());
+        AuditService::log($currentUser, 'CREATE_USER', 'USER', $user->id, null, $user->toArray());
 
         return response()->json([
             'success' => true,
@@ -193,9 +217,31 @@ class AuthController extends Controller
 
     public function updateUser(Request $request, $id)
     {
-        $user = User::findOrFail($id);
-        $old = $user->toArray();
+        $currentUser = $request->user();
+        if (!$currentUser->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator/Superuser yang berwenang mengubah data pengguna.',
+            ], 403);
+        }
 
+        $user = User::findOrFail($id);
+
+        // Prevent non-superuser from modifying a superuser account or elevating anyone to superuser
+        if ($user->hasRole('SUPERUSER') && !$currentUser->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Akun Superuser hanya dapat disunting oleh Superuser.',
+            ], 403);
+        }
+        if ($request->filled('role') && $request->role === 'SUPERUSER' && !$currentUser->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser yang dapat memberikan hak role SUPERUSER.',
+            ], 403);
+        }
+
+        $old = $user->toArray();
         $data = $request->only(['name', 'phone', 'vendor_id', 'is_active']);
         if ($request->filled('email')) {
             $data['email'] = strtolower($request->email);
@@ -210,7 +256,7 @@ class AuthController extends Controller
             $user->syncRoles([$request->role]);
         }
 
-        AuditService::log($request->user(), 'UPDATE_USER', 'USER', $user->id, $old, $user->toArray());
+        AuditService::log($currentUser, 'UPDATE_USER', 'USER', $user->id, $old, $user->toArray());
 
         return response()->json([
             'success' => true,
@@ -221,13 +267,28 @@ class AuthController extends Controller
 
     public function deleteUser(Request $request, $id)
     {
+        $currentUser = $request->user();
+        if (!$currentUser->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator/Superuser yang berwenang menghapus pengguna.',
+            ], 403);
+        }
+
         $user = User::findOrFail($id);
 
-        if ($user->id === $request->user()->id) {
+        if ($user->id === $currentUser->id) {
             return response()->json(['success' => false, 'message' => 'Anda tidak dapat menghapus akun Anda sendiri.'], 400);
         }
 
-        AuditService::log($request->user(), 'DELETE_USER', 'USER', $user->id, $user->toArray());
+        if ($user->hasRole('SUPERUSER') && !$currentUser->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Akun Superuser hanya dapat dihapus oleh Superuser.',
+            ], 403);
+        }
+
+        AuditService::log($currentUser, 'DELETE_USER', 'USER', $user->id, $user->toArray());
         $user->delete();
 
         return response()->json([
@@ -236,8 +297,16 @@ class AuthController extends Controller
         ]);
     }
 
-    public function roles()
+    public function roles(Request $request)
     {
+        $currentUser = $request->user();
+        if (!$currentUser->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Anda tidak memiliki izin untuk melihat daftar role.',
+            ], 403);
+        }
+
         $roles = Role::all()->pluck('name');
         return response()->json([
             'success' => true,

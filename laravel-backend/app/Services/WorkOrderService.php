@@ -44,8 +44,12 @@ class WorkOrderService
             'baDocument'
         ]);
 
-        if ($user->hasRole('VENDOR')) {
-            $query->where('vendor_id', $user->vendor_id);
+        if ($user->hasAnyRole(['VENDOR', 'CLIENT'])) {
+            if ($user->vendor_id) {
+                $query->where('vendor_id', $user->vendor_id);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         } elseif ($user->hasRole('FIELD_TEAM')) {
             $query->where(function ($q) use ($user) {
                 $q->where('pic_user_id', $user->id)

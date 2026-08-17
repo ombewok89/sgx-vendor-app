@@ -21,7 +21,7 @@ class AuditService
                 'ip_address' => Request::ip() ?? '127.0.0.1',
             ]);
         } catch (\Throwable $e) {
-            // Silently ignore audit logging errors
+            \Illuminate\Support\Facades\Log::warning('Audit logging failed: ' . $e->getMessage());
         }
     }
 }

@@ -57,8 +57,12 @@ class EvidenceController extends Controller
         $user = $request->user();
         $query = EvidencePhoto::with(['workOrder:id,spk_number,title,location_name,vendor_id', 'user:id,name', 'item:id,item_name']);
 
-        if ($user->hasRole('VENDOR')) {
-            $query->whereHas('workOrder', fn($q) => $q->where('vendor_id', $user->vendor_id));
+        if ($user->hasAnyRole(['VENDOR', 'CLIENT'])) {
+            if ($user->vendor_id) {
+                $query->whereHas('workOrder', fn($q) => $q->where('vendor_id', $user->vendor_id));
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         } elseif ($user->hasRole('FIELD_TEAM')) {
             $query->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)

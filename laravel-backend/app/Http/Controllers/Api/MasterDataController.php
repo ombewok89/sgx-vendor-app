@@ -14,6 +14,17 @@ use Illuminate\Http\Request;
 
 class MasterDataController extends Controller
 {
+    private function checkAdminAuth(Request $request)
+    {
+        if (!$request->user()->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator/Superuser yang berwenang mengelola data master.',
+            ], 403);
+        }
+        return null;
+    }
+
     // ==========================================
     // VENDORS / CLIENTS
     // ==========================================
@@ -22,7 +33,7 @@ class MasterDataController extends Controller
         $user = $request->user();
         $query = Vendor::query();
 
-        if ($user && $user->hasRole('VENDOR') && $user->vendor_id) {
+        if ($user && ($user->hasRole('VENDOR') || $user->hasRole('CLIENT')) && $user->vendor_id) {
             $query->where('id', $user->vendor_id);
         }
 
@@ -32,6 +43,8 @@ class MasterDataController extends Controller
 
     public function storeVendor(Request $request)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $request->validate([
             'code' => 'required|unique:vendors,code',
             'name' => 'required|string',
@@ -44,6 +57,8 @@ class MasterDataController extends Controller
 
     public function updateVendor(Request $request, $id)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $vendor = Vendor::findOrFail($id);
         $old = $vendor->toArray();
         $vendor->update($request->all());
@@ -53,6 +68,8 @@ class MasterDataController extends Controller
 
     public function deleteVendor(Request $request, $id)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $vendor = Vendor::findOrFail($id);
         AuditService::log($request->user(), 'DELETE_VENDOR', 'VENDOR', $vendor->id, $vendor->toArray());
         $vendor->delete();
@@ -70,6 +87,8 @@ class MasterDataController extends Controller
 
     public function storeArea(Request $request)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $request->validate([
             'name' => 'required|string',
             'province' => 'nullable|string',
@@ -83,6 +102,8 @@ class MasterDataController extends Controller
 
     public function updateArea(Request $request, $id)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $area = Area::findOrFail($id);
         $old = $area->toArray();
         $area->update($request->all());
@@ -92,6 +113,8 @@ class MasterDataController extends Controller
 
     public function deleteArea(Request $request, $id)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $area = Area::findOrFail($id);
         AuditService::log($request->user(), 'DELETE_AREA', 'AREA', $area->id, $area->toArray());
         $area->delete();
@@ -109,6 +132,8 @@ class MasterDataController extends Controller
 
     public function storeJobType(Request $request)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $request->validate([
             'code' => 'required|unique:job_types,code',
             'name' => 'required|string',
@@ -122,6 +147,8 @@ class MasterDataController extends Controller
 
     public function updateJobType(Request $request, $id)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $jobType = JobType::findOrFail($id);
         $old = $jobType->toArray();
         $jobType->update($request->all());
@@ -131,6 +158,8 @@ class MasterDataController extends Controller
 
     public function deleteJobType(Request $request, $id)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $jobType = JobType::findOrFail($id);
         AuditService::log($request->user(), 'DELETE_JOB_TYPE', 'JOB_TYPE', $jobType->id, $jobType->toArray());
         $jobType->delete();
@@ -148,6 +177,8 @@ class MasterDataController extends Controller
 
     public function storeFieldTeam(Request $request)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $request->validate([
             'name' => 'required|string',
             'leader_user_id' => 'required|exists:users,id',
@@ -165,6 +196,8 @@ class MasterDataController extends Controller
 
     public function updateFieldTeam(Request $request, $id)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $team = FieldTeam::findOrFail($id);
         $old = $team->toArray();
         $team->update($request->only(['name', 'leader_user_id', 'area_id', 'is_active']));
@@ -178,6 +211,8 @@ class MasterDataController extends Controller
 
     public function deleteFieldTeam(Request $request, $id)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $team = FieldTeam::findOrFail($id);
         AuditService::log($request->user(), 'DELETE_FIELD_TEAM', 'FIELD_TEAM', $team->id, $team->toArray());
         $team->delete();
@@ -189,6 +224,8 @@ class MasterDataController extends Controller
     // ==========================================
     public function auditLogs(Request $request)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $logs = AuditLog::with('user:id,name,email')
             ->orderByDesc('id')
             ->limit(100)
@@ -211,14 +248,18 @@ class MasterDataController extends Controller
         return response()->json(['success' => true, 'data' => $logs]);
     }
 
-    public function settings()
+    public function settings(Request $request)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $settings = SystemSetting::orderBy('id')->get();
         return response()->json(['success' => true, 'data' => $settings]);
     }
 
     public function updateSetting(Request $request)
     {
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
+
         $request->validate([
             'key' => 'required|string',
             'value' => 'required',

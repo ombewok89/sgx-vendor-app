@@ -162,6 +162,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Indomaret / Alfamart (Client QA)',
             'password' => $defaultPassword,
             'phone' => '081177778888',
+            'vendor_id' => $v1->id,
             'is_active' => true,
         ]);
         $uClient->syncRoles(['CLIENT']);

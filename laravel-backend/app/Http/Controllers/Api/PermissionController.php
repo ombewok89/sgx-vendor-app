@@ -84,6 +84,13 @@ class PermissionController extends Controller
 
     public function matrix(Request $request)
     {
+        if (!$request->user()->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser yang berwenang mengakses matriks hak akses.',
+            ], 403);
+        }
+
         $roleCode = $request->query('role', 'ADMIN');
         $roles = [
             ['code' => 'ADMIN', 'name' => 'Admin Operasional'],
@@ -149,6 +156,13 @@ class PermissionController extends Controller
 
     public function updateMatrix(Request $request)
     {
+        if (!$request->user()->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser yang berwenang mengubah matriks hak akses.',
+            ], 403);
+        }
+
         $request->validate([
             'role_code' => 'required|string',
             'matrix' => 'required|array',

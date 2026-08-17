@@ -18,7 +18,7 @@ class BaDocumentController extends Controller
         $user = $request->user();
         $query = BaDocument::with(['workOrder.vendor', 'template', 'generator']);
 
-        if ($user->hasRole('VENDOR')) {
+        if ($user->hasAnyRole(['VENDOR', 'CLIENT']) && $user->vendor_id) {
             $query->whereHas('workOrder', fn($q) => $q->where('vendor_id', $user->vendor_id));
         }
 
@@ -99,7 +99,7 @@ class BaDocumentController extends Controller
     }
 
     // ==========================================
-    // DOCUMENT TEMPLATES CRUD
+    // DOCUMENT TEMPLATES CRUD (Admin only)
     // ==========================================
     public function templates()
     {
@@ -112,6 +112,13 @@ class BaDocumentController extends Controller
 
     public function storeTemplate(Request $request)
     {
+        if (!$request->user()->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang membuat template dokumen.',
+            ], 403);
+        }
+
         $request->validate([
             'name' => 'required|string',
             'code' => 'required|unique:document_templates,code',
@@ -135,6 +142,13 @@ class BaDocumentController extends Controller
 
     public function updateTemplate(Request $request, $id)
     {
+        if (!$request->user()->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang menyunting template dokumen.',
+            ], 403);
+        }
+
         $template = DocumentTemplate::findOrFail($id);
         $old = $template->toArray();
 
@@ -156,6 +170,13 @@ class BaDocumentController extends Controller
 
     public function setDefaultTemplate(Request $request, $id)
     {
+        if (!$request->user()->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang menetapkan template default.',
+            ], 403);
+        }
+
         $template = DocumentTemplate::findOrFail($id);
         DocumentTemplate::where('is_default', true)->update(['is_default' => false]);
         $template->update(['is_default' => true]);
@@ -171,6 +192,13 @@ class BaDocumentController extends Controller
 
     public function deleteTemplate(Request $request, $id)
     {
+        if (!$request->user()->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang menghapus template dokumen.',
+            ], 403);
+        }
+
         $template = DocumentTemplate::findOrFail($id);
         AuditService::log($request->user(), 'DELETE_TEMPLATE', 'DOCUMENT_TEMPLATE', $template->id, $template->toArray());
         $template->delete();
