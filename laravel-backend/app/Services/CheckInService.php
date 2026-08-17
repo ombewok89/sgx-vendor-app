@@ -27,8 +27,8 @@ class CheckInService
         $lat = (float) ($data['latitude'] ?? 0);
         $lng = (float) ($data['longitude'] ?? 0);
         $accuracy = (float) ($data['accuracy'] ?? 0);
-        $addressNote = $data['address_note'] ?? null;
-        $maxRadiusMeters = (float) ($data['max_radius_meters'] ?? 250);
+        $settingRadius = \App\Models\SystemSetting::where('key', 'geofence_default_radius_meters')->value('value');
+        $maxRadiusMeters = (float) ($settingRadius ?: ($data['max_radius_meters'] ?? 250));
 
         if ($workOrder->target_lat && $workOrder->target_lng) {
             $distance = self::calculateDistanceMeters(
