@@ -1,28 +1,8 @@
-DirectoryIndex index.html index.php
-
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-
-    # Handle Authorization Header for Bearer tokens
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-
-    # 1. Route all /api/* requests directly to Laravel (index.php)
-    RewriteCond %{REQUEST_URI} ^/api/ [NC]
-    RewriteRule ^ index.php [L]
-
-    # 2. Route storage/uploads requests to laravel-backend/public/storage
-    RewriteCond %{REQUEST_URI} ^/storage/ [NC]
-    RewriteCond %{DOCUMENT_ROOT}/laravel-backend/public%{REQUEST_URI} -f
-    RewriteRule ^(.*)$ /laravel-backend/public/$1 [L]
-
-    # 3. Serve physical files directly if they exist
-    RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule ^ - [L]
-
-    # 4. Route all other requests to index.html
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^ index.html [L]
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
 </IfModule>
