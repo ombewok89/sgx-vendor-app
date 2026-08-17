@@ -2,14 +2,27 @@
   "name": "sgx-vendor-work-evidence",
   "version": "1.0.0",
   "description": "SGX Vendor Work Evidence - Digital Evidence & Reporting System",
+  "main": "server/src/index.js",
   "scripts": {
-    "start": "node start.js",
+    "start": "node server/src/index.js",
+    "build": "echo 'Backend build completed'",
     "dev": "node start.js",
     "server": "cd server && npm start",
     "client": "cd client && npm run dev",
     "dev:server": "cd server && npm run dev",
-    "test": "cd server && npm test",
-    "build": "cd client && npm run build"
+    "test": "cd server && npm test"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "sqlite3": "^5.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": [
     "sgx",
