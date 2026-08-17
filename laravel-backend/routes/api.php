@@ -25,6 +25,29 @@ Route::get('/health', function () {
 // Public Authentication
 Route::post('/auth/login', [AuthController::class, 'login']);
 
+// Public Direct Storage & Evidence Image Streamer
+Route::get('/storage-stream/{path}', function ($path) {
+    $candidatePaths = [
+        storage_path('app/public/' . $path),
+        base_path('storage/app/public/' . $path),
+        base_path('../laravel-backend/storage/app/public/' . $path),
+        public_path('storage/' . $path),
+        base_path('../uploads/' . $path),
+    ];
+
+    foreach ($candidatePaths as $file) {
+        if (file_exists($file) && !is_dir($file)) {
+            $mimeType = mime_content_type($file) ?: 'image/jpeg';
+            return response()->file($file, [
+                'Content-Type' => $mimeType,
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        }
+    }
+
+    return response('Image not found', 404);
+})->where('path', '.*');
+
 // Authenticated Routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth & Profile
