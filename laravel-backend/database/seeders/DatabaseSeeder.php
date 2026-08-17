@@ -79,6 +79,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Pemasangan Sticker & Branding',
             'doc_mode' => 'BEFORE_PROCESS_AFTER',
             'min_photos_per_stage' => 3,
+            'standard_price' => 750000,
             'is_active' => true,
         ]);
 
@@ -86,6 +87,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Pemasangan Neonbox & Signage',
             'doc_mode' => 'BEFORE_PROCESS_AFTER',
             'min_photos_per_stage' => 3,
+            'standard_price' => 3500000,
             'is_active' => true,
         ]);
 
@@ -93,6 +95,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Renovasi Facade & Cat Dinding',
             'doc_mode' => 'BEFORE_PROCESS_AFTER',
             'min_photos_per_stage' => 4,
+            'standard_price' => 15000000,
             'is_active' => true,
         ]);
 
@@ -100,6 +103,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Perawatan & Pembersihan Rutin',
             'doc_mode' => 'AFTER_ONLY',
             'min_photos_per_stage' => 1,
+            'standard_price' => 350000,
             'is_active' => true,
         ]);
 

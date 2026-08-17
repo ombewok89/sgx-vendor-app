@@ -138,6 +138,8 @@ class MasterDataController extends Controller
             'code' => 'required|unique:job_types,code',
             'name' => 'required|string',
             'doc_mode' => 'required|in:BEFORE_PROCESS_AFTER,AFTER_ONLY',
+            'standard_price' => 'nullable|numeric|min:0',
+            'min_photos_per_stage' => 'nullable|integer|min:1',
         ]);
 
         $jobType = JobType::create($request->all());
@@ -148,6 +150,13 @@ class MasterDataController extends Controller
     public function updateJobType(Request $request, $id)
     {
         if ($deny = $this->checkAdminAuth($request)) return $deny;
+
+        $request->validate([
+            'name' => 'sometimes|required|string',
+            'doc_mode' => 'sometimes|required|in:BEFORE_PROCESS_AFTER,AFTER_ONLY',
+            'standard_price' => 'nullable|numeric|min:0',
+            'min_photos_per_stage' => 'nullable|integer|min:1',
+        ]);
 
         $jobType = JobType::findOrFail($id);
         $old = $jobType->toArray();

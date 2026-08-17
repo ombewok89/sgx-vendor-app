@@ -35,6 +35,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('doc_mode')->default('BEFORE_PROCESS_AFTER');
             $table->integer('min_photos_per_stage')->default(3);
+            $table->decimal('standard_price', 15, 2)->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

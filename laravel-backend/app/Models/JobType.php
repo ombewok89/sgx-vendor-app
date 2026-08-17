@@ -11,12 +11,14 @@ class JobType extends Model
         'name',
         'doc_mode',
         'min_photos_per_stage',
+        'standard_price',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'min_photos_per_stage' => 'integer',
+        'standard_price' => 'float',
     ];
 
     public function workOrders()
