@@ -8,8 +8,10 @@ client/dist/
 *.zip
 
 # Environment variables
+.env
 .env.local
 .env.*.local
+laravel-backend/.env
 
 # Logs & temp
 *.log
