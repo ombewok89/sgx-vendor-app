@@ -158,34 +158,45 @@ class WorkOrderController extends Controller
 
         $workOrder = WorkOrder::findOrFail($id);
 
-        $request->validate([
-            'pic_user_id' => 'required|exists:users,id',
-        ]);
+        $picId = $request->input('pic_user_id', $request->input('picUserId'));
+        $memberIds = $request->input('member_ids', $request->input('memberUserIds', []));
 
-        return DB::transaction(function () use ($user, $workOrder, $request) {
+        if (!$picId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'PIC tim lapangan wajib dipilih.',
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($user, $workOrder, $picId, $memberIds) {
             $workOrder->update([
-                'pic_user_id' => $request->pic_user_id,
+                'pic_user_id' => $picId,
                 'status' => in_array($workOrder->status, ['READY', 'DRAFT']) ? 'ASSIGNED' : $workOrder->status,
             ]);
 
             $sync = [
-                $request->pic_user_id => ['role_in_team' => 'PIC', 'assigned_at' => now()]
+                $picId => ['role_in_team' => 'PIC', 'assigned_at' => now()]
             ];
 
-            if ($request->has('member_ids') && is_array($request->member_ids)) {
-                foreach ($request->member_ids as $mId) {
-                    $sync[$mId] = ['role_in_team' => 'MEMBER', 'assigned_at' => now()];
+            if (!empty($memberIds) && is_array($memberIds)) {
+                foreach ($memberIds as $mId) {
+                    if ($mId != $picId) {
+                        $sync[$mId] = ['role_in_team' => 'MEMBER', 'assigned_at' => now()];
+                    }
                 }
             }
 
             $workOrder->assignments()->sync($sync);
 
-            AuditService::log($user, 'ASSIGN_TEAM', 'WORK_ORDER', $workOrder->id, null, $sync);
+            AuditService::log($user, 'ASSIGN_TEAM', 'WORK_ORDER', $workOrder->id, null, [
+                'pic_user_id' => $picId,
+                'member_ids' => $memberIds,
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Tim teknisi lapangan berhasil ditugaskan.',
-                'data' => $workOrder->fresh(['pic', 'assignments']),
+                'message' => 'Penugasan tim lapangan berhasil diperbarui.',
+                'data' => $workOrder->load(['pic', 'assignments', 'vendor', 'area', 'jobType']),
             ]);
         });
     }

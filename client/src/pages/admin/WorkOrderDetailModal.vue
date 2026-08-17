@@ -429,9 +429,13 @@ async function handleSaveAssignment() {
   }
   assigning.value = true;
   try {
+    const picId = parseInt(selectedPic.value, 10);
+    const memberIds = selectedMembers.value.map(id => parseInt(id, 10));
     await api.assignTeam(props.workOrderId, {
-      picUserId: parseInt(selectedPic.value, 10),
-      memberUserIds: selectedMembers.value.map(id => parseInt(id, 10))
+      pic_user_id: picId,
+      picUserId: picId,
+      member_ids: memberIds,
+      memberUserIds: memberIds
     });
     await loadDetail();
     emit('refresh-list');
