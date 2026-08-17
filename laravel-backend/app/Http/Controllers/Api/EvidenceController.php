@@ -15,9 +15,16 @@ class EvidenceController extends Controller
 {
     public function upload(Request $request)
     {
+        $file = $request->file('photo') ?? $request->file('file') ?? $request->file('image');
+        if (!$file) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File foto bukti wajib disertakan (photo/file/image).',
+            ], 422);
+        }
+
         $request->validate([
             'work_order_id' => 'required|exists:work_orders,id',
-            'photo' => 'required|image|max:16384', // 16MB max
             'stage' => 'required|in:BEFORE,PROCESS,AFTER,ISSUE',
         ]);
 
@@ -37,7 +44,7 @@ class EvidenceController extends Controller
         }
 
         try {
-            $photo = EvidenceService::storePhoto($user, $workOrder, $request->file('photo'), $request->all());
+            $photo = EvidenceService::storePhoto($user, $workOrder, $file, $request->all());
 
             return response()->json([
                 'success' => true,

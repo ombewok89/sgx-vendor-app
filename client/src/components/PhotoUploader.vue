@@ -346,6 +346,7 @@ async function handleFilesSelected(fileList) {
       }
       formData.append('stage', props.stage);
       formData.append('sequence', stagePhotos.value.length + i + 1);
+      formData.append('photo', fileToUpload);
       formData.append('file', fileToUpload);
 
       const finalUploadLat = fileToUpload._latitude != null ? fileToUpload._latitude : gpsCoords?.latitude;

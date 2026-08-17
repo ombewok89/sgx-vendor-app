@@ -26,6 +26,10 @@ class EvidenceService
         $fileHash = hash_file('sha256', $file->getRealPath());
 
         // 3. Save File to public disk
+        if (!Storage::disk('public')->exists('uploads')) {
+            Storage::disk('public')->makeDirectory('uploads');
+        }
+
         $extension = $file->getClientOriginalExtension() ?: 'jpg';
         $filename = time() . '-' . Str::random(10) . '.' . $extension;
         $path = $file->storeAs('uploads', $filename, 'public');

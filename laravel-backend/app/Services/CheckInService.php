@@ -27,10 +27,13 @@ class CheckInService
         $lat = (float) ($data['latitude'] ?? 0);
         $lng = (float) ($data['longitude'] ?? 0);
         $accuracy = (float) ($data['accuracy'] ?? 0);
-        $settingRadius = \App\Models\SystemSetting::where('key', 'geofence_default_radius_meters')->value('value');
-        $maxRadiusMeters = (float) ($settingRadius ?: ($data['max_radius_meters'] ?? 250));
+        $addressNote = $data['address_note'] ?? ($data['notes'] ?? null);
 
-        if ($workOrder->target_lat && $workOrder->target_lng) {
+        $settingRadius = \App\Models\SystemSetting::where('key', 'geofence_default_radius_meters')->value('value');
+        $maxRadiusMeters = (float) ($settingRadius ?: ($data['max_radius_meters'] ?? 500));
+
+        // Hanya lakukan validasi radius ketat jika require_checkin AKTIF dan target koordinat tersedia
+        if ($workOrder->require_checkin && $workOrder->target_lat && $workOrder->target_lng && $lat && $lng) {
             $distance = self::calculateDistanceMeters(
                 $lat,
                 $lng,
@@ -39,7 +42,7 @@ class CheckInService
             );
 
             if ($distance > $maxRadiusMeters) {
-                throw new Exception("Posisi Anda berada di luar radius lokasi pekerjaan ({$distance} meter dari target, batas maksimal {$maxRadiusMeters} meter). Silakan mendekat ke lokasi cabang.");
+                throw new Exception("Posisi Anda berada di luar radius lokasi pekerjaan ({$distance} meter dari target, batas maksimal {$maxRadiusMeters} meter). Silakan mendekat ke lokasi cabang atau nonaktifkan wajib cek lokasi.");
             }
         }
 
@@ -54,7 +57,7 @@ class CheckInService
             'address_note' => $addressNote,
         ]);
 
-        if ($workOrder->status === 'ASSIGNED') {
+        if (in_array($workOrder->status, ['READY', 'ASSIGNED', 'DRAFT'])) {
             $workOrder->update(['status' => 'IN_PROGRESS']);
         }
 
@@ -62,6 +65,7 @@ class CheckInService
             'latitude' => $lat,
             'longitude' => $lng,
             'accuracy' => $accuracy,
+            'address_note' => $addressNote,
         ]);
 
         return $checkIn;
