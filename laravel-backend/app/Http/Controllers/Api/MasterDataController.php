@@ -14,12 +14,14 @@ use Illuminate\Http\Request;
 
 class MasterDataController extends Controller
 {
+    // ==========================================
+    // VENDORS / CLIENTS
+    // ==========================================
     public function vendors(Request $request)
     {
         $user = $request->user();
         $query = Vendor::query();
 
-        // Vendor Isolation: VENDOR role only sees their own vendor
         if ($user && $user->hasRole('VENDOR') && $user->vendor_id) {
             $query->where('id', $user->vendor_id);
         }
@@ -30,30 +32,161 @@ class MasterDataController extends Controller
 
     public function storeVendor(Request $request)
     {
-        $request->validate(['code' => 'required|unique:vendors', 'name' => 'required']);
+        $request->validate([
+            'code' => 'required|unique:vendors,code',
+            'name' => 'required|string',
+        ]);
+
         $vendor = Vendor::create($request->all());
         AuditService::log($request->user(), 'CREATE_VENDOR', 'VENDOR', $vendor->id, null, $vendor->toArray());
         return response()->json(['success' => true, 'data' => $vendor], 201);
     }
 
+    public function updateVendor(Request $request, $id)
+    {
+        $vendor = Vendor::findOrFail($id);
+        $old = $vendor->toArray();
+        $vendor->update($request->all());
+        AuditService::log($request->user(), 'UPDATE_VENDOR', 'VENDOR', $vendor->id, $old, $vendor->toArray());
+        return response()->json(['success' => true, 'data' => $vendor]);
+    }
+
+    public function deleteVendor(Request $request, $id)
+    {
+        $vendor = Vendor::findOrFail($id);
+        AuditService::log($request->user(), 'DELETE_VENDOR', 'VENDOR', $vendor->id, $vendor->toArray());
+        $vendor->delete();
+        return response()->json(['success' => true, 'message' => 'Data vendor berhasil dihapus.']);
+    }
+
+    // ==========================================
+    // AREAS
+    // ==========================================
     public function areas()
     {
         $areas = Area::orderBy('name')->get();
         return response()->json(['success' => true, 'data' => $areas]);
     }
 
+    public function storeArea(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'province' => 'nullable|string',
+            'city' => 'nullable|string',
+        ]);
+
+        $area = Area::create($request->all());
+        AuditService::log($request->user(), 'CREATE_AREA', 'AREA', $area->id, null, $area->toArray());
+        return response()->json(['success' => true, 'data' => $area], 201);
+    }
+
+    public function updateArea(Request $request, $id)
+    {
+        $area = Area::findOrFail($id);
+        $old = $area->toArray();
+        $area->update($request->all());
+        AuditService::log($request->user(), 'UPDATE_AREA', 'AREA', $area->id, $old, $area->toArray());
+        return response()->json(['success' => true, 'data' => $area]);
+    }
+
+    public function deleteArea(Request $request, $id)
+    {
+        $area = Area::findOrFail($id);
+        AuditService::log($request->user(), 'DELETE_AREA', 'AREA', $area->id, $area->toArray());
+        $area->delete();
+        return response()->json(['success' => true, 'message' => 'Data area berhasil dihapus.']);
+    }
+
+    // ==========================================
+    // JOB TYPES
+    // ==========================================
     public function jobTypes()
     {
-        $jobTypes = JobType::where('is_active', true)->orderBy('name')->get();
+        $jobTypes = JobType::orderBy('name')->get();
         return response()->json(['success' => true, 'data' => $jobTypes]);
     }
 
+    public function storeJobType(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|unique:job_types,code',
+            'name' => 'required|string',
+            'doc_mode' => 'required|in:BEFORE_PROCESS_AFTER,AFTER_ONLY',
+        ]);
+
+        $jobType = JobType::create($request->all());
+        AuditService::log($request->user(), 'CREATE_JOB_TYPE', 'JOB_TYPE', $jobType->id, null, $jobType->toArray());
+        return response()->json(['success' => true, 'data' => $jobType], 201);
+    }
+
+    public function updateJobType(Request $request, $id)
+    {
+        $jobType = JobType::findOrFail($id);
+        $old = $jobType->toArray();
+        $jobType->update($request->all());
+        AuditService::log($request->user(), 'UPDATE_JOB_TYPE', 'JOB_TYPE', $jobType->id, $old, $jobType->toArray());
+        return response()->json(['success' => true, 'data' => $jobType]);
+    }
+
+    public function deleteJobType(Request $request, $id)
+    {
+        $jobType = JobType::findOrFail($id);
+        AuditService::log($request->user(), 'DELETE_JOB_TYPE', 'JOB_TYPE', $jobType->id, $jobType->toArray());
+        $jobType->delete();
+        return response()->json(['success' => true, 'message' => 'Data jenis pekerjaan berhasil dihapus.']);
+    }
+
+    // ==========================================
+    // FIELD TEAMS
+    // ==========================================
     public function fieldTeams()
     {
-        $teams = FieldTeam::with(['leader', 'area', 'members'])->where('is_active', true)->get();
+        $teams = FieldTeam::with(['leader', 'area', 'members'])->get();
         return response()->json(['success' => true, 'data' => $teams]);
     }
 
+    public function storeFieldTeam(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'leader_user_id' => 'required|exists:users,id',
+            'area_id' => 'required|exists:areas,id',
+        ]);
+
+        $team = FieldTeam::create($request->only(['name', 'leader_user_id', 'area_id', 'is_active']));
+        if ($request->has('member_ids') && is_array($request->member_ids)) {
+            $team->members()->sync($request->member_ids);
+        }
+
+        AuditService::log($request->user(), 'CREATE_FIELD_TEAM', 'FIELD_TEAM', $team->id, null, $team->toArray());
+        return response()->json(['success' => true, 'data' => $team->load(['leader', 'area', 'members'])], 201);
+    }
+
+    public function updateFieldTeam(Request $request, $id)
+    {
+        $team = FieldTeam::findOrFail($id);
+        $old = $team->toArray();
+        $team->update($request->only(['name', 'leader_user_id', 'area_id', 'is_active']));
+        if ($request->has('member_ids') && is_array($request->member_ids)) {
+            $team->members()->sync($request->member_ids);
+        }
+
+        AuditService::log($request->user(), 'UPDATE_FIELD_TEAM', 'FIELD_TEAM', $team->id, $old, $team->toArray());
+        return response()->json(['success' => true, 'data' => $team->load(['leader', 'area', 'members'])]);
+    }
+
+    public function deleteFieldTeam(Request $request, $id)
+    {
+        $team = FieldTeam::findOrFail($id);
+        AuditService::log($request->user(), 'DELETE_FIELD_TEAM', 'FIELD_TEAM', $team->id, $team->toArray());
+        $team->delete();
+        return response()->json(['success' => true, 'message' => 'Data tim lapangan berhasil dihapus.']);
+    }
+
+    // ==========================================
+    // AUDIT LOGS & SETTINGS
+    // ==========================================
     public function auditLogs(Request $request)
     {
         $logs = AuditLog::with('user:id,name,email')
@@ -100,7 +233,6 @@ class MasterDataController extends Controller
             $setting = SystemSetting::create([
                 'key' => $request->key,
                 'value' => $request->value,
-                'group' => 'GENERAL',
                 'description' => $request->key,
             ]);
             AuditService::log($request->user(), 'CREATE_SETTING', 'SYSTEM_SETTING', $setting->id, null, $setting->toArray());

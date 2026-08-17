@@ -11,15 +11,37 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = NotificationFeed::with(['workOrder:id,spk_number,title', 'client:id,name']);
+        $query = NotificationFeed::with(['workOrder:id,spk_number,title,location_name', 'client:id,name']);
 
         if ($user->hasRole('CLIENT')) {
-            $query->where('target_role', 'CLIENT')->orWhere('target_role', 'ALL');
+            $query->where(function ($q) {
+                $q->where('target_role', 'CLIENT')->orWhere('target_role', 'ALL');
+            });
         } elseif ($user->hasRole('VENDOR')) {
-            $query->where('target_role', 'VENDOR')->orWhere('target_role', 'ALL');
+            $query->where(function ($q) {
+                $q->where('target_role', 'VENDOR')->orWhere('target_role', 'ALL');
+            });
         }
 
-        $notifications = $query->orderByDesc('id')->limit(50)->get();
+        $notifications = $query->orderByDesc('id')
+            ->limit(100)
+            ->get()
+            ->map(function ($n) use ($user) {
+                $isRead = $n->readUsers()->where('users.id', $user->id)->exists();
+                return [
+                    'id' => $n->id,
+                    'work_order_id' => $n->work_order_id,
+                    'spk_number' => $n->workOrder?->spk_number,
+                    'title' => $n->title,
+                    'message' => $n->message,
+                    'category' => $n->category,
+                    'target_role' => $n->target_role,
+                    'client_name' => $n->client?->name,
+                    'location_name' => $n->workOrder?->location_name,
+                    'created_at' => $n->created_at,
+                    'is_read' => $isRead,
+                ];
+            });
 
         return response()->json([
             'success' => true,
@@ -36,6 +58,23 @@ class NotificationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Notifikasi telah ditandai dibaca.',
+        ]);
+    }
+
+    public function markAllAsRead(Request $request)
+    {
+        $user = $request->user();
+        $allIds = NotificationFeed::pluck('id')->toArray();
+        $syncData = [];
+        foreach ($allIds as $nid) {
+            $syncData[$nid] = ['read_at' => now()];
+        }
+
+        $user->readNotifications()->syncWithoutDetaching($syncData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Semua notifikasi telah ditandai sebagai dibaca.',
         ]);
     }
 }

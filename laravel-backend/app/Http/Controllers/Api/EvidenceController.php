@@ -24,6 +24,18 @@ class EvidenceController extends Controller
         $user = $request->user();
         $workOrder = WorkOrder::findOrFail($request->work_order_id);
 
+        // Anti-IDOR: Verify assignment for FIELD_TEAM
+        if ($user->hasRole('FIELD_TEAM')) {
+            $isAssigned = $workOrder->pic_user_id === $user->id ||
+                $workOrder->assignments()->where('users.id', $user->id)->exists();
+            if (!$isAssigned) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses Ditolak: Anda tidak ditugaskan pada Surat Perintah Kerja (SPK) ini.',
+                ], 403);
+            }
+        }
+
         try {
             $photo = EvidenceService::storePhoto($user, $workOrder, $request->file('photo'), $request->all());
 
@@ -48,7 +60,13 @@ class EvidenceController extends Controller
         if ($user->hasRole('VENDOR')) {
             $query->whereHas('workOrder', fn($q) => $q->where('vendor_id', $user->vendor_id));
         } elseif ($user->hasRole('FIELD_TEAM')) {
-            $query->where('user_id', $user->id);
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('workOrder', function ($wq) use ($user) {
+                      $wq->where('pic_user_id', $user->id)
+                         ->orWhereHas('assignments', fn($aq) => $aq->where('users.id', $user->id));
+                  });
+            });
         }
 
         if ($request->filled('work_order_id')) {
@@ -135,6 +153,20 @@ class EvidenceController extends Controller
         ]);
 
         $user = $request->user();
+        $workOrder = WorkOrder::findOrFail($request->work_order_id);
+
+        // Anti-IDOR: Verify assignment for FIELD_TEAM
+        if ($user->hasRole('FIELD_TEAM')) {
+            $isAssigned = $workOrder->pic_user_id === $user->id ||
+                $workOrder->assignments()->where('users.id', $user->id)->exists();
+            if (!$isAssigned) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses Ditolak: Anda tidak ditugaskan pada pekerjaan ini.',
+                ], 403);
+            }
+        }
+
         $issue = Issue::create([
             'work_order_id' => $request->work_order_id,
             'user_id' => $user->id,

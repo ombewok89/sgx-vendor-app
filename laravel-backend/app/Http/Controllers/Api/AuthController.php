@@ -86,6 +86,39 @@ class AuthController extends Controller
         ]);
     }
 
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        $old = $user->toArray();
+
+        $data = $request->only(['name', 'phone']);
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+        AuditService::log($user, 'UPDATE_PROFILE', 'USER', $user->id, $old, $user->toArray());
+
+        $role = $user->roles->first()?->name ?? 'FIELD_TEAM';
+        $userData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $role,
+            'vendor_id' => $user->vendor_id,
+            'vendor_name' => $user->vendor?->name,
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diperbarui.',
+            'user' => $userData,
+            'data' => $userData,
+        ]);
+    }
+
     public function logout(Request $request)
     {
         $user = $request->user();
@@ -101,8 +134,13 @@ class AuthController extends Controller
 
     public function users(Request $request)
     {
-        $users = User::with(['roles', 'vendor'])
-            ->orderBy('name')
+        $query = User::with(['roles', 'vendor']);
+
+        if ($request->filled('role')) {
+            $query->role($request->role);
+        }
+
+        $users = $query->orderBy('name')
             ->get()
             ->map(function ($u) {
                 return [
@@ -121,6 +159,80 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'data' => $users,
+        ]);
+    }
+
+    public function storeUser(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6',
+            'role' => 'required|string',
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => strtolower($request->email),
+            'password' => Hash::make($request->password),
+            'phone' => $request->phone,
+            'vendor_id' => $request->vendor_id ?: null,
+            'is_active' => true,
+        ]);
+
+        $user->syncRoles([$request->role]);
+
+        AuditService::log($request->user(), 'CREATE_USER', 'USER', $user->id, null, $user->toArray());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pengguna baru berhasil dibuat.',
+            'data' => $user->load('vendor'),
+        ], 201);
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $old = $user->toArray();
+
+        $data = $request->only(['name', 'phone', 'vendor_id', 'is_active']);
+        if ($request->filled('email')) {
+            $data['email'] = strtolower($request->email);
+        }
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        if ($request->filled('role')) {
+            $user->syncRoles([$request->role]);
+        }
+
+        AuditService::log($request->user(), 'UPDATE_USER', 'USER', $user->id, $old, $user->toArray());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data pengguna berhasil diperbarui.',
+            'data' => $user->load('vendor'),
+        ]);
+    }
+
+    public function deleteUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id === $request->user()->id) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak dapat menghapus akun Anda sendiri.'], 400);
+        }
+
+        AuditService::log($request->user(), 'DELETE_USER', 'USER', $user->id, $user->toArray());
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pengguna berhasil dihapus.',
         ]);
     }
 

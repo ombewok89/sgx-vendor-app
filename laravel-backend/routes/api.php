@@ -29,6 +29,7 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     // Auth & Profile
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     // Permissions & RBAC Matrix
@@ -44,14 +45,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/system/settings', [MasterDataController::class, 'settings']);
     Route::put('/system/settings', [MasterDataController::class, 'updateSetting']);
     Route::get('/system/audit-logs', [MasterDataController::class, 'auditLogs']);
+    Route::get('/system/notifications', [NotificationController::class, 'index']);
+
+    // In-App Notification Feed
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications-feed', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications-feed/mark-read/{id}', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications-feed/mark-all-read', [NotificationController::class, 'markAllAsRead']);
 
     // Work Orders
     Route::get('/work-orders', [WorkOrderController::class, 'index']);
     Route::get('/work-orders/{id}', [WorkOrderController::class, 'show']);
     Route::post('/work-orders', [WorkOrderController::class, 'store']);
     Route::post('/work-orders/{id}/assign', [WorkOrderController::class, 'assignTeam']);
+    Route::post('/work-orders/{id}/submit', [WorkOrderController::class, 'submit']);
 
-    // Check-In
+    // Check-In (Geofencing)
     Route::post('/check-ins', [CheckInController::class, 'store']);
     Route::post('/work-orders/{id}/check-in', [CheckInController::class, 'checkIn']);
 
@@ -76,20 +86,41 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ba/{identifier}', [BaDocumentController::class, 'show']);
     Route::get('/ba/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);
 
-    // Master Data
+    // Master Data CRUD
     Route::get('/master/vendors', [MasterDataController::class, 'vendors']);
     Route::post('/master/vendors', [MasterDataController::class, 'storeVendor']);
+    Route::put('/master/vendors/{id}', [MasterDataController::class, 'updateVendor']);
+    Route::delete('/master/vendors/{id}', [MasterDataController::class, 'deleteVendor']);
+
     Route::get('/master/areas', [MasterDataController::class, 'areas']);
+    Route::post('/master/areas', [MasterDataController::class, 'storeArea']);
+    Route::put('/master/areas/{id}', [MasterDataController::class, 'updateArea']);
+    Route::delete('/master/areas/{id}', [MasterDataController::class, 'deleteArea']);
+
     Route::get('/master/job-types', [MasterDataController::class, 'jobTypes']);
+    Route::post('/master/job-types', [MasterDataController::class, 'storeJobType']);
+    Route::put('/master/job-types/{id}', [MasterDataController::class, 'updateJobType']);
+    Route::delete('/master/job-types/{id}', [MasterDataController::class, 'deleteJobType']);
+
     Route::get('/master/field-teams', [MasterDataController::class, 'fieldTeams']);
+    Route::post('/master/field-teams', [MasterDataController::class, 'storeFieldTeam']);
+    Route::put('/master/field-teams/{id}', [MasterDataController::class, 'updateFieldTeam']);
+    Route::delete('/master/field-teams/{id}', [MasterDataController::class, 'deleteFieldTeam']);
+
     Route::get('/master/users', [AuthController::class, 'users']);
+    Route::post('/master/users', [AuthController::class, 'storeUser']);
+    Route::put('/master/users/{id}', [AuthController::class, 'updateUser']);
+    Route::delete('/master/users/{id}', [AuthController::class, 'deleteUser']);
+
     Route::get('/master/templates', [BaDocumentController::class, 'templates']);
+    Route::get('/master/templates/{id}', [BaDocumentController::class, 'show']);
+    Route::post('/master/templates', [BaDocumentController::class, 'storeTemplate']);
+    Route::put('/master/templates/{id}', [BaDocumentController::class, 'updateTemplate']);
+    Route::post('/master/templates/{id}/set-default', [BaDocumentController::class, 'setDefaultTemplate']);
+    Route::delete('/master/templates/{id}', [BaDocumentController::class, 'deleteTemplate']);
+
     Route::get('/master/audit-logs', [MasterDataController::class, 'auditLogs']);
     Route::get('/master/settings', [MasterDataController::class, 'settings']);
     Route::get('/users', [AuthController::class, 'users']);
     Route::get('/roles', [AuthController::class, 'roles']);
-
-    // Notifications
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 });
