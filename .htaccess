@@ -1,5 +1,10 @@
+DirectoryIndex index.php index.html
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Allow direct access to diagnostic and static files
+    RewriteRule ^test\.php$ - [L]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
