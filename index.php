@@ -10,6 +10,12 @@ if (file_exists(__DIR__.'/.env')) {
     @copy(__DIR__.'/.env', __DIR__.'/laravel-backend/.env');
 }
 
+// Auto-clean stale compiled caches so updates in routes/api.php take effect immediately
+$cachedRoute = __DIR__.'/laravel-backend/bootstrap/cache/routes-v7.php';
+if (file_exists($cachedRoute)) {
+    @unlink($cachedRoute);
+}
+
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/laravel-backend/storage/framework/maintenance.php')) {
     require $maintenance;
