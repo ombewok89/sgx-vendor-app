@@ -556,10 +556,11 @@ function openLightbox(photo) {
 function downloadSinglePhoto(photo) {
   if (!photo?.file_path) return;
   const link = document.createElement('a');
-  link.href = photo.file_path;
+  link.href = getFileUrl(photo.file_path);
   const ext = photo.file_name?.split('.').pop() || 'jpg';
   const spk = selectedOrder.value?.spk_number ? `${selectedOrder.value.spk_number}_` : '';
   link.download = `${spk}${photo.stage || 'EVIDENCE'}_${photo.sequence || 1}.${ext}`;
+  link.target = '_blank';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

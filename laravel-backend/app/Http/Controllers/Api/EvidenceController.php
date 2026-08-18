@@ -98,6 +98,7 @@ class EvidenceController extends Controller
                 'stage' => $p->stage,
                 'sequence' => $p->sequence,
                 'file_path' => $p->file_path,
+                'file_url' => url('/api/storage-stream/' . ltrim(str_replace('/storage/', '', $p->file_path), '/')),
                 'file_name' => $p->file_name,
                 'file_hash' => $p->file_hash,
                 'server_timestamp' => $p->server_timestamp,
@@ -114,6 +115,41 @@ class EvidenceController extends Controller
             'success' => true,
             'data' => $photos,
         ]);
+    }
+
+    public function streamPhoto($id)
+    {
+        $photo = EvidencePhoto::findOrFail($id);
+        $path = $photo->file_path;
+        $clean = preg_replace('#^(storage/|/storage/|public/)+#', '', ltrim($path, '/'));
+
+        $candidatePaths = [
+            storage_path('app/public/' . $clean),
+            storage_path('app/public/' . $path),
+            storage_path('app/public/uploads/' . basename($path)),
+            storage_path('app/private/' . $clean),
+            storage_path('app/' . $clean),
+            base_path('storage/app/public/' . $clean),
+            base_path('storage/app/public/uploads/' . basename($path)),
+            base_path('../laravel-backend/storage/app/public/' . $clean),
+            base_path('../laravel-backend/storage/app/public/uploads/' . basename($path)),
+            public_path('storage/' . $clean),
+            public_path('uploads/' . basename($path)),
+            base_path('../uploads/' . basename($path)),
+        ];
+
+        foreach ($candidatePaths as $file) {
+            if ($file && file_exists($file) && !is_dir($file)) {
+                $mimeType = @mime_content_type($file) ?: ($photo->mime_type ?: 'image/jpeg');
+                return response()->file($file, [
+                    'Content-Type' => $mimeType,
+                    'Cache-Control' => 'public, max-age=86400',
+                    'Access-Control-Allow-Origin' => '*',
+                ]);
+            }
+        }
+
+        return response('Image not found', 404);
     }
 
     public function deletePhoto(Request $request, $id)

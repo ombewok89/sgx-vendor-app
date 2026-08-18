@@ -25,28 +25,42 @@ Route::get('/health', function () {
 // Public Authentication
 Route::post('/auth/login', [AuthController::class, 'login']);
 
-// Public Direct Storage & Evidence Image Streamer
+// Public Direct Storage & Evidence Image Streamer (Bypasses all symlink and Apache rewrite issues)
 Route::get('/storage-stream/{path}', function ($path) {
+    $clean = preg_replace('#^(storage/|/storage/|public/)+#', '', ltrim($path, '/'));
+
     $candidatePaths = [
+        storage_path('app/public/' . $clean),
         storage_path('app/public/' . $path),
-        base_path('storage/app/public/' . $path),
-        base_path('../laravel-backend/storage/app/public/' . $path),
-        public_path('storage/' . $path),
-        base_path('../uploads/' . $path),
+        storage_path('app/public/uploads/' . basename($path)),
+        storage_path('app/private/' . $clean),
+        storage_path('app/' . $clean),
+        base_path('storage/app/public/' . $clean),
+        base_path('storage/app/public/uploads/' . basename($path)),
+        base_path('../laravel-backend/storage/app/public/' . $clean),
+        base_path('../laravel-backend/storage/app/public/uploads/' . basename($path)),
+        public_path('storage/' . $clean),
+        public_path('uploads/' . basename($path)),
+        base_path('../uploads/' . basename($path)),
     ];
 
     foreach ($candidatePaths as $file) {
-        if (file_exists($file) && !is_dir($file)) {
-            $mimeType = mime_content_type($file) ?: 'image/jpeg';
+        if ($file && file_exists($file) && !is_dir($file)) {
+            $mimeType = @mime_content_type($file) ?: 'image/jpeg';
             return response()->file($file, [
                 'Content-Type' => $mimeType,
                 'Cache-Control' => 'public, max-age=86400',
+                'Access-Control-Allow-Origin' => '*',
             ]);
         }
     }
 
     return response('Image not found', 404);
 })->where('path', '.*');
+
+// Public Direct Photo Streamer by ID
+Route::get('/evidence/photos/{id}/view', [EvidenceController::class, 'streamPhoto']);
+Route::get('/evidence/photos/{id}/file', [EvidenceController::class, 'streamPhoto']);
 
 // Authenticated Routes
 Route::middleware('auth:sanctum')->group(function () {

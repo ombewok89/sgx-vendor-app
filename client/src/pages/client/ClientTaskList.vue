@@ -203,7 +203,7 @@
                 <div class="h-44 rounded-xl overflow-hidden bg-slate-900 relative">
                   <img
                     v-if="beforePhoto"
-                    :src="beforePhoto.file_path"
+                    :src="getFileUrl(beforePhoto.file_path)"
                     alt="Foto Sebelum"
                     class="w-full h-full object-cover"
                   />
@@ -228,7 +228,7 @@
                 <div class="h-44 rounded-xl overflow-hidden bg-slate-900 relative">
                   <img
                     v-if="afterPhoto"
-                    :src="afterPhoto.file_path"
+                    :src="getFileUrl(afterPhoto.file_path)"
                     alt="Foto Selesai"
                     class="w-full h-full object-cover"
                   />
@@ -468,10 +468,11 @@ function openLightbox(photo) {
 function downloadSinglePhoto(photo) {
   if (!photo?.file_path) return;
   const link = document.createElement('a');
-  link.href = photo.file_path;
+  link.href = getFileUrl(photo.file_path);
   const ext = photo.file_name?.split('.').pop() || 'jpg';
   const spk = selectedOrder.value?.spk_number ? `${selectedOrder.value.spk_number}_` : '';
   link.download = `${spk}${photo.stage || 'EVIDENCE'}_${photo.sequence || 1}.${ext}`;
+  link.target = '_blank';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

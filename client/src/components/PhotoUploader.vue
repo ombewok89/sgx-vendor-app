@@ -422,9 +422,10 @@ function openLightbox(idx) {
 function triggerDirectDownload(photo, idx) {
   if (!photo?.file_path) return;
   const link = document.createElement('a');
-  link.href = photo.file_path;
+  link.href = getFileUrl(photo.file_path);
   const ext = photo.file_name?.split('.').pop() || 'jpg';
   link.download = `SPK-${props.workOrderId}_${props.stage}_${photo.sequence || idx + 1}.${ext}`;
+  link.target = '_blank';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
