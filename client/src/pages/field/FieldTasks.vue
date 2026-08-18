@@ -20,9 +20,56 @@
       </button>
     </div>
 
+    <!-- Mobile Horizontal Task Switcher Carousel (Visible on Mobile Only) -->
+    <div class="block lg:hidden space-y-2">
+      <div class="flex items-center justify-between px-1">
+        <h3 class="font-bold text-xs text-slate-500 uppercase tracking-wider">
+          Pilih SPK Lapangan ({{ tasks.length }})
+        </h3>
+        <span class="text-[10px] font-semibold bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full border border-brand-200">
+          Geser untuk memilih
+        </span>
+      </div>
+
+      <div class="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+        <div
+          v-for="task in tasks"
+          :key="task.id"
+          @click="handleSelectTask(task.id)"
+          :class="[
+            'min-w-[240px] max-w-[280px] p-3.5 rounded-2xl cursor-pointer transition-all duration-200 snap-start flex-shrink-0 relative overflow-hidden border',
+            selectedTask?.id === task.id
+              ? 'bg-slate-900 text-white border-slate-800 shadow-lg shadow-slate-900/20'
+              : 'bg-white text-slate-900 border-slate-200 hover:border-slate-300'
+          ]"
+        >
+          <div class="flex items-center justify-between gap-1.5 mb-1.5">
+            <span
+              :class="[
+                'font-mono font-black text-[11px] px-2 py-0.5 rounded-md',
+                selectedTask?.id === task.id ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-800'
+              ]"
+            >
+              {{ task.spk_number }}
+            </span>
+            <StatusBadge :status="task.status" />
+          </div>
+
+          <div class="font-bold text-xs line-clamp-1 mb-1" :class="selectedTask?.id === task.id ? 'text-white' : 'text-slate-900'">
+            {{ task.title || task.location_name }}
+          </div>
+
+          <div class="text-[11px] flex items-center justify-between" :class="selectedTask?.id === task.id ? 'text-slate-300' : 'text-slate-500'">
+            <span class="truncate max-w-[140px]">📍 {{ task.location_name }}</span>
+            <span class="font-bold font-mono text-emerald-400">{{ task.progress_percent || 0 }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      <!-- Task Cards List (Glassmorphism Task Cards) -->
-      <div class="space-y-3">
+      <!-- Desktop Task Cards List (Visible on Large Screens) -->
+      <div class="hidden lg:block space-y-3">
         <div class="flex items-center justify-between px-1">
           <h3 class="font-bold text-xs text-slate-500 uppercase tracking-wider">
             Kartu Tugas Cabang ({{ tasks.length }})

@@ -34,7 +34,10 @@
       />
 
       <!-- Main Content Stage with Smooth Transitions -->
-      <main class="flex-1 lg:pl-64 p-4 sm:p-6 md:p-8 max-w-[1600px] w-full mx-auto animate-fade-in">
+      <main
+        class="flex-1 lg:pl-64 p-3.5 sm:p-6 md:p-8 max-w-[1600px] w-full mx-auto animate-fade-in"
+        :class="{ 'pb-24 lg:pb-8': auth.state.user?.role === 'FIELD_TEAM' }"
+      >
         <component
           :is="currentView"
           :key="activeTab"
@@ -75,11 +78,25 @@
       :baData="activeBaPreview"
       @close="activeBaPreview = null"
     />
+
+    <!-- Global User Profile & Security Modal -->
+    <UserProfileModal
+      v-if="showProfileModal"
+      @close="showProfileModal = false"
+    />
+
+    <!-- Mobile Bottom Navigation Bar (Field Team Dedicated) -->
+    <FieldBottomNav
+      v-if="auth.state.user?.role === 'FIELD_TEAM'"
+      v-model:activeTab="activeTab"
+      :activeTaskCount="fieldActiveTaskCount"
+      @open-profile="showProfileModal = true"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useAuth } from './composables/useAuth';
 import { api } from './services/api';
 
@@ -90,6 +107,8 @@ import LoginPage from './pages/auth/LoginPage.vue';
 import Navbar from './components/Navbar.vue';
 import Sidebar from './components/Sidebar.vue';
 import BaOpnameViewer from './components/BaOpnameViewer.vue';
+import UserProfileModal from './components/UserProfileModal.vue';
+import FieldBottomNav from './components/FieldBottomNav.vue';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard.vue';
@@ -127,13 +146,29 @@ const sidebarOpen = ref(false);
 
 // Global Modals State
 const showCreateModal = ref(false);
+const showProfileModal = ref(false);
 const selectedWorkOrderId = ref(null);
 const activeBaPreview = ref(null);
+const fieldActiveTaskCount = ref(0);
+
+async function fetchFieldTaskCount() {
+  if (auth.state.user?.role === 'FIELD_TEAM') {
+    try {
+      const res = await api.getWorkOrders();
+      if (res.data) {
+        fieldActiveTaskCount.value = res.data.filter(w => ['ASSIGNED', 'IN_PROGRESS', 'REVISION'].includes(w.status)).length;
+      }
+    } catch (e) {
+      // Background load error suppressed
+    }
+  }
+}
 
 // Sync initial active tab when user role changes
 watch(() => auth.state.user?.role, (newRole) => {
   if (newRole === 'FIELD_TEAM') {
     activeTab.value = 'field_dashboard';
+    fetchFieldTaskCount();
   } else if (newRole === 'VENDOR') {
     activeTab.value = 'client_dashboard';
   } else if (newRole === 'SUPERUSER') {
@@ -142,6 +177,10 @@ watch(() => auth.state.user?.role, (newRole) => {
     activeTab.value = 'admin_dashboard';
   }
 }, { immediate: true });
+
+onMounted(() => {
+  fetchFieldTaskCount();
+});
 
 const currentView = computed(() => {
   // Always guarantee SuperDashboard for SUPERUSER on executive dashboard
