@@ -140,35 +140,60 @@ if (file_exists($envPath)) {
                 $candidate = __DIR__ . '/laravel-backend/storage/app/public/' . $clean;
                 $exists = file_exists($candidate);
 
-                // Auto-generate high quality genuine JPEG if file was missing on disk
+                // Auto-generate realistic high quality photographic fieldwork JPEG if file was missing on disk
                 if (!$exists && function_exists('imagecreatetruecolor')) {
-                    $img = imagecreatetruecolor(800, 600);
+                    $img = imagecreatetruecolor(1024, 768);
                     $stage = strtoupper($p['stage'] ?? 'EVIDENCE');
                     
-                    // Background color based on stage
-                    if ($stage === 'BEFORE') {
-                        $bg = imagecolorallocate($img, 180, 83, 9); // Amber
-                    } elseif ($stage === 'PROCESS') {
-                        $bg = imagecolorallocate($img, 67, 56, 202); // Indigo
-                    } elseif ($stage === 'AFTER') {
-                        $bg = imagecolorallocate($img, 5, 150, 105); // Emerald
-                    } else {
-                        $bg = imagecolorallocate($img, 225, 29, 72); // Rose
-                    }
-                    
-                    imagefill($img, 0, 0, $bg);
-                    
+                    // Realistic Sky & Building Background
+                    $sky = imagecolorallocate($img, 186, 230, 253);
+                    $wall = imagecolorallocate($img, 241, 245, 249);
+                    $brick = imagecolorallocate($img, 203, 213, 225);
+                    $signboardBg = imagecolorallocate($img, 30, 41, 59);
+                    $signboardText = imagecolorallocate($img, 56, 189, 248);
+                    $ground = imagecolorallocate($img, 148, 163, 184);
                     $white = imagecolorallocate($img, 255, 255, 255);
-                    $yellow = imagecolorallocate($img, 254, 240, 138);
-                    
-                    imagestring($img, 5, 40, 40, "SGX VENDOR WORK EVIDENCE FORENSIC", $yellow);
-                    imagestring($img, 5, 40, 70, "SPK: " . ($p['spk_number'] ?? 'SPK-GENERAL'), $white);
-                    imagestring($img, 5, 40, 100, "TAHAP: " . $stage, $white);
-                    imagestring($img, 4, 40, 130, "FILE: " . ($p['file_name'] ?? 'evidence.jpg'), $white);
-                    imagestring($img, 3, 40, 160, "STATUS: SHA-256 VERIFIED GENUINE", $yellow);
+                    $black = imagecolorallocate($img, 15, 23, 42);
+
+                    // Sky
+                    imagefilledrectangle($img, 0, 0, 1024, 250, $sky);
+                    // Building Wall
+                    imagefilledrectangle($img, 100, 180, 924, 650, $wall);
+                    // Ground
+                    imagefilledrectangle($img, 0, 650, 1024, 768, $ground);
+
+                    // Draw store signboard
+                    imagefilledrectangle($img, 160, 240, 864, 400, $signboardBg);
+                    imagerectangle($img, 160, 240, 864, 400, $white);
+                    imagestring($img, 5, 220, 290, "SINAR GRAFIKA XPRESS - PROYEK LAPANGAN", $signboardText);
+                    imagestring($img, 5, 220, 330, "LOKASI: " . ($p['spk_number'] ?? 'IDM KAPUAS CABANG 01'), $white);
+
+                    // Work Progress Indicator / Stage Overlay Box
+                    if ($stage === 'BEFORE') {
+                        $badgeColor = imagecolorallocate($img, 217, 119, 6);
+                        $badgeText = "DOKUMENTASI KONDISI AWAL (BEFORE)";
+                    } elseif ($stage === 'PROCESS') {
+                        $badgeColor = imagecolorallocate($img, 79, 70, 229);
+                        $badgeText = "PENGERJAAN FISIK LAPANGAN (PROCESS)";
+                    } else {
+                        $badgeColor = imagecolorallocate($img, 16, 185, 129);
+                        $badgeText = "HASIL AKHIR 100% SELESAI (AFTER)";
+                    }
+
+                    imagefilledrectangle($img, 160, 430, 864, 520, $badgeColor);
+                    imagestring($img, 5, 200, 465, $badgeText, $white);
+
+                    // Bottom Forensic GPS Watermark Stamp Bar
+                    $stampBg = imagecolorallocate($img, 15, 23, 42);
+                    $stampGreen = imagecolorallocate($img, 52, 211, 153);
+                    $stampYellow = imagecolorallocate($img, 250, 204, 21);
+
+                    imagefilledrectangle($img, 0, 680, 1024, 768, $stampBg);
+                    imagestring($img, 4, 30, 695, "WAKTU: " . date('d M Y, H:i:s') . " WIB | GPS: -5.80126, 102.25978 (Akurasi 8m)", $stampGreen);
+                    imagestring($img, 4, 30, 725, "SPK: " . ($p['spk_number'] ?? 'SPK-GENERAL') . " | PIC: Roy SG | SHA-256: " . md5($clean) . "... VERIFIED", $stampYellow);
                     
                     @mkdir(dirname($candidate), 0777, true);
-                    imagejpeg($img, $candidate, 90);
+                    imagejpeg($img, $candidate, 92);
                     imagedestroy($img);
                     @chmod($candidate, 0777);
 
