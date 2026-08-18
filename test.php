@@ -127,7 +127,7 @@ if (file_exists($envPath)) {
             @symlink(__DIR__ . '/laravel-backend/storage/app/public', __DIR__ . '/storage');
 
             // 3. Inspect & Auto-Recover Uploaded Photos
-            $photosStmt = $pdo->query("SELECT id, spk_number, file_name, file_path, stage FROM evidence_photos LEFT JOIN work_orders ON evidence_photos.work_order_id = work_orders.id ORDER BY evidence_photos.id DESC");
+            $photosStmt = $pdo->query("SELECT evidence_photos.id, work_orders.spk_number, evidence_photos.file_name, evidence_photos.file_path, evidence_photos.stage FROM evidence_photos LEFT JOIN work_orders ON evidence_photos.work_order_id = work_orders.id ORDER BY evidence_photos.id DESC");
             $uploadedPhotos = $photosStmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo "<p style='color:green; font-weight:bold;'>✅ FOLDER PENYIMPANAN BERHASIL DISIAPKAN DENGAN IZIN AKSES PENUH (0777)!</p>";
