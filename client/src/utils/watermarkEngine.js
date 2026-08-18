@@ -31,6 +31,39 @@ function loadLogoImage() {
   });
 }
 
+/**
+ * Fetch 100% Real Satellite Imagery Tile from Esri World Imagery (No API Key Required)
+ * With 2.5s timeout protection so offline/slow connections never freeze the app.
+ */
+function fetchRealSatelliteTile(lat, lng, width, height) {
+  return new Promise((resolve) => {
+    if (lat == null || lng == null) return resolve(null);
+    const delta = 0.0035;
+    const minLng = (Number(lng) - delta).toFixed(6);
+    const maxLng = (Number(lng) + delta).toFixed(6);
+    const minLat = (Number(lat) - (delta * 0.75)).toFixed(6);
+    const maxLat = (Number(lat) + (delta * 0.75)).toFixed(6);
+    const tileW = Math.min(480, Math.max(240, Math.round(width)));
+    const tileH = Math.min(380, Math.max(180, Math.round(height)));
+
+    const url = `https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&size=${tileW},${tileH}&f=image`;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const timer = setTimeout(() => resolve(null), 2500);
+
+    img.onload = () => {
+      clearTimeout(timer);
+      resolve(img);
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
 export async function stampGpsWatermark(file, metadata = {}) {
   return new Promise(async (resolve) => {
     if (!file || !file.type.startsWith('image/')) {
@@ -43,14 +76,17 @@ export async function stampGpsWatermark(file, metadata = {}) {
     // 2. Extract embedded EXIF Metadata directly from the uploaded photo file
     const exifData = await extractExifFromImage(file);
 
-    // Prioritize EXIF GPS from photo, fallback to live device GPS, fallback to Bandung default
+    // Prioritize EXIF GPS from photo, fallback to live device GPS, fallback to Bengkulu default
     const finalLat = exifData?.latitude != null 
       ? exifData.latitude 
-      : (metadata.latitude != null ? metadata.latitude : -6.917464);
+      : (metadata.latitude != null ? metadata.latitude : -3.824921);
 
     const finalLng = exifData?.longitude != null 
       ? exifData.longitude 
-      : (metadata.longitude != null ? metadata.longitude : 107.619122);
+      : (metadata.longitude != null ? metadata.longitude : 102.286299);
+
+    // 3. Preload Real Satellite Map Imagery Tile for the exact coordinates (with 2.5s fallback)
+    const satelliteImg = await fetchRealSatelliteTile(finalLat, finalLng, 320, 260);
 
     // Prioritize EXIF original capture time, fallback to metadata/current time
     let photoDate = new Date();
@@ -212,10 +248,10 @@ export async function stampGpsWatermark(file, metadata = {}) {
           ctx.fillText(coordText, textMarginL + badgePadX, currentY + (29 * scale));
           ctx.restore();
 
-          // 5. Draw Mini GPS Satellite Map on the right
-          drawRealisticMiniMap(ctx, mapX, mapY, mapW, mapH, scale);
+          // 5. Draw Mini GPS Satellite Map on the right (Real Satellite Map Tile)
+          drawRealisticMiniMap(ctx, mapX, mapY, mapW, mapH, scale, satelliteImg);
 
-          // 6. Draw Bottom White/Light Branding Footer Bar (Area Kontak Perusahaan)
+          // 6. Draw Bottom White/Light Branding Footer Bar (Area Kontak Perusahaan - No Icon)
           const footerY = height - footerBarH;
           ctx.save();
           ctx.fillStyle = '#FFFFFF';
@@ -235,16 +271,7 @@ export async function stampGpsWatermark(file, metadata = {}) {
           ctx.fillStyle = '#334155';
           ctx.fillText('Telp / WA: 0823 8888 5251', textMarginL, footerY + (72 * scale));
 
-          // Small Company Logo in footer
-          const footerLogoSize = Math.round(68 * scale);
-          const footerLogoX = width - Math.round(390 * scale);
-          const footerLogoY = footerY + Math.round((footerBarH - footerLogoSize) / 2);
-
-          if (logoImg) {
-            drawRoundedImage(ctx, logoImg, footerLogoX, footerLogoY, footerLogoSize, footerLogoSize, 12 * scale);
-          }
-
-          // Website URL in right-most footer
+          // Website URL in right-most footer (Clean typography, no icon)
           ctx.font = `700 ${17 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
           ctx.fillStyle = '#64748B';
           ctx.fillText('vendor.sinargrafika.my.id', width - Math.round(280 * scale), footerY + (56 * scale));
@@ -322,9 +349,9 @@ function drawRoundedImage(ctx, img, x, y, width, height, radius) {
 }
 
 /**
- * Draw Realistic Mini GPS Satellite/Street Map
+ * Draw 100% Real GPS Satellite Imagery Map (with Offline Vector Fallback)
  */
-function drawRealisticMiniMap(ctx, x, y, width, height, scale) {
+function drawRealisticMiniMap(ctx, x, y, width, height, scale, satelliteImg) {
   ctx.save();
 
   // Outer border with rounded corners
@@ -342,54 +369,62 @@ function drawRealisticMiniMap(ctx, x, y, width, height, scale) {
   ctx.closePath();
   ctx.clip();
 
-  // Satellite Terrain background (Forest/Urban mix)
-  ctx.fillStyle = '#2C3E50';
-  ctx.fillRect(x, y, width, height);
+  // 1. Draw Real Satellite Image if available, otherwise draw Vector Terrain
+  if (satelliteImg && satelliteImg.complete && satelliteImg.naturalWidth > 0) {
+    ctx.drawImage(satelliteImg, x, y, width, height);
 
-  // Green satellite vegetation patches
-  ctx.fillStyle = '#274E13';
-  ctx.fillRect(x, y, width * 0.45, height * 0.4);
-  ctx.fillStyle = '#38761D';
-  ctx.fillRect(x + width * 0.5, y + height * 0.45, width * 0.5, height * 0.55);
+    // Subtle dark gradient vignette on map edges
+    const vig = ctx.createLinearGradient(x, y, x, y + height);
+    vig.addColorStop(0, 'rgba(0,0,0,0.15)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.35)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(x, y, width, height);
+  } else {
+    // Satellite Terrain fallback (Forest/Urban mix)
+    ctx.fillStyle = '#2C3E50';
+    ctx.fillRect(x, y, width, height);
 
-  // Roof & building lots texture
-  ctx.fillStyle = '#434343';
-  ctx.fillRect(x + width * 0.1, y + height * 0.5, width * 0.35, height * 0.45);
-  ctx.fillStyle = '#666666';
-  ctx.fillRect(x + width * 0.55, y + height * 0.1, width * 0.38, height * 0.35);
+    ctx.fillStyle = '#274E13';
+    ctx.fillRect(x, y, width * 0.45, height * 0.4);
+    ctx.fillStyle = '#38761D';
+    ctx.fillRect(x + width * 0.5, y + height * 0.45, width * 0.5, height * 0.55);
 
-  // Major Highway / Road (Yellow/Orange outline)
-  ctx.strokeStyle = '#D97706';
-  ctx.lineWidth = 9 * scale;
+    ctx.fillStyle = '#434343';
+    ctx.fillRect(x + width * 0.1, y + height * 0.5, width * 0.35, height * 0.45);
+    ctx.fillStyle = '#666666';
+    ctx.fillRect(x + width * 0.55, y + height * 0.1, width * 0.38, height * 0.35);
+
+    // Major Highway / Road (Yellow/Orange outline)
+    ctx.strokeStyle = '#D97706';
+    ctx.lineWidth = 9 * scale;
+    ctx.beginPath();
+    ctx.moveTo(x + width * 0.85, y);
+    ctx.lineTo(x + width * 0.2, y + height);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#FDE047';
+    ctx.lineWidth = 6 * scale;
+    ctx.beginPath();
+    ctx.moveTo(x + width * 0.85, y);
+    ctx.lineTo(x + width * 0.2, y + height);
+    ctx.stroke();
+  }
+
+  // Cross Street / Road Outline
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.lineWidth = 4 * scale;
   ctx.beginPath();
-  ctx.moveTo(x + width * 0.85, y);
-  ctx.lineTo(x + width * 0.2, y + height);
-  ctx.stroke();
-
-  // Highway center (Yellow)
-  ctx.strokeStyle = '#FDE047';
-  ctx.lineWidth = 6 * scale;
-  ctx.beginPath();
-  ctx.moveTo(x + width * 0.85, y);
-  ctx.lineTo(x + width * 0.2, y + height);
-  ctx.stroke();
-
-  // Cross Street (White)
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 5 * scale;
-  ctx.beginPath();
-  ctx.moveTo(x, y + height * 0.35);
-  ctx.lineTo(x + width, y + height * 0.7);
+  ctx.moveTo(x, y + height * 0.38);
+  ctx.lineTo(x + width, y + height * 0.68);
   ctx.stroke();
 
   // Street Name labels
   ctx.save();
   ctx.font = `bold ${10 * scale}px "Inter", Arial`;
   ctx.fillStyle = '#FFFFFF';
-  ctx.shadowColor = 'rgba(0,0,0,0.9)';
-  ctx.shadowBlur = 4 * scale;
-  ctx.fillText('Jl. Yos Sudarso', x + (12 * scale), y + (height * 0.38));
-  ctx.fillText('Jl. Trans', x + (width * 0.65), y + (height * 0.22));
+  ctx.shadowColor = 'rgba(0,0,0,0.95)';
+  ctx.shadowBlur = 5 * scale;
+  ctx.fillText('Jl. Jend. Sudirman', x + (12 * scale), y + (height * 0.38) - (6 * scale));
   ctx.restore();
 
   // Vision Field Angle Cone (Emerald/Cyan wedge)
@@ -403,19 +438,35 @@ function drawRealisticMiniMap(ctx, x, y, width, height, scale) {
   ctx.closePath();
   ctx.fill();
 
-  // Blue GPS Pin Marker
+  // Blue & Green GPS Pin Marker
   ctx.fillStyle = '#0284C7';
   ctx.beginPath();
-  ctx.arc(pinX, pinY, 12 * scale, 0, Math.PI * 2);
+  ctx.arc(pinX, pinY, 13 * scale, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 3.5 * scale;
-  ctx.stroke();
 
-  // Inner White Dot
+  ctx.fillStyle = '#10B981';
+  ctx.beginPath();
+  ctx.arc(pinX, pinY, 8 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  ctx.arc(pinX, pinY, 4.5 * scale, 0, Math.PI * 2);
+  ctx.arc(pinX, pinY, 3.5 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 2.5 * scale;
+  ctx.beginPath();
+  ctx.arc(pinX, pinY, 13 * scale, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Compass indicator on top of pin
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.moveTo(pinX, pinY - 22 * scale);
+  ctx.lineTo(pinX - 5 * scale, pinY - 14 * scale);
+  ctx.lineTo(pinX + 5 * scale, pinY - 14 * scale);
+  ctx.closePath();
   ctx.fill();
 
   // Bottom Google Maps Banner

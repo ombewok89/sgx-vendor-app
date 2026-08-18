@@ -172,19 +172,7 @@ imagestring($img, 5, 70, $footerY + 30, $officeAddrStr, $black);
 // Phone in Footer
 $phoneStr = "Telp / WA: 0823 8888 5251";
 imagestring($img, 5, 70, $footerY + 65, $phoneStr, $darkGray);
-imagestring($img, 5, 71, $footerY + 65, $phoneStr, $darkGray);
-
-// Small Company Logo in Footer
-$smallLogoW = 75;
-$smallLogoH = 75;
-$smallLogoX = $width - 550;
-$smallLogoY = $footerY + 30;
-
-if (isset($logoSrc) && $logoSrc) {
-    imagecopyresampled($img, $logoSrc, $smallLogoX, $smallLogoY, 0, 0, $smallLogoW, $smallLogoH, $logoW, $logoH);
-}
-
-// Right Website URL in Footer
+// Right Website URL in Footer (No icon)
 $webUrlStr = "vendor.sinargrafika.my.id";
 imagestring($img, 5, $width - 320, $footerY + 55, $webUrlStr, $lightGray);
 imagestring($img, 5, $width - 319, $footerY + 55, $webUrlStr, $lightGray);
