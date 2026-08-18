@@ -25,21 +25,24 @@ class EvidenceService
         // 2. Compute SHA-256 Hash
         $fileHash = hash_file('sha256', $file->getRealPath());
 
-        // 3. Save File to physical storage directories with 0777 permissions
-        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+        // 3. Save File to physical storage directories with standard secure permissions
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+        if (!in_array($extension, $allowedExts)) {
+            $extension = 'jpg';
+        }
         $filename = time() . '-' . Str::random(12) . '.' . $extension;
 
         // Target direct physical folders
         $primaryDir = storage_path('app/public/uploads');
         if (!is_dir($primaryDir)) {
-            @mkdir($primaryDir, 0777, true);
+            @mkdir($primaryDir, 0755, true);
         }
-        @chmod($primaryDir, 0777);
 
         // Also ensure secondary mirrors exist
         $rootStorageDir = base_path('../storage/uploads');
         if (!is_dir($rootStorageDir) && file_exists(base_path('../.htaccess'))) {
-            @mkdir($rootStorageDir, 0777, true);
+            @mkdir($rootStorageDir, 0755, true);
         }
 
         $destFile = $primaryDir . DIRECTORY_SEPARATOR . $filename;
@@ -49,14 +52,14 @@ class EvidenceService
             // Fallback to storeAs
             $path = $file->storeAs('uploads', $filename, 'public');
         } else {
-            @chmod($destFile, 0777);
+            @chmod($destFile, 0644);
             $path = 'uploads/' . $filename;
         }
 
         // Mirror to root storage if accessible
         if (is_dir($rootStorageDir)) {
             @copy($destFile, $rootStorageDir . DIRECTORY_SEPARATOR . $filename);
-            @chmod($rootStorageDir . DIRECTORY_SEPARATOR . $filename, 0777);
+            @chmod($rootStorageDir . DIRECTORY_SEPARATOR . $filename, 0644);
         }
 
         // Verify write succeeded

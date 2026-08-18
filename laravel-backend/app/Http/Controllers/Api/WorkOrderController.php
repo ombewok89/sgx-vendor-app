@@ -296,7 +296,7 @@ class WorkOrderController extends Controller
     public function submit(Request $request, $id)
     {
         $user = $request->user();
-        $workOrder = WorkOrder::findOrFail($id);
+        $workOrder = WorkOrder::with(['evidencePhotos', 'jobType'])->findOrFail($id);
 
         if ($user->hasRole('FIELD_TEAM')) {
             $isAssigned = $workOrder->pic_user_id === $user->id ||
@@ -307,6 +307,30 @@ class WorkOrderController extends Controller
                     'message' => 'Akses Ditolak: Anda tidak ditugaskan pada pekerjaan ini.',
                 ], 403);
             }
+        }
+
+        // Validate Minimum Required Evidence Photos (M-01)
+        $minPhotos = $workOrder->jobType?->min_photos_per_stage ?: 1;
+        $beforeCount = $workOrder->evidencePhotos()->where('stage', 'BEFORE')->count();
+        $processCount = $workOrder->evidencePhotos()->where('stage', 'PROCESS')->count();
+        $afterCount = $workOrder->evidencePhotos()->where('stage', 'AFTER')->count();
+
+        $missing = [];
+        if ($beforeCount < $minPhotos) {
+            $missing[] = "BEFORE (kurang " . ($minPhotos - $beforeCount) . " foto)";
+        }
+        if ($processCount < $minPhotos) {
+            $missing[] = "PROCESS (kurang " . ($minPhotos - $processCount) . " foto)";
+        }
+        if ($afterCount < $minPhotos) {
+            $missing[] = "AFTER (kurang " . ($minPhotos - $afterCount) . " foto)";
+        }
+
+        if (!empty($missing)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pekerjaan belum dapat diajukan: Foto bukti belum lengkap pada tahap: ' . implode(', ', $missing) . '. Wajib minimal ' . $minPhotos . ' foto per tahap.',
+            ], 422);
         }
 
         $workOrder->update(['status' => 'REVIEW']);

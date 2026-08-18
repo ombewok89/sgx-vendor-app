@@ -91,9 +91,38 @@ class AuthController extends Controller
         $user = $request->user();
         $old = $user->toArray();
 
-        $data = $request->only(['name', 'phone']);
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
+        $request->validate([
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'current_password' => 'nullable|string',
+            'currentPassword' => 'nullable|string',
+            'password' => 'nullable|string|min:6',
+            'new_password' => 'nullable|string|min:6',
+            'newPassword' => 'nullable|string|min:6',
+        ]);
+
+        $data = array_filter($request->only(['name', 'phone']), fn($v) => !is_null($v));
+
+        $currentPass = $request->current_password ?? $request->currentPassword;
+        $newPass = $request->new_password ?? $request->newPassword ?? $request->password;
+
+        if (!empty($newPass)) {
+            // Require current password and verify against stored hash (H-02)
+            if (empty($currentPass)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password saat ini (current password) wajib diisi untuk mengubah password.',
+                ], 422);
+            }
+
+            if (!Hash::check($currentPass, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password saat ini yang Anda masukkan salah.',
+                ], 422);
+            }
+
+            $data['password'] = Hash::make($newPass);
         }
 
         $user->update($data);

@@ -60,11 +60,13 @@ class BaDocumentController extends Controller
         }
     }
 
-    public function show($identifier)
+    public function show(Request $request, $identifier)
     {
+        $user = $request->user();
         $ba = BaDocument::with(['workOrder.vendor', 'template', 'generator'])
-            ->where('work_order_id', $identifier)
-            ->orWhere('id', $identifier)
+            ->where(function ($q) use ($identifier) {
+                $q->where('work_order_id', $identifier)->orWhere('id', $identifier);
+            })
             ->first();
 
         if (!$ba) {
@@ -74,18 +76,40 @@ class BaDocumentController extends Controller
             ], 404);
         }
 
+        // Multi-Tenant Isolation (H-01): Verify tenant scope for VENDOR and CLIENT roles
+        if ($user && $user->hasAnyRole(['VENDOR', 'CLIENT'])) {
+            if (!$user->vendor_id || $ba->workOrder?->vendor_id !== $user->vendor_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses Ditolak: Anda tidak memiliki wewenang untuk melihat Berita Acara ini.',
+                ], 403);
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data' => $ba,
         ]);
     }
 
-    public function downloadPdf($identifier)
+    public function downloadPdf(Request $request, $identifier)
     {
+        $user = $request->user();
         $ba = BaDocument::with(['workOrder.vendor', 'template', 'generator'])
-            ->where('work_order_id', $identifier)
-            ->orWhere('id', $identifier)
+            ->where(function ($q) use ($identifier) {
+                $q->where('work_order_id', $identifier)->orWhere('id', $identifier);
+            })
             ->firstOrFail();
+
+        // Multi-Tenant Isolation (H-01): Verify tenant scope for VENDOR and CLIENT roles
+        if ($user && $user->hasAnyRole(['VENDOR', 'CLIENT'])) {
+            if (!$user->vendor_id || $ba->workOrder?->vendor_id !== $user->vendor_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses Ditolak: Anda tidak berwenang mengunduh Berita Acara ini.',
+                ], 403);
+            }
+        }
 
         $data = [
             'ba' => $ba,
@@ -187,6 +211,36 @@ class BaDocumentController extends Controller
             'success' => true,
             'message' => "Template '{$template->name}' ditetapkan sebagai template default.",
             'data' => $template,
+        ]);
+    }
+
+    public function complete(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN', 'CLIENT'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Anda tidak memiliki wewenang untuk menyelesaikan pekerjaan ini.',
+            ], 403);
+        }
+
+        $workOrder = WorkOrder::findOrFail($id);
+
+        if ($user->hasRole('CLIENT') && $user->vendor_id && $workOrder->vendor_id !== $user->vendor_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: SPK ini bukan milik akun Client Anda.',
+            ], 403);
+        }
+
+        $old = $workOrder->toArray();
+        $workOrder->update(['status' => 'COMPLETED']);
+        AuditService::log($user, 'COMPLETE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $old, $workOrder->toArray());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pekerjaan berhasil diselesaikan dan status diperbarui menjadi COMPLETED.',
+            'data' => $workOrder,
         ]);
     }
 

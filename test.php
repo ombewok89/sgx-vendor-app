@@ -4,6 +4,30 @@ header('Content-Type: text/html; charset=utf-8');
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
+// Security Guard: Require admin token to prevent unauthorized access
+$envPath = file_exists(__DIR__ . '/laravel-backend/.env') ? __DIR__ . '/laravel-backend/.env' : __DIR__ . '/.env';
+$appKey = '';
+if (file_exists($envPath)) {
+    $envContent = file_get_contents($envPath);
+    if (preg_match('/APP_KEY=(.*)/', $envContent, $m)) {
+        $appKey = trim($m[1], "\"' \r\n");
+    }
+}
+
+// Require security token query parameter or secret pin
+$authKey = $_GET['key'] ?? '';
+$validKey = substr(md5($appKey ?: 'sgx_secure_diagnostic'), 0, 12);
+
+if ($authKey !== $validKey && $authKey !== 'sgx_admin_audit_2026') {
+    http_response_code(403);
+    echo "<div style='font-family:sans-serif; max-width:600px; margin:40px auto; padding:25px; border-radius:12px; background:#fff1f2; border:1px solid #fda4af; color:#9f1239;'>";
+    echo "<h2>🔒 Akses Terproteksi (Security Restricted)</h2>";
+    echo "<p>Halaman diagnostik ini hanya dapat diakses oleh Administrator dengan token rahasia.</p>";
+    echo "<p>Format: <code>test.php?key=[TOKEN]</code></p>";
+    echo "</div>";
+    exit;
+}
+
 echo "<div style='font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);'>";
 echo "<h2 style='color: #1e3a8a;'>🔧 SGX Vendor System & Database Diagnostics</h2>";
 echo "<b>PHP Version:</b> " . PHP_VERSION . "<br>";
@@ -16,7 +40,6 @@ if (version_compare(PHP_VERSION, '8.2.0', '<')) {
 
 // Check .env
 echo "<h3>📄 Environment (.env) Check:</h3>";
-$envPath = file_exists(__DIR__ . '/laravel-backend/.env') ? __DIR__ . '/laravel-backend/.env' : __DIR__ . '/.env';
 if (file_exists($envPath)) {
     echo "<p style='color:green;'>✅ File <code>{$envPath}</code> ditemukan (" . filesize($envPath) . " bytes).</p>";
     $envContent = file_get_contents($envPath);
@@ -24,66 +47,32 @@ if (file_exists($envPath)) {
     preg_match('/DB_USERNAME=(.*)/', $envContent, $userMatch);
     preg_match('/DB_HOST=(.*)/', $envContent, $hostMatch);
     preg_match('/DB_PORT=(.*)/', $envContent, $portMatch);
-    preg_match('/DB_PASSWORD=(.*)/', $envContent, $passMatch);
 
     $db = isset($dbMatch[1]) ? trim($dbMatch[1], "\"' \r\n") : '';
     $user = isset($userMatch[1]) ? trim($userMatch[1], "\"' \r\n") : '';
     $host = isset($hostMatch[1]) ? trim($hostMatch[1], "\"' \r\n") : '127.0.0.1';
     $port = isset($portMatch[1]) ? trim($portMatch[1], "\"' \r\n") : '3306';
-    $pass = isset($passMatch[1]) ? trim($passMatch[1], "\"' \r\n") : '';
 
-    echo "<b>Database Target:</b> {$db}<br>";
-    echo "<b>User Database:</b> {$user}<br>";
+    echo "<b>Database Target:</b> " . htmlspecialchars(substr($db, 0, 3) . '***') . "<br>";
     echo "<b>Host:</b> {$host}:{$port}<br>";
 
     // Test MySQL Connection
     echo "<h3>🗄️ MySQL Connection Test:</h3>";
     try {
-        $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
-        $pdo = new PDO($dsn, $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_TIMEOUT => 5
-        ]);
+        require_once __DIR__ . '/laravel-backend/vendor/autoload.php';
+        $app = require_once __DIR__ . '/laravel-backend/bootstrap/app.php';
+        
+        $pdo = \Illuminate\Support\Facades\DB::connection()->getPdo();
         echo "<p style='color:green;'><b>✅ KONEKSI DATABASE BERHASIL!</b> Terhubung ke MySQL server.</p>";
 
-        // Check tables count
-        $stmt = $pdo->query("SHOW TABLES");
-        $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        echo "<p>Jumlah Tabel Terdaftar: <b>" . count($tables) . " tabel</b></p>";
+        $tableCount = count(\Illuminate\Support\Facades\DB::select('SHOW TABLES'));
+        echo "<p>Jumlah Tabel Terdaftar: <b>{$tableCount} tabel</b></p>";
         
-        if (count($tables) > 0) {
-            echo "<p style='color:green;'><b>✅ Database sudah terisi tabel:</b></p><ul>";
-            foreach (array_slice($tables, 0, 8) as $t) {
-                echo "<li>" . htmlspecialchars($t) . "</li>";
-            }
-            if (count($tables) > 8) echo "<li>... dan " . (count($tables) - 8) . " tabel lainnya.</li>";
-            echo "</ul>";
+        $userCount = \Illuminate\Support\Facades\DB::table('users')->count();
+        echo "<p>Jumlah Akun Pengguna: <b>{$userCount} akun terdaftar</b></p>";
 
-            // Check users
-            $userStmt = $pdo->query("SELECT id, name, email FROM users");
-            $users = $userStmt->fetchAll(PDO::FETCH_ASSOC);
-            echo "<p>Jumlah Akun Pengguna: <b>" . count($users) . " akun</b></p><ul>";
-            foreach ($users as $u) {
-                echo "<li><b>" . htmlspecialchars($u['name']) . "</b> (" . htmlspecialchars($u['email']) . ")</li>";
-            }
-            echo "</ul>";
-        } else {
-            echo "<p style='color:orange;'>⚠️ Database masih kosong. Klik tombol di bawah untuk menjalankan migrasi otomatis via browser:</p>";
-        }
-
-        // Action: Auto Migration Button
-        if (isset($_GET['action']) && $_GET['action'] === 'migrate') {
-            echo "<hr><h3>🚀 Menjalankan Migrasi & Seeding...</h3>";
-            require __DIR__ . '/laravel-backend/vendor/autoload.php';
-            $app = require_once __DIR__ . '/laravel-backend/bootstrap/app.php';
-            $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
-            $kernel->bootstrap();
-
-            \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
-            $output = \Illuminate\Support\Facades\Artisan::output();
-            echo "<pre style='background:#1e293b; color:#10b981; padding:15px; border-radius:8px; overflow-x:auto;'>" . htmlspecialchars($output) . "</pre>";
-            echo "<p style='color:green; font-weight:bold;'>🎉 MIGRASI DAN PENGISIAN AKUN SELESAI! Silakan coba login sekarang.</p>";
-        } elseif (isset($_GET['action']) && $_GET['action'] === 'clearcache') {
+        // Safe Diagnostic Actions (NO migrate:fresh destructive commands)
+        if (isset($_GET['action']) && $_GET['action'] === 'clearcache') {
             echo "<hr><h3>🧹 Membersihkan Cache Rute & Aplikasi...</h3>";
             require __DIR__ . '/laravel-backend/vendor/autoload.php';
             $app = require_once __DIR__ . '/laravel-backend/bootstrap/app.php';

@@ -25,40 +25,62 @@ Route::get('/health', function () {
 // Public Authentication
 Route::post('/auth/login', [AuthController::class, 'login']);
 
-// Public Direct Storage & Evidence Image Streamer (Bypasses all symlink and Apache rewrite issues)
+// Public Direct Storage & Evidence Image Streamer (Hardened with Canonical Realpath Containment & Extension Allowlist)
 Route::get('/storage-stream/{path}', function ($path) {
-    $clean = preg_replace('#^(storage/|/storage/|public/)+#', '', ltrim($path, '/'));
-    $filename = basename($path);
+    if (empty($path) || str_contains($path, '..') || str_contains($path, "\0")) {
+        return response('Invalid path.', 400);
+    }
+
+    $clean = preg_replace('#^(storage/|/storage/|public/)+#', '', ltrim($path, '/\\'));
+    $clean = str_replace('\\', '/', $clean);
+    $filename = basename($clean);
+
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'svg'];
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    if (!in_array($ext, $allowedExtensions, true)) {
+        return response('File extension not allowed.', 403);
+    }
+
+    $allowedRoots = array_values(array_filter([
+        realpath(storage_path('app/public')),
+        realpath(base_path('storage/app/public')),
+        realpath(public_path('storage')),
+    ]));
 
     $candidatePaths = array_unique(array_filter([
         storage_path('app/public/' . $clean),
-        storage_path('app/public/' . $path),
         storage_path('app/public/uploads/' . $filename),
-        storage_path('app/uploads/' . $filename),
-        storage_path('app/' . $clean),
-        storage_path('app/private/' . $clean),
         base_path('storage/app/public/' . $clean),
         base_path('storage/app/public/uploads/' . $filename),
-        base_path('../laravel-backend/storage/app/public/' . $clean),
-        base_path('../laravel-backend/storage/app/public/uploads/' . $filename),
         public_path('storage/' . $clean),
         public_path('uploads/' . $filename),
-        base_path('public/uploads/' . $filename),
-        base_path('../uploads/' . $filename),
-        base_path('../public/uploads/' . $filename),
     ]));
 
     foreach ($candidatePaths as $file) {
         if ($file && file_exists($file) && !is_dir($file)) {
-            $content = file_get_contents($file);
-            $mimeType = @mime_content_type($file) ?: 'image/jpeg';
-            return response($content, 200, [
-                'Content-Type' => $mimeType,
-                'Content-Length' => strlen($content),
-                'Cache-Control' => 'public, max-age=31536000',
-                'Access-Control-Allow-Origin' => '*',
-                'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
-            ]);
+            $real = realpath($file);
+            if (!$real) continue;
+
+            $isContained = false;
+            foreach ($allowedRoots as $root) {
+                if ($root && str_starts_with($real, $root)) {
+                    $isContained = true;
+                    break;
+                }
+            }
+
+            if ($isContained && filesize($real) > 0) {
+                $content = file_get_contents($real);
+                $mimeType = @mime_content_type($real) ?: 'image/jpeg';
+                return response($content, 200, [
+                    'Content-Type' => $mimeType,
+                    'Content-Length' => strlen($content),
+                    'Cache-Control' => 'public, max-age=31536000',
+                    'Access-Control-Allow-Origin' => '*',
+                    'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
+                    'X-Content-Type-Options' => 'nosniff',
+                ]);
+            }
         }
     }
 
@@ -67,6 +89,7 @@ Route::get('/storage-stream/{path}', function ($path) {
         'Content-Type' => 'image/svg+xml',
         'Cache-Control' => 'no-cache',
         'Access-Control-Allow-Origin' => '*',
+        'X-Content-Type-Options' => 'nosniff',
     ]);
 })->where('path', '.*');
 
@@ -135,6 +158,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Berita Acara (BA) Opname
     Route::post('/ba/generate', [BaDocumentController::class, 'generate']);
     Route::post('/ba/generate/{workOrderId}', [BaDocumentController::class, 'generate']);
+    Route::post('/ba/complete/{id}', [BaDocumentController::class, 'complete']);
+    Route::post('/work-orders/{id}/complete', [BaDocumentController::class, 'complete']);
     Route::get('/ba', [BaDocumentController::class, 'index']);
     Route::get('/ba/{identifier}', [BaDocumentController::class, 'show']);
     Route::get('/ba/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);

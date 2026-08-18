@@ -64,7 +64,19 @@ class NotificationController extends Controller
     public function markAllAsRead(Request $request)
     {
         $user = $request->user();
-        $allIds = NotificationFeed::pluck('id')->toArray();
+        $query = NotificationFeed::query();
+
+        if ($user->hasRole('CLIENT')) {
+            $query->where(function ($q) {
+                $q->where('target_role', 'CLIENT')->orWhere('target_role', 'ALL');
+            });
+        } elseif ($user->hasRole('VENDOR')) {
+            $query->where(function ($q) {
+                $q->where('target_role', 'VENDOR')->orWhere('target_role', 'ALL');
+            });
+        }
+
+        $allIds = $query->pluck('id')->toArray();
         $syncData = [];
         foreach ($allIds as $nid) {
             $syncData[$nid] = ['read_at' => now()];
@@ -74,7 +86,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Semua notifikasi telah ditandai sebagai dibaca.',
+            'message' => 'Semua notifikasi yang relevan telah ditandai sebagai dibaca.',
         ]);
     }
 }
