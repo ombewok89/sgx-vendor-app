@@ -410,23 +410,6 @@ function drawRealisticMiniMap(ctx, x, y, width, height, scale, satelliteImg) {
     ctx.stroke();
   }
 
-  // Cross Street / Road Outline
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.lineWidth = 4 * scale;
-  ctx.beginPath();
-  ctx.moveTo(x, y + height * 0.38);
-  ctx.lineTo(x + width, y + height * 0.68);
-  ctx.stroke();
-
-  // Street Name labels
-  ctx.save();
-  ctx.font = `bold ${10 * scale}px "Inter", Arial`;
-  ctx.fillStyle = '#FFFFFF';
-  ctx.shadowColor = 'rgba(0,0,0,0.95)';
-  ctx.shadowBlur = 5 * scale;
-  ctx.fillText('Jl. Jend. Sudirman', x + (12 * scale), y + (height * 0.38) - (6 * scale));
-  ctx.restore();
-
   // Vision Field Angle Cone (Emerald/Cyan wedge)
   const pinX = x + width * 0.48;
   const pinY = y + height * 0.52;

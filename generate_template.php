@@ -126,10 +126,6 @@ imagefilledrectangle($img, $mapX + 220, $mapY + 30, $mapX + 340, $mapY + 110, $r
 imagefilledrectangle($img, $mapX, $mapY + 110, $mapX + $mapW, $mapY + 130, $roadOrange);
 imagefilledrectangle($img, $mapX, $mapY + 114, $mapX + $mapW, $mapY + 126, $roadYellow);
 
-// Street Label
-imagestring($img, 4, $mapX + 20, $mapY + 90, "Jl. Jend. Sudirman", $white);
-imagestring($img, 4, $mapX + 21, $mapY + 90, "Jl. Jend. Sudirman", $white);
-
 // Vision Angle & GPS Pin
 $pinX = $mapX + 190;
 $pinY = $mapY + 130;
