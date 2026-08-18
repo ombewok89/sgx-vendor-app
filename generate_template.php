@@ -41,57 +41,62 @@ if (file_exists($logoPath)) {
 
 // 3. Bottom Information & Footer Area
 $footerH = 140;
-$panelH = 340;
+$panelH = 360;
 $totalBottomH = $panelH + $footerH;
 $panelY = $height - $totalBottomH;
 
-// Semi-transparent frosted white/slate overlay panel for maximum legibility
-$panelBg = imagecolorallocatealpha($img, 255, 255, 255, 15); // Translucent clean card
-imagefilledrectangle($img, 40, $panelY, $width - 40, $panelY + $panelH, $panelBg);
-imagerectangle($img, 40, $panelY, $width - 40, $panelY + $panelH, $grayBorder);
+// NO dark background - 100% transparent so field photo is fully visible!
 
 // --- AREA INFORMASI LOKASI (Bawah-Kiri / Tengah) ---
 
 // A. Blok Waktu
 $timeBoxX = 70;
-$timeBoxY = $panelY + 30;
+$timeBoxY = $panelY + 40;
 
-// Big time text (10:23)
-// We will draw large readable time text with crisp outline
-$timeStr = "10:23";
-$dateStr = "06/08/2026";
-$dayStr = "Kamis";
+$timeStr = "0 0 : 0 9";
+$dateStr = "19/08/2026";
+$dayStr = "Rabu";
 
-// Time font simulation / GD text
-imagestring($img, 5, $timeBoxX, $timeBoxY + 10, "1 0 : 2 3", $pureBlack);
-imagestring($img, 5, $timeBoxX + 1, $timeBoxY + 10, "1 0 : 2 3", $pureBlack);
-imagestring($img, 5, $timeBoxX + 2, $timeBoxY + 10, "1 0 : 2 3", $pureBlack);
-imagestring($img, 5, $timeBoxX, $timeBoxY + 11, "1 0 : 2 3", $pureBlack);
+// Large bold time with crisp black stroke
+imagestring($img, 5, $timeBoxX, $timeBoxY, $timeStr, $pureBlack);
+imagestring($img, 5, $timeBoxX + 1, $timeBoxY, $timeStr, $pureBlack);
+imagestring($img, 5, $timeBoxX + 2, $timeBoxY, $timeStr, $pureBlack);
+imagestring($img, 5, $timeBoxX, $timeBoxY + 1, $timeStr, $pureBlack);
+imagestring($img, 5, $timeBoxX, $timeBoxY + 2, $timeStr, $pureBlack);
 
 // Vertical Divider Bar
-$divX = $timeBoxX + 180;
-imagefilledrectangle($img, $divX, $timeBoxY, $divX + 4, $timeBoxY + 60, $gold);
+$divX = $timeBoxX + 200;
+imagefilledrectangle($img, $divX, $timeBoxY - 5, $divX + 6, $timeBoxY + 70, $gold);
 
-// Date & Day (below/next to time)
-imagestring($img, 5, $divX + 20, $timeBoxY + 10, $dateStr, $black);
-imagestring($img, 5, $divX + 20, $timeBoxY + 35, $dayStr, $darkGray);
+// Date & Day
+imagestring($img, 5, $divX + 25, $timeBoxY + 5, $dateStr, $pureBlack);
+imagestring($img, 5, $divX + 26, $timeBoxY + 5, $dateStr, $pureBlack);
+imagestring($img, 5, $divX + 25, $timeBoxY + 38, $dayStr, $darkGray);
+imagestring($img, 5, $divX + 26, $timeBoxY + 38, $dayStr, $darkGray);
+
+// Stage Badge
+$stageY = $timeBoxY + 95;
+$stageStr = "[SPK-SGX-20260818-0001] • TAHAP: BEFORE";
+imagestring($img, 5, $timeBoxX, $stageY, $stageStr, $gold);
+imagestring($img, 5, $timeBoxX + 1, $stageY, $stageStr, $gold);
 
 // B. Blok Alamat
-$addressY = $timeBoxY + 80;
+$addressY = $stageY + 45;
 $addressStr = "Mataram, Kec. Tugumulyo, Kabupaten Musi Rawas, Sumatera Selatan 31626";
-imagestring($img, 5, $timeBoxX, $addressY, $addressStr, $black);
-imagestring($img, 5, $timeBoxX + 1, $addressY, $addressStr, $black);
+imagestring($img, 5, $timeBoxX, $addressY, $addressStr, $pureBlack);
+imagestring($img, 5, $timeBoxX + 1, $addressY, $addressStr, $pureBlack);
+imagestring($img, 5, $timeBoxX, $addressY + 1, $addressStr, $pureBlack);
 
 // C. Blok Koordinat (Solid Black Badge with Bright White Text)
-$coordY = $addressY + 45;
-$coordBadgeW = 520;
-$coordBadgeH = 46;
+$coordY = $addressY + 48;
+$coordBadgeW = 560;
+$coordBadgeH = 52;
 imagefilledrectangle($img, $timeBoxX, $coordY, $timeBoxX + $coordBadgeW, $coordY + $coordBadgeH, $pureBlack);
 
 $whiteText = imagecolorallocate($img, 255, 255, 255);
-$coordStr = "Koordinat: -3.169254, 102.951034";
-imagestring($img, 5, $timeBoxX + 25, $coordY + 14, $coordStr, $whiteText);
-imagestring($img, 5, $timeBoxX + 26, $coordY + 14, $coordStr, $whiteText);
+$coordStr = "Koordinat: -3.824921, 102.286299";
+imagestring($img, 5, $timeBoxX + 25, $coordY + 16, $coordStr, $whiteText);
+imagestring($img, 5, $timeBoxX + 26, $coordY + 16, $coordStr, $whiteText);
 
 
 // --- SISIPAN MAP (Bawah-Kanan, di samping koordinat) ---

@@ -114,91 +114,102 @@ export async function stampGpsWatermark(file, metadata = {}) {
             drawRoundedImage(ctx, logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 22 * scale);
           }
 
-          // 2. Draw Bottom Geotagging & GPS Map Panel (Prominent, High Legibility)
-          const footerBarH = Math.round(100 * scale); // White branding bar height
-          const infoPanelH = Math.round(290 * scale); // Data overlay height
+          // 2. Bottom Geotagging & GPS Overlay (100% Transparent Over Field Photo)
+          const footerBarH = Math.round(95 * scale); // White branding bar height
+          const infoPanelH = Math.round(310 * scale); // Overlay area height
           const totalPanelH = infoPanelH + footerBarH;
           const panelY = height - totalPanelH;
 
-          // Frosted glass card backdrop
-          ctx.save();
-          const darkGrad = ctx.createLinearGradient(0, panelY, 0, panelY + infoPanelH);
-          darkGrad.addColorStop(0, 'rgba(15, 23, 42, 0.88)');
-          darkGrad.addColorStop(1, 'rgba(15, 23, 42, 0.98)');
-          ctx.fillStyle = darkGrad;
-          ctx.fillRect(0, panelY, width, infoPanelH);
-          ctx.restore();
-
-          // Amber/Gold top line accent
-          ctx.fillStyle = '#EAB308';
-          ctx.fillRect(0, panelY, width, 4 * scale);
+          // NO dark covering background - 100% transparent so field photo is fully visible!
 
           // 3. Mini Map Dimensions (Right side)
-          const mapW = Math.round(270 * scale);
-          const mapH = Math.round(230 * scale);
+          const mapW = Math.round(280 * scale);
+          const mapH = Math.round(240 * scale);
           const mapX = width - mapW - (28 * scale);
-          const mapY = panelY + (28 * scale);
+          const mapY = panelY + (30 * scale);
 
-          // 4. Draw Left Text Metadata
+          // 4. Draw Left Text Metadata (Large, High-Contrast with Text Strokes)
           const textMarginL = Math.round(32 * scale);
-          const maxTextW = mapX - textMarginL - (20 * scale);
-          let currentY = panelY + (68 * scale);
+          const maxTextW = mapX - textMarginL - (24 * scale);
+          let currentY = panelY + (78 * scale);
 
-          // BLOK WAKTU (LARGE DIGITAL TIME WITH SUBTLE OUTLINE)
+          // BLOK WAKTU (EXTRA LARGE DIGITAL TIME: e.g. 00:09)
           ctx.save();
-          ctx.font = `900 ${68 * scale}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
-          ctx.fillStyle = '#FFFFFF';
-          ctx.strokeStyle = '#0F172A';
-          ctx.lineWidth = 4 * scale;
+          ctx.font = `900 ${92 * scale}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
+          ctx.shadowColor = 'rgba(0,0,0,0.95)';
+          ctx.shadowBlur = 16 * scale;
+          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+          ctx.lineWidth = 7 * scale;
           ctx.strokeText(timeStr, textMarginL, currentY);
+          ctx.fillStyle = '#FFFFFF';
           ctx.fillText(timeStr, textMarginL, currentY);
           const timeW = ctx.measureText(timeStr).width;
 
           // Vertical Gold Separator Line
-          const sepX = textMarginL + timeW + (18 * scale);
+          const sepX = textMarginL + timeW + (20 * scale);
           ctx.fillStyle = '#EAB308';
-          ctx.fillRect(sepX, panelY + (18 * scale), 4 * scale, 58 * scale);
+          ctx.fillRect(sepX, panelY + (10 * scale), 5 * scale, 76 * scale);
 
           // Date & Day
-          ctx.font = `700 ${22 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.fillStyle = '#F8FAFC';
-          ctx.fillText(dateStr, sepX + (16 * scale), currentY - (30 * scale));
+          ctx.font = `800 ${28 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          ctx.strokeText(dateStr, sepX + (18 * scale), currentY - (42 * scale));
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(dateStr, sepX + (18 * scale), currentY - (42 * scale));
 
-          ctx.font = `800 ${24 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.fillStyle = '#E2E8F0';
-          ctx.fillText(dayName, sepX + (16 * scale), currentY);
+          ctx.font = `800 ${30 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          ctx.strokeText(dayName, sepX + (18 * scale), currentY - (6 * scale));
+          ctx.fillStyle = '#F1F5F9';
+          ctx.fillText(dayName, sepX + (18 * scale), currentY - (6 * scale));
           ctx.restore();
 
-          // Stage & SPK Label Badge
-          currentY += (36 * scale);
-          ctx.font = `800 ${18 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          // Stage & SPK Label Badge (Enlarged)
+          currentY += (42 * scale);
+          ctx.save();
+          ctx.font = `900 ${24 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          ctx.shadowColor = 'rgba(0,0,0,0.95)';
+          ctx.shadowBlur = 12 * scale;
+          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+          ctx.lineWidth = 5 * scale;
+          const stageBadgeText = `[${spkNumber}] • TAHAP: ${stage}`;
+          ctx.strokeText(stageBadgeText, textMarginL, currentY);
           ctx.fillStyle = stage === 'BEFORE' ? '#FACC15' : stage === 'PROCESS' ? '#60A5FA' : '#4ADE80';
-          ctx.fillText(`[${spkNumber}] • TAHAP: ${stage}`, textMarginL, currentY);
+          ctx.fillText(stageBadgeText, textMarginL, currentY);
+          ctx.restore();
 
-          // BLOK ALAMAT (Dynamic Address)
-          currentY += (34 * scale);
-          ctx.font = `700 ${20 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.fillStyle = '#FFFFFF';
+          // BLOK ALAMAT (Enlarged & High-Contrast)
+          currentY += (40 * scale);
+          ctx.save();
+          ctx.font = `800 ${26 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          ctx.shadowColor = 'rgba(0,0,0,0.95)';
+          ctx.shadowBlur = 14 * scale;
+          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+          ctx.lineWidth = 6 * scale;
           const fullDisplayAddress = dynamicAddress || 'Mataram, Kec. Tugumulyo, Kabupaten Musi Rawas, Sumatera Selatan 31626';
-          ctx.fillText(truncateText(ctx, fullDisplayAddress, maxTextW), textMarginL, currentY);
+          const truncatedAddr = truncateText(ctx, fullDisplayAddress, maxTextW);
+          ctx.strokeText(truncatedAddr, textMarginL, currentY);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(truncatedAddr, textMarginL, currentY);
+          ctx.restore();
 
-          // BLOK KOORDINAT (Solid Black Badge with Bright White Text)
-          currentY += (24 * scale);
+          // BLOK KOORDINAT (Enlarged Solid Black Badge with Bright White Text)
+          currentY += (26 * scale);
           const coordText = `Koordinat: ${latFormatted}, ${lngFormatted}`;
-          ctx.font = `700 ${18 * scale}px "JetBrains Mono", monospace, Arial`;
+          ctx.font = `800 ${22 * scale}px "JetBrains Mono", monospace, Arial`;
           const coordTextW = ctx.measureText(coordText).width;
-          const badgePadX = 14 * scale;
-          const badgeH = 34 * scale;
+          const badgePadX = 18 * scale;
+          const badgeH = 42 * scale;
 
           ctx.save();
-          ctx.fillStyle = '#000000';
+          ctx.shadowColor = 'rgba(0,0,0,0.85)';
+          ctx.shadowBlur = 10 * scale;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.92)';
           ctx.fillRect(textMarginL, currentY, coordTextW + (badgePadX * 2), badgeH);
-          ctx.strokeStyle = '#334155';
-          ctx.lineWidth = 1.5 * scale;
+          ctx.strokeStyle = '#64748B';
+          ctx.lineWidth = 2 * scale;
           ctx.strokeRect(textMarginL, currentY, coordTextW + (badgePadX * 2), badgeH);
 
           ctx.fillStyle = '#FFFFFF';
-          ctx.fillText(coordText, textMarginL + badgePadX, currentY + (24 * scale));
+          ctx.fillText(coordText, textMarginL + badgePadX, currentY + (29 * scale));
           ctx.restore();
 
           // 5. Draw Mini GPS Satellite Map on the right
