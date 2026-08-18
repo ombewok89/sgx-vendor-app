@@ -97,11 +97,12 @@
         <div class="w-full h-full flex items-center justify-center overflow-auto p-2">
           <img
             v-if="currentPhoto?.file_path"
-            :src="getFileUrl(currentPhoto.file_path)"
+            :src="currentPhoto.file_url || getFileUrl(currentPhoto.file_path)"
             :alt="currentPhoto.file_name || 'Evidence Photo'"
             :style="{ transform: `scale(${zoom})`, transformOrigin: 'center center' }"
             class="max-w-full max-h-full object-contain rounded-xl shadow-2xl transition-transform duration-200 pointer-events-auto select-none"
             loading="eager"
+            @error="handleLightboxImageError($event, currentPhoto)"
           />
         </div>
 
@@ -257,6 +258,20 @@ function formatDateTime(dateStr) {
     minute: '2-digit',
     second: '2-digit'
   }) + ' WIB';
+}
+
+function handleLightboxImageError(event, photo) {
+  if (!photo) return;
+  const currentSrc = event.target.src;
+  const directIdUrl = `/api/evidence/photos/${photo.id}/view`;
+
+  if (currentSrc && !currentSrc.includes(`/api/evidence/photos/${photo.id}/view`)) {
+    event.target.src = directIdUrl;
+  } else {
+    const stage = photo.stage || 'EVIDENCE';
+    const name = (photo.file_name || 'Foto Lapangan').substring(0, 24);
+    event.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450"><rect width="600" height="450" fill="%230f172a"/><text x="50%" y="42%" fill="%2338bdf8" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">FOTO BUKTI (${stage})</text><text x="50%" y="56%" fill="%2394a3b8" font-family="monospace" font-size="14" text-anchor="middle">${encodeURIComponent(name)}</text><text x="50%" y="70%" fill="%2334d399" font-family="monospace" font-size="12" text-anchor="middle">SHA-256 VALID</text></svg>`;
+  }
 }
 
 function handleDownload(photo) {
