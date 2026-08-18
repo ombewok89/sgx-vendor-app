@@ -25,14 +25,45 @@ class EvidenceService
         // 2. Compute SHA-256 Hash
         $fileHash = hash_file('sha256', $file->getRealPath());
 
-        // 3. Save File to public disk
-        if (!Storage::disk('public')->exists('uploads')) {
-            Storage::disk('public')->makeDirectory('uploads');
+        // 3. Save File to physical storage directories with 0777 permissions
+        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+        $filename = time() . '-' . Str::random(12) . '.' . $extension;
+
+        // Target direct physical folders
+        $primaryDir = storage_path('app/public/uploads');
+        if (!is_dir($primaryDir)) {
+            @mkdir($primaryDir, 0777, true);
+        }
+        @chmod($primaryDir, 0777);
+
+        // Also ensure secondary mirrors exist
+        $rootStorageDir = base_path('../storage/uploads');
+        if (!is_dir($rootStorageDir) && file_exists(base_path('../.htaccess'))) {
+            @mkdir($rootStorageDir, 0777, true);
         }
 
-        $extension = $file->getClientOriginalExtension() ?: 'jpg';
-        $filename = time() . '-' . Str::random(10) . '.' . $extension;
-        $path = $file->storeAs('uploads', $filename, 'public');
+        $destFile = $primaryDir . DIRECTORY_SEPARATOR . $filename;
+        
+        // Copy physical bytes directly
+        if (!copy($file->getRealPath(), $destFile)) {
+            // Fallback to storeAs
+            $path = $file->storeAs('uploads', $filename, 'public');
+        } else {
+            @chmod($destFile, 0777);
+            $path = 'uploads/' . $filename;
+        }
+
+        // Mirror to root storage if accessible
+        if (is_dir($rootStorageDir)) {
+            @copy($destFile, $rootStorageDir . DIRECTORY_SEPARATOR . $filename);
+            @chmod($rootStorageDir . DIRECTORY_SEPARATOR . $filename, 0777);
+        }
+
+        // Verify write succeeded
+        if (!file_exists($destFile) || filesize($destFile) === 0) {
+            // Last resort: standard storeAs
+            $path = $file->storeAs('uploads', $filename, 'public');
+        }
 
         // 4. Calculate sequence
         $stage = strtoupper($metadata['stage'] ?? 'AFTER');
