@@ -505,6 +505,13 @@ import {
   Layers
 } from 'lucide-vue-next';
 
+const props = defineProps({
+  initialWorkOrderId: {
+    type: Number,
+    default: null
+  }
+});
+
 const tasks = ref([]);
 const selectedTask = ref(null);
 const loading = ref(true);
@@ -564,7 +571,7 @@ async function loadTasks(preserveSelectedId = null) {
     const res = await api.getWorkOrders();
     tasks.value = res.data || [];
 
-    const targetId = preserveSelectedId || selectedTask.value?.id || (tasks.value.length > 0 ? tasks.value[0].id : null);
+    const targetId = preserveSelectedId || props.initialWorkOrderId || selectedTask.value?.id || (tasks.value.length > 0 ? tasks.value[0].id : null);
     if (targetId) {
       await handleSelectTask(targetId);
     }

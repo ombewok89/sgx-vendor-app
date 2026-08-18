@@ -44,6 +44,8 @@
           @navigate-to-spk="activeTab = 'admin_spk'"
           @open-review="activeTab = 'admin_review'"
           @select-work-order="handleSelectWorkOrder"
+          @open-detail="handleSelectWorkOrder"
+          @navigate="handleFieldNavigate"
           @approved-success="handleApprovedSuccess"
           @open-ba="handleOpenBa"
           @preview-ba="handleOpenBa"
@@ -79,6 +81,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useAuth } from './composables/useAuth';
+import { api } from './services/api';
 
 // Auth Page
 import LoginPage from './pages/auth/LoginPage.vue';
@@ -105,8 +108,10 @@ import FieldIssuesManager from './pages/admin/FieldIssuesManager.vue';
 import Reports from './pages/admin/Reports.vue';
 import NotificationLogs from './pages/admin/NotificationLogs.vue';
 
-// Field Team Page
+// Field Team Pages
+import FieldDashboard from './pages/field/FieldDashboard.vue';
 import FieldTasks from './pages/field/FieldTasks.vue';
+import FieldHistory from './pages/field/FieldHistory.vue';
 
 // Client / Principal Pages (Indomarco, Smartfren, Perbankan)
 import ClientDashboard from './pages/client/ClientDashboard.vue';
@@ -128,7 +133,7 @@ const activeBaPreview = ref(null);
 // Sync initial active tab when user role changes
 watch(() => auth.state.user?.role, (newRole) => {
   if (newRole === 'FIELD_TEAM') {
-    activeTab.value = 'field_tasks';
+    activeTab.value = 'field_dashboard';
   } else if (newRole === 'VENDOR') {
     activeTab.value = 'client_dashboard';
   } else if (newRole === 'SUPERUSER') {
@@ -159,9 +164,11 @@ const currentView = computed(() => {
 
     // FIELD TEAM
     case 'field_dashboard':
+      return FieldDashboard;
     case 'field_tasks':
-    case 'field_history':
       return FieldTasks;
+    case 'field_history':
+      return FieldHistory;
 
     // CLIENT / PRINCIPAL (INDOMARCO, SMARTFREN, DLL)
     case 'client_dashboard':
@@ -208,6 +215,8 @@ const currentView = computed(() => {
 
 const currentViewProps = computed(() => {
   switch (activeTab.value) {
+    case 'field_tasks':
+      return { initialWorkOrderId: selectedWorkOrderId.value };
     case 'super_dashboard':
     case 'dashboard':
       return { initialTab: 'dashboard' };
@@ -239,6 +248,13 @@ const currentViewProps = computed(() => {
 
 function handleSelectWorkOrder(id) {
   selectedWorkOrderId.value = id;
+}
+
+function handleFieldNavigate(tab, id = null) {
+  if (id) {
+    selectedWorkOrderId.value = id;
+  }
+  activeTab.value = tab;
 }
 
 function handleOpenReviewFromDetail(id) {
@@ -273,7 +289,7 @@ function handleCreateSuccess() {
 
 function handleLoginSuccess(user) {
   if (user?.role === 'FIELD_TEAM') {
-    activeTab.value = 'field_tasks';
+    activeTab.value = 'field_dashboard';
   } else if (user?.role === 'VENDOR') {
     activeTab.value = 'client_dashboard';
   } else if (user?.role === 'SUPERUSER') {
