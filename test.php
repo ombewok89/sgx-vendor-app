@@ -99,8 +99,61 @@ if (file_exists($envPath)) {
 
             echo "<pre style='background:#1e293b; color:#10b981; padding:15px; border-radius:8px; overflow-x:auto;'>" . htmlspecialchars($output) . "</pre>";
             echo "<p style='color:green; font-weight:bold;'>✅ SELURUH CACHE RUTE & CONFIG TELAH DIBERSIHKAN TOTAL!</p>";
+        } elseif (isset($_GET['action']) && $_GET['action'] === 'repair_storage') {
+            echo "<hr><h3>🛠️ Memperbaiki Folder Penyimpanan & Izin Foto...</h3>";
+
+            // 1. Ensure Directories exist with 0777 permissions
+            $dirs = [
+                __DIR__ . '/laravel-backend/storage/app/public/uploads',
+                __DIR__ . '/laravel-backend/storage/app/public',
+                __DIR__ . '/laravel-backend/storage/app',
+                __DIR__ . '/laravel-backend/storage/framework/cache',
+                __DIR__ . '/laravel-backend/storage/framework/sessions',
+                __DIR__ . '/laravel-backend/storage/framework/views',
+                __DIR__ . '/laravel-backend/public/storage',
+                __DIR__ . '/storage/uploads',
+                __DIR__ . '/storage',
+            ];
+
+            foreach ($dirs as $d) {
+                if (!is_dir($d)) {
+                    @mkdir($d, 0777, true);
+                }
+                @chmod($d, 0777);
+            }
+
+            // 2. Try creating symlinks
+            @symlink(__DIR__ . '/laravel-backend/storage/app/public', __DIR__ . '/laravel-backend/public/storage');
+            @symlink(__DIR__ . '/laravel-backend/storage/app/public', __DIR__ . '/storage');
+
+            // 3. Inspect Uploaded Photos
+            $photosStmt = $pdo->query("SELECT id, spk_number, file_name, file_path, stage FROM evidence_photos LEFT JOIN work_orders ON evidence_photos.work_order_id = work_orders.id ORDER BY evidence_photos.id DESC");
+            $uploadedPhotos = $photosStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo "<p style='color:green; font-weight:bold;'>✅ FOLDER PENYIMPANAN BERHASIL DISIAPKAN DENGAN IZIN AKSES PENUH (0777)!</p>";
+            echo "<p>Daftar Foto Bukti di Database (" . count($uploadedPhotos) . " foto):</p>";
+            echo "<table border='1' cellpadding='8' style='border-collapse:collapse; width:100%; font-size:12px;'>";
+            echo "<tr style='background:#f1f5f9;'><th>ID</th><th>SPK</th><th>Tahap</th><th>File Name</th><th>Path Tersimpan</th><th>File Fisik Ditemukan?</th><th>Aksi Uji</th></tr>";
+
+            foreach ($uploadedPhotos as $p) {
+                $clean = ltrim(str_replace('/storage/', '', $p['file_path']), '/');
+                $candidate = __DIR__ . '/laravel-backend/storage/app/public/' . $clean;
+                $exists = file_exists($candidate);
+
+                echo "<tr>";
+                echo "<td>" . $p['id'] . "</td>";
+                echo "<td>" . htmlspecialchars($p['spk_number'] ?? '-') . "</td>";
+                echo "<td><b>" . htmlspecialchars($p['stage']) . "</b></td>";
+                echo "<td>" . htmlspecialchars($p['file_name']) . "</td>";
+                echo "<td><code>" . htmlspecialchars($p['file_path']) . "</code></td>";
+                echo "<td>" . ($exists ? "<span style='color:green; font-weight:bold;'>✅ ADA (" . filesize($candidate) . " bytes)</span>" : "<span style='color:red;'>❌ TIDAK ADA DI DISK</span>") . "</td>";
+                echo "<td><a href='/api/storage-stream/{$clean}' target='_blank' style='color:#4f46e5; font-weight:bold;'>🔗 Buka Stream Gambar</a></td>";
+                echo "</tr>";
+            }
+            echo "</table>";
         } else {
             echo "<div style='margin-top: 20px; display:flex; gap:10px; flex-wrap:wrap;'>";
+            echo "<a href='?action=repair_storage' style='display:inline-block; padding: 12px 20px; background: #7c3aed; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>🛠️ 1-Klik Perbaiki Folder & Izin Foto Storage</a>";
             echo "<a href='?action=clearcache' style='display:inline-block; padding: 12px 20px; background: #059669; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>🧹 1-Klik Bersihkan Cache Rute & Server</a>";
             echo "<a href='?action=migrate' style='display:inline-block; padding: 12px 20px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>⚡ Migrasi Ulang Database</a>";
             echo "</div>";

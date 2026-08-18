@@ -33,6 +33,19 @@ class EvidencePhoto extends Model
         'server_timestamp' => 'datetime',
     ];
 
+    protected $appends = [
+        'file_url',
+    ];
+
+    public function getFileUrlAttribute()
+    {
+        if (empty($this->file_path)) {
+            return null;
+        }
+        $clean = ltrim(str_replace('/storage/', '', $this->file_path), '/');
+        return url('/api/storage-stream/' . $clean);
+    }
+
     public function workOrder()
     {
         return $this->belongsTo(WorkOrder::class);
