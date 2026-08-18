@@ -7,7 +7,7 @@ export function getFileUrl(filePath) {
     return filePath;
   }
   const cleanPath = filePath.replace(/^\/?storage\//, '').replace(/^\//, '');
-  return `${API_BASE}/storage-stream/${cleanPath}`;
+  return `/stream.php?file=${encodeURIComponent(cleanPath)}`;
 }
 
 function getAuthHeaders() {

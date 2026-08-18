@@ -43,7 +43,7 @@ class EvidencePhoto extends Model
             return null;
         }
         $clean = ltrim(str_replace('/storage/', '', $this->file_path), '/');
-        return url('/api/storage-stream/' . $clean);
+        return '/stream.php?file=' . urlencode($clean);
     }
 
     public function workOrder()
