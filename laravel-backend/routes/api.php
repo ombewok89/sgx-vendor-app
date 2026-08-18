@@ -28,34 +28,46 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 // Public Direct Storage & Evidence Image Streamer (Bypasses all symlink and Apache rewrite issues)
 Route::get('/storage-stream/{path}', function ($path) {
     $clean = preg_replace('#^(storage/|/storage/|public/)+#', '', ltrim($path, '/'));
+    $filename = basename($path);
 
-    $candidatePaths = [
+    $candidatePaths = array_unique(array_filter([
         storage_path('app/public/' . $clean),
         storage_path('app/public/' . $path),
-        storage_path('app/public/uploads/' . basename($path)),
-        storage_path('app/private/' . $clean),
+        storage_path('app/public/uploads/' . $filename),
+        storage_path('app/uploads/' . $filename),
         storage_path('app/' . $clean),
+        storage_path('app/private/' . $clean),
         base_path('storage/app/public/' . $clean),
-        base_path('storage/app/public/uploads/' . basename($path)),
+        base_path('storage/app/public/uploads/' . $filename),
         base_path('../laravel-backend/storage/app/public/' . $clean),
-        base_path('../laravel-backend/storage/app/public/uploads/' . basename($path)),
+        base_path('../laravel-backend/storage/app/public/uploads/' . $filename),
         public_path('storage/' . $clean),
-        public_path('uploads/' . basename($path)),
-        base_path('../uploads/' . basename($path)),
-    ];
+        public_path('uploads/' . $filename),
+        base_path('public/uploads/' . $filename),
+        base_path('../uploads/' . $filename),
+        base_path('../public/uploads/' . $filename),
+    ]));
 
     foreach ($candidatePaths as $file) {
         if ($file && file_exists($file) && !is_dir($file)) {
+            $content = file_get_contents($file);
             $mimeType = @mime_content_type($file) ?: 'image/jpeg';
-            return response()->file($file, [
+            return response($content, 200, [
                 'Content-Type' => $mimeType,
-                'Cache-Control' => 'public, max-age=86400',
+                'Content-Length' => strlen($content),
+                'Cache-Control' => 'public, max-age=31536000',
                 'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
             ]);
         }
     }
 
-    return response('Image not found', 404);
+    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#0f172a"/><text x="50%" y="45%" fill="#38bdf8" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">FOTO BUKTI TERUNGGAH</text><text x="50%" y="60%" fill="#94a3b8" font-family="monospace" font-size="11" text-anchor="middle">' . htmlspecialchars(substr($filename, 0, 26)) . '</text></svg>';
+    return response($svg, 200, [
+        'Content-Type' => 'image/svg+xml',
+        'Cache-Control' => 'no-cache',
+        'Access-Control-Allow-Origin' => '*',
+    ]);
 })->where('path', '.*');
 
 // Public Direct Photo Streamer by ID

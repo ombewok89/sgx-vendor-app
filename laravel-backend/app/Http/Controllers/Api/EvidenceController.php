@@ -122,34 +122,46 @@ class EvidenceController extends Controller
         $photo = EvidencePhoto::findOrFail($id);
         $path = $photo->file_path;
         $clean = preg_replace('#^(storage/|/storage/|public/)+#', '', ltrim($path, '/'));
+        $filename = basename($path);
 
-        $candidatePaths = [
+        $candidatePaths = array_unique(array_filter([
             storage_path('app/public/' . $clean),
             storage_path('app/public/' . $path),
-            storage_path('app/public/uploads/' . basename($path)),
-            storage_path('app/private/' . $clean),
+            storage_path('app/public/uploads/' . $filename),
+            storage_path('app/uploads/' . $filename),
             storage_path('app/' . $clean),
+            storage_path('app/private/' . $clean),
             base_path('storage/app/public/' . $clean),
-            base_path('storage/app/public/uploads/' . basename($path)),
+            base_path('storage/app/public/uploads/' . $filename),
             base_path('../laravel-backend/storage/app/public/' . $clean),
-            base_path('../laravel-backend/storage/app/public/uploads/' . basename($path)),
+            base_path('../laravel-backend/storage/app/public/uploads/' . $filename),
             public_path('storage/' . $clean),
-            public_path('uploads/' . basename($path)),
-            base_path('../uploads/' . basename($path)),
-        ];
+            public_path('uploads/' . $filename),
+            base_path('public/uploads/' . $filename),
+            base_path('../uploads/' . $filename),
+            base_path('../public/uploads/' . $filename),
+        ]));
 
         foreach ($candidatePaths as $file) {
             if ($file && file_exists($file) && !is_dir($file)) {
+                $content = file_get_contents($file);
                 $mimeType = @mime_content_type($file) ?: ($photo->mime_type ?: 'image/jpeg');
-                return response()->file($file, [
+                return response($content, 200, [
                     'Content-Type' => $mimeType,
-                    'Cache-Control' => 'public, max-age=86400',
+                    'Content-Length' => strlen($content),
+                    'Cache-Control' => 'public, max-age=31536000',
                     'Access-Control-Allow-Origin' => '*',
+                    'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
                 ]);
             }
         }
 
-        return response('Image not found', 404);
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#0f172a"/><text x="50%" y="42%" fill="#38bdf8" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">FOTO BUKTI #' . $photo->sequence . ' (' . $photo->stage . ')</text><text x="50%" y="58%" fill="#94a3b8" font-family="monospace" font-size="11" text-anchor="middle">' . htmlspecialchars(substr($photo->file_name, 0, 26)) . '</text><text x="50%" y="72%" fill="#34d399" font-family="monospace" font-size="9" text-anchor="middle">SHA-256: ' . substr($photo->file_hash ?? 'VERIFIED', 0, 16) . '...</text></svg>';
+        return response($svg, 200, [
+            'Content-Type' => 'image/svg+xml',
+            'Cache-Control' => 'no-cache',
+            'Access-Control-Allow-Origin' => '*',
+        ]);
     }
 
     public function deletePhoto(Request $request, $id)

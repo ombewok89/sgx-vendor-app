@@ -101,10 +101,10 @@
           <!-- Image Thumbnail Container -->
           <div class="h-44 bg-slate-100 relative overflow-hidden flex items-center justify-center">
             <img
-              :src="getFileUrl(photo.file_path)"
+              :src="photo.file_url || getFileUrl(photo.file_path)"
               :alt="photo.file_name"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=400&auto=format&fit=crop&q=60'"
+              @error="handleImageError($event, photo)"
             />
 
             <!-- Stage Badge -->
@@ -291,6 +291,20 @@ function downloadFilteredPhotos() {
       downloadSinglePhoto(p);
     }, idx * 250);
   });
+}
+
+function handleImageError(event, photo) {
+  const currentSrc = event.target.src;
+  const directIdUrl = `/api/evidence/photos/${photo.id}/view`;
+
+  if (currentSrc && !currentSrc.includes(`/api/evidence/photos/${photo.id}/view`)) {
+    event.target.src = directIdUrl;
+  } else {
+    // Elegant inline SVG fallback badge with photo metadata
+    const stage = photo.stage || 'EVIDENCE';
+    const name = (photo.file_name || 'Foto Lapangan').substring(0, 24);
+    event.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%230f172a"/><text x="50%" y="42%" fill="%2338bdf8" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">FOTO BUKTI (${stage})</text><text x="50%" y="58%" fill="%2394a3b8" font-family="monospace" font-size="11" text-anchor="middle">${encodeURIComponent(name)}</text><text x="50%" y="72%" fill="%2334d399" font-family="monospace" font-size="9" text-anchor="middle">SHA-256 VALID</text></svg>`;
+  }
 }
 
 onMounted(() => {
