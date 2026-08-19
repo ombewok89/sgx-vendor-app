@@ -32,8 +32,10 @@ class CheckInService
         $settingRadius = \App\Models\SystemSetting::where('key', 'geofence_default_radius_meters')->value('value');
         $maxRadiusMeters = (float) ($settingRadius ?: ($data['max_radius_meters'] ?? 500));
 
+        $isRequireCheckin = filter_var($workOrder->require_checkin, FILTER_VALIDATE_BOOLEAN);
+
         // Hanya lakukan validasi radius ketat jika require_checkin AKTIF dan target koordinat tersedia
-        if ($workOrder->require_checkin && $workOrder->target_lat && $workOrder->target_lng && $lat && $lng) {
+        if ($isRequireCheckin && !empty($workOrder->target_lat) && !empty($workOrder->target_lng) && $lat && $lng) {
             $distance = self::calculateDistanceMeters(
                 $lat,
                 $lng,

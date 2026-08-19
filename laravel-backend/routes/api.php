@@ -127,15 +127,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications-feed/mark-all-read', [NotificationController::class, 'markAllAsRead']);
 
     // Work Orders
-    Route::get('/work-orders', [WorkOrderController::class, 'index']);
-    Route::get('/work-orders/{id}', [WorkOrderController::class, 'show']);
-    Route::post('/work-orders', [WorkOrderController::class, 'store']);
     Route::post('/work-orders/update-location', [WorkOrderController::class, 'updateLocation']);
     Route::post('/work-orders/toggle-checkin', [WorkOrderController::class, 'toggleCheckin']);
-    Route::match(['put', 'post'], '/work-orders/{id}', [WorkOrderController::class, 'update']);
-    Route::post('/work-orders/{id}/update', [WorkOrderController::class, 'update']);
-    Route::post('/work-orders/{id}/assign', [WorkOrderController::class, 'assignTeam']);
-    Route::post('/work-orders/{id}/submit', [WorkOrderController::class, 'submit']);
+    Route::get('/work-orders', [WorkOrderController::class, 'index']);
+    Route::post('/work-orders', [WorkOrderController::class, 'store']);
+    Route::get('/work-orders/{id}', [WorkOrderController::class, 'show'])->whereNumber('id');
+    Route::match(['put', 'post'], '/work-orders/{id}', [WorkOrderController::class, 'update'])->whereNumber('id');
+    Route::post('/work-orders/{id}/update', [WorkOrderController::class, 'update'])->whereNumber('id');
+    Route::post('/work-orders/{id}/assign', [WorkOrderController::class, 'assignTeam'])->whereNumber('id');
+    Route::post('/work-orders/{id}/submit', [WorkOrderController::class, 'submit'])->whereNumber('id');
+    Route::post('/work-orders/{id}/check-in', [CheckInController::class, 'checkIn'])->whereNumber('id');
+    Route::post('/work-orders/{id}/complete', [BaDocumentController::class, 'complete'])->whereNumber('id');
 
     // Check-In (Geofencing)
     Route::post('/check-ins', [CheckInController::class, 'store']);

@@ -205,11 +205,25 @@
                 <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600" /> TERVERIFIKASI (1x Untuk Semua Item)
               </span>
               <span
+                v-else-if="!selectedTask?.require_checkin"
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1"
+              >
+                <span>Bebas Lokasi (Opsional)</span>
+              </span>
+              <span
                 v-else
                 class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 border border-amber-300"
               >
                 Wajib Check-In
               </span>
+            </div>
+
+            <!-- Notice if require_checkin is disabled -->
+            <div v-if="!selectedTask?.require_checkin && !isCheckedIn" class="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl text-xs text-indigo-950 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <CheckCircle2 class="w-4 h-4 text-indigo-600 shrink-0" />
+                <span>Pekerjaan ini berstatus <strong>Bebas Lokasi</strong>. Anda dapat langsung mengunggah foto bukti di Langkah 2, atau melakukan check-in lokasi di bawah.</span>
+              </div>
             </div>
 
             <GeolocationCapture @locationCaptured="setCapturedGps" />
@@ -228,7 +242,7 @@
                 class="w-full py-3 bg-gradient-to-r from-brand-900 via-brand-800 to-brand-700 hover:from-brand-800 hover:to-brand-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-900/20 transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Navigation class="w-4 h-4" />
-                <span>{{ checkingIn ? 'Mencatat Check-In Real-time...' : 'Mulai Pekerjaan & Check-In Cabang Sekarang' }}</span>
+                <span>{{ checkingIn ? 'Mencatat Check-In Real-time...' : (selectedTask?.require_checkin ? 'Mulai Pekerjaan & Check-In Cabang Sekarang' : 'Catat Presensi Lokasi GPS (Opsional)') }}</span>
               </button>
             </div>
             <div v-else class="p-3.5 bg-emerald-500/10 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-center justify-between">
@@ -473,7 +487,7 @@
                 <CheckCircle2 :class="['w-4 h-4 shrink-0', isCheckinSatisfied ? 'text-emerald-400' : 'text-slate-500']" />
                 <div>
                   <div class="font-bold text-white">Check-in GPS Lokasi Cabang</div>
-                  <div class="text-[10px] opacity-80">{{ isCheckinSatisfied ? 'Sudah Tervalidasi ✓' : 'Belum Check-In' }}</div>
+                  <div class="text-[10px] opacity-80">{{ isCheckedIn ? 'Sudah Tervalidasi ✓' : (!selectedTask?.require_checkin ? 'Bebas Lokasi (Opsional) ✓' : 'Belum Check-In') }}</div>
                 </div>
               </div>
 
