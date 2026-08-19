@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         // 1. Roles (Spatie)
         $roles = [
             'SUPERUSER' => Role::firstOrCreate(['name' => 'SUPERUSER', 'guard_name' => 'sanctum']),
+            'SUPERVISOR' => Role::firstOrCreate(['name' => 'SUPERVISOR', 'guard_name' => 'sanctum']),
             'ADMIN' => Role::firstOrCreate(['name' => 'ADMIN', 'guard_name' => 'sanctum']),
             'FIELD_TEAM' => Role::firstOrCreate(['name' => 'FIELD_TEAM', 'guard_name' => 'sanctum']),
             'VENDOR' => Role::firstOrCreate(['name' => 'VENDOR', 'guard_name' => 'sanctum']),
@@ -117,6 +118,14 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
         $uSuper->syncRoles(['SUPERUSER']);
+
+        $uSupervisor = User::firstOrCreate(['email' => 'supervisor@sgx.com'], [
+            'name' => 'Supervisor Operasional SGX',
+            'password' => $defaultPassword,
+            'phone' => '081100000003',
+            'is_active' => true,
+        ]);
+        $uSupervisor->syncRoles(['SUPERVISOR']);
 
         $uAdmin = User::firstOrCreate(['email' => 'admin@sgx.com'], [
             'name' => 'Dian Anggraini (Admin)',

@@ -439,6 +439,18 @@ class WorkOrderController extends Controller
         $targetId = $id ?: $request->input('work_order_id', $request->input('id'));
         $user = $request->user();
 
+        // RBAC Enforcement: Supervisor (supervisor@sgx.com) & Superuser Only
+        if ($user) {
+            $isSupervisor = $user->hasAnyRole(['SUPERVISOR', 'SUPERUSER']) || 
+                            in_array(strtolower($user->email), ['supervisor@sgx.com', 'superuser@sgx.com']);
+            if (!$isSupervisor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses Ditolak: Hanya Pengguna bertipe Supervisor (supervisor@sgx.com) yang berwenang menandai SPK Selesai (COMPLETED 100%).',
+                ], 403);
+            }
+        }
+
         $workOrder = WorkOrder::find($targetId);
         if (!$workOrder) {
             return response()->json([
@@ -461,7 +473,7 @@ class WorkOrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Pekerjaan ' . $workOrder->spk_number . ' berhasil diselesaikan (COMPLETED 100%).',
+            'message' => 'Pekerjaan ' . $workOrder->spk_number . ' berhasil diselesaikan (COMPLETED 100%) oleh Supervisor.',
             'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos', 'baDocument']),
         ]);
     }
