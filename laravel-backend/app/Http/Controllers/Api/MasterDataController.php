@@ -188,6 +188,10 @@ class MasterDataController extends Controller
     {
         if ($deny = $this->checkAdminAuth($request)) return $deny;
 
+        if (!$request->has('leader_user_id') && $request->has('leader_id')) {
+            $request->merge(['leader_user_id' => $request->leader_id]);
+        }
+
         $request->validate([
             'name' => 'required|string',
             'leader_user_id' => 'required|exists:users,id',
@@ -206,6 +210,10 @@ class MasterDataController extends Controller
     public function updateFieldTeam(Request $request, $id)
     {
         if ($deny = $this->checkAdminAuth($request)) return $deny;
+
+        if (!$request->has('leader_user_id') && $request->has('leader_id')) {
+            $request->merge(['leader_user_id' => $request->leader_id]);
+        }
 
         $team = FieldTeam::findOrFail($id);
         $old = $team->toArray();

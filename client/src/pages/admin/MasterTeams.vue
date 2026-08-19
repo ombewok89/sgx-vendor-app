@@ -127,7 +127,7 @@
             <label class="block font-bold mb-1">Ketua Tim / PIC *</label>
             <select
               required
-              v-model="formInput.leader_id"
+              v-model="formInput.leader_user_id"
               class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs font-bold"
             >
               <option value="" disabled>Pilih Teknisi / PIC</option>
@@ -205,6 +205,8 @@ async function loadData() {
 function openAddModal() {
   isEditing.value = false;
   formInput.value = {
+    name: '',
+    leader_user_id: fieldUsers.value[0]?.id || '',
     leader_id: fieldUsers.value[0]?.id || '',
     area_id: areasList.value[0]?.id || ''
   };
@@ -213,17 +215,27 @@ function openAddModal() {
 
 function openEditModal(item) {
   isEditing.value = true;
-  formInput.value = { ...item };
+  formInput.value = {
+    ...item,
+    leader_user_id: item.leader_user_id || item.leader_id || item.leader?.id || '',
+    leader_id: item.leader_user_id || item.leader_id || item.leader?.id || '',
+    area_id: item.area_id || item.area?.id || ''
+  };
   showModal.value = true;
 }
 
 async function handleSubmit() {
   try {
+    const payload = {
+      ...formInput.value,
+      leader_user_id: formInput.value.leader_user_id || formInput.value.leader_id,
+      leader_id: formInput.value.leader_user_id || formInput.value.leader_id
+    };
     if (isEditing.value) {
-      await api.updateFieldTeam(formInput.value.id, formInput.value);
+      await api.updateFieldTeam(formInput.value.id, payload);
       alert('Data tim berhasil diperbarui!');
     } else {
-      await api.createFieldTeam(formInput.value);
+      await api.createFieldTeam(payload);
       alert('Tim lapangan baru berhasil ditambahkan!');
     }
     showModal.value = false;
