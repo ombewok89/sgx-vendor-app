@@ -732,16 +732,19 @@ async function handleSubmitWorkOrder() {
     alert('Gagal: Dokumentasi foto dari seluruh sub-pekerjaan belum lengkap.');
     return;
   }
-  if (!confirm('Konfirmasi mengajukan seluruh pekerjaan cabang ini untuk direview oleh Admin?')) return;
+  if (!selectedTask.value?.id) {
+    alert('Gagal: Data SPK tidak valid.');
+    return;
+  }
 
   submitting.value = true;
   try {
-    await api.submitWorkOrder(selectedTask.value.id);
-    alert('Pekerjaan cabang berhasil diajukan untuk direview Admin!');
+    const res = await api.submitWorkOrder(selectedTask.value.id);
+    alert(res.message || 'Pekerjaan cabang berhasil diajukan untuk direview Admin!');
     await handleSelectTask(selectedTask.value.id);
-    loadTasks(selectedTask.value.id);
+    await loadTasks(selectedTask.value.id);
   } catch (err) {
-    alert(`Gagal Submit: ${err.message}`);
+    alert(`Gagal Submit: ${err.message || 'Terjadi kendala saat mengajukan'}`);
   } finally {
     submitting.value = false;
   }
