@@ -149,34 +149,109 @@ class WorkOrderController extends Controller
     public function update(Request $request, $id)
     {
         $user = $request->user();
-        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+        if (!$user->hasAnyRole(['SUPERUSER', 'SUPERVISOR'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang mengubah SPK.',
+                'message' => 'Akses Ditolak: Hanya Pengguna Supervisor / Superuser yang memiliki wewenang untuk mengubah data dan pengaturan SPK.',
             ], 403);
         }
 
-        $workOrder = WorkOrder::findOrFail($id);
+        $workOrder = WorkOrder::with(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items'])->findOrFail($id);
+        $oldData = $workOrder->toArray();
 
-        $data = $request->only([
-            'title', 'vendor_id', 'area_id', 'job_type_id', 'location_name',
-            'target_lat', 'target_lng', 'start_date', 'deadline', 'notes',
-            'doc_mode'
-        ]);
+        return DB::transaction(function () use ($request, $user, $workOrder, $oldData) {
+            $data = $request->only([
+                'title', 'spk_number', 'vendor_id', 'area_id', 'job_type_id', 'location_name',
+                'target_lat', 'target_lng', 'start_date', 'deadline', 'notes',
+                'doc_mode', 'status'
+            ]);
 
-        if ($request->has('require_checkin')) {
-            $data['require_checkin'] = $request->boolean('require_checkin');
-        }
+            if ($request->has('require_checkin')) {
+                $data['require_checkin'] = $request->boolean('require_checkin');
+            }
 
-        $workOrder->update($data);
+            if ($request->has('pic_user_id')) {
+                $data['pic_user_id'] = $request->pic_user_id ?: null;
+                // Update assignment pivot for PIC
+                if ($data['pic_user_id']) {
+                    $workOrder->assignments()->syncWithoutDetaching([
+                        $data['pic_user_id'] => ['role_in_team' => 'PIC', 'assigned_at' => now()]
+                    ]);
+                    if (in_array($workOrder->status, ['DRAFT', 'READY']) && empty($data['status'])) {
+                        $data['status'] = 'ASSIGNED';
+                    }
+                }
+            }
 
-        AuditService::log($user, 'UPDATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, $data);
+            $workOrder->update($data);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Data SPK berhasil diperbarui.',
-            'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
-        ]);
+            // Sync additional team members if passed
+            if ($request->has('member_ids') && is_array($request->member_ids)) {
+                $syncAssignments = [];
+                if ($workOrder->pic_user_id) {
+                    $syncAssignments[$workOrder->pic_user_id] = ['role_in_team' => 'PIC', 'assigned_at' => now()];
+                }
+                foreach ($request->member_ids as $mId) {
+                    if ($mId != $workOrder->pic_user_id) {
+                        $syncAssignments[$mId] = ['role_in_team' => 'MEMBER', 'assigned_at' => now()];
+                    }
+                }
+                $workOrder->assignments()->sync($syncAssignments);
+            }
+
+            // Sync checklist items if passed
+            if ($request->has('items') && is_array($request->items) && count($request->items) > 0) {
+                $itemCount = count($request->items);
+                $weight = floor(100 / $itemCount);
+                
+                // Get existing item IDs that are kept
+                $keptItemIds = [];
+                foreach ($request->items as $idx => $itemData) {
+                    $itemWeight = ($idx === $itemCount - 1) ? (100 - ($weight * ($itemCount - 1))) : $weight;
+                    if (!empty($itemData['id'])) {
+                        $item = WorkOrderItem::where('work_order_id', $workOrder->id)->find($itemData['id']);
+                        if ($item) {
+                            $item->update([
+                                'item_name' => $itemData['item_name'],
+                                'job_type_id' => $itemData['job_type_id'] ?? $workOrder->job_type_id,
+                                'doc_mode' => $itemData['doc_mode'] ?? $workOrder->doc_mode,
+                                'weight_percent' => $itemWeight,
+                                'notes' => $itemData['notes'] ?? null,
+                            ]);
+                            $keptItemIds[] = $item->id;
+                            continue;
+                        }
+                    }
+
+                    // Create new item
+                    $newItem = WorkOrderItem::create([
+                        'work_order_id' => $workOrder->id,
+                        'item_name' => $itemData['item_name'],
+                        'job_type_id' => $itemData['job_type_id'] ?? $workOrder->job_type_id,
+                        'doc_mode' => $itemData['doc_mode'] ?? $workOrder->doc_mode,
+                        'weight_percent' => $itemWeight,
+                        'status' => 'PENDING',
+                        'notes' => $itemData['notes'] ?? null,
+                    ]);
+                    $keptItemIds[] = $newItem->id;
+                }
+
+                // Delete items that were removed
+                if (count($keptItemIds) > 0) {
+                    WorkOrderItem::where('work_order_id', $workOrder->id)
+                        ->whereNotIn('id', $keptItemIds)
+                        ->delete();
+                }
+            }
+
+            AuditService::log($user, 'UPDATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $oldData, $workOrder->toArray());
+
+            return response()->json([
+                'success' => true,
+                'message' => "Data dan pengaturan SPK {$workOrder->spk_number} berhasil diperbarui oleh Supervisor.",
+                'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+            ]);
+        });
     }
 
     public function updateLocation(Request $request)

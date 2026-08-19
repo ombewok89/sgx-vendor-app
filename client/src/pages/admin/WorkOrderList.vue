@@ -236,13 +236,23 @@
 
                 <!-- Column 5: Actions -->
                 <td class="py-4 px-5 align-middle text-right">
-                  <button
-                    @click.stop="$emit('select-work-order', wo.id)"
-                    class="px-3.5 py-2 bg-white group-hover:bg-brand-900 group-hover:text-white rounded-xl text-slate-700 font-bold transition-all duration-200 inline-flex items-center gap-1.5 border border-slate-200/90 shadow-2xs active:scale-95 cursor-pointer"
-                  >
-                    <Eye class="w-3.5 h-3.5" />
-                    <span>Detail</span>
-                  </button>
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      v-if="isSupervisor"
+                      @click.stop="openEditSpk(wo.id)"
+                      class="p-2 bg-white hover:bg-purple-700 hover:text-white rounded-xl text-purple-800 font-bold transition-all border border-purple-200/90 shadow-2xs active:scale-95 cursor-pointer"
+                      title="Edit Data & Pengaturan SPK (Supervisor Only)"
+                    >
+                      <Pencil class="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      @click.stop="$emit('select-work-order', wo.id)"
+                      class="px-3.5 py-2 bg-white group-hover:bg-brand-900 group-hover:text-white rounded-xl text-slate-700 font-bold transition-all duration-200 inline-flex items-center gap-1.5 border border-slate-200/90 shadow-2xs active:scale-95 cursor-pointer"
+                    >
+                      <Eye class="w-3.5 h-3.5" />
+                      <span>Detail</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </template>
@@ -261,16 +271,34 @@
         </table>
       </div>
     </div>
+
+    <!-- Supervisor Edit SPK Modal -->
+    <WorkOrderEditModal
+      :isOpen="editModalOpen"
+      :workOrderId="editingWorkOrderId"
+      @close="editModalOpen = false"
+      @updated="loadData"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { api } from '../../services/api';
 import { useAuth } from '../../composables/useAuth';
 import StatusBadge from '../../components/StatusBadge.vue';
+import WorkOrderEditModal from './WorkOrderEditModal.vue';
 
 const auth = useAuth();
+const isSupervisor = computed(() => ['SUPERUSER', 'SUPERVISOR'].includes(auth.state.user?.role));
+const editModalOpen = ref(false);
+const editingWorkOrderId = ref(null);
+
+function openEditSpk(id) {
+  editingWorkOrderId.value = id;
+  editModalOpen.value = true;
+}
+
 import {
   Plus,
   Search,
@@ -283,7 +311,8 @@ import {
   Calendar,
   Layers,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Pencil
 } from 'lucide-vue-next';
 
 defineEmits(['open-create', 'select-work-order']);

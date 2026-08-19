@@ -12,12 +12,26 @@
           </div>
           <h3 class="font-black text-slate-900 text-base mt-1">{{ workOrder?.title }}</h3>
         </div>
-        <button
-          @click="$emit('close')"
-          class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition-all"
-        >
-          <X class="w-5 h-5" />
-        </button>
+
+        <div class="flex items-center gap-2">
+          <!-- Edit SPK Button (Supervisor Only) -->
+          <button
+            v-if="isSupervisor"
+            @click="isEditModalOpen = true"
+            class="px-3.5 py-2 bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-700 hover:to-indigo-600 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            title="Edit Data & Pengaturan SPK (Supervisor Only)"
+          >
+            <Pencil class="w-3.5 h-3.5" />
+            <span>Edit SPK</span>
+          </button>
+
+          <button
+            @click="$emit('close')"
+            class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition-all cursor-pointer"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <!-- Content -->
@@ -386,15 +400,25 @@
       :initialIndex="selectedLightboxIndex"
       @close="isLightboxOpen = false"
     />
+
+    <!-- Supervisor Edit SPK Modal -->
+    <WorkOrderEditModal
+      :isOpen="isEditModalOpen"
+      :workOrderId="workOrder?.id"
+      @close="isEditModalOpen = false"
+      @updated="onSpkUpdated"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { api, getFileUrl } from '../../services/api';
+import { useAuth } from '../../composables/useAuth';
 import StatusBadge from '../../components/StatusBadge.vue';
 import StepperProgress from '../../components/StepperProgress.vue';
 import PhotoLightboxModal from '../../components/PhotoLightboxModal.vue';
+import WorkOrderEditModal from './WorkOrderEditModal.vue';
 import {
   X,
   MapPin,
@@ -404,8 +428,13 @@ import {
   Navigation,
   Camera,
   RotateCcw,
-  Download
+  Download,
+  Pencil
 } from 'lucide-vue-next';
+
+const auth = useAuth();
+const isSupervisor = computed(() => ['SUPERUSER', 'SUPERVISOR'].includes(auth.state.user?.role));
+const isEditModalOpen = ref(false);
 
 const props = defineProps({
   workOrderId: {
@@ -422,6 +451,11 @@ const loading = ref(true);
 const assigning = ref(false);
 const selectedPic = ref('');
 const selectedMembers = ref([]);
+
+async function onSpkUpdated(updatedData) {
+  await loadDetail();
+  emit('refresh-list');
+}
 
 async function loadDetail() {
   if (!props.workOrderId) return;
