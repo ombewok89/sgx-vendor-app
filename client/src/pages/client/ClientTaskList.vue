@@ -36,6 +36,23 @@
       </div>
     </div>
 
+    <!-- Demo Mode Notice Banner if using sample data -->
+    <div
+      v-if="selectedOrder?.is_demo"
+      class="p-3.5 bg-gradient-to-r from-purple-900/10 via-indigo-900/5 to-purple-900/10 border border-purple-200 rounded-2xl flex items-center justify-between gap-3 text-xs"
+    >
+      <div class="flex items-center gap-2 text-purple-950 font-bold">
+        <Sparkles class="w-4 h-4 text-purple-700 shrink-0" />
+        <span>PRATINJAU INTERAKTIF: Akun Anda belum memiliki data SPK terhubung. Menampilkan contoh format evidensi cabang toko secara lengkap.</span>
+      </div>
+      <button
+        @click="loadOrders"
+        class="text-[11px] font-bold text-purple-800 hover:underline shrink-0 cursor-pointer"
+      >
+        Cek Ulang Server
+      </button>
+    </div>
+
     <!-- Mobile Horizontal Store Switcher (Visible on Mobile Only) -->
     <div class="block lg:hidden space-y-2">
       <div class="flex items-center justify-between px-1">
@@ -423,13 +440,10 @@
         <div v-else class="bg-white rounded-3xl p-12 border border-slate-200 text-center space-y-3">
           <Store class="w-12 h-12 text-purple-300 mx-auto" />
           <h3 class="text-base font-extrabold text-slate-800">
-            {{ filteredOrders.length === 0 ? 'Belum Ada Cabang Toko Terdaftar' : 'Pilih Cabang Toko' }}
+            Pilih Cabang Toko
           </h3>
           <p class="text-xs text-slate-500 max-w-sm mx-auto">
-            {{ filteredOrders.length === 0
-              ? 'Belum ada Surat Perintah Kerja (SPK) aktif untuk akun perusahaan Anda. Hubungi tim SGX jika Anda ingin mendaftarkan pekerjaan baru.'
-              : 'Silakan pilih salah satu cabang toko di atas/samping untuk melihat perbandingan foto Before-After dan status GPS.'
-            }}
+            Silakan pilih salah satu cabang toko di atas/samping untuk melihat perbandingan foto Before-After dan status GPS.
           </p>
           <button
             @click="loadOrders"
@@ -470,7 +484,8 @@ import {
   ImageIcon,
   Download,
   RefreshCw,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-vue-next';
 
 defineEmits(['preview-ba']);
@@ -488,29 +503,98 @@ const statusTabs = [
   { label: 'Selesai 100%', value: 'COMPLETED' }
 ];
 
+// Interactive Demo Sample Store for Preview when company has no work orders yet
+const sampleDemoOrder = {
+  id: 'demo-sample-store',
+  is_demo: true,
+  spk_number: 'SPK-DEMO-SAMPLE',
+  title: 'Pemasangan Signage & Facade Toko Contoh',
+  location_name: 'Cabang Contoh - Jl. R.E. Martadinata No. 45',
+  address: 'Jl. R.E. Martadinata No. 45, Citarum, Bandung Wetan, Kota Bandung',
+  status: 'IN_PROGRESS',
+  progress_percent: 75,
+  area: { name: 'Jawa Barat - Bandung' },
+  pic: { name: 'Rian Hidayat (Tim Teknisi SGX)', phone: '0812-3456-7890' },
+  due_date: '2026-08-25',
+  check_ins: [
+    {
+      latitude: -6.908332,
+      longitude: 107.610947,
+      server_timestamp: new Date().toISOString()
+    }
+  ],
+  evidence_photos: [
+    {
+      id: 'demo-p1',
+      stage: 'BEFORE',
+      sequence: 1,
+      file_path: 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=600&auto=format&fit=crop&q=80',
+      file_name: 'before_plang_lama.jpg',
+      file_hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      uploader_name: 'Rian Hidayat',
+      notes: 'Kondisi plang lama sebelum dibongkar dan diganti baru.'
+    },
+    {
+      id: 'demo-p2',
+      stage: 'PROCESS',
+      sequence: 2,
+      file_path: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80',
+      file_name: 'process_instalasi_rangka.jpg',
+      file_hash: 'a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0',
+      uploader_name: 'Rian Hidayat',
+      notes: 'Pemasangan konstruksi rangka besi dan penarikan jalur kelistrikan.'
+    },
+    {
+      id: 'demo-p3',
+      stage: 'AFTER',
+      sequence: 3,
+      file_path: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80',
+      file_name: 'after_signage_selesai.jpg',
+      file_hash: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+      uploader_name: 'Rian Hidayat',
+      notes: 'Branding signage baru selesai dipasang rapi dan lampu LED menyala sempurna.'
+    }
+  ],
+  issues: []
+};
+
 async function loadOrders() {
   loading.value = true;
   try {
     const res = await api.getWorkOrders();
-    workOrders.value = res.data || [];
-    if (workOrders.value.length > 0) {
-      await handleSelectOrder(workOrders.value[0].id);
+    const serverOrders = (res.data || []).filter(Boolean);
+    if (serverOrders.length > 0) {
+      workOrders.value = serverOrders;
+      await handleSelectOrder(serverOrders[0].id);
     } else {
-      selectedOrder.value = null;
+      // Fallback to sample demo store so client sees full interactive UI
+      workOrders.value = [sampleDemoOrder];
+      selectedOrder.value = sampleDemoOrder;
     }
   } catch (err) {
-    console.error('Failed to load client store tasks:', err);
+    console.error('Failed to load client store tasks, activating sample preview:', err);
+    workOrders.value = [sampleDemoOrder];
+    selectedOrder.value = sampleDemoOrder;
   } finally {
     loading.value = false;
   }
 }
 
 async function handleSelectOrder(id) {
+  if (id === sampleDemoOrder.id) {
+    selectedOrder.value = sampleDemoOrder;
+    return;
+  }
   try {
     const detail = await api.getWorkOrderById(id);
-    selectedOrder.value = detail.data;
+    if (detail.data) {
+      selectedOrder.value = detail.data;
+    } else {
+      selectedOrder.value = workOrders.value.find(w => w.id === id) || sampleDemoOrder;
+    }
   } catch (err) {
     console.error('Failed to get store details:', err);
+    selectedOrder.value = workOrders.value.find(w => w.id === id) || sampleDemoOrder;
   }
 }
 
