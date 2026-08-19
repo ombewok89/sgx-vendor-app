@@ -434,15 +434,16 @@ class WorkOrderController extends Controller
         ]);
     }
 
-    public function complete(Request $request, $id)
+    public function complete(Request $request, $id = null)
     {
+        $targetId = $id ?: $request->input('work_order_id', $request->input('id'));
         $user = $request->user();
 
-        $workOrder = WorkOrder::find($id);
+        $workOrder = WorkOrder::find($targetId);
         if (!$workOrder) {
             return response()->json([
                 'success' => false,
-                'message' => "Pekerjaan dengan ID {$id} tidak ditemukan.",
+                'message' => "Pekerjaan dengan ID '{$targetId}' tidak ditemukan.",
             ], 404);
         }
 
