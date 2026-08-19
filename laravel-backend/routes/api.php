@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\WhatsAppController;
 
 // Public Health Check
 Route::get('/health', function () {
@@ -118,6 +119,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/system/settings', [MasterDataController::class, 'updateSetting']);
     Route::get('/system/audit-logs', [MasterDataController::class, 'auditLogs']);
     Route::get('/system/notifications', [NotificationController::class, 'index']);
+    Route::post('/system/whatsapp/test-connection', [WhatsAppController::class, 'testConnection']);
+    Route::post('/system/whatsapp/send-test', [WhatsAppController::class, 'sendTestMessage']);
 
     // In-App Notification Feed
     Route::get('/notifications', [NotificationController::class, 'index']);
