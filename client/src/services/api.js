@@ -83,10 +83,23 @@ export const api = {
   generateBa: (data) => request('/ba/generate', { method: 'POST', body: JSON.stringify(data) }),
   getBaList: () => request('/ba'),
   getBaById: (id) => request(`/ba/${id}`),
-  completeWorkOrder: (workOrderId) => request('/work-orders/complete', {
-    method: 'POST',
-    body: JSON.stringify({ work_order_id: workOrderId, id: workOrderId })
-  }),
+  getBaByWorkOrderId: (workOrderId) => request(`/ba/${workOrderId}`),
+  completeWorkOrder: async (workOrderId) => {
+    const payload = JSON.stringify({ work_order_id: workOrderId, id: workOrderId });
+    try {
+      return await request('/work-orders/complete', { method: 'POST', body: payload });
+    } catch (e1) {
+      try {
+        return await request(`/work-orders/${workOrderId}/complete`, { method: 'POST', body: payload });
+      } catch (e2) {
+        try {
+          return await request('/ba/complete', { method: 'POST', body: payload });
+        } catch (e3) {
+          return await request(`/ba/complete/${workOrderId}`, { method: 'POST', body: payload });
+        }
+      }
+    }
+  },
 
   // Master Data CRUD
   getVendors: () => request('/master/vendors'),
