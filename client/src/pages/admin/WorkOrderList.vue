@@ -176,7 +176,7 @@
                       {{ wo.spk_number }}
                     </span>
                     <span class="text-[10px] font-semibold text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
-                      {{ wo.job_type_name || 'Project' }}
+                      {{ wo.jobType?.name || wo.job_type?.name || wo.job_type_name || 'Project' }}
                     </span>
                   </div>
                   <div class="text-slate-900 font-bold text-sm leading-snug group-hover:text-brand-900 transition-colors">
@@ -184,7 +184,7 @@
                   </div>
                   <div class="flex items-center gap-1.5 text-slate-500 text-[11px] mt-1">
                     <MapPin class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span class="font-medium text-slate-700">{{ wo.area_name }}</span>
+                    <span class="font-medium text-slate-700">{{ wo.area?.name || wo.area_name || 'Wilayah' }}</span>
                     <span class="text-slate-300">•</span>
                     <span class="text-slate-500 truncate max-w-md">{{ wo.location_name }}</span>
                   </div>
@@ -194,13 +194,13 @@
                 <td class="py-4 px-4 align-middle">
                   <div class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
                     <Building class="w-3.5 h-3.5 text-brand-600 shrink-0" />
-                    <span class="truncate">{{ wo.vendor_name }}</span>
+                    <span class="truncate">{{ wo.vendor?.name || wo.vendor_name || 'Client / Mitra' }}</span>
                   </div>
                   <div class="mt-1 flex items-center gap-1.5 text-[11px]">
                     <User class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <div v-if="wo.pic_name">
-                      <span class="font-semibold text-slate-700">{{ wo.pic_name }}</span>
-                      <span class="text-slate-400 font-mono text-[10px] ml-1">({{ wo.pic_phone }})</span>
+                    <div v-if="wo.pic?.name || wo.pic_name">
+                      <span class="font-semibold text-slate-700">{{ wo.pic?.name || wo.pic_name }}</span>
+                      <span class="text-slate-400 font-mono text-[10px] ml-1">({{ wo.pic?.phone || wo.pic_phone || '-' }})</span>
                     </div>
                     <span v-else class="text-amber-600 italic font-medium text-[10px]">Belum ditugaskan</span>
                   </div>

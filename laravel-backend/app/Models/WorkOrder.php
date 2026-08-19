@@ -35,6 +35,45 @@ class WorkOrder extends Model
         'deadline' => 'date:Y-m-d',
     ];
 
+    protected $appends = [
+        'vendor_name',
+        'vendor_code',
+        'pic_name',
+        'pic_phone',
+        'area_name',
+        'job_type_name',
+    ];
+
+    public function getVendorNameAttribute()
+    {
+        return $this->vendor ? $this->vendor->name : null;
+    }
+
+    public function getVendorCodeAttribute()
+    {
+        return $this->vendor ? $this->vendor->code : null;
+    }
+
+    public function getPicNameAttribute()
+    {
+        return $this->pic ? $this->pic->name : null;
+    }
+
+    public function getPicPhoneAttribute()
+    {
+        return $this->pic ? $this->pic->phone : null;
+    }
+
+    public function getAreaNameAttribute()
+    {
+        return $this->area ? $this->area->name : null;
+    }
+
+    public function getJobTypeNameAttribute()
+    {
+        return $this->jobType ? $this->jobType->name : null;
+    }
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
