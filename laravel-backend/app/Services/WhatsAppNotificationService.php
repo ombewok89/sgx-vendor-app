@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendWhatsAppNotificationJob;
 use App\Models\BaDocument;
 use App\Models\Revision;
 use App\Models\SystemSetting;
@@ -12,21 +13,53 @@ use Illuminate\Support\Facades\Log;
 /**
  * WhatsAppNotificationService — Business event dispatcher for WhatsApp notifications.
  *
- * ARCHITECTURE:
- *   Business Event (Controller/Service)
- *   → WhatsAppNotificationService
- *   → FonnteService (with Idempotency & Safe Logging)
- *
- * CRITICAL RULES:
- *   - NEVER fail or roll back the business transaction if WhatsApp dispatch fails.
- *   - Recipients are dynamic (from User/Vendor/Setting), NEVER hardcoded.
- *   - Empty/invalid phone numbers are safely SKIPPED.
+ * PRODUCTION HARDENED:
+ *   - Dispatches via SendWhatsAppNotificationJob (queued/async, non-blocking).
+ *   - Dynamic recipient resolution from database.
+ *   - Never breaks business transactions.
  */
 class WhatsAppNotificationService
 {
     /**
+     * Helper to dispatch job safely without crashing.
+     */
+    public static function dispatch(
+        string $phone,
+        string $templateKey,
+        array $params = [],
+        ?string $idempotencyKey = null,
+        ?string $referenceType = null,
+        ?int $referenceId = null,
+        ?int $existingLogId = null
+    ): void {
+        try {
+            if (empty(trim($phone))) return;
+
+            SendWhatsAppNotificationJob::dispatch(
+                $phone,
+                $templateKey,
+                $params,
+                $idempotencyKey,
+                $referenceType,
+                $referenceId,
+                $existingLogId
+            );
+        } catch (\Throwable $e) {
+            Log::warning('[WhatsApp Dispatcher] Failed to dispatch job, falling back to sync: ' . $e->getMessage());
+            FonnteService::sendTemplatedMessage(
+                $phone,
+                $templateKey,
+                $params,
+                $idempotencyKey,
+                $referenceType,
+                $referenceId,
+                $existingLogId
+            );
+        }
+    }
+
+    /**
      * Trigger 1: WORK_ORDER_CREATED
-     * Dispatched after a new Work Order is created.
      */
     public static function onWorkOrderCreated(WorkOrder $workOrder): void
     {
@@ -45,7 +78,7 @@ class WhatsAppNotificationService
             // 1. Notify Client / Vendor Contact Person
             $vendorPhone = $workOrder->vendor?->phone;
             if (!empty($vendorPhone)) {
-                FonnteService::sendTemplatedMessage(
+                self::dispatch(
                     $vendorPhone,
                     'WORK_ORDER_CREATED',
                     $params,
@@ -66,7 +99,6 @@ class WhatsAppNotificationService
 
     /**
      * Trigger 2: WORK_ORDER_ASSIGNED
-     * Dispatched after a technician/PIC is assigned to a Work Order.
      */
     public static function onWorkOrderAssigned(WorkOrder $workOrder, ?User $picUser = null): void
     {
@@ -75,10 +107,6 @@ class WhatsAppNotificationService
             $targetUser = $picUser ?? $workOrder->pic;
 
             if (!$targetUser || empty($targetUser->phone)) {
-                Log::info('[WhatsApp] onWorkOrderAssigned skipped: No phone number for assigned user.', [
-                    'work_order_id' => $workOrder->id,
-                    'user_id'       => $targetUser?->id,
-                ]);
                 return;
             }
 
@@ -90,7 +118,7 @@ class WhatsAppNotificationService
                 'date'          => $workOrder->deadline ? date('d-m-Y', strtotime($workOrder->deadline)) : '-',
             ];
 
-            FonnteService::sendTemplatedMessage(
+            self::dispatch(
                 $targetUser->phone,
                 'WORK_ORDER_ASSIGNED',
                 $params,
@@ -105,7 +133,6 @@ class WhatsAppNotificationService
 
     /**
      * Trigger 3: SUBMISSION_RECEIVED
-     * Dispatched when technician submits complete evidence for review.
      */
     public static function onSubmissionReceived(WorkOrder $workOrder): void
     {
@@ -118,9 +145,6 @@ class WhatsAppNotificationService
             }
 
             if (empty($adminPhone)) {
-                Log::info('[WhatsApp] onSubmissionReceived skipped: No admin phone configured.', [
-                    'work_order_id' => $workOrder->id,
-                ]);
                 return;
             }
 
@@ -131,7 +155,7 @@ class WhatsAppNotificationService
                 'date'          => now()->translatedFormat('d F Y, H:i') . ' WIB',
             ];
 
-            FonnteService::sendTemplatedMessage(
+            self::dispatch(
                 $adminPhone,
                 'SUBMISSION_RECEIVED',
                 $params,
@@ -146,7 +170,6 @@ class WhatsAppNotificationService
 
     /**
      * Trigger 4A: REVIEW_APPROVED
-     * Dispatched when admin approves the work order (and completes it).
      */
     public static function onReviewApproved(WorkOrder $workOrder): void
     {
@@ -162,7 +185,7 @@ class WhatsAppNotificationService
 
             // 1. Notify PIC Technician
             if ($workOrder->pic && !empty($workOrder->pic->phone)) {
-                FonnteService::sendTemplatedMessage(
+                self::dispatch(
                     $workOrder->pic->phone,
                     'REVIEW_APPROVED',
                     $params,
@@ -174,7 +197,7 @@ class WhatsAppNotificationService
 
             // 2. Notify Client Contact
             if ($workOrder->vendor && !empty($workOrder->vendor->phone)) {
-                FonnteService::sendTemplatedMessage(
+                self::dispatch(
                     $workOrder->vendor->phone,
                     'REVIEW_APPROVED',
                     $params,
@@ -190,7 +213,6 @@ class WhatsAppNotificationService
 
     /**
      * Trigger 4B: REVISION_REQUIRED
-     * Dispatched when admin requests a revision on submitted photos.
      */
     public static function onRevisionRequired(WorkOrder $workOrder, Revision $revision): void
     {
@@ -198,9 +220,6 @@ class WhatsAppNotificationService
             $workOrder->loadMissing(['pic']);
 
             if (!$workOrder->pic || empty($workOrder->pic->phone)) {
-                Log::info('[WhatsApp] onRevisionRequired skipped: No phone for PIC.', [
-                    'work_order_id' => $workOrder->id,
-                ]);
                 return;
             }
 
@@ -211,7 +230,7 @@ class WhatsAppNotificationService
                 'notes'         => $revision->reason ?: 'Foto perlu diperbaiki sesuai standar.',
             ];
 
-            FonnteService::sendTemplatedMessage(
+            self::dispatch(
                 $workOrder->pic->phone,
                 'REVISION_REQUIRED',
                 $params,
@@ -226,7 +245,6 @@ class WhatsAppNotificationService
 
     /**
      * Trigger 5: BA_ISSUED
-     * Dispatched when a formal BA Opname is generated and issued.
      */
     public static function onBaIssued(BaDocument $ba): void
     {
@@ -235,9 +253,6 @@ class WhatsAppNotificationService
             $wo = $ba->workOrder;
 
             if (!$wo || !$wo->vendor || empty($wo->vendor->phone)) {
-                Log::info('[WhatsApp] onBaIssued skipped: No vendor phone available.', [
-                    'ba_id' => $ba->id,
-                ]);
                 return;
             }
 
@@ -249,7 +264,7 @@ class WhatsAppNotificationService
                 'date'          => $ba->ba_date ? date('d-m-Y', strtotime($ba->ba_date)) : date('d-m-Y'),
             ];
 
-            FonnteService::sendTemplatedMessage(
+            self::dispatch(
                 $wo->vendor->phone,
                 'BA_ISSUED',
                 $params,

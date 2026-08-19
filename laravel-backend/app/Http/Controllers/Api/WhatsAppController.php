@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\NotificationLog;
+use App\Services\AuditService;
 use App\Services\FonnteService;
 use App\Services\WhatsAppTemplateService;
 use Illuminate\Http\Request;
@@ -64,7 +65,7 @@ class WhatsAppController extends Controller
             'custom_message'=> $request->custom_text,
         ];
 
-        // Unique idempotency key for this test request (cooldown per minute per user)
+        // Idempotency key for test (per user per minute)
         $idempotencyKey = 'TEST_MESSAGE:' . $user->id . ':' . now()->format('YmdHi');
 
         $result = FonnteService::sendTemplatedMessage(
@@ -107,6 +108,10 @@ class WhatsAppController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('failure_type')) {
+            $query->where('failure_type', $request->failure_type);
+        }
+
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(function ($q) use ($s) {
@@ -123,6 +128,101 @@ class WhatsAppController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $logs,
+        ]);
+    }
+
+    /**
+     * Retry sending a failed notification.
+     * Admin/Superuser only.
+     */
+    public function retry(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang dapat melakukan retry notifikasi.',
+            ], 403);
+        }
+
+        $log = NotificationLog::findOrFail($id);
+
+        if ($log->status === 'SENT') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifikasi ini sudah berstatus TERKIRIM sebelumnya.',
+                'data'    => $log,
+            ]);
+        }
+
+        $payload = json_decode($log->payload, true) ?? [];
+        $text = $payload['text'] ?? '';
+
+        if (empty($text)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Isi pesan tidak ditemukan pada log ini.',
+            ], 422);
+        }
+
+        // Retry without creating duplicate log record (pass existingLogId)
+        $result = FonnteService::sendMessage(
+            $log->recipient,
+            $text,
+            $log->message_type,
+            $log->idempotency_key,
+            $log->reference_type,
+            $log->reference_id,
+            $log->id
+        );
+
+        AuditService::log($user, 'RETRY_WHATSAPP_NOTIFICATION', 'NOTIFICATION_LOG', $log->id, [
+            'previous_status' => 'FAILED',
+            'attempts'        => $log->attempts,
+        ], [
+            'new_status' => $result['success'] ? 'SENT' : 'FAILED',
+            'result'     => $result['message'],
+        ]);
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'data'    => $log->fresh(),
+        ], $result['success'] ? 200 : 400);
+    }
+
+    /**
+     * Gateway stats for monitoring dashboard.
+     */
+    public function stats(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak.',
+            ], 403);
+        }
+
+        $totalSent    = NotificationLog::where('channel', 'WHATSAPP')->where('status', 'SENT')->count();
+        $totalFailed  = NotificationLog::where('channel', 'WHATSAPP')->where('status', 'FAILED')->count();
+        $totalSkipped = NotificationLog::where('channel', 'WHATSAPP')->where('status', 'SKIPPED')->count();
+        $lastSent     = NotificationLog::where('channel', 'WHATSAPP')->where('status', 'SENT')->latest('sent_at')->first();
+        $lastFailed   = NotificationLog::where('channel', 'WHATSAPP')->where('status', 'FAILED')->latest('updated_at')->first();
+
+        $isEnabled = FonnteService::isEnabled();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'gateway_status' => $isEnabled ? 'ACTIVE' : 'DISABLED',
+                'total_sent'     => $totalSent,
+                'total_failed'   => $totalFailed,
+                'total_skipped'  => $totalSkipped,
+                'last_sent_at'   => $lastSent?->sent_at,
+                'last_failed_at' => $lastFailed?->updated_at,
+                'last_error'     => $lastFailed?->error_message,
+            ],
         ]);
     }
 

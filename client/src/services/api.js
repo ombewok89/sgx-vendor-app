@@ -128,11 +128,13 @@ export const api = {
     return request(`/system/audit-logs${qs ? `?${qs}` : ''}`);
   },
   getNotifications: () => request('/system/notifications'),
+  getWhatsAppStats: () => request('/system/whatsapp/stats'),
   getWhatsAppLogs: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/system/whatsapp/logs${qs ? `?${qs}` : ''}`);
   },
   getWhatsAppTemplates: () => request('/system/whatsapp/templates'),
+  retryWhatsAppNotification: (id) => request(`/system/whatsapp/logs/${id}/retry`, { method: 'POST' }),
   testWhatsAppConnection: () => request('/system/whatsapp/test-connection', { method: 'POST' }),
   sendTestWhatsAppMessage: (data) => request('/system/whatsapp/send-test', { method: 'POST', body: JSON.stringify(data) }),
   getSettings: () => request('/system/settings'),

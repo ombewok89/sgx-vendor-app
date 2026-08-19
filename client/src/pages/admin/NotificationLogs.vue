@@ -158,8 +158,41 @@
       </div>
     </div>
 
-    <!-- TAB 2: WhatsApp Gateway Logs Table -->
+    <!-- TAB 2: WhatsApp Gateway Logs & Hardened Dashboard -->
     <div v-else class="space-y-4">
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="glass-card rounded-2xl p-3 border border-slate-200/80 bg-white">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status Gateway</div>
+          <div class="flex items-center gap-1.5 mt-1">
+            <span
+              :class="[
+                'w-2.5 h-2.5 rounded-full animate-pulse',
+                waStats.gateway_status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-rose-500'
+              ]"
+            ></span>
+            <span class="font-black text-xs text-slate-800">
+              {{ waStats.gateway_status === 'ACTIVE' ? 'AKTIF / ONLINE' : 'DINONAKTIFKAN' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-3 border border-slate-200/80 bg-white">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pesan Terkirim</div>
+          <div class="font-black text-base text-emerald-700 mt-0.5">{{ waStats.total_sent || 0 }}</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-3 border border-slate-200/80 bg-white">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gagal Kirim</div>
+          <div class="font-black text-base text-rose-700 mt-0.5">{{ waStats.total_failed || 0 }}</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-3 border border-slate-200/80 bg-white">
+          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Dilewati (Skip)</div>
+          <div class="font-black text-base text-slate-600 mt-0.5">{{ waStats.total_skipped || 0 }}</div>
+        </div>
+      </div>
+
       <!-- Search & Filters -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
         <div class="relative w-full sm:w-72">
@@ -173,13 +206,23 @@
         </div>
 
         <div class="flex items-center gap-2">
+          <select
+            v-model="filterWaStatus"
+            class="px-3 py-2 bg-white/80 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-purple-700"
+          >
+            <option value="">Semua Status</option>
+            <option value="SENT">Terkirim (SENT)</option>
+            <option value="FAILED">Gagal (FAILED)</option>
+            <option value="SKIPPED">Dilewati (SKIPPED)</option>
+          </select>
+
           <button
             @click="testConnection"
             :disabled="testingConnection"
             class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Radio class="w-3.5 h-3.5 text-emerald-600" :class="{ 'animate-pulse': testingConnection }" />
-            <span>{{ testingConnection ? 'Menguji...' : 'Cek Status Gateway' }}</span>
+            <span>{{ testingConnection ? 'Menguji...' : 'Cek Gateway' }}</span>
           </button>
         </div>
       </div>
@@ -191,17 +234,18 @@
             <thead class="bg-slate-100/70 text-slate-500 font-bold border-b border-slate-200/80">
               <tr>
                 <th class="py-3.5 px-4">Waktu</th>
-                <th class="py-3.5 px-4">Provider</th>
                 <th class="py-3.5 px-4">Nomor WhatsApp</th>
                 <th class="py-3.5 px-4">Event / Template</th>
                 <th class="py-3.5 px-4">Isi Pesan</th>
+                <th class="py-3.5 px-4 text-center">Percobaan</th>
                 <th class="py-3.5 px-4 text-center">Status</th>
+                <th class="py-3.5 px-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100/80 text-slate-700">
               <template v-if="loading">
                 <tr>
-                  <td colspan="6" class="py-10 text-center text-slate-400 font-medium">Memuat log WhatsApp...</td>
+                  <td colspan="7" class="py-10 text-center text-slate-400 font-medium">Memuat log WhatsApp...</td>
                 </tr>
               </template>
               <template v-else-if="filteredWaLogs.length > 0">
@@ -209,7 +253,6 @@
                   <td class="py-3.5 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
                     {{ new Date(log.sent_at || log.created_at).toLocaleString('id-ID') }}
                   </td>
-                  <td class="py-3.5 px-4 font-bold text-slate-900">{{ log.provider }}</td>
                   <td class="py-3.5 px-4 font-mono font-bold text-emerald-800">{{ log.recipient }}</td>
                   <td class="py-3.5 px-4">
                     <span class="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
@@ -218,9 +261,17 @@
                   </td>
                   <td class="py-3.5 px-4 text-slate-600 max-w-sm">
                     <div class="line-clamp-2 text-[11px] whitespace-pre-line">{{ parsePayload(log.payload).text || '-' }}</div>
-                    <div v-if="log.error_message" class="text-[10px] text-rose-600 font-medium mt-0.5">
-                      ⚠️ {{ log.error_message }}
+                    <div v-if="log.error_message" class="text-[10px] text-rose-600 font-medium mt-0.5 flex items-center gap-1">
+                      <span>⚠️ {{ log.error_message }}</span>
+                      <span v-if="log.failure_type" class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-700 font-mono text-[9px]">
+                        {{ log.failure_type }}
+                      </span>
                     </div>
+                  </td>
+                  <td class="py-3.5 px-4 text-center font-mono text-xs">
+                    <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[10px]">
+                      {{ log.attempts || 1 }}x
+                    </span>
                   </td>
                   <td class="py-3.5 px-4 text-center">
                     <span
@@ -244,11 +295,24 @@
                       {{ log.status }}
                     </span>
                   </td>
+                  <td class="py-3.5 px-4 text-right">
+                    <button
+                      v-if="log.status === 'FAILED'"
+                      @click="retryLog(log.id)"
+                      :disabled="retryingId === log.id"
+                      class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                      title="Kirim Ulang Notifikasi Gagal"
+                    >
+                      <RotateCw class="w-3 h-3" :class="{ 'animate-spin': retryingId === log.id }" />
+                      <span>{{ retryingId === log.id ? 'Mengirim...' : 'Retry' }}</span>
+                    </button>
+                    <span v-else class="text-slate-300 text-[10px]">—</span>
+                  </td>
                 </tr>
               </template>
               <template v-else>
                 <tr>
-                  <td colspan="6" class="py-10 text-center text-slate-400 font-medium">Belum ada catatan pengiriman WhatsApp.</td>
+                  <td colspan="7" class="py-10 text-center text-slate-400 font-medium">Belum ada catatan pengiriman WhatsApp.</td>
                 </tr>
               </template>
             </tbody>
@@ -344,16 +408,25 @@ import {
   AlertTriangle,
   Search,
   Send,
-  Radio
+  Radio,
+  RotateCw
 } from 'lucide-vue-next';
 
 const activeTab = ref('inapp');
 const inAppList = ref([]);
 const waLogs = ref([]);
+const waStats = ref({
+  gateway_status: 'ACTIVE',
+  total_sent: 0,
+  total_failed: 0,
+  total_skipped: 0
+});
 const loading = ref(true);
 const searchQuery = ref('');
 const searchWaQuery = ref('');
 const filterCategory = ref('');
+const filterWaStatus = ref('');
+const retryingId = ref(null);
 
 // Test Message Modal State
 const showTestModal = ref(false);
@@ -382,14 +455,17 @@ const filteredInApp = computed(() => {
 });
 
 const filteredWaLogs = computed(() => {
-  if (!searchWaQuery.value) return waLogs.value;
-  const q = searchWaQuery.value.toLowerCase();
   return waLogs.value.filter(log => {
-    const matchRec = log.recipient?.toLowerCase().includes(q);
-    const matchType = log.message_type?.toLowerCase().includes(q);
-    const matchPayload = log.payload?.toLowerCase().includes(q);
-    const matchErr = log.error_message?.toLowerCase().includes(q);
-    return matchRec || matchType || matchPayload || matchErr;
+    if (filterWaStatus.value && log.status !== filterWaStatus.value) return false;
+    if (searchWaQuery.value) {
+      const q = searchWaQuery.value.toLowerCase();
+      const matchRec = log.recipient?.toLowerCase().includes(q);
+      const matchType = log.message_type?.toLowerCase().includes(q);
+      const matchPayload = log.payload?.toLowerCase().includes(q);
+      const matchErr = log.error_message?.toLowerCase().includes(q);
+      if (!matchRec && !matchType && !matchPayload && !matchErr) return false;
+    }
+    return true;
   });
 });
 
@@ -408,10 +484,14 @@ async function loadInAppNotifications() {
 async function loadWaLogs() {
   loading.value = true;
   try {
-    const res = await api.getWhatsAppLogs({ limit: 100 });
-    waLogs.value = res.data || [];
+    const [resLogs, resStats] = await Promise.all([
+      api.getWhatsAppLogs({ limit: 100 }),
+      api.getWhatsAppStats()
+    ]);
+    waLogs.value = resLogs.data || [];
+    waStats.value = resStats.data || {};
   } catch (err) {
-    console.error('Failed to load WA logs:', err);
+    console.error('Failed to load WA logs & stats:', err);
   } finally {
     loading.value = false;
   }
@@ -426,6 +506,20 @@ async function testConnection() {
     alert(err.message || 'Gagal terhubung ke WhatsApp Gateway.');
   } finally {
     testingConnection.value = false;
+  }
+}
+
+async function retryLog(id) {
+  retryingId.value = id;
+  try {
+    const res = await api.retryWhatsAppNotification(id);
+    alert(res.message || 'Pesan berhasil dikirim ulang.');
+    await loadWaLogs();
+  } catch (err) {
+    alert(err.message || 'Gagal mengirim ulang pesan.');
+    await loadWaLogs();
+  } finally {
+    retryingId.value = null;
   }
 }
 

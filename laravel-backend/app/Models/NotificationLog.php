@@ -16,12 +16,15 @@ class NotificationLog extends Model
         'idempotency_key',
         'payload',
         'status',
+        'attempts',
+        'failure_type',
         'provider_response',
         'error_message',
         'sent_at',
     ];
 
     protected $casts = [
-        'sent_at' => 'datetime',
+        'sent_at'  => 'datetime',
+        'attempts' => 'integer',
     ];
 }
