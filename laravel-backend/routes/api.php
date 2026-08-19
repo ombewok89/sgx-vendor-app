@@ -127,7 +127,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications-feed/mark-all-read', [NotificationController::class, 'markAllAsRead']);
 
     // Work Orders
-    Route::post('/work-orders/complete', [WorkOrderController::class, 'complete']);
+    Route::match(['post', 'put', 'get'], '/work-orders/complete', [WorkOrderController::class, 'complete']);
+    Route::match(['post', 'put', 'get'], '/work-orders/complete/{id}', [WorkOrderController::class, 'complete']);
     Route::post('/work-orders/update-location', [WorkOrderController::class, 'updateLocation']);
     Route::post('/work-orders/toggle-checkin', [WorkOrderController::class, 'toggleCheckin']);
     Route::get('/work-orders', [WorkOrderController::class, 'index']);
@@ -138,7 +139,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/work-orders/{id}/assign', [WorkOrderController::class, 'assignTeam'])->whereNumber('id');
     Route::post('/work-orders/{id}/submit', [WorkOrderController::class, 'submit'])->whereNumber('id');
     Route::post('/work-orders/{id}/check-in', [CheckInController::class, 'checkIn'])->whereNumber('id');
-    Route::match(['post', 'put', 'get'], '/work-orders/{id}/complete', [WorkOrderController::class, 'complete'])->whereNumber('id');
+    Route::match(['post', 'put', 'get'], '/work-orders/{id}/complete', [WorkOrderController::class, 'complete']);
 
     // Check-In (Geofencing)
     Route::post('/check-ins', [CheckInController::class, 'store']);
@@ -158,11 +159,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reviews/{id}/revision', [ReviewController::class, 'requestRevision']);
 
     // Berita Acara (BA) Opname
-    Route::post('/ba/complete', [WorkOrderController::class, 'complete']);
+    Route::match(['post', 'put', 'get'], '/ba/complete', [WorkOrderController::class, 'complete']);
     Route::post('/ba/generate', [BaDocumentController::class, 'generate']);
     Route::post('/ba/generate/{workOrderId}', [BaDocumentController::class, 'generate']);
-    Route::match(['post', 'put', 'get'], '/ba/complete/{id}', [WorkOrderController::class, 'complete'])->whereNumber('id');
-    Route::match(['post', 'put', 'get'], '/ba/{id}/complete', [WorkOrderController::class, 'complete'])->whereNumber('id');
+    Route::match(['post', 'put', 'get'], '/ba/complete/{id}', [WorkOrderController::class, 'complete']);
+    Route::match(['post', 'put', 'get'], '/ba/{id}/complete', [WorkOrderController::class, 'complete']);
     Route::get('/ba', [BaDocumentController::class, 'index']);
     Route::get('/ba/{identifier}', [BaDocumentController::class, 'show']);
     Route::get('/ba/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);
