@@ -36,7 +36,7 @@
       <!-- Main Content Stage with Smooth Transitions -->
       <main
         class="flex-1 lg:pl-64 p-3.5 sm:p-6 md:p-8 max-w-[1600px] w-full mx-auto animate-fade-in"
-        :class="{ 'pb-24 lg:pb-8': auth.state.user?.role === 'FIELD_TEAM' }"
+        :class="{ 'pb-24 lg:pb-8': auth.state.user?.role === 'FIELD_TEAM' || auth.state.user?.role === 'VENDOR' }"
       >
         <component
           :is="currentView"
@@ -92,6 +92,15 @@
       :activeTaskCount="fieldActiveTaskCount"
       @open-profile="showProfileModal = true"
     />
+
+    <!-- Mobile Bottom Navigation Bar (Client / Vendor Dedicated) -->
+    <ClientBottomNav
+      v-if="auth.state.user?.role === 'VENDOR'"
+      v-model:activeTab="activeTab"
+      :storeCount="clientStoreCount"
+      :baCount="clientBaCount"
+      @open-profile="showProfileModal = true"
+    />
   </div>
 </template>
 
@@ -109,6 +118,7 @@ import Sidebar from './components/Sidebar.vue';
 import BaOpnameViewer from './components/BaOpnameViewer.vue';
 import UserProfileModal from './components/UserProfileModal.vue';
 import FieldBottomNav from './components/FieldBottomNav.vue';
+import ClientBottomNav from './components/ClientBottomNav.vue';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard.vue';
@@ -150,6 +160,8 @@ const showProfileModal = ref(false);
 const selectedWorkOrderId = ref(null);
 const activeBaPreview = ref(null);
 const fieldActiveTaskCount = ref(0);
+const clientStoreCount = ref(0);
+const clientBaCount = ref(0);
 
 async function fetchFieldTaskCount() {
   if (auth.state.user?.role === 'FIELD_TEAM') {
@@ -164,6 +176,21 @@ async function fetchFieldTaskCount() {
   }
 }
 
+async function fetchClientBadgeCounts() {
+  if (auth.state.user?.role === 'VENDOR') {
+    try {
+      const [woRes, baRes] = await Promise.all([
+        api.getWorkOrders(),
+        api.getBaList()
+      ]);
+      if (woRes.data) clientStoreCount.value = woRes.data.length;
+      if (baRes.data) clientBaCount.value = baRes.data.length;
+    } catch (e) {
+      // Background load error suppressed
+    }
+  }
+}
+
 // Sync initial active tab when user role changes
 watch(() => auth.state.user?.role, (newRole) => {
   if (newRole === 'FIELD_TEAM') {
@@ -171,6 +198,7 @@ watch(() => auth.state.user?.role, (newRole) => {
     fetchFieldTaskCount();
   } else if (newRole === 'VENDOR') {
     activeTab.value = 'client_dashboard';
+    fetchClientBadgeCounts();
   } else if (newRole === 'SUPERUSER') {
     activeTab.value = 'super_dashboard';
   } else {
@@ -180,6 +208,7 @@ watch(() => auth.state.user?.role, (newRole) => {
 
 onMounted(() => {
   fetchFieldTaskCount();
+  fetchClientBadgeCounts();
 });
 
 const currentView = computed(() => {

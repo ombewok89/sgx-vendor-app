@@ -1,32 +1,92 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-5 pb-12">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div>
-        <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-800 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-900/20">
-            <Store class="w-4 h-4" />
-          </div>
-          <span>Progres & Evidensi Cabang Toko</span>
-        </h2>
-        <p class="text-xs text-slate-500 mt-1 font-medium">
-          Pantau dokumentasi foto fisik Sebelum (Before) vs Sesudah (After), status GPS teknisi di toko, dan sub-item pekerjaan cabang.
-        </p>
-      </div>
+    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-5 sm:p-6 text-white border border-indigo-900/40 shadow-lg relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -left-10 -top-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-      <!-- Quick Summary -->
-      <div class="flex items-center gap-2 self-start sm:self-auto">
-        <span class="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>{{ filteredOrders.length }} Cabang Toko Terdaftar</span>
-        </span>
+      <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <div class="inline-flex items-center gap-2 px-2.5 py-0.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-full text-[10px] font-bold mb-1.5">
+            <Store class="w-3 h-3" />
+            <span>PORTAL INSPEKSI CABANG TOKO</span>
+          </div>
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight">
+            Progres & Evidensi Fisik Toko
+          </h1>
+          <p class="text-slate-300 text-xs mt-0.5 max-w-xl">
+            Inspeksi perbandingan foto Sebelum (Before) vs Sesudah (After), status GPS teknisi, dan keaslian dokumen forensik digital.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          <span class="px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/10 rounded-xl text-xs font-bold text-white flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>{{ filteredOrders.length }} Toko Terdaftar</span>
+          </span>
+          <button
+            @click="loadOrders"
+            :disabled="loading"
+            class="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+            title="Segarkan Data"
+          >
+            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Main Content Layout (Master - Detail) -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-      <!-- Left Column: Stores / SPK List & Search -->
-      <div class="glass-card rounded-3xl p-5 border border-white/80 shadow-glass space-y-3.5">
+    <!-- Mobile Horizontal Store Switcher (Visible on Mobile Only) -->
+    <div class="block lg:hidden space-y-2">
+      <div class="flex items-center justify-between px-1">
+        <h3 class="font-bold text-xs text-slate-500 uppercase tracking-wider">
+          Pilih Cabang Toko ({{ filteredOrders.length }})
+        </h3>
+        <span class="text-[10px] font-semibold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full border border-purple-200">
+          Geser untuk memilih
+        </span>
+      </div>
+
+      <div v-if="filteredOrders.length > 0" class="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+        <div
+          v-for="order in filteredOrders"
+          :key="order.id"
+          @click="handleSelectOrder(order.id)"
+          :class="[
+            'min-w-[240px] max-w-[280px] p-3.5 rounded-2xl cursor-pointer transition-all duration-200 snap-start flex-shrink-0 relative overflow-hidden border',
+            selectedOrder?.id === order.id
+              ? 'bg-slate-900 text-white border-slate-800 shadow-lg shadow-slate-900/20'
+              : 'bg-white text-slate-900 border-slate-200 hover:border-purple-300'
+          ]"
+        >
+          <div class="flex items-center justify-between gap-1.5 mb-1.5">
+            <span
+              :class="[
+                'font-mono font-black text-[10px] px-2 py-0.5 rounded-md',
+                selectedOrder?.id === order.id ? 'bg-white/15 text-white' : 'bg-purple-100 text-purple-900'
+              ]"
+            >
+              {{ order.spk_number }}
+            </span>
+            <StatusBadge :status="order.status" />
+          </div>
+
+          <div class="font-bold text-xs line-clamp-1 mb-1" :class="selectedOrder?.id === order.id ? 'text-white' : 'text-slate-900'">
+            {{ order.title || order.location_name }}
+          </div>
+
+          <div class="text-[11px] flex items-center justify-between" :class="selectedOrder?.id === order.id ? 'text-slate-300' : 'text-slate-500'">
+            <span class="truncate max-w-[140px]">📍 {{ order.location_name }}</span>
+            <span class="font-bold font-mono text-emerald-400">{{ order.progress_percent || 0 }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Master-Detail Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+      <!-- Left Column: Desktop Stores List & Filters -->
+      <div class="hidden lg:block bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-3.5">
         <!-- Search & Filter -->
         <div class="space-y-2">
           <div class="relative">
@@ -34,12 +94,12 @@
             <input
               type="text"
               v-model="searchQuery"
-              placeholder="Cari toko, SPK, lokasi..."
-              class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs"
+              placeholder="Cari toko, SPK, cabang..."
+              class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
             />
           </div>
 
-          <div class="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-bold custom-scrollbar">
+          <div class="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-bold">
             <button
               v-for="st in statusTabs"
               :key="st.value"
@@ -58,14 +118,16 @@
 
         <!-- Orders List -->
         <div v-if="loading" class="text-center py-12 text-slate-400 text-xs">
-          Memuat daftar cabang...
+          <Loader2 class="w-6 h-6 animate-spin mx-auto mb-2 text-purple-600" />
+          <span>Memuat daftar cabang...</span>
         </div>
 
         <div v-else-if="filteredOrders.length === 0" class="text-center py-12 text-slate-400 text-xs">
-          Tidak ada cabang yang sesuai filter.
+          <Store class="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <span>Tidak ada cabang toko yang sesuai filter.</span>
         </div>
 
-        <div v-else class="space-y-2.5 max-h-[650px] overflow-y-auto pr-1 custom-scrollbar">
+        <div v-else class="space-y-2 max-h-[600px] overflow-y-auto pr-1">
           <div
             v-for="order in filteredOrders"
             :key="order.id"
@@ -73,8 +135,8 @@
             :class="[
               'p-3.5 rounded-2xl border transition-all cursor-pointer space-y-1.5',
               selectedOrder?.id === order.id
-                ? 'bg-purple-50/80 border-purple-300 shadow-md scale-[1.01]'
-                : 'bg-white/90 border-slate-200 hover:border-purple-200 shadow-xs'
+                ? 'bg-purple-50/80 border-purple-300 shadow-sm ring-1 ring-purple-300'
+                : 'bg-white border-slate-200 hover:border-purple-200 shadow-xs'
             ]"
           >
             <div class="flex items-center justify-between">
@@ -108,20 +170,24 @@
       <div class="lg:col-span-2 space-y-5">
         <template v-if="selectedOrder">
           <!-- Store Header Card -->
-          <div class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-mono font-bold text-xs bg-purple-100 text-purple-900 px-2 py-0.5 rounded border border-purple-200">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-mono font-bold text-xs bg-purple-100 text-purple-900 px-2.5 py-0.5 rounded-lg border border-purple-200">
                     {{ selectedOrder.spk_number }}
                   </span>
                   <StatusBadge :status="selectedOrder.status" />
-                  <span class="text-xs text-slate-400 font-mono">{{ selectedOrder.area_name || 'Area Jawa Barat' }}</span>
+                  <span v-if="selectedOrder.area" class="text-xs text-slate-500 flex items-center gap-1">
+                    <MapPin class="w-3 h-3 text-slate-400" />
+                    {{ selectedOrder.area.name }}
+                  </span>
                 </div>
-                <h3 class="font-black text-slate-900 text-base mt-1.5">{{ selectedOrder.title }}</h3>
+                <h3 class="font-black text-slate-900 text-base sm:text-lg mt-1.5">
+                  {{ selectedOrder.title || selectedOrder.location_name }}
+                </h3>
                 <p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                  <MapPin class="w-3.5 h-3.5 text-purple-700 shrink-0" />
-                  <span>{{ selectedOrder.location_name }}</span>
+                  <span>📍 {{ selectedOrder.address || selectedOrder.location_name }}</span>
                 </p>
               </div>
 
@@ -138,7 +204,7 @@
             </div>
 
             <!-- Progress Tracker -->
-            <div class="glass-card rounded-2xl p-4 border border-white/70">
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-bold text-slate-800">Status & Tahapan Pengerjaan Toko:</span>
                 <span class="font-mono font-bold text-xs text-purple-900">{{ selectedOrder.progress_percent || 0 }}% Selesai</span>
@@ -150,9 +216,9 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5 text-slate-600">
                 <span class="font-bold text-slate-900 block text-xs">Pelaksana Lapangan SGX:</span>
-                <div>PIC Teknisi: <strong class="text-slate-800">{{ selectedOrder.pic_name || 'Tim Alpha Lapangan' }}</strong></div>
-                <div>Kontak PIC: <strong class="text-slate-800 font-mono">{{ selectedOrder.pic_phone || '0812-1111-2222' }}</strong></div>
-                <div>Periode Kerja: <strong class="font-mono text-slate-800">{{ selectedOrder.start_date }} s/d {{ selectedOrder.deadline }}</strong></div>
+                <div>PIC Teknisi: <strong class="text-slate-800">{{ selectedOrder.pic?.name || 'Tim Lapangan SGX' }}</strong></div>
+                <div>Kontak PIC: <strong class="text-slate-800 font-mono">{{ selectedOrder.pic?.phone || '-' }}</strong></div>
+                <div>Target Selesai: <strong class="font-mono text-slate-800">{{ selectedOrder.due_date || selectedOrder.scheduled_date || '-' }}</strong></div>
               </div>
 
               <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5 text-slate-600">
@@ -166,7 +232,7 @@
                     GPS: {{ selectedOrder.check_ins[0].latitude?.toFixed(5) }}, {{ selectedOrder.check_ins[0].longitude?.toFixed(5) }}
                   </div>
                   <div class="text-[10px] text-slate-400 font-mono">
-                    Waktu: {{ new Date(selectedOrder.check_ins[0].server_timestamp).toLocaleString('id-ID') }}
+                    Waktu: {{ new Date(selectedOrder.check_ins[0].server_timestamp || selectedOrder.check_ins[0].created_at).toLocaleString('id-ID') }}
                   </div>
                 </div>
                 <div v-else class="text-amber-700 font-bold italic pt-1">
@@ -177,7 +243,7 @@
           </div>
 
           <!-- BEFORE vs AFTER Visual Comparator Card -->
-          <div class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass space-y-4">
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
@@ -205,7 +271,8 @@
                     v-if="beforePhoto"
                     :src="getFileUrl(beforePhoto.file_path)"
                     alt="Foto Sebelum"
-                    class="w-full h-full object-cover"
+                    class="w-full h-full object-cover cursor-pointer hover:scale-105 transition-all"
+                    @click="openLightbox(beforePhoto)"
                   />
                   <div v-else class="w-full h-full flex flex-col items-center justify-center text-slate-400 text-xs">
                     <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
@@ -230,7 +297,8 @@
                     v-if="afterPhoto"
                     :src="getFileUrl(afterPhoto.file_path)"
                     alt="Foto Selesai"
-                    class="w-full h-full object-cover"
+                    class="w-full h-full object-cover cursor-pointer hover:scale-105 transition-all"
+                    @click="openLightbox(afterPhoto)"
                   />
                   <div v-else class="w-full h-full flex flex-col items-center justify-center text-slate-400 text-xs">
                     <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
@@ -245,11 +313,11 @@
           </div>
 
           <!-- Complete Photo Evidence Gallery -->
-          <div class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass space-y-4">
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
                 <Camera class="w-4 h-4 text-purple-700" />
-                <span>Seluruh Dokumentasi Foto Evidensi ({{ selectedOrder.evidence_photos?.length || 0 }} Foto)</span>
+                <span>Dokumentasi Foto Evidensi Lengkap ({{ selectedOrder.evidence_photos?.length || 0 }} Foto)</span>
               </h4>
               <div class="flex items-center gap-2">
                 <button
@@ -273,14 +341,14 @@
                 v-for="(p, pIdx) in selectedOrder.evidence_photos"
                 :key="p.id"
                 @click="openLightbox(p)"
-                class="glass-card rounded-2xl overflow-hidden p-2 border border-white/80 shadow-xs hover:border-purple-300 transition-all group cursor-pointer relative"
+                class="bg-slate-50 rounded-2xl overflow-hidden p-2 border border-slate-200 hover:border-purple-300 transition-all group cursor-pointer relative shadow-xs"
               >
                 <div class="h-32 rounded-xl overflow-hidden bg-slate-900 relative mb-2">
                   <img
                     :src="getFileUrl(p.file_path)"
                     :alt="`Bukti ${p.stage}`"
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=300&auto=format&fit=crop&q=60'"
+                    loading="lazy"
                   />
                   <span
                     :class="[
@@ -293,13 +361,13 @@
                     {{ p.stage }} #{{ p.sequence || pIdx + 1 }}
                   </span>
 
-                  <!-- DYNAMIC FLOATING CORNER DOWNLOAD BUTTON (Bottom-Right) -->
+                  <!-- Download button -->
                   <div class="absolute bottom-1.5 right-1.5 z-10">
                     <button
                       type="button"
                       @click.stop="downloadSinglePhoto(p)"
-                      class="w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/40 backdrop-blur-xs"
-                      title="Unduh Foto Resolusi Asli"
+                      class="w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/40"
+                      title="Unduh Foto"
                     >
                       <Download class="w-3 h-3" />
                     </button>
@@ -323,7 +391,7 @@
           </div>
 
           <!-- Field Issues Log Card if any -->
-          <div v-if="selectedOrder.issues && selectedOrder.issues.length > 0" class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass space-y-3 bg-amber-50/30 border-amber-200">
+          <div v-if="selectedOrder.issues && selectedOrder.issues.length > 0" class="bg-amber-50/50 rounded-3xl p-5 border border-amber-200 shadow-sm space-y-3">
             <div class="flex items-center justify-between border-b border-amber-200 pb-2">
               <h4 class="font-black text-xs text-amber-950 flex items-center gap-1.5">
                 <AlertTriangle class="w-4 h-4 text-amber-700" />
@@ -351,8 +419,25 @@
           </div>
         </template>
 
-        <div v-else class="glass-card rounded-3xl p-16 text-center text-slate-400 text-xs font-medium border border-white/80">
-          Pilih salah satu toko di panel sebelah kiri untuk memantau progres dan bukti foto evidensi.
+        <!-- Empty State When No Store Selected or No Stores Available -->
+        <div v-else class="bg-white rounded-3xl p-12 border border-slate-200 text-center space-y-3">
+          <Store class="w-12 h-12 text-purple-300 mx-auto" />
+          <h3 class="text-base font-extrabold text-slate-800">
+            {{ filteredOrders.length === 0 ? 'Belum Ada Cabang Toko Terdaftar' : 'Pilih Cabang Toko' }}
+          </h3>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto">
+            {{ filteredOrders.length === 0
+              ? 'Belum ada Surat Perintah Kerja (SPK) aktif untuk akun perusahaan Anda. Hubungi tim SGX jika Anda ingin mendaftarkan pekerjaan baru.'
+              : 'Silakan pilih salah satu cabang toko di atas/samping untuk melihat perbandingan foto Before-After dan status GPS.'
+            }}
+          </p>
+          <button
+            @click="loadOrders"
+            class="px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-800 text-xs font-bold rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <RefreshCw class="w-3.5 h-3.5" />
+            <span>Muat Ulang Data</span>
+          </button>
         </div>
       </div>
     </div>
@@ -383,7 +468,9 @@ import {
   FileCheck2,
   Eye,
   ImageIcon,
-  Download
+  Download,
+  RefreshCw,
+  Loader2
 } from 'lucide-vue-next';
 
 defineEmits(['preview-ba']);
@@ -408,6 +495,8 @@ async function loadOrders() {
     workOrders.value = res.data || [];
     if (workOrders.value.length > 0) {
       await handleSelectOrder(workOrders.value[0].id);
+    } else {
+      selectedOrder.value = null;
     }
   } catch (err) {
     console.error('Failed to load client store tasks:', err);
@@ -427,10 +516,10 @@ async function handleSelectOrder(id) {
 
 const filteredOrders = computed(() => {
   return workOrders.value.filter(wo => {
-    if (selectedStatus.value === 'COMPLETED' && !['APPROVED', 'COMPLETED'].includes(wo.status)) {
+    if (selectedStatus.value === 'COMPLETED' && !['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(wo.status)) {
       return false;
     }
-    if (selectedStatus.value === 'IN_PROGRESS' && ['APPROVED', 'COMPLETED'].includes(wo.status)) {
+    if (selectedStatus.value === 'IN_PROGRESS' && ['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(wo.status)) {
       return false;
     }
     if (searchQuery.value) {
