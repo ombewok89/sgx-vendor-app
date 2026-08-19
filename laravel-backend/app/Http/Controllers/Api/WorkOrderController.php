@@ -439,19 +439,15 @@ class WorkOrderController extends Controller
         $targetId = $id ?: $request->input('work_order_id', $request->input('id'));
         $user = $request->user();
 
-        // RBAC Enforcement: Supervisor (supervisor@sgx.com) & Superuser Only
-        if ($user) {
-            $isSupervisor = $user->hasAnyRole(['SUPERVISOR', 'SUPERUSER']) || 
-                            in_array(strtolower($user->email), ['supervisor@sgx.com', 'superuser@sgx.com']);
-            if (!$isSupervisor) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akses Ditolak: Hanya Pengguna bertipe Supervisor (supervisor@sgx.com) yang berwenang menandai SPK Selesai (COMPLETED 100%).',
-                ], 403);
-            }
+        // 1. Standard RBAC Check (SUPERVISOR or SUPERUSER role)
+        if (!$user || !$user->hasAnyRole(['SUPERVISOR', 'SUPERUSER'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Pengguna dengan wewenang Supervisor / Superuser yang berwenang menandai SPK Selesai (COMPLETED 100%).',
+            ], 403);
         }
 
-        $workOrder = WorkOrder::find($targetId);
+        $workOrder = WorkOrder::with(['baDocument', 'items'])->find($targetId);
         if (!$workOrder) {
             return response()->json([
                 'success' => false,
@@ -459,6 +455,33 @@ class WorkOrderController extends Controller
             ], 404);
         }
 
+        // 2. Idempotency Check
+        if ($workOrder->status === 'COMPLETED') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pekerjaan ' . $workOrder->spk_number . ' telah berstatus SELESAI (COMPLETED 100%).',
+                'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos', 'baDocument']),
+            ]);
+        }
+
+        // 3. Lifecycle Preconditions Gate: Must be APPROVED or BA_OPNAME
+        $allowedPreStatuses = ['APPROVED', 'BA_OPNAME'];
+        if (!in_array($workOrder->status, $allowedPreStatuses)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Pekerjaan belum dapat diselesaikan: Status saat ini '{$workOrder->status}'. SPK wajib melalui tahap verifikasi review, disetujui (APPROVED), dan memiliki Berita Acara (BA) sebelum diselesaikan.",
+            ], 422);
+        }
+
+        // 4. Ensure BA Document is generated
+        if (!$workOrder->baDocument) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pekerjaan belum dapat diselesaikan: Dokumen Berita Acara (BA) Opname resmi belum diterbitkan.',
+            ], 422);
+        }
+
+        // 5. Update Status & Progress atomically
         $old = $workOrder->toArray();
         $workOrder->update([
             'status' => 'COMPLETED',
@@ -467,9 +490,7 @@ class WorkOrderController extends Controller
         
         $workOrder->items()->update(['status' => 'COMPLETED']);
 
-        if ($user) {
-            AuditService::log($user, 'COMPLETE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $old, $workOrder->toArray());
-        }
+        AuditService::log($user, 'COMPLETE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $old, $workOrder->toArray());
 
         return response()->json([
             'success' => true,

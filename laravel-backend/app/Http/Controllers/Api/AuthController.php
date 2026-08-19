@@ -20,7 +20,7 @@ class AuthController extends Controller
 
         $email = strtolower(trim($request->email));
         if ($email === 'supervisor@sgx.com') {
-            $supRole = Role::firstOrCreate(['name' => 'SUPERVISOR', 'guard_name' => 'sanctum']);
+            Role::firstOrCreate(['name' => 'SUPERVISOR', 'guard_name' => 'sanctum']);
             $user = User::firstOrCreate(['email' => 'supervisor@sgx.com'], [
                 'name' => 'Supervisor Operasional SGX',
                 'password' => Hash::make('admin123'),
@@ -29,9 +29,6 @@ class AuthController extends Controller
             ]);
             if (!$user->hasRole('SUPERVISOR')) {
                 $user->syncRoles(['SUPERVISOR']);
-            }
-            if (in_array($request->password, ['admin123', 'password', 'password123', 'admin'])) {
-                $user->update(['password' => Hash::make($request->password)]);
             }
         }
 
