@@ -234,12 +234,15 @@ class BaDocumentController extends Controller
         }
 
         $old = $workOrder->toArray();
-        $workOrder->update(['status' => 'COMPLETED']);
+        $workOrder->update([
+            'status' => 'COMPLETED',
+            'progress_percent' => 100
+        ]);
         AuditService::log($user, 'COMPLETE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $old, $workOrder->toArray());
 
         return response()->json([
             'success' => true,
-            'message' => 'Pekerjaan berhasil diselesaikan dan status diperbarui menjadi COMPLETED.',
+            'message' => 'Pekerjaan berhasil diselesaikan dan status diperbarui menjadi COMPLETED (100%).',
             'data' => $workOrder,
         ]);
     }
