@@ -102,19 +102,18 @@ const currentIndex = computed(() => {
     case 'UNDER_REVIEW':
     case 'REVIEW':       return 4;
     case 'REVISION':     return 4;
-    case 'APPROVED':     return 5;   // Review Disetujui sudah selesai, BA menjadi langkah aktif berikutnya
+    case 'APPROVED':
     case 'BA_OPNAME':
-    case 'COMPLETED':    return 6;   // Semua selesai, step terakhir aktif
+    case 'COMPLETED':    return 6;   // Semua selesai — BA Opname Selesai (step 7) aktif/done
     default:             return 0;
   }
 });
 
 // Returns true if step[idx] should show green checkmark (done)
 function isStepDone(idx) {
-  // Terminal states → semua 7 step hijau ✓
-  if (['BA_OPNAME', 'COMPLETED'].includes(props.status)) return true;
-  // APPROVED → step 0–5 hijau, step 6 (BA Opname) aktif berikutnya
-  if (props.status === 'APPROVED') return idx < 6;
+  // APPROVED/BA_OPNAME/COMPLETED → semua 7 step hijau ✓
+  // (Saat approve, BA Opname otomatis terbit dan status → COMPLETED)
+  if (['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(props.status)) return true;
   // Otherwise: semua step sebelum currentIndex
   return idx < currentIndex.value;
 }
@@ -123,7 +122,8 @@ function isStepDone(idx) {
 const STATUS_PROGRESS = {
   DRAFT: 5, READY: 15, ASSIGNED: 30, CHECKED_IN: 45,
   IN_PROGRESS: 60, SUBMITTED: 80, UNDER_REVIEW: 80,
-  REVIEW: 80, REVISION: 65, APPROVED: 90,
+  REVIEW: 80, REVISION: 65,
+  APPROVED: 100,   // BA auto-terbit saat approve → selesai 100%
   BA_OPNAME: 100, COMPLETED: 100
 };
 

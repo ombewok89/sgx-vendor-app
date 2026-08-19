@@ -129,19 +129,13 @@ class WorkOrderService
         $photos = $workOrder->evidencePhotos()->get();
         $checkInsCount = $workOrder->checkIns()->count();
 
-        // 1. Terminal States — strict progressive percentages
-        if (in_array($workOrder->status, ['BA_OPNAME', 'COMPLETED'])) {
+        // 1. Terminal States — APPROVED/BA_OPNAME/COMPLETED semua = 100%
+        // (ReviewController.approve() auto-terbitkan BA dan set status=COMPLETED)
+        if (in_array($workOrder->status, ['APPROVED', 'BA_OPNAME', 'COMPLETED'])) {
             if ($workOrder->progress_percent !== 100) {
                 $workOrder->update(['progress_percent' => 100]);
             }
             return 100;
-        }
-
-        if ($workOrder->status === 'APPROVED') {
-            if ($workOrder->progress_percent !== 90) {
-                $workOrder->update(['progress_percent' => 90]);
-            }
-            return 90;
         }
 
         if (in_array($workOrder->status, ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'])) {
