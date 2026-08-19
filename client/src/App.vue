@@ -335,19 +335,39 @@ function handleApprovedSuccess(id) {
 }
 
 async function handleOpenBa(ba) {
+  if (!ba) return;
+  
   if (typeof ba === 'number' || typeof ba === 'string') {
     try {
-      const res = await api.getBaByWorkOrderId(ba);
+      const res = await api.getBaById(ba);
       if (res.data) {
         activeBaPreview.value = res.data;
         return;
       }
     } catch (e) {
-      console.warn('Could not fetch BA by ID, opening detail modal fallback:', e);
+      console.warn('Could not fetch BA by ID, trying fallback:', e);
+      alert('Gagal memuat dokumen BA: ' + e.message);
     }
-    selectedWorkOrderId.value = ba;
-  } else {
-    activeBaPreview.value = ba;
+  } else if (typeof ba === 'object') {
+    // If ba is already a full BA object with ba_number or content
+    if (ba.ba_number || ba.content_json || ba.content) {
+      activeBaPreview.value = ba;
+      return;
+    }
+    // If ba object only contains id or work_order_id
+    const targetId = ba.id || ba.work_order_id;
+    if (targetId) {
+      try {
+        const res = await api.getBaById(targetId);
+        if (res.data) {
+          activeBaPreview.value = res.data;
+          return;
+        }
+      } catch (e) {
+        console.warn('Could not fetch BA by object targetId:', e);
+        alert('Gagal memuat dokumen BA: ' + e.message);
+      }
+    }
   }
 }
 

@@ -75,8 +75,9 @@
             </div>
           </div>
 
+          <!-- Approved & Ready for BA Generation Banner (Shown ONLY when BA is NOT yet generated) -->
           <div
-            v-if="workOrder.status === 'APPROVED'"
+            v-if="workOrder.status === 'APPROVED' && !workOrder.ba_document"
             class="p-4 bg-emerald-500/10 border border-emerald-300 rounded-2xl flex items-center justify-between backdrop-blur-md"
           >
             <div class="flex items-center gap-2.5 text-emerald-950">
@@ -87,14 +88,16 @@
               </div>
             </div>
             <button
+              type="button"
               @click="handleGenerateBa"
-              class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95 transition-all"
+              class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
             >
               <FileCheck2 class="w-4 h-4" />
               <span>Terbitkan BA Opname</span>
             </button>
           </div>
 
+          <!-- BA Opname Generated Banner -->
           <div
             v-if="workOrder.ba_document"
             class="p-4 bg-teal-500/10 border border-teal-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md"
@@ -106,21 +109,33 @@
                 <div class="text-[11px] text-teal-700">Diterbitkan pada {{ new Date(workOrder.ba_document.ba_date).toLocaleDateString('id-ID') }}</div>
               </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <button
-                @click="$emit('open-ba', workOrder.ba_document)"
+                type="button"
+                @click="openBaViewer(workOrder.ba_document || workOrder.id)"
                 class="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all"
               >
                 <FileCheck2 class="w-4 h-4" />
                 <span>Lihat BA</span>
               </button>
+
               <button
                 v-if="workOrder.status !== 'COMPLETED'"
+                type="button"
                 @click="handleCompleteWorkOrder"
                 class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all"
               >
                 <CheckCircle2 class="w-4 h-4" />
                 <span>Tandai Selesai (100%)</span>
+              </button>
+              <button
+                v-else
+                type="button"
+                disabled
+                class="px-4 py-2 bg-slate-100 text-slate-400 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 cursor-not-allowed opacity-80"
+              >
+                <Check class="w-4 h-4 text-emerald-600" />
+                <span>Pekerjaan Selesai (100%)</span>
               </button>
             </div>
           </div>
@@ -429,7 +444,8 @@ import {
   Camera,
   RotateCcw,
   Download,
-  Pencil
+  Pencil,
+  Check
 } from 'lucide-vue-next';
 
 const auth = useAuth();
@@ -564,6 +580,10 @@ async function handleQuickApprove() {
 function handleGoToReview() {
   emit('close');
   emit('open-review', workOrder.value.id);
+}
+
+function openBaViewer(ba) {
+  emit('open-ba', ba);
 }
 
 async function handleGenerateBa() {
