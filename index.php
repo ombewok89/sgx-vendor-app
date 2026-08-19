@@ -10,7 +10,10 @@ if (file_exists(__DIR__.'/.env')) {
     @copy(__DIR__.'/.env', __DIR__.'/laravel-backend/.env');
 }
 
-// Auto-clean stale compiled caches so updates in routes/api.php and routes/web.php take effect immediately
+// Auto-clean stale compiled caches and OPcache so updates in routes/api.php take effect immediately
+if (function_exists('opcache_reset')) {
+    @opcache_reset();
+}
 foreach (glob(__DIR__.'/laravel-backend/bootstrap/cache/*.php') as $f) {
     if (basename($f) !== '.gitignore') {
         @unlink($f);
