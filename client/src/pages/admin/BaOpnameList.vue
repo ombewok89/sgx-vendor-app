@@ -43,6 +43,7 @@
               <th class="py-3 px-4">Nomor SPK & Pekerjaan</th>
               <th class="py-3 px-4">Mitra Vendor</th>
               <th class="py-3 px-4">Tanggal BA</th>
+              <th class="py-3 px-4">Tgl Selesai</th>
               <th class="py-3 px-4">Diterbitkan Oleh</th>
               <th class="py-3 px-4">Status</th>
               <th class="py-3 px-4 text-right">Aksi</th>
@@ -64,11 +65,16 @@
               >
                 <td class="py-3.5 px-4 font-mono font-bold text-teal-900">{{ ba.ba_number }}</td>
                 <td class="py-3.5 px-4">
-                  <div class="font-mono text-slate-500 text-[11px]">{{ ba.spk_number }}</div>
-                  <div class="font-bold text-slate-900 truncate max-w-xs mt-0.5">{{ ba.work_order_title }}</div>
+                  <div class="font-mono text-slate-500 text-[11px]">{{ ba.spk_number || '—' }}</div>
+                  <div class="font-bold text-slate-900 truncate max-w-xs mt-0.5">{{ ba.work_order_title || ba.location_name || '—' }}</div>
                 </td>
-                <td class="py-3.5 px-4 font-bold text-slate-800">{{ ba.vendor_name }}</td>
-                <td class="py-3.5 px-4 font-mono text-slate-600">{{ ba.ba_date }}</td>
+                <td class="py-3.5 px-4 font-bold text-slate-800">{{ ba.vendor_name || '—' }}</td>
+                <td class="py-3.5 px-4 font-mono text-slate-600 text-[11px]">
+                  {{ ba.ba_date ? new Date(ba.ba_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—' }}
+                </td>
+                <td class="py-3.5 px-4 font-mono text-emerald-700 font-semibold text-[11px]">
+                  {{ ba.completed_at ? new Date(ba.completed_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : (ba.deadline ? new Date(ba.deadline).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—') }}
+                </td>
                 <td class="py-3.5 px-4 font-medium">{{ ba.generator_name || 'Admin SGX' }}</td>
                 <td class="py-3.5 px-4">
                   <span class="px-3 py-1 rounded-full text-xs font-bold bg-teal-500/10 text-teal-700 border border-teal-300">

@@ -17,7 +17,7 @@ class BaDocumentController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = BaDocument::with(['workOrder.vendor', 'template', 'generator']);
+        $query = BaDocument::with(['workOrder.vendor', 'workOrder.area', 'template', 'generator']);
 
         if ($user->hasAnyRole(['VENDOR', 'CLIENT']) && $user->vendor_id) {
             $query->whereHas('workOrder', fn($q) => $q->where('vendor_id', $user->vendor_id));
@@ -25,9 +25,37 @@ class BaDocumentController extends Controller
 
         $bas = $query->orderByDesc('id')->get();
 
+        // Flatten workOrder relation fields for frontend consumption
+        $mapped = $bas->map(function ($ba) {
+            $wo = $ba->workOrder;
+            return [
+                'id'               => $ba->id,
+                'ba_number'        => $ba->ba_number,
+                'ba_date'          => $ba->ba_date ? $ba->ba_date->format('Y-m-d') : null,
+                'status'           => $ba->status ?? 'FINAL',
+                'pdf_path'         => $ba->pdf_path,
+                'content_json'     => $ba->content_json,
+                // WorkOrder flat fields
+                'work_order_id'    => $wo?->id,
+                'spk_number'       => $wo?->spk_number,
+                'work_order_title' => $wo?->title,
+                'location_name'    => $wo?->location_name,
+                'deadline'         => $wo?->deadline ? \Carbon\Carbon::parse($wo->deadline)->format('Y-m-d') : null,
+                'contract_value'   => $wo?->contract_value ?? null,
+                'completed_at'     => $ba->updated_at ? $ba->updated_at->format('Y-m-d') : ($ba->ba_date ? $ba->ba_date->format('Y-m-d') : null),
+                // Vendor
+                'vendor_name'      => $wo?->vendor?->name ?? $wo?->vendor_name ?? null,
+                'vendor_code'      => $wo?->vendor?->code ?? null,
+                // Generator / reviewer
+                'generator_name'   => $ba->generator?->name ?? 'Admin SGX',
+                // Area
+                'area_name'        => $wo?->area?->name ?? null,
+            ];
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $bas,
+            'data'    => $mapped,
         ]);
     }
 

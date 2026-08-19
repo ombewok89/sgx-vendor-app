@@ -118,6 +118,7 @@
               <th class="py-3.5 px-4">Nomor SPK</th>
               <th class="py-3.5 px-4">Nama Toko Cabang</th>
               <th class="py-3.5 px-4">Tanggal Terbit</th>
+              <th class="py-3.5 px-4">Tgl Selesai</th>
               <th class="py-3.5 px-4 text-right">Nilai Kontrak</th>
               <th class="py-3.5 px-4 text-center">Status Legalitas</th>
               <th class="py-3.5 px-4 text-center">Aksi Dokumen</th>
@@ -126,7 +127,7 @@
           <tbody class="divide-y divide-slate-100 text-slate-700">
             <template v-if="loading">
               <tr>
-                <td colspan="7" class="py-12 text-center text-slate-400 font-medium">
+                <td colspan="8" class="py-12 text-center text-slate-400 font-medium">
                   <Loader2 class="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
                   <span>Memuat arsip Berita Acara...</span>
                 </td>
@@ -140,13 +141,18 @@
                     <span>{{ ba.ba_number }}</span>
                   </div>
                 </td>
-                <td class="py-3.5 px-4 font-mono text-slate-600 font-semibold">{{ ba.spk_number }}</td>
-                <td class="py-3.5 px-4">
-                  <div class="font-bold text-slate-900">{{ ba.work_order_title }}</div>
-                  <div class="text-[10px] text-slate-400 truncate">{{ ba.location_name }}</div>
+                <td class="py-3.5 px-4 font-mono text-slate-700 font-semibold text-[11px]">
+                  {{ ba.spk_number || '—' }}
                 </td>
-                <td class="py-3.5 px-4 font-mono text-slate-500">
-                  {{ new Date(ba.ba_date || ba.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }}
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-slate-900">{{ ba.work_order_title || ba.location_name || '—' }}</div>
+                  <div class="text-[10px] text-slate-400 truncate">{{ ba.location_name || ba.area_name || '' }}</div>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-slate-500 text-[11px]">
+                  {{ ba.ba_date ? new Date(ba.ba_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—' }}
+                </td>
+                <td class="py-3.5 px-4 font-mono text-emerald-700 font-semibold text-[11px]">
+                  {{ ba.completed_at ? new Date(ba.completed_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : (ba.deadline ? new Date(ba.deadline).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—') }}
                 </td>
                 <td class="py-3.5 px-4 font-mono font-bold text-slate-900 text-right">
                   Rp {{ Number(ba.contract_value || 15000000).toLocaleString('id-ID') }}
@@ -169,7 +175,7 @@
             </template>
             <template v-else>
               <tr>
-                <td colspan="7" class="py-16 text-center text-slate-400 space-y-2">
+                <td colspan="8" class="py-16 text-center text-slate-400 space-y-2">
                   <FileSpreadsheet class="w-8 h-8 opacity-30 mx-auto" />
                   <p class="font-medium">Belum ada dokumen Berita Acara yang diterbitkan.</p>
                   <p class="text-[11px] text-slate-400">Dokumen BA akan otomatis terbit setelah pekerjaan toko disetujui 100% oleh Pengawas SGX.</p>
