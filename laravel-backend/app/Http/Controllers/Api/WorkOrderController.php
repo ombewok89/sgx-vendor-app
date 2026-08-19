@@ -41,6 +41,12 @@ class WorkOrderController extends Controller
 
         $workOrders = $query->orderByDesc('id')->get();
 
+        // Calculate and normalize real progress for each work order
+        foreach ($workOrders as $wo) {
+            $calc = WorkOrderService::recalculateProgress($wo);
+            $wo->progress_percent = $calc;
+        }
+
         return response()->json([
             'success' => true,
             'data' => $workOrders,
@@ -58,6 +64,9 @@ class WorkOrderController extends Controller
                 'message' => 'Surat Perintah Kerja (SPK) tidak ditemukan atau Anda tidak memiliki akses.',
             ], 404);
         }
+
+        $calc = WorkOrderService::recalculateProgress($workOrder);
+        $workOrder->progress_percent = $calc;
 
         return response()->json([
             'success' => true,

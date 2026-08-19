@@ -127,29 +127,45 @@ class WorkOrderService
     {
         $items = $workOrder->items()->get();
         $photos = $workOrder->evidencePhotos()->get();
+        $checkInsCount = $workOrder->checkIns()->count();
 
+        // 1. Definite Completed & Submitted Statuses
         if (in_array($workOrder->status, ['APPROVED', 'COMPLETED', 'BA_OPNAME'])) {
-            $workOrder->update(['progress_percent' => 100]);
+            if ($workOrder->progress_percent !== 100) {
+                $workOrder->update(['progress_percent' => 100]);
+            }
             return 100;
         }
 
         if (in_array($workOrder->status, ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'])) {
-            $workOrder->update(['progress_percent' => 100]);
+            if ($workOrder->progress_percent !== 100) {
+                $workOrder->update(['progress_percent' => 100]);
+            }
             return 100;
         }
 
+        // 2. Compute Item Weighted Progress
         $totalProgress = 0;
 
         if ($items->count() > 0) {
-            foreach ($items as $item) {
+            $itemCount = $items->count();
+            $weightPerItem = floor(100 / $itemCount);
+            $accumulated = 0;
+
+            foreach ($items as $idx => $item) {
+                $weight = $item->weight_percent ?: (($idx === $itemCount - 1) ? (100 - ($weightPerItem * ($itemCount - 1))) : $weightPerItem);
+
+                // Check item photos
                 $itemPhotos = $photos->where('item_id', $item->id);
+                if ($itemPhotos->count() === 0 && $itemCount === 1) {
+                    $itemPhotos = $photos; // Single item grabs all photos
+                }
+
                 $hasBefore = $itemPhotos->where('stage', 'BEFORE')->count() > 0;
                 $hasProcess = $itemPhotos->where('stage', 'PROCESS')->count() > 0;
                 $hasAfter = $itemPhotos->where('stage', 'AFTER')->count() > 0;
 
-                $weight = $item->weight_percent ?: floor(100 / $items->count());
                 $ratio = 0;
-
                 if ($hasAfter) {
                     $ratio = 1.0;
                     $item->update(['status' => 'COMPLETED']);
@@ -163,10 +179,22 @@ class WorkOrderService
                     $item->update(['status' => 'PENDING']);
                 }
 
-                $totalProgress += ($weight * $ratio);
+                $accumulated += ($weight * $ratio);
             }
+
+            // If photos exist but had null item_id, compute general photo progress
+            if ($accumulated === 0 && $photos->count() > 0) {
+                $hasBefore = $photos->where('stage', 'BEFORE')->count() > 0;
+                $hasProcess = $photos->where('stage', 'PROCESS')->count() > 0;
+                $hasAfter = $photos->where('stage', 'AFTER')->count() > 0;
+                if ($hasAfter) $accumulated = 100;
+                elseif ($hasProcess) $accumulated = 65;
+                elseif ($hasBefore) $accumulated = 35;
+            }
+
+            $totalProgress = $accumulated;
         } else {
-            // Fallback for work order without explicit sub-items
+            // Work order without sub-items (flat evidence mode)
             $hasBefore = $photos->where('stage', 'BEFORE')->count() > 0;
             $hasProcess = $photos->where('stage', 'PROCESS')->count() > 0;
             $hasAfter = $photos->where('stage', 'AFTER')->count() > 0;
@@ -177,9 +205,12 @@ class WorkOrderService
                 $totalProgress = 65;
             } elseif ($hasBefore) {
                 $totalProgress = 35;
-            } elseif ($workOrder->checkIns()->count() > 0) {
-                $totalProgress = 15;
             }
+        }
+
+        // Check-in baseline: If technician checked in at location, award baseline 10%
+        if ($totalProgress === 0 && $checkInsCount > 0) {
+            $totalProgress = 10;
         }
 
         $calcPercent = (int) round($totalProgress);
