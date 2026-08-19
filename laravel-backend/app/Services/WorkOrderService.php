@@ -64,7 +64,7 @@ class WorkOrderService
 
     public static function createWorkOrder($user, array $data): WorkOrder
     {
-        return DB::transaction(function () use ($user, $data) {
+        $created = DB::transaction(function () use ($user, $data) {
             $spkNumber = self::generateSpkNumber();
 
             $workOrder = WorkOrder::create([
@@ -121,6 +121,11 @@ class WorkOrderService
 
             return $workOrder->load(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']);
         });
+
+        // WhatsApp Notification (Post-Commit Trigger 1 & 2)
+        WhatsAppNotificationService::onWorkOrderCreated($created);
+
+        return $created;
     }
 
     public static function recalculateProgress(WorkOrder $workOrder): int

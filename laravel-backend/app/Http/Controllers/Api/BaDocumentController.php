@@ -8,6 +8,7 @@ use App\Models\DocumentTemplate;
 use App\Models\WorkOrder;
 use App\Services\AuditService;
 use App\Services\BaDocumentService;
+use App\Services\WhatsAppNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -92,12 +93,17 @@ class BaDocumentController extends Controller
                     'status' => 'COMPLETED'
                 ]);
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Berita Acara (BA) Opname berhasil diterbitkan dan SPK otomatis selesai (COMPLETED 100%).',
-                    'data' => $ba,
-                ]);
+                return $ba;
             });
+
+            // WhatsApp Notification (Post-Commit Trigger 5)
+            WhatsAppNotificationService::onBaIssued($ba);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Berita Acara (BA) Opname berhasil diterbitkan dan SPK otomatis selesai (COMPLETED 100%).',
+                'data' => $ba,
+            ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
