@@ -23,6 +23,14 @@ Route::get('/health', function () {
     ]);
 });
 
+Route::get('/debug-version', function () {
+    return response()->json([
+        'version' => '2026-08-20-v1',
+        'base_path' => base_path(),
+        'routes_file' => __FILE__,
+    ]);
+});
+
 // Public Authentication
 Route::post('/auth/login', [AuthController::class, 'login']);
 
