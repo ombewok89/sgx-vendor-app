@@ -192,19 +192,19 @@
               <div>
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="font-mono font-bold text-xs bg-purple-100 text-purple-900 px-2.5 py-0.5 rounded-lg border border-purple-200">
-                    {{ selectedOrder.spk_number }}
+                    {{ selectedOrder.spk_number || '-' }}
                   </span>
-                  <StatusBadge :status="selectedOrder.status" />
-                  <span v-if="selectedOrder.area" class="text-xs text-slate-500 flex items-center gap-1">
+                  <StatusBadge :status="selectedOrder.status || 'IN_PROGRESS'" />
+                  <span v-if="selectedOrder.area || selectedOrder.area_name" class="text-xs text-slate-500 flex items-center gap-1">
                     <MapPin class="w-3 h-3 text-slate-400" />
-                    {{ selectedOrder.area.name }}
+                    {{ typeof selectedOrder.area === 'object' ? (selectedOrder.area?.name || selectedOrder.area_name) : (selectedOrder.area || selectedOrder.area_name || '-') }}
                   </span>
                 </div>
                 <h3 class="font-black text-slate-900 text-base sm:text-lg mt-1.5">
-                  {{ selectedOrder.title || selectedOrder.location_name }}
+                  {{ selectedOrder.title || selectedOrder.location_name || 'Cabang Toko' }}
                 </h3>
                 <p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                  <span>📍 {{ selectedOrder.address || selectedOrder.location_name }}</span>
+                  <span>📍 {{ selectedOrder.address || selectedOrder.location_name || '-' }}</span>
                 </p>
               </div>
 
@@ -226,30 +226,30 @@
                 <span class="text-xs font-bold text-slate-800">Status & Tahapan Pengerjaan Toko:</span>
                 <span class="font-mono font-bold text-xs text-purple-900">{{ selectedOrder.progress_percent || 0 }}% Selesai</span>
               </div>
-              <StepperProgress :status="selectedOrder.status" :progressPercent="selectedOrder.progress_percent" />
+              <StepperProgress :status="selectedOrder.status || 'IN_PROGRESS'" :progressPercent="Number(selectedOrder.progress_percent || 0)" />
             </div>
 
             <!-- Location & Field PIC Details -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5 text-slate-600">
                 <span class="font-bold text-slate-900 block text-xs">Pelaksana Lapangan SGX:</span>
-                <div>PIC Teknisi: <strong class="text-slate-800">{{ selectedOrder.pic?.name || 'Tim Lapangan SGX' }}</strong></div>
-                <div>Kontak PIC: <strong class="text-slate-800 font-mono">{{ selectedOrder.pic?.phone || '-' }}</strong></div>
-                <div>Target Selesai: <strong class="font-mono text-slate-800">{{ selectedOrder.due_date || selectedOrder.scheduled_date || '-' }}</strong></div>
+                <div>PIC Teknisi: <strong class="text-slate-800">{{ selectedOrder.pic?.name || selectedOrder.pic_name || 'Tim Lapangan SGX' }}</strong></div>
+                <div>Kontak PIC: <strong class="text-slate-800 font-mono">{{ selectedOrder.pic?.phone || selectedOrder.pic_phone || '-' }}</strong></div>
+                <div>Target Selesai: <strong class="font-mono text-slate-800">{{ selectedOrder.due_date || selectedOrder.deadline || selectedOrder.scheduled_date || '-' }}</strong></div>
               </div>
 
               <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5 text-slate-600">
                 <span class="font-bold text-slate-900 block text-xs">Verifikasi Kehadiran GPS:</span>
-                <div v-if="selectedOrder.check_ins && selectedOrder.check_ins.length > 0">
+                <div v-if="Array.isArray(selectedOrder.check_ins) && selectedOrder.check_ins.length > 0">
                   <div class="font-bold text-emerald-700 flex items-center gap-1">
                     <CheckCircle2 class="w-3.5 h-3.5" />
                     <span>Sudah Check-In di Lokasi Toko ✓</span>
                   </div>
                   <div class="font-mono text-[11px] text-slate-600 mt-1">
-                    GPS: {{ selectedOrder.check_ins[0].latitude?.toFixed(5) }}, {{ selectedOrder.check_ins[0].longitude?.toFixed(5) }}
+                    GPS: {{ Number(selectedOrder.check_ins[0].latitude || 0).toFixed(5) }}, {{ Number(selectedOrder.check_ins[0].longitude || 0).toFixed(5) }}
                   </div>
                   <div class="text-[10px] text-slate-400 font-mono">
-                    Waktu: {{ new Date(selectedOrder.check_ins[0].server_timestamp || selectedOrder.check_ins[0].created_at).toLocaleString('id-ID') }}
+                    Waktu: {{ new Date(selectedOrder.check_ins[0].server_timestamp || selectedOrder.check_ins[0].created_at || Date.now()).toLocaleString('id-ID') }}
                   </div>
                 </div>
                 <div v-else class="text-amber-700 font-bold italic pt-1">
