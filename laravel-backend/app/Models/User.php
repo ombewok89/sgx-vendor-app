@@ -42,6 +42,31 @@ class User extends Authenticatable
         return $this->belongsTo(Vendor::class);
     }
 
+    public function hasRole($role, $guard = null): bool
+    {
+        try {
+            if ($this->roles()->where('name', $role)->exists()) {
+                return true;
+            }
+        } catch (\Throwable $e) {}
+
+        return strtolower($this->role ?? '') === strtolower($role);
+    }
+
+    public function hasAnyRole(...$roles): bool
+    {
+        $rolesList = is_array($roles[0] ?? null) ? $roles[0] : $roles;
+        try {
+            if ($this->roles()->whereIn('name', $rolesList)->exists()) {
+                return true;
+            }
+        } catch (\Throwable $e) {}
+
+        $userRole = strtoupper($this->role ?? '');
+        $upperList = array_map('strtoupper', $rolesList);
+        return in_array($userRole, $upperList);
+    }
+
     public function assignedWorkOrders()
     {
         return $this->belongsToMany(WorkOrder::class, 'work_order_user')

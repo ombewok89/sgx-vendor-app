@@ -122,10 +122,10 @@ class PermissionController extends Controller
 
     public function matrix(Request $request)
     {
-        if (!$request->user()->hasRole('SUPERUSER')) {
+        if (!$request->user()->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Akses Ditolak: Hanya Superuser yang berwenang mengakses matriks hak akses.',
+                'message' => 'Akses Ditolak: Hanya Administrator/Superuser yang berwenang mengakses matriks hak akses.',
             ], 403);
         }
 
@@ -184,10 +184,10 @@ class PermissionController extends Controller
 
     public function updateMatrix(Request $request)
     {
-        if (!$request->user()->hasRole('SUPERUSER')) {
+        if (!$request->user()->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Akses Ditolak: Hanya Superuser yang berwenang mengubah matriks hak akses.',
+                'message' => 'Akses Ditolak: Hanya Administrator/Superuser yang berwenang mengubah matriks hak akses.',
             ], 403);
         }
 
