@@ -129,19 +129,26 @@ class WorkOrderService
         $photos = $workOrder->evidencePhotos()->get();
         $checkInsCount = $workOrder->checkIns()->count();
 
-        // 1. Definite Completed & Submitted Statuses
-        if (in_array($workOrder->status, ['APPROVED', 'COMPLETED', 'BA_OPNAME'])) {
+        // 1. Terminal States — strict progressive percentages
+        if (in_array($workOrder->status, ['BA_OPNAME', 'COMPLETED'])) {
             if ($workOrder->progress_percent !== 100) {
                 $workOrder->update(['progress_percent' => 100]);
             }
             return 100;
         }
 
-        if (in_array($workOrder->status, ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'])) {
-            if ($workOrder->progress_percent !== 100) {
-                $workOrder->update(['progress_percent' => 100]);
+        if ($workOrder->status === 'APPROVED') {
+            if ($workOrder->progress_percent !== 90) {
+                $workOrder->update(['progress_percent' => 90]);
             }
-            return 100;
+            return 90;
+        }
+
+        if (in_array($workOrder->status, ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'])) {
+            if ($workOrder->progress_percent !== 80) {
+                $workOrder->update(['progress_percent' => 80]);
+            }
+            return 80;
         }
 
         // 2. Compute Item Weighted Progress
