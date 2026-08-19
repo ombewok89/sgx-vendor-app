@@ -43,7 +43,7 @@
         <template v-else-if="workOrder">
           <!-- Stepper Progress -->
           <div class="glass-card rounded-2xl p-4 border border-white/60">
-            <StepperProgress :status="workOrder.status" :progressPercent="workOrder.progress_percent" />
+            <StepperProgress :status="workOrder.status" :progressPercent="workOrder.progress_percent" :hasBa="!!workOrder.ba_document" />
           </div>
 
           <!-- Action Banners -->
