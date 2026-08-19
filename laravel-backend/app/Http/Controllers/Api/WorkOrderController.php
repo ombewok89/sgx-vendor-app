@@ -429,7 +429,43 @@ class WorkOrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Pekerjaan berhasil diajukan untuk review dan persetujuan Admin.',
+            'message' => 'Pekerjaan berhasil diajukan untuk review tim admin.',
+            'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos']),
+        ]);
+    }
+
+    public function complete(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN', 'CLIENT', 'VENDOR'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Anda tidak memiliki wewenang untuk menyelesaikan pekerjaan ini.',
+            ], 403);
+        }
+
+        $workOrder = WorkOrder::findOrFail($id);
+
+        if ($user->hasRole('CLIENT') && $user->vendor_id && $workOrder->vendor_id !== $user->vendor_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: SPK ini bukan milik akun Client Anda.',
+            ], 403);
+        }
+
+        $old = $workOrder->toArray();
+        $workOrder->update([
+            'status' => 'COMPLETED',
+            'progress_percent' => 100
+        ]);
+        
+        $workOrder->items()->update(['status' => 'COMPLETED']);
+
+        AuditService::log($user, 'COMPLETE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $old, $workOrder->toArray());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pekerjaan ' . $workOrder->spk_number . ' berhasil diselesaikan (COMPLETED 100%).',
             'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos']),
         ]);
     }

@@ -204,6 +204,15 @@
                       <CheckCircle2 class="w-4 h-4" />
                       <span>Tandai Selesai (100%)</span>
                     </button>
+                    <button
+                      v-else
+                      type="button"
+                      disabled
+                      class="px-3.5 py-1.5 bg-slate-100 text-slate-400 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 cursor-not-allowed opacity-80"
+                    >
+                      <Check class="w-4 h-4 text-emerald-600" />
+                      <span>Pekerjaan Selesai (100%)</span>
+                    </button>
                   </template>
                 </div>
               </template>
