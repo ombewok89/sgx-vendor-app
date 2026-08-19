@@ -54,12 +54,12 @@
               <tr v-for="item in teams" :key="item.id" class="hover:bg-brand-50/30 transition-colors">
                 <td class="py-3.5 px-4 font-bold text-slate-900">{{ item.name }}</td>
                 <td class="py-3.5 px-4">
-                  <div class="font-bold text-slate-900">{{ item.leader_name }}</div>
-                  <div class="text-[11px] font-mono text-slate-500">{{ item.leader_phone }}</div>
+                  <div class="font-bold text-slate-900">{{ item.leader?.name || item.leader_name || '-' }}</div>
+                  <div class="text-[11px] font-mono text-slate-500">{{ item.leader?.phone || item.leader_phone || '' }}</div>
                 </td>
                 <td class="py-3.5 px-4">
                   <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-800">
-                    {{ item.area_name || 'Seluruh Wilayah' }}
+                    {{ item.area?.name || item.area_name || 'Seluruh Wilayah' }}
                   </span>
                 </td>
                 <td class="py-3.5 px-4">
@@ -123,6 +123,7 @@
               class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
             />
           </div>
+
           <div>
             <label class="block font-bold mb-1">Ketua Tim / PIC *</label>
             <select
@@ -132,10 +133,11 @@
             >
               <option value="" disabled>Pilih Teknisi / PIC</option>
               <option v-for="u in fieldUsers" :key="u.id" :value="u.id">
-                {{ u.name }} ({{ u.phone }})
+                {{ u.name }} ({{ u.phone || 'No HP -' }})
               </option>
             </select>
           </div>
+
           <div>
             <label class="block font-bold mb-1">Area Operasional Penugasan *</label>
             <select
@@ -145,9 +147,32 @@
             >
               <option value="" disabled>Pilih Area</option>
               <option v-for="a in areasList" :key="a.id" :value="a.id">
-                {{ a.name }} ({{ a.city }})
+                {{ a.name }} ({{ a.city || a.province || 'Wilayah' }})
               </option>
             </select>
+          </div>
+
+          <!-- Team Members Multi-Selection Checkbox -->
+          <div>
+            <label class="block font-bold mb-1">Anggota Tim Tambahan (Opsional)</label>
+            <div class="max-h-36 overflow-y-auto p-2 bg-white/90 border border-slate-200 rounded-xl space-y-1">
+              <label
+                v-for="u in fieldUsers.filter(u => u.id !== formInput.leader_user_id)"
+                :key="u.id"
+                class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer text-xs"
+              >
+                <input
+                  type="checkbox"
+                  :value="u.id"
+                  v-model="selectedMemberIds"
+                  class="rounded border-slate-300 text-brand-900 focus:ring-brand-500"
+                />
+                <span>{{ u.name }} ({{ u.phone || 'No HP -' }})</span>
+              </label>
+              <div v-if="fieldUsers.filter(u => u.id !== formInput.leader_user_id).length === 0" class="text-slate-400 text-[11px] p-1 italic">
+                Tidak ada teknisi lain yang tersedia.
+              </div>
+            </div>
           </div>
 
           <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
@@ -183,6 +208,7 @@ const loading = ref(true);
 const showModal = ref(false);
 const isEditing = ref(false);
 const formInput = ref({});
+const selectedMemberIds = ref([]);
 
 async function loadData() {
   loading.value = true;
@@ -204,6 +230,7 @@ async function loadData() {
 
 function openAddModal() {
   isEditing.value = false;
+  selectedMemberIds.value = [];
   formInput.value = {
     name: '',
     leader_user_id: fieldUsers.value[0]?.id || '',
@@ -215,6 +242,7 @@ function openAddModal() {
 
 function openEditModal(item) {
   isEditing.value = true;
+  selectedMemberIds.value = (item.members || []).map(m => m.id);
   formInput.value = {
     ...item,
     leader_user_id: item.leader_user_id || item.leader_id || item.leader?.id || '',
@@ -229,7 +257,8 @@ async function handleSubmit() {
     const payload = {
       ...formInput.value,
       leader_user_id: formInput.value.leader_user_id || formInput.value.leader_id,
-      leader_id: formInput.value.leader_user_id || formInput.value.leader_id
+      leader_id: formInput.value.leader_user_id || formInput.value.leader_id,
+      member_ids: selectedMemberIds.value
     };
     if (isEditing.value) {
       await api.updateFieldTeam(formInput.value.id, payload);
@@ -240,6 +269,7 @@ async function handleSubmit() {
     }
     showModal.value = false;
     formInput.value = {};
+    selectedMemberIds.value = [];
     loadData();
   } catch (err) {
     alert(`Gagal menyimpan tim: ${err.message}`);

@@ -17,6 +17,27 @@ class FieldTeam extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = [
+        'leader_name',
+        'leader_phone',
+        'area_name',
+    ];
+
+    public function getLeaderNameAttribute()
+    {
+        return $this->leader ? $this->leader->name : null;
+    }
+
+    public function getLeaderPhoneAttribute()
+    {
+        return $this->leader ? $this->leader->phone : null;
+    }
+
+    public function getAreaNameAttribute()
+    {
+        return $this->area ? $this->area->name : null;
+    }
+
     public function leader()
     {
         return $this->belongsTo(User::class, 'leader_user_id');
