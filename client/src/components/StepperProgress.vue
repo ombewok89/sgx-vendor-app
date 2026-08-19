@@ -18,7 +18,7 @@
     </div>
 
     <!-- Horizontal Stepper -->
-    <div class="grid grid-cols-4 sm:grid-cols-8 gap-2">
+    <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
       <div
         v-for="(step, idx) in STEPS"
         :key="step.id"
@@ -27,16 +27,16 @@
         <div
           :class="[
             'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 mb-1.5 shadow-sm',
-            idx < currentIndex || status === 'COMPLETED' || (idx === 6 && hasBa)
+            idx < currentIndex || isCompleteStep(idx)
               ? 'bg-emerald-500 text-white shadow-emerald-500/20'
-              : idx === currentIndex && status !== 'COMPLETED'
+              : idx === currentIndex
               ? isRevision
                 ? 'bg-rose-500 text-white ring-4 ring-rose-100 shadow-rose-500/30'
                 : 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-brand-600/30 animate-pulse'
               : 'bg-slate-100 text-slate-400 border border-slate-200/80'
           ]"
         >
-          <CheckCircle2 v-if="idx < currentIndex || status === 'COMPLETED' || (idx === 6 && hasBa)" class="w-4 h-4" />
+          <CheckCircle2 v-if="idx < currentIndex || isCompleteStep(idx)" class="w-4 h-4" />
           <AlertCircle v-else-if="idx === currentIndex && isRevision" class="w-4 h-4" />
           <Clock v-else-if="idx === currentIndex" class="w-4 h-4" />
           <span v-else class="text-[11px]">{{ idx + 1 }}</span>
@@ -44,7 +44,7 @@
         <span
           :class="[
             'text-[10px] leading-tight transition-colors duration-200',
-            idx < currentIndex || status === 'COMPLETED' || (idx === 6 && hasBa)
+            idx < currentIndex || isCompleteStep(idx)
               ? 'text-slate-800 font-semibold'
               : idx === currentIndex && isRevision
               ? 'text-rose-600 font-bold'
@@ -86,9 +86,15 @@ const STEPS = [
   { id: 'IN_PROGRESS', label: 'Pelaksanaan' },
   { id: 'SUBMITTED', label: 'Evidence Submit' },
   { id: 'APPROVED', label: 'Review Disetujui' },
-  { id: 'BA_OPNAME', label: 'BA Opname' },
-  { id: 'COMPLETED', label: 'Selesai' }
+  { id: 'BA_OPNAME', label: 'BA Opname Selesai' }
 ];
+
+function isCompleteStep(idx) {
+  if (['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(props.status)) {
+    return true;
+  }
+  return false;
+}
 
 const currentIndex = computed(() => {
   switch (props.status) {
@@ -101,9 +107,9 @@ const currentIndex = computed(() => {
     case 'UNDER_REVIEW':
     case 'REVIEW': return 4;
     case 'REVISION': return 4;
-    case 'APPROVED': return props.hasBa ? 7 : 5;
-    case 'BA_OPNAME': return 6;
-    case 'COMPLETED': return 7;
+    case 'APPROVED':
+    case 'BA_OPNAME':
+    case 'COMPLETED': return 6;
     default: return 0;
   }
 });

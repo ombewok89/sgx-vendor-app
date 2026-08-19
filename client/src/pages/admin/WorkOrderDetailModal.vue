@@ -118,25 +118,6 @@
                 <FileCheck2 class="w-4 h-4" />
                 <span>Lihat BA</span>
               </button>
-
-              <button
-                v-if="workOrder.status !== 'COMPLETED'"
-                type="button"
-                @click="handleCompleteWorkOrder"
-                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all"
-              >
-                <CheckCircle2 class="w-4 h-4" />
-                <span>Tandai Selesai (100%)</span>
-              </button>
-              <button
-                v-else
-                type="button"
-                disabled
-                class="px-4 py-2 bg-slate-100 text-slate-400 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 cursor-not-allowed opacity-80"
-              >
-                <Check class="w-4 h-4 text-emerald-600" />
-                <span>Pekerjaan Selesai (100%)</span>
-              </button>
             </div>
           </div>
 
@@ -597,16 +578,7 @@ async function handleGenerateBa() {
   }
 }
 
-async function handleCompleteWorkOrder() {
-  try {
-    await api.completeWorkOrder(workOrder.value.id);
-    alert(`Pekerjaan ${workOrder.value.spk_number} telah ditandai SELESAI (COMPLETED 100%)!`);
-    await loadDetail();
-    emit('refresh-list');
-  } catch (e) {
-    alert(`Gagal menyelesaikan pekerjaan: ${e.message}`);
-  }
-}
+
 
 /**
  * Lightbox & Photo Download Handlers

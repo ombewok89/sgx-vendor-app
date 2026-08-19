@@ -194,25 +194,6 @@
                       <FileCheck2 class="w-4 h-4" />
                       <span>Lihat BA Opname</span>
                     </button>
-                    <button
-                      v-if="selectedOrder.status !== 'COMPLETED'"
-                      type="button"
-                      @click="handleCompleteOrder"
-                      :disabled="actionLoading"
-                      class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-                    >
-                      <CheckCircle2 class="w-4 h-4" />
-                      <span>Tandai Selesai (100%)</span>
-                    </button>
-                    <button
-                      v-else
-                      type="button"
-                      disabled
-                      class="px-3.5 py-1.5 bg-slate-100 text-slate-400 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 cursor-not-allowed opacity-80"
-                    >
-                      <Check class="w-4 h-4 text-emerald-600" />
-                      <span>Pekerjaan Selesai (100%)</span>
-                    </button>
                   </template>
                 </div>
               </template>
@@ -644,21 +625,7 @@ async function handleGenerateBa() {
   }
 }
 
-async function handleCompleteOrder() {
-  actionLoading.value = true;
-  try {
-    await api.completeWorkOrder(selectedOrder.value.id);
-    successToast.value = `Pekerjaan ${selectedOrder.value.spk_number} telah ditandai SELESAI (COMPLETED 100%)!`;
-    setTimeout(() => successToast.value = null, 4000);
-    const updated = await api.getWorkOrderById(selectedOrder.value.id);
-    selectedOrder.value = updated.data;
-    loadQueue(selectedOrder.value.id);
-  } catch (e) {
-    alert(`Gagal menyelesaikan: ${e.message}`);
-  } finally {
-    actionLoading.value = false;
-  }
-}
+
 
 /**
  * Lightbox & Download Handlers
