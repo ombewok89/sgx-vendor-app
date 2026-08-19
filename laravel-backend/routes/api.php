@@ -119,6 +119,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/system/settings', [MasterDataController::class, 'updateSetting']);
     Route::get('/system/audit-logs', [MasterDataController::class, 'auditLogs']);
     Route::get('/system/notifications', [NotificationController::class, 'index']);
+    Route::get('/system/whatsapp/logs', [WhatsAppController::class, 'logs']);
+    Route::get('/system/whatsapp/templates', [WhatsAppController::class, 'templates']);
     Route::post('/system/whatsapp/test-connection', [WhatsAppController::class, 'testConnection']);
     Route::post('/system/whatsapp/send-test', [WhatsAppController::class, 'sendTestMessage']);
 

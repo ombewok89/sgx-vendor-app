@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\NotificationLog;
 use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -14,34 +15,107 @@ use Illuminate\Support\Facades\Log;
  *
  * SECURITY RULES:
  *   - Token TIDAK PERNAH di-log, di-print, atau dikembalikan ke response.
- *   - Nomor tujuan selalu di-mask di log.
+ *   - Nomor tujuan selalu di-mask di log & database.
  *   - Gateway failure TIDAK boleh membuat transaksi bisnis utama gagal.
- *
- * USAGE:
- *   $result = FonnteService::sendMessage('08123456789', 'Halo!');
- *   // Returns: ['success' => bool, 'status' => int|null, 'message' => string]
+ *   - Idempotency proteksi double-send.
  */
 class FonnteService
 {
-    const BASE_URL       = 'https://api.fonnte.com';
-    const SEND_TIMEOUT   = 15;  // detik — HTTP request timeout
-    const CONNECT_TIMEOUT = 8;  // detik — TCP connection timeout
+    const BASE_URL        = 'https://api.fonnte.com';
+    const SEND_TIMEOUT    = 15;  // detik — HTTP request timeout
+    const CONNECT_TIMEOUT = 8;   // detik — TCP connection timeout
 
     // =========================================================================
     // PUBLIC API
     // =========================================================================
 
     /**
-     * Kirim pesan WhatsApp ke nomor tujuan.
+     * Kirim pesan WhatsApp menggunakan template dan catat ke NotificationLog.
      *
-     * @param  string $phone   Nomor tujuan (format bebas Indonesia: 08x, 62x, +62x)
-     * @param  string $message Isi pesan teks
+     * @param string      $phone          Nomor tujuan
+     * @param string      $templateKey    Kunci template (e.g. WORK_ORDER_CREATED, TEST_MESSAGE)
+     * @param array       $params         Variabel pengganti
+     * @param string|null $idempotencyKey Kunci unik untuk cegah duplicate (e.g. WORK_ORDER_CREATED:123)
+     * @param string|null $referenceType  Tipe entitas (e.g. WORK_ORDER)
+     * @param int|null    $referenceId    ID entitas
+     * @return array
+     */
+    public static function sendTemplatedMessage(
+        string $phone,
+        string $templateKey,
+        array $params = [],
+        ?string $idempotencyKey = null,
+        ?string $referenceType = null,
+        ?int $referenceId = null
+    ): array {
+        // 1. Idempotency Check: cegah pengiriman ganda untuk event yang sama
+        if (!empty($idempotencyKey)) {
+            $existing = NotificationLog::where('idempotency_key', $idempotencyKey)
+                ->where('status', 'SENT')
+                ->first();
+
+            if ($existing) {
+                Log::info('[Fonnte] Pesan dilewati karena idempotency key sudah terkirim.', [
+                    'idempotency_key' => $idempotencyKey,
+                ]);
+                return [
+                    'success' => true,
+                    'status'  => 200,
+                    'message' => 'Pesan sudah pernah dikirim sebelumnya (idempotency match).',
+                    'skipped' => true,
+                ];
+            }
+        }
+
+        // 2. Render isi pesan dari template
+        $messageContent = WhatsAppTemplateService::render($templateKey, $params);
+
+        // 3. Eksekusi pengiriman
+        return self::sendMessage(
+            $phone,
+            $messageContent,
+            $templateKey,
+            $idempotencyKey,
+            $referenceType,
+            $referenceId
+        );
+    }
+
+    /**
+     * Kirim pesan WhatsApp ke nomor tujuan dan catat log pengiriman.
+     *
+     * @param  string      $phone
+     * @param  string      $message
+     * @param  string      $messageType
+     * @param  string|null $idempotencyKey
+     * @param  string|null $referenceType
+     * @param  int|null    $referenceId
      * @return array  ['success' => bool, 'status' => int|null, 'message' => string]
      */
-    public static function sendMessage(string $phone, string $message): array
-    {
+    public static function sendMessage(
+        string $phone,
+        string $message,
+        string $messageType = 'CUSTOM_MESSAGE',
+        ?string $idempotencyKey = null,
+        ?string $referenceType = null,
+        ?int $referenceId = null
+    ): array {
+        $normalizedPhone = self::normalizePhone($phone);
+        $masked          = self::maskPhone($normalizedPhone ?: $phone);
+
         // Guard: gateway dinonaktifkan
         if (!self::isEnabled()) {
+            self::logNotification(
+                $masked,
+                $messageType,
+                $message,
+                'SKIPPED',
+                'Gateway dinonaktifkan (whatsapp_enabled=0)',
+                null,
+                $idempotencyKey,
+                $referenceType,
+                $referenceId
+            );
             return self::result(false, null, 'WhatsApp gateway dinonaktifkan (whatsapp_enabled=0).');
         }
 
@@ -49,19 +123,38 @@ class FonnteService
         $token = self::getApiToken();
         if (empty($token)) {
             Log::warning('[Fonnte] sendMessage skipped: fonnte_api_key belum dikonfigurasi di System Settings.');
+            self::logNotification(
+                $masked,
+                $messageType,
+                $message,
+                'FAILED',
+                'fonnte_api_key belum dikonfigurasi',
+                null,
+                $idempotencyKey,
+                $referenceType,
+                $referenceId
+            );
             return self::result(false, null, 'fonnte_api_key belum dikonfigurasi.');
         }
 
-        // Normalisasi & validasi nomor
-        $normalizedPhone = self::normalizePhone($phone);
+        // Guard: format nomor tidak valid
         if (empty($normalizedPhone)) {
             Log::warning('[Fonnte] sendMessage skipped: format nomor tidak valid.', [
-                'masked_input' => self::maskPhone($phone),
+                'masked_input' => $masked,
             ]);
-            return self::result(false, null, 'Format nomor tidak valid: ' . self::maskPhone($phone));
+            self::logNotification(
+                $masked,
+                $messageType,
+                $message,
+                'FAILED',
+                'Format nomor tidak valid: ' . $masked,
+                null,
+                $idempotencyKey,
+                $referenceType,
+                $referenceId
+            );
+            return self::result(false, null, 'Format nomor tidak valid: ' . $masked);
         }
-
-        $masked = self::maskPhone($normalizedPhone);
 
         try {
             $response = Http::withHeaders([
@@ -86,6 +179,20 @@ class FonnteService
                     'http_status' => $httpStatus,
                     'result'      => 'success',
                 ]);
+
+                self::logNotification(
+                    $masked,
+                    $messageType,
+                    $message,
+                    'SENT',
+                    null,
+                    json_encode(['status' => true, 'target' => $masked, 'http' => $httpStatus]),
+                    $idempotencyKey,
+                    $referenceType,
+                    $referenceId,
+                    now()
+                );
+
                 return self::result(true, $httpStatus, 'Pesan WhatsApp berhasil dikirim.');
             }
 
@@ -96,6 +203,19 @@ class FonnteService
                 'reason'      => $reason,
                 'result'      => 'failed',
             ]);
+
+            self::logNotification(
+                $masked,
+                $messageType,
+                $message,
+                'FAILED',
+                "Provider error: {$reason}",
+                json_encode(['status' => false, 'http' => $httpStatus, 'reason' => $reason]),
+                $idempotencyKey,
+                $referenceType,
+                $referenceId
+            );
+
             return self::result(false, $httpStatus, "Provider error: {$reason}");
 
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
@@ -103,6 +223,19 @@ class FonnteService
                 'to'    => $masked,
                 'error' => 'ConnectionException: ' . class_basename($e),
             ]);
+
+            self::logNotification(
+                $masked,
+                $messageType,
+                $message,
+                'FAILED',
+                'Koneksi timeout/refused ke Fonnte API',
+                null,
+                $idempotencyKey,
+                $referenceType,
+                $referenceId
+            );
+
             return self::result(false, null, 'Koneksi ke Fonnte gagal (timeout/refused).');
 
         } catch (\Throwable $e) {
@@ -110,15 +243,25 @@ class FonnteService
                 'to'    => $masked,
                 'error' => class_basename($e) . ': ' . $e->getMessage(),
             ]);
+
+            self::logNotification(
+                $masked,
+                $messageType,
+                $message,
+                'FAILED',
+                class_basename($e) . ': ' . $e->getMessage(),
+                null,
+                $idempotencyKey,
+                $referenceType,
+                $referenceId
+            );
+
             return self::result(false, null, 'Error: ' . class_basename($e));
         }
     }
 
     /**
      * Test koneksi ke Fonnte API menggunakan endpoint /device.
-     * Tidak mengirim pesan — hanya memvalidasi token dan reachability.
-     *
-     * @return array ['success' => bool, 'message' => string, 'http_status' => int|null, 'device' => array|null]
      */
     public static function testConnection(): array
     {
@@ -197,13 +340,11 @@ class FonnteService
 
     /**
      * Cek apakah WhatsApp gateway diaktifkan.
-     * Baca dari system_settings key: whatsapp_enabled
-     * Default: true (jika key belum ada).
      */
     public static function isEnabled(): bool
     {
         $val = SystemSetting::where('key', 'whatsapp_enabled')->value('value');
-        if ($val === null) return true; // default aktif jika belum ada setting
+        if ($val === null) return true;
         return filter_var($val, FILTER_VALIDATE_BOOLEAN);
     }
 
@@ -211,69 +352,30 @@ class FonnteService
     // PHONE NORMALIZATION
     // =========================================================================
 
-    /**
-     * Normalisasi nomor telepon Indonesia ke format 62xxx.
-     *
-     * Input yang diterima:
-     *   08xxxxxxxxx  →  628xxxxxxxxx
-     *   628xxxxxxxxx →  628xxxxxxxxx  (no change)
-     *   +628xxxxxxxx →  628xxxxxxxxx  (strip +)
-     *   8xxxxxxxxx   →  628xxxxxxxxx  (leading 8, asumsi Indonesia)
-     *
-     * @param  string $phone Input mentah
-     * @return string|null   Nomor ternormalisasi, atau null jika tidak valid
-     */
     public static function normalizePhone(string $phone): ?string
     {
         if (empty(trim($phone))) return null;
 
-        // Hapus semua karakter non-digit (kecuali + di awal)
         $cleaned = preg_replace('/[^0-9]/', '', ltrim(trim($phone), '+'));
 
-        // Terlalu pendek / kosong
         if (strlen($cleaned) < 7) return null;
 
-        // Sudah format 62xxx
         if (str_starts_with($cleaned, '62')) {
             return strlen($cleaned) >= 10 ? $cleaned : null;
         }
 
-        // Format 08xxx → 628xxx
         if (str_starts_with($cleaned, '0')) {
             $normalized = '62' . substr($cleaned, 1);
             return strlen($normalized) >= 10 ? $normalized : null;
         }
 
-        // Format 8xxx → 628xxx (nomor Indonesia dimulai 8)
         if (str_starts_with($cleaned, '8') && strlen($cleaned) >= 9) {
             return '62' . $cleaned;
         }
 
-        // Format tidak dikenal — kembalikan apa adanya jika panjang cukup
         return strlen($cleaned) >= 10 ? $cleaned : null;
     }
 
-    // =========================================================================
-    // PRIVATE HELPERS
-    // =========================================================================
-
-    /**
-     * Ambil API token dari SystemSetting.
-     * JANGAN log, print, atau expose token ini.
-     */
-    private static function getApiToken(): ?string
-    {
-        $token = SystemSetting::where('key', 'fonnte_api_key')->value('value');
-        if (empty($token) || $token === 'FONNTE_DEMO_KEY_SGX_2026') {
-            return null; // Demo key dianggap belum dikonfigurasi
-        }
-        return $token;
-    }
-
-    /**
-     * Mask nomor telepon untuk logging yang aman.
-     * Contoh: 628123456789  →  62812*****789
-     */
     public static function maskPhone(string $phone): string
     {
         $len = strlen($phone);
@@ -290,9 +392,51 @@ class FonnteService
             . substr($phone, -$showEnd);
     }
 
-    /**
-     * Helper untuk membuat array result standar.
-     */
+    // =========================================================================
+    // PRIVATE LOGGING & HELPERS
+    // =========================================================================
+
+    private static function logNotification(
+        string $recipient,
+        string $messageType,
+        string $messageText,
+        string $status,
+        ?string $errorMessage = null,
+        ?string $providerResponse = null,
+        ?string $idempotencyKey = null,
+        ?string $referenceType = null,
+        ?int $referenceId = null,
+        $sentAt = null
+    ): void {
+        try {
+            NotificationLog::create([
+                'channel'           => 'WHATSAPP',
+                'provider'          => 'FONNTE',
+                'recipient'         => $recipient,
+                'message_type'      => $messageType,
+                'reference_type'    => $referenceType,
+                'reference_id'      => $referenceId,
+                'idempotency_key'   => $idempotencyKey,
+                'payload'           => json_encode(['text' => $messageText]),
+                'status'            => $status,
+                'provider_response' => $providerResponse,
+                'error_message'     => $errorMessage,
+                'sent_at'           => $sentAt,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('[Fonnte] Gagal menyimpan log notifikasi: ' . $e->getMessage());
+        }
+    }
+
+    private static function getApiToken(): ?string
+    {
+        $token = SystemSetting::where('key', 'fonnte_api_key')->value('value');
+        if (empty($token) || $token === 'FONNTE_DEMO_KEY_SGX_2026') {
+            return null;
+        }
+        return $token;
+    }
+
     private static function result(bool $success, ?int $status, string $message): array
     {
         return [
