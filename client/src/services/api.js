@@ -84,9 +84,8 @@ export const api = {
   getBaList: () => request('/ba'),
   getBaById: (id) => request(`/ba/${id}`),
   getBaByWorkOrderId: (workOrderId) => request(`/ba/${workOrderId}`),
-  completeWorkOrder: (workOrderId) => request('/work-orders/complete', {
-    method: 'POST',
-    body: JSON.stringify({ work_order_id: workOrderId, id: workOrderId })
+  completeWorkOrder: (workOrderId) => request(`/work-orders/${workOrderId}/complete`, {
+    method: 'POST'
   }),
 
   // Master Data CRUD
