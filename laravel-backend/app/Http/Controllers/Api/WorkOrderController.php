@@ -15,6 +15,10 @@ class WorkOrderController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        
+        // Auto-normalize legacy 'REVIEW' status to standard 'SUBMITTED'
+        WorkOrder::where('status', 'REVIEW')->update(['status' => 'SUBMITTED', 'progress_percent' => 100]);
+
         $query = WorkOrderService::getScopedQuery($user);
 
         if ($request->filled('status')) {

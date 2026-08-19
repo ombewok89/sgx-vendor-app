@@ -38,14 +38,70 @@
       <!-- Left: Queue List (Glassmorphic Cards) -->
       <div class="glass-card rounded-3xl p-4 shadow-glass border border-white/80 space-y-3">
         <div class="flex items-center justify-between border-b border-slate-200/80 pb-2.5 px-1">
-          <h3 class="font-bold text-xs text-slate-800">Antrian Review ({{ reviewQueue.length }})</h3>
-          <span class="text-[10px] text-slate-400 font-bold uppercase">PILIH SPK</span>
+          <div class="flex items-center gap-2">
+            <h3 class="font-bold text-xs text-slate-800">Antrian Review</h3>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-100 text-purple-900 border border-purple-200">
+              {{ filteredQueue.length }}
+            </span>
+          </div>
+          <button
+            @click="loadQueue(selectedOrder?.id)"
+            :disabled="loading"
+            class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition-all cursor-pointer active:scale-95"
+            title="Segarkan Antrian"
+          >
+            <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
+          </button>
         </div>
 
-        <div class="space-y-2 max-h-[75vh] overflow-y-auto pr-1 custom-scrollbar">
-          <template v-if="reviewQueue.length > 0">
+        <!-- Search & Filter Controls -->
+        <div class="space-y-2">
+          <div class="relative">
+            <Search class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="Cari SPK / Toko / PIC..."
+              class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+            />
+          </div>
+
+          <!-- Status Filter Tabs -->
+          <div class="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-bold scrollbar-none">
+            <button
+              v-for="tab in filterTabs"
+              :key="tab.id"
+              @click="activeStatusFilter = tab.id"
+              :class="[
+                'px-2.5 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
+                activeStatusFilter === tab.id
+                  ? 'bg-purple-900 text-white shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+              ]"
+            >
+              <span>{{ tab.label }}</span>
+              <span
+                :class="[
+                  'px-1.5 py-0.2 rounded-full text-[9px] font-mono',
+                  activeStatusFilter === tab.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                ]"
+              >
+                {{ tab.count }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- List Items -->
+        <div class="space-y-2 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
+          <div v-if="loading" class="text-center py-10 text-slate-400 text-xs">
+            <Loader2 class="w-5 h-5 animate-spin mx-auto mb-2 text-purple-600" />
+            <span>Memuat antrian review...</span>
+          </div>
+
+          <template v-else-if="filteredQueue.length > 0">
             <div
-              v-for="wo in reviewQueue"
+              v-for="wo in filteredQueue"
               :key="wo.id"
               @click="handleSelectOrder(wo.id)"
               :class="[
@@ -59,14 +115,19 @@
                 <span class="font-mono font-bold text-slate-900">{{ wo.spk_number }}</span>
                 <StatusBadge :status="wo.status" />
               </div>
-              <div class="font-bold text-slate-800 truncate mb-1">{{ wo.title }}</div>
+              <div class="font-bold text-slate-800 truncate mb-1">{{ wo.title || wo.location_name }}</div>
               <div class="text-[11px] text-slate-500 flex items-center justify-between">
-                <span>{{ wo.vendor_name }}</span>
-                <span>PIC: {{ wo.pic_name || '-' }}</span>
+                <span class="truncate max-w-[120px]">{{ wo.vendor_name || wo.vendor?.name || 'Client SGX' }}</span>
+                <span class="font-mono text-purple-800 font-bold">{{ wo.progress_percent || 0 }}%</span>
               </div>
             </div>
           </template>
-          <p v-else class="text-slate-400 text-xs text-center py-10 font-medium">Tidak ada SPK dalam antrian review.</p>
+
+          <div v-else class="text-center py-10 text-slate-400 text-xs space-y-1">
+            <Store class="w-8 h-8 text-slate-300 mx-auto mb-1" />
+            <p class="font-bold text-slate-700">Tidak ada SPK di kategori ini</p>
+            <p class="text-[11px]">Silakan ubah filter status di atas untuk melihat SPK lainnya.</p>
+          </div>
         </div>
       </div>
 
@@ -382,7 +443,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { api, getFileUrl } from '../../services/api';
 import StatusBadge from '../../components/StatusBadge.vue';
 import PhotoLightboxModal from '../../components/PhotoLightboxModal.vue';
@@ -396,7 +457,10 @@ import {
   FileCheck2,
   Loader2,
   Check,
-  Download
+  Download,
+  Search,
+  Store,
+  RefreshCw
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -408,11 +472,14 @@ const props = defineProps({
 
 const emit = defineEmits(['approved-success', 'open-ba']);
 
-const reviewQueue = ref([]);
+const allWorkOrders = ref([]);
 const selectedOrder = ref(null);
 const loading = ref(true);
 const actionLoading = ref(false);
 const successToast = ref(null);
+
+const searchQuery = ref('');
+const activeStatusFilter = ref('ALL');
 
 const showApproveModal = ref(false);
 const reviewNotes = ref('Pekerjaan telah diverifikasi di lapangan dan memenuhi seluruh standar mutu & spesifikasi.');
@@ -421,18 +488,62 @@ const showRevisionModal = ref(false);
 const revisionStage = ref('AFTER');
 const revisionReason = ref('');
 
+const filterTabs = computed(() => {
+  const all = allWorkOrders.value;
+  return [
+    { id: 'ALL', label: 'Semua Antrian', count: all.length },
+    { id: 'WAITING_REVIEW', label: 'Menunggu Review', count: all.filter(w => ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(w.status)).length },
+    { id: 'REVISION', label: 'Perlu Revisi', count: all.filter(w => w.status === 'REVISION').length },
+    { id: 'IN_PROGRESS', label: 'Sedang Berjalan', count: all.filter(w => ['IN_PROGRESS', 'CHECKED_IN'].includes(w.status)).length },
+    { id: 'APPROVED', label: 'Disetujui / Selesai', count: all.filter(w => ['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(w.status)).length },
+  ];
+});
+
+const filteredQueue = computed(() => {
+  return allWorkOrders.value.filter(wo => {
+    // 1. Status Filter
+    if (activeStatusFilter.value === 'WAITING_REVIEW' && !['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(wo.status)) {
+      return false;
+    }
+    if (activeStatusFilter.value === 'REVISION' && wo.status !== 'REVISION') {
+      return false;
+    }
+    if (activeStatusFilter.value === 'IN_PROGRESS' && !['IN_PROGRESS', 'CHECKED_IN'].includes(wo.status)) {
+      return false;
+    }
+    if (activeStatusFilter.value === 'APPROVED' && !['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status)) {
+      return false;
+    }
+
+    // 2. Search Query
+    if (searchQuery.value.trim()) {
+      const q = searchQuery.value.toLowerCase();
+      const matchSpk = wo.spk_number?.toLowerCase().includes(q);
+      const matchTitle = wo.title?.toLowerCase().includes(q);
+      const matchLoc = wo.location_name?.toLowerCase().includes(q);
+      const matchVendor = wo.vendor_name?.toLowerCase().includes(q) || wo.vendor?.name?.toLowerCase().includes(q);
+      const matchPic = wo.pic_name?.toLowerCase().includes(q);
+      if (!matchSpk && !matchTitle && !matchLoc && !matchVendor && !matchPic) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+});
+
 async function loadQueue(targetIdToSelect = null) {
   loading.value = true;
   try {
     const res = await api.getWorkOrders();
-    const queue = (res.data || []).filter(wo =>
-      ['SUBMITTED', 'UNDER_REVIEW', 'REVISION', 'APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status)
-    );
-    reviewQueue.value = queue;
+    allWorkOrders.value = res.data || [];
 
-    const targetId = targetIdToSelect || props.selectedWorkOrderId || (queue.length > 0 ? queue[0].id : null);
+    const targetId = targetIdToSelect || props.selectedWorkOrderId || (allWorkOrders.value.length > 0 ? allWorkOrders.value[0].id : null);
     if (targetId) {
       const detail = await api.getWorkOrderById(targetId);
+      selectedOrder.value = detail.data;
+    } else if (allWorkOrders.value.length > 0) {
+      const detail = await api.getWorkOrderById(allWorkOrders.value[0].id);
       selectedOrder.value = detail.data;
     }
   } catch (err) {
