@@ -125,6 +125,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/system/whatsapp/logs/{id}/retry', [WhatsAppController::class, 'retry'])->whereNumber('id');
     Route::post('/system/whatsapp/test-connection', [WhatsAppController::class, 'testConnection']);
     Route::post('/system/whatsapp/send-test', [WhatsAppController::class, 'sendTestMessage']);
+    // Fallback aliases
+    Route::post('/whatsapp/send-test', [WhatsAppController::class, 'sendTestMessage']);
+    Route::post('/master/whatsapp/send-test', [MasterDataController::class, 'sendWhatsAppTest']);
 
     // In-App Notification Feed
     Route::get('/notifications', [NotificationController::class, 'index']);

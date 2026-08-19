@@ -298,4 +298,19 @@ class MasterDataController extends Controller
 
         return response()->json(['success' => true, 'data' => $setting]);
     }
+
+    public function testWhatsApp(Request $request)
+    {
+        return (new WhatsAppController())->testConnection($request);
+    }
+
+    public function sendWhatsAppTest(Request $request)
+    {
+        return (new WhatsAppController())->sendTestMessage($request);
+    }
+
+    public function whatsAppLogs(Request $request)
+    {
+        return (new WhatsAppController())->logs($request);
+    }
 }
