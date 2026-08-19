@@ -84,9 +84,6 @@ export const api = {
   getBaList: () => request('/ba'),
   getBaById: (id) => request(`/ba/${id}`),
   getBaByWorkOrderId: (workOrderId) => request(`/ba/${workOrderId}`),
-  completeWorkOrder: (workOrderId) => request(`/work-orders/${workOrderId}/complete`, {
-    method: 'POST'
-  }),
 
   // Master Data CRUD
   getVendors: () => request('/master/vendors'),

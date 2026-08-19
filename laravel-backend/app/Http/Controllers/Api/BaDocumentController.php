@@ -10,6 +10,7 @@ use App\Services\AuditService;
 use App\Services\BaDocumentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BaDocumentController extends Controller
 {
@@ -41,17 +42,34 @@ class BaDocumentController extends Controller
             ], 403);
         }
 
-        $workOrder = WorkOrder::findOrFail($id);
+        $workOrder = WorkOrder::with(['items', 'evidencePhotos'])->findOrFail($id);
         $templateId = $request->template_id;
 
         try {
-            $ba = BaDocumentService::createOrUpdateBa($user, $workOrder, $templateId);
+            return DB::transaction(function () use ($user, $workOrder, $templateId) {
+                $old = $workOrder->toArray();
+                $ba = BaDocumentService::createOrUpdateBa($user, $workOrder, $templateId);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Berita Acara (BA) Opname berhasil diterbitkan.',
-                'data' => $ba,
-            ]);
+                // Automatic Terminal State Completion
+                $workOrder->update([
+                    'status' => 'COMPLETED',
+                    'progress_percent' => 100,
+                ]);
+
+                $workOrder->items()->update(['status' => 'COMPLETED']);
+
+                AuditService::log($user, 'GENERATE_BA_AND_COMPLETE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $old, [
+                    'ba_id' => $ba->id,
+                    'ba_number' => $ba->ba_number,
+                    'status' => 'COMPLETED'
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Berita Acara (BA) Opname berhasil diterbitkan dan SPK otomatis selesai (COMPLETED 100%).',
+                    'data' => $ba,
+                ]);
+            });
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,

@@ -24,9 +24,11 @@ class ReviewController extends Controller
             ], 403);
         }
 
-        $workOrder = WorkOrder::findOrFail($id);
+        $workOrder = WorkOrder::with(['evidencePhotos', 'items'])->findOrFail($id);
 
         return DB::transaction(function () use ($user, $workOrder, $request) {
+            $old = $workOrder->toArray();
+
             $review = Review::create([
                 'work_order_id' => $workOrder->id,
                 'reviewer_user_id' => $user->id,
@@ -34,21 +36,28 @@ class ReviewController extends Controller
                 'review_notes' => $request->review_notes ?? 'Pekerjaan disetujui.',
             ]);
 
+            // Auto-generate & Finalize Berita Acara (BA) Opname
+            $ba = BaDocumentService::createOrUpdateBa($user, $workOrder);
+
+            // Automatic Terminal State Completion
             $workOrder->update([
-                'status' => 'APPROVED',
+                'status' => 'COMPLETED',
                 'progress_percent' => 100,
             ]);
 
-            // Auto-generate Berita Acara (BA) Opname
-            $ba = BaDocumentService::createOrUpdateBa($user, $workOrder);
+            $workOrder->items()->update(['status' => 'COMPLETED']);
 
-            AuditService::log($user, 'APPROVE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, ['ba_id' => $ba->id]);
+            AuditService::log($user, 'APPROVE_AND_COMPLETE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $old, [
+                'ba_id' => $ba->id,
+                'ba_number' => $ba->ba_number,
+                'status' => 'COMPLETED'
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Pekerjaan berhasil disetujui & Berita Acara (BA) telah otomatis diterbitkan.',
+                'message' => 'Pekerjaan berhasil disetujui, Berita Acara (BA) diterbitkan, dan SPK otomatis selesai (COMPLETED 100%).',
                 'data' => [
-                    'work_order' => $workOrder->fresh(),
+                    'work_order' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos', 'baDocument']),
                     'ba_document' => $ba,
                 ],
             ]);

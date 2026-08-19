@@ -137,7 +137,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/work-orders/{id}/assign', [WorkOrderController::class, 'assignTeam'])->whereNumber('id');
     Route::post('/work-orders/{id}/submit', [WorkOrderController::class, 'submit'])->whereNumber('id');
     Route::post('/work-orders/{id}/check-in', [CheckInController::class, 'checkIn'])->whereNumber('id');
-    Route::post('/work-orders/{id}/complete', [WorkOrderController::class, 'complete'])->whereNumber('id');
 
     // Check-In (Geofencing)
     Route::post('/check-ins', [CheckInController::class, 'store']);
