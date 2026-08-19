@@ -15,11 +15,11 @@ class ReportController extends Controller
         $query = WorkOrderService::getScopedQuery($user);
 
         $total = (clone $query)->count();
-        $inProgress = (clone $query)->where('status', 'IN_PROGRESS')->count();
-        $waitingCheckin = (clone $query)->where('status', 'ASSIGNED')->count();
-        $waitingReview = (clone $query)->where('status', 'REVIEW')->count();
+        $inProgress = (clone $query)->whereIn('status', ['IN_PROGRESS', 'CHECKED_IN'])->count();
+        $waitingCheckin = (clone $query)->whereIn('status', ['READY', 'ASSIGNED'])->count();
+        $waitingReview = (clone $query)->whereIn('status', ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'])->count();
         $revision = (clone $query)->where('status', 'REVISION')->count();
-        $completed = (clone $query)->whereIn('status', ['APPROVED', 'COMPLETED'])->count();
+        $completed = (clone $query)->whereIn('status', ['APPROVED', 'COMPLETED', 'BA_OPNAME'])->count();
 
         $alerts = [];
         if ($revision > 0) {

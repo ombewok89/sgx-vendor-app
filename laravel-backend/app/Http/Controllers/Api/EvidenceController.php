@@ -184,8 +184,13 @@ class EvidenceController extends Controller
         $relativeDiskPath = str_replace('/storage/', '', $photo->file_path);
         Storage::disk('public')->delete($relativeDiskPath);
 
+        $workOrder = $photo->workOrder;
         AuditService::log($user, 'DELETE_PHOTO', 'EVIDENCE_PHOTO', $photo->id, $photo->toArray());
         $photo->delete();
+
+        if ($workOrder) {
+            \App\Services\WorkOrderService::recalculateProgress($workOrder);
+        }
 
         return response()->json([
             'success' => true,

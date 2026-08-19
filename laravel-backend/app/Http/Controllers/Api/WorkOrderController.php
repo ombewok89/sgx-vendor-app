@@ -408,13 +408,16 @@ class WorkOrderController extends Controller
             ], 422);
         }
 
-        $workOrder->update(['status' => 'REVIEW']);
+        $workOrder->update([
+            'status' => 'SUBMITTED',
+            'progress_percent' => 100,
+        ]);
         AuditService::log($user, 'SUBMIT_FOR_REVIEW', 'WORK_ORDER', $workOrder->id);
 
         return response()->json([
             'success' => true,
             'message' => 'Pekerjaan berhasil diajukan untuk review dan persetujuan Admin.',
-            'data' => $workOrder,
+            'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos']),
         ]);
     }
 }

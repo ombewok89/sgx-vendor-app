@@ -103,6 +103,8 @@ class EvidenceService
             'file_hash' => $fileHash,
         ]);
 
+        WorkOrderService::recalculateProgress($workOrder);
+
         return $photo;
     }
 }

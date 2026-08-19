@@ -510,12 +510,12 @@
             <button
               type="button"
               @click="handleSubmitWorkOrder"
-              :disabled="submitting || ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'COMPLETED'].includes(selectedTask.status)"
+              :disabled="submitting || ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW', 'APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask?.status)"
               :class="[
                 'w-full py-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all duration-200 active:scale-[0.99]',
-                ['SUBMITTED', 'UNDER_REVIEW'].includes(selectedTask.status)
+                ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(selectedTask?.status)
                   ? 'bg-purple-900/80 text-purple-200 cursor-not-allowed border border-purple-700/60'
-                  : ['APPROVED', 'COMPLETED'].includes(selectedTask.status)
+                  : ['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask?.status)
                   ? 'bg-emerald-900/80 text-emerald-200 cursor-not-allowed border border-emerald-700/60'
                   : canSubmit
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 cursor-pointer shadow-emerald-500/25 font-black text-sm'
@@ -526,9 +526,9 @@
               <span>
                 {{ submitting
                   ? 'Memproses Pengajuan...'
-                  : ['SUBMITTED', 'UNDER_REVIEW'].includes(selectedTask.status)
+                  : ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(selectedTask?.status)
                   ? 'Pekerjaan Sedang Dalam Review Admin ✓'
-                  : ['APPROVED', 'COMPLETED'].includes(selectedTask.status)
+                  : ['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask?.status)
                   ? 'Pekerjaan Telah Disetujui & Selesai ✓'
                   : 'Ajukan Seluruh Pekerjaan Cabang untuk Direview Admin' }}
               </span>
@@ -720,7 +720,7 @@ const isCheckinSatisfied = computed(() => {
 const canSubmit = computed(() => {
   return isCheckinSatisfied.value &&
     isAllItemsComplete.value &&
-    !['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'COMPLETED'].includes(selectedTask.value?.status);
+    !['SUBMITTED', 'UNDER_REVIEW', 'REVIEW', 'APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask.value?.status);
 });
 
 async function handleSubmitWorkOrder() {

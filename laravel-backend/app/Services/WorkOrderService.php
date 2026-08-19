@@ -122,4 +122,76 @@ class WorkOrderService
             return $workOrder->load(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']);
         });
     }
+
+    public static function recalculateProgress(WorkOrder $workOrder): int
+    {
+        $items = $workOrder->items()->get();
+        $photos = $workOrder->evidencePhotos()->get();
+
+        if (in_array($workOrder->status, ['APPROVED', 'COMPLETED', 'BA_OPNAME'])) {
+            $workOrder->update(['progress_percent' => 100]);
+            return 100;
+        }
+
+        if (in_array($workOrder->status, ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'])) {
+            $workOrder->update(['progress_percent' => 100]);
+            return 100;
+        }
+
+        $totalProgress = 0;
+
+        if ($items->count() > 0) {
+            foreach ($items as $item) {
+                $itemPhotos = $photos->where('item_id', $item->id);
+                $hasBefore = $itemPhotos->where('stage', 'BEFORE')->count() > 0;
+                $hasProcess = $itemPhotos->where('stage', 'PROCESS')->count() > 0;
+                $hasAfter = $itemPhotos->where('stage', 'AFTER')->count() > 0;
+
+                $weight = $item->weight_percent ?: floor(100 / $items->count());
+                $ratio = 0;
+
+                if ($hasAfter) {
+                    $ratio = 1.0;
+                    $item->update(['status' => 'COMPLETED']);
+                } elseif ($hasProcess) {
+                    $ratio = 0.65;
+                    $item->update(['status' => 'IN_PROGRESS']);
+                } elseif ($hasBefore) {
+                    $ratio = 0.35;
+                    $item->update(['status' => 'IN_PROGRESS']);
+                } else {
+                    $item->update(['status' => 'PENDING']);
+                }
+
+                $totalProgress += ($weight * $ratio);
+            }
+        } else {
+            // Fallback for work order without explicit sub-items
+            $hasBefore = $photos->where('stage', 'BEFORE')->count() > 0;
+            $hasProcess = $photos->where('stage', 'PROCESS')->count() > 0;
+            $hasAfter = $photos->where('stage', 'AFTER')->count() > 0;
+
+            if ($hasAfter) {
+                $totalProgress = 100;
+            } elseif ($hasProcess) {
+                $totalProgress = 65;
+            } elseif ($hasBefore) {
+                $totalProgress = 35;
+            } elseif ($workOrder->checkIns()->count() > 0) {
+                $totalProgress = 15;
+            }
+        }
+
+        $calcPercent = (int) round($totalProgress);
+        $calcPercent = max(0, min(100, $calcPercent));
+
+        $updateData = ['progress_percent' => $calcPercent];
+        if ($calcPercent > 0 && in_array($workOrder->status, ['DRAFT', 'READY', 'ASSIGNED'])) {
+            $updateData['status'] = 'IN_PROGRESS';
+        }
+
+        $workOrder->update($updateData);
+
+        return $calcPercent;
+    }
 }

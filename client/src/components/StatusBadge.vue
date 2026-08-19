@@ -36,6 +36,7 @@ const STATUS_CONFIG = {
   IN_PROGRESS: { label: 'Sedang Dikerjakan', bg: 'bg-amber-500/15', text: 'text-amber-700', border: 'border-amber-300/80', dot: 'bg-amber-500', shadow: 'shadow-sm shadow-amber-500/10' },
   SUBMITTED: { label: 'Menunggu Review', bg: 'bg-purple-500/15', text: 'text-purple-700', border: 'border-purple-300/80', dot: 'bg-purple-500', shadow: 'shadow-sm shadow-purple-500/10' },
   UNDER_REVIEW: { label: 'Sedang Direview', bg: 'bg-purple-500/20', text: 'text-purple-800', border: 'border-purple-400/80', dot: 'bg-purple-600', shadow: 'shadow-sm shadow-purple-500/15' },
+  REVIEW: { label: 'Menunggu Review', bg: 'bg-purple-500/15', text: 'text-purple-700', border: 'border-purple-300/80', dot: 'bg-purple-500', shadow: 'shadow-sm shadow-purple-500/10' },
   REVISION: { label: 'Perlu Revisi', bg: 'bg-rose-500/15', text: 'text-rose-700', border: 'border-rose-300/80', dot: 'bg-rose-500', shadow: 'shadow-sm shadow-rose-500/10' },
   APPROVED: { label: 'Disetujui (Approved)', bg: 'bg-emerald-500/15', text: 'text-emerald-700', border: 'border-emerald-300/80', dot: 'bg-emerald-500', shadow: 'shadow-sm shadow-emerald-500/10' },
   BA_OPNAME: { label: 'BA Opname Terbit', bg: 'bg-teal-500/15', text: 'text-teal-700', border: 'border-teal-300/80', dot: 'bg-teal-500', shadow: 'shadow-sm shadow-teal-500/10' },

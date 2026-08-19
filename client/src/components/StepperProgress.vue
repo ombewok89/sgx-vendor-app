@@ -94,7 +94,8 @@ const currentIndex = computed(() => {
     case 'CHECKED_IN': return 2;
     case 'IN_PROGRESS': return 3;
     case 'SUBMITTED':
-    case 'UNDER_REVIEW': return 4;
+    case 'UNDER_REVIEW':
+    case 'REVIEW': return 4;
     case 'REVISION': return 4;
     case 'APPROVED': return 5;
     case 'BA_OPNAME': return 6;
