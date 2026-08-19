@@ -5,11 +5,6 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Always sync root .env into laravel-backend/.env if root .env exists
-if (file_exists(__DIR__.'/.env')) {
-    @copy(__DIR__.'/.env', __DIR__.'/laravel-backend/.env');
-}
-
 // Auto-clean stale compiled caches and OPcache so updates in routes/api.php take effect immediately
 if (function_exists('opcache_reset')) {
     @opcache_reset();
