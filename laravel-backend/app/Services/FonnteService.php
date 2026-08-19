@@ -310,7 +310,7 @@ class FonnteService
             ])
             ->timeout(self::CONNECT_TIMEOUT)
             ->connectTimeout(6)
-            ->get(self::BASE_URL . '/device');
+            ->post(self::BASE_URL . '/device');
 
             $httpStatus = $response->status();
             $body       = $response->json() ?? [];
