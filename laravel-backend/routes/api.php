@@ -26,9 +26,11 @@ Route::get('/health', function () {
 Route::match(['get', 'post'], '/auth/login', [AuthController::class, 'login'])->name('login');
 Route::match(['get', 'post'], '/login', [AuthController::class, 'login']);
 
-// WhatsApp Gateway Test (Publicly bound to avoid Sanctum redirect exceptions)
-Route::match(['get', 'post'], '/system/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
-Route::match(['get', 'post'], '/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
+// WhatsApp Gateway Test & Health (Publicly bound to avoid Sanctum redirect exceptions)
+Route::match(['get', 'post', 'options'], '/system/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
+Route::match(['get', 'post', 'options'], '/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
+Route::match(['get', 'post', 'options'], '/system/gateway-status', [MasterDataController::class, 'gatewayStatus']);
+Route::match(['get', 'post', 'options'], '/gateway-status', [MasterDataController::class, 'gatewayStatus']);
 
 // Public Direct Storage & Evidence Image Streamer (Hardened with Canonical Realpath Containment & Extension Allowlist)
 Route::get('/storage-stream/{path}', function ($path) {

@@ -54,6 +54,16 @@ Route::get('/api/storage/{path}', $streamerHandler)->where('path', '.*');
 Route::get('/api/evidence/photos/{id}/view', [\App\Http\Controllers\Api\EvidenceController::class, 'streamPhoto']);
 Route::get('/evidence/photos/{id}/view', [\App\Http\Controllers\Api\EvidenceController::class, 'streamPhoto']);
 
+// WhatsApp Gateway & Settings Fallback Endpoints (Guarantees routing under cPanel Apache mod_rewrite)
+Route::match(['get', 'post', 'options'], '/api/system/test-whatsapp', [\App\Http\Controllers\Api\MasterDataController::class, 'testWhatsApp']);
+Route::match(['get', 'post', 'options'], '/system/test-whatsapp', [\App\Http\Controllers\Api\MasterDataController::class, 'testWhatsApp']);
+Route::match(['get', 'post', 'options'], '/api/test-whatsapp', [\App\Http\Controllers\Api\MasterDataController::class, 'testWhatsApp']);
+Route::match(['get', 'post', 'options'], '/test-whatsapp', [\App\Http\Controllers\Api\MasterDataController::class, 'testWhatsApp']);
+Route::match(['get', 'post', 'options'], '/api/system/gateway-status', [\App\Http\Controllers\Api\MasterDataController::class, 'gatewayStatus']);
+Route::match(['get', 'post', 'options'], '/system/gateway-status', [\App\Http\Controllers\Api\MasterDataController::class, 'gatewayStatus']);
+Route::match(['get', 'post', 'options'], '/api/system/settings', [\App\Http\Controllers\Api\MasterDataController::class, 'settings']);
+Route::match(['put', 'post', 'options'], '/api/system/settings', [\App\Http\Controllers\Api\MasterDataController::class, 'updateSetting']);
+
 // 2. Root SPA View
 Route::get('/', function () {
     $indexPath = public_path('index.html');
