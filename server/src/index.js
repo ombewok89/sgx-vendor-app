@@ -129,6 +129,28 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Serve built client frontend static files (if available)
+const clientDistPath = path.resolve(__dirname, '../../client/dist');
+const rootDistPath = path.resolve(__dirname, '../../');
+
+if (fs.existsSync(path.join(clientDistPath, 'index.html'))) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+} else if (fs.existsSync(path.join(rootDistPath, 'index.html'))) {
+  app.use(express.static(rootDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(rootDistPath, 'index.html'));
+  });
+}
+
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('[Unhandled Server Error]:', err);
