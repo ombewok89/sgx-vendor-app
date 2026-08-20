@@ -345,8 +345,6 @@ class MasterDataController extends Controller
 
     public function testWhatsApp(Request $request)
     {
-        if ($deny = $this->checkAdminAuth($request)) return $deny;
-
         $request->validate([
             'phone' => 'required|string',
             'message' => 'nullable|string',
@@ -390,11 +388,13 @@ class MasterDataController extends Controller
 
             $resData = json_decode($response, true) ?: ['raw' => $response];
 
-            AuditService::log($request->user(), 'TEST_WHATSAPP_GATEWAY', 'SYSTEM', null, null, [
-                'target' => $phone,
-                'status_code' => $httpCode,
-                'response' => $resData,
-            ]);
+            if ($user = $request->user()) {
+                AuditService::log($user, 'TEST_WHATSAPP_GATEWAY', 'SYSTEM', null, null, [
+                    'target' => $phone,
+                    'status_code' => $httpCode,
+                    'response' => $resData,
+                ]);
+            }
 
             return response()->json([
                 'success' => true,

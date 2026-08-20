@@ -18,6 +18,7 @@ function getAuthHeaders() {
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
   const headers = {
+    'Accept': 'application/json',
     ...getAuthHeaders(),
     ...(options.headers || {})
   };
