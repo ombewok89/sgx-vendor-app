@@ -47,12 +47,13 @@ class FonnteService
     {
         $dbToken = null;
         try {
-            $dbToken = SystemSetting::where('key', 'fonnte_api_key')->value('value');
+            $dbToken = SystemSetting::whereIn('key', ['fonnte_api_key', 'FONNTE_API_KEY', 'fonnte_token', 'FONNTE_TOKEN'])->value('value');
         } catch (\Throwable $e) {
             // Fallback during migrations/unit tests without DB
         }
 
-        $token = !empty($dbToken) ? trim($dbToken) : (string)config('services.fonnte.token', '');
+        $token = !empty($dbToken) ? trim((string)$dbToken) : (string)config('services.fonnte.token', env('FONNTE_TOKEN', env('FONNTE_API_KEY', '')));
+        $token = trim($token, " \t\n\r\0\x0B\"'");
         
         // Ignore generic placeholder strings
         if (in_array($token, ['FONNTE_DEMO_KEY_SGX_2026', 'mock-token', 'YOUR_FONNTE_TOKEN_HERE', ''])) {
@@ -295,9 +296,20 @@ class FonnteService
             // Ignore if table not yet migrated
         }
 
+        $maskedToken = null;
+        if (!empty($token)) {
+            $len = strlen($token);
+            if ($len > 8) {
+                $maskedToken = substr($token, 0, 4) . '••••' . substr($token, -4);
+            } else {
+                $maskedToken = '••••••••';
+            }
+        }
+
         return [
             'state' => $state, // 'ACTIVE' | 'MOCK' | 'UNCONFIGURED'
             'token_configured' => !empty($token),
+            'masked_token' => $maskedToken,
             'mock_enabled' => $isMock,
             'total_sent' => $totalSent,
             'total_failed' => $totalFailed,

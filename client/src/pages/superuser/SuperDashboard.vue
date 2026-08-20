@@ -219,42 +219,87 @@
               <p class="text-[11px] text-slate-500">Integrasi pengiriman pesan notifikasi otomatis untuk SPK, Check-In, dan Berita Acara.</p>
             </div>
           </div>
-          <span
-            :class="[
-              'px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 self-start sm:self-auto',
-              gatewayInfo.state === 'ACTIVE'
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : gatewayInfo.state === 'MOCK'
-                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                : 'bg-rose-50 text-rose-800 border-rose-200'
-            ]"
-          >
+          <div class="flex items-center gap-2 self-start sm:self-auto">
             <span
               :class="[
-                'w-2 h-2 rounded-full',
+                'px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5',
                 gatewayInfo.state === 'ACTIVE'
-                  ? 'bg-emerald-500 animate-pulse'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   : gatewayInfo.state === 'MOCK'
-                  ? 'bg-amber-500'
-                  : 'bg-rose-500'
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : 'bg-rose-50 text-rose-800 border-rose-200'
               ]"
-            ></span>
-            <span>
-              {{ gatewayInfo.state === 'ACTIVE' ? 'Gateway Fonnte Aktif' : gatewayInfo.state === 'MOCK' ? 'Mode Mock (Testing)' : 'Belum Dikonfigurasi (Offline)' }}
+            >
+              <span
+                :class="[
+                  'w-2 h-2 rounded-full',
+                  gatewayInfo.state === 'ACTIVE'
+                    ? 'bg-emerald-500 animate-pulse'
+                    : gatewayInfo.state === 'MOCK'
+                    ? 'bg-amber-500'
+                    : 'bg-rose-500'
+                ]"
+              ></span>
+              <span>
+                {{ gatewayInfo.state === 'ACTIVE' ? 'Gateway Fonnte Aktif' : gatewayInfo.state === 'MOCK' ? 'Mode Mock (Testing)' : 'Belum Dikonfigurasi (Offline)' }}
+              </span>
             </span>
-          </span>
+
+            <button
+              type="button"
+              @click="refreshGatewayStatus"
+              :disabled="refreshingGateway"
+              title="Periksa Ulang Status Gateway"
+              class="p-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer shadow-2xs text-[10px] font-bold flex items-center gap-1"
+            >
+              <RefreshCw :class="['w-3 h-3', refreshingGateway ? 'animate-spin text-purple-700' : '']" />
+            </button>
+          </div>
         </div>
 
-        <!-- Peringatan Visual Jika Gateway Belum Dikonfigurasi -->
+        <!-- Banner 1: Gateway Online / Aktif (Hijau) -->
         <div
-          v-if="gatewayInfo.state === 'UNCONFIGURED'"
+          v-if="gatewayInfo.state === 'ACTIVE'"
+          class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-950 text-xs font-medium shadow-xs"
+        >
+          <ShieldCheck class="w-5 h-5 text-emerald-600 shrink-0" />
+          <div class="flex-1">
+            <div class="font-bold flex items-center gap-2">
+              <span>WhatsApp Gateway Siap & Terhubung Normal</span>
+              <span v-if="gatewayInfo.masked_token" class="font-mono text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md">
+                Token: {{ gatewayInfo.masked_token }}
+              </span>
+            </div>
+            <p class="text-[11px] text-emerald-700 mt-0.5">
+              Notifikasi otomatis pengerjaan SPK, presensi GPS, dan Berita Acara siap dikirimkan ke nomor WhatsApp penerima.
+            </p>
+          </div>
+        </div>
+
+        <!-- Banner 2: Token sudah diisi tapi belum disimpan / Belum Dikonfigurasi -->
+        <div
+          v-else-if="gatewayInfo.state === 'UNCONFIGURED' && fonnteApiKey && fonnteApiKey.trim().length > 5"
+          class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-amber-950 text-xs font-medium shadow-xs"
+        >
+          <AlertTriangle class="w-5 h-5 text-amber-600 shrink-0" />
+          <div class="flex-1">
+            <div class="font-bold">💡 Token Fonnte telah dimasukkan</div>
+            <p class="text-[11px] text-amber-800 mt-0.5">
+              Klik tombol <span class="font-bold underline">"Simpan Token"</span> di bawah untuk mengaktifkan koneksi WhatsApp Gateway ke sistem.
+            </p>
+          </div>
+        </div>
+
+        <!-- Banner 3: Token Kosong (Merah) -->
+        <div
+          v-else-if="gatewayInfo.state === 'UNCONFIGURED'"
           class="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-900 text-xs font-medium shadow-xs"
         >
           <ShieldAlert class="w-5 h-5 text-rose-600 shrink-0" />
-          <div>
+          <div class="flex-1">
             <div class="font-bold">⚠️ WhatsApp Gateway belum terkonfigurasi</div>
             <p class="text-[11px] text-rose-700 mt-0.5">
-              API Token Fonnte masih kosong atau bernilai placeholder. Seluruh notifikasi otomatis ke nomor WhatsApp penerima tidak akan terkirim. Silakan masukkan token resmi dari dashboard Fonnte Anda di bawah ini.
+              API Token Fonnte masih kosong atau bernilai placeholder. Silakan masukkan token resmi dari dashboard Fonnte Anda di bawah ini lalu klik Simpan Token.
             </p>
           </div>
         </div>
@@ -666,7 +711,8 @@ import {
   MessageSquare,
   Send,
   MapPin,
-  Globe
+  Globe,
+  AlertTriangle
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -802,6 +848,22 @@ const filteredAuditLogs = computed(() => {
   });
 });
 
+const refreshingGateway = ref(false);
+
+async function refreshGatewayStatus() {
+  refreshingGateway.value = true;
+  try {
+    const res = await api.getGatewayStatus();
+    if (res.data) {
+      gatewayInfo.value = res.data;
+    }
+  } catch (err) {
+    console.warn('Failed to refresh gateway status:', err);
+  } finally {
+    refreshingGateway.value = false;
+  }
+}
+
 async function saveSetting(key, value) {
   savingSetting.value = true;
   try {
@@ -816,7 +878,22 @@ async function saveSetting(key, value) {
 }
 
 async function saveFonnteKey() {
-  await saveSetting('fonnte_api_key', fonnteApiKey.value);
+  const token = (fonnteApiKey.value || '').trim();
+  if (!token) {
+    alert('Mohon masukkan Token Fonnte terlebih dahulu.');
+    return;
+  }
+  savingSetting.value = true;
+  try {
+    await api.updateSetting('fonnte_api_key', token);
+    await refreshGatewayStatus();
+    alert('Token WhatsApp Fonnte berhasil disimpan! Status Gateway: ONLINE');
+    loadData();
+  } catch (err) {
+    alert(`Gagal menyimpan token: ${err.message}`);
+  } finally {
+    savingSetting.value = false;
+  }
 }
 
 async function toggleStrictGps() {
