@@ -64,6 +64,44 @@ class FonnteService
     }
 
     /**
+     * Checks if a specific notification event is enabled in system settings.
+     */
+    public static function isEventEnabled(string $messageType): bool
+    {
+        // Custom or direct manual test messages are always allowed
+        if (in_array(strtoupper($messageType), ['CUSTOM', 'TEST_MESSAGE', 'TEST', ''])) {
+            return true;
+        }
+
+        $settingMap = [
+            'SPK_CREATED'      => 'wa_notify_spk_assigned',
+            'SPK_ASSIGNED'     => 'wa_notify_spk_assigned',
+            'GPS_CHECKIN'      => 'wa_notify_gps_checkin',
+            'EVIDENCE_UPLOAD'  => 'wa_notify_evidence_upload',
+            'ISSUE_REPORTED'   => 'wa_notify_issue_reported',
+            'SPK_SUBMITTED'    => 'wa_notify_spk_submitted',
+            'BA_ISSUED'        => 'wa_notify_ba_issued',
+            'BA_APPROVED'      => 'wa_notify_ba_issued',
+        ];
+
+        $key = $settingMap[strtoupper($messageType)] ?? null;
+        if (!$key) {
+            return true;
+        }
+
+        try {
+            $val = SystemSetting::where('key', $key)->value('value');
+            if ($val !== null) {
+                return (string)$val === '1' || strtolower((string)$val) === 'true';
+            }
+        } catch (\Throwable $e) {
+            // Default to true if DB error
+        }
+
+        return true;
+    }
+
+    /**
      * Checks if mock simulation mode is explicitly enabled.
      */
     public static function isMockEnabled(): bool
@@ -88,6 +126,27 @@ class FonnteService
             $err = 'Nomor telepon tujuan tidak valid.';
             self::recordLog($notificationFeedId, $phone, $messageType, $message, 'FAILED', null, $err, null);
             return ['success' => false, 'error' => $err, 'status' => 'FAILED'];
+        }
+
+        // Check if event notification is disabled by admin settings
+        if (!self::isEventEnabled($messageType)) {
+            self::recordLog(
+                $notificationFeedId,
+                $normalizedPhone,
+                $messageType,
+                $message,
+                'SKIPPED',
+                null,
+                'Notifikasi dinonaktifkan di pengaturan sistem',
+                ['skipped' => true, 'event' => $messageType]
+            );
+
+            return [
+                'success' => true,
+                'skipped' => true,
+                'status' => 'SKIPPED',
+                'message' => 'Pengiriman WhatsApp dilewati karena notifikasi event ini dinonaktifkan di pengaturan sistem.'
+            ];
         }
 
         $isMock = self::isMockEnabled();

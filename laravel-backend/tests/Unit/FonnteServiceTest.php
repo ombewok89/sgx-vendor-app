@@ -134,4 +134,36 @@ class FonnteServiceTest extends TestCase
             'error_message' => 'device disconnected',
         ]);
     }
+
+    /**
+     * Test 6: Verifikasi bahwa jika event notifikasi dimatikan oleh admin (0), pengiriman di-skip.
+     */
+    public function test_disabled_notification_event_skips_whatsapp_dispatch()
+    {
+        Http::fake();
+        Config::set('services.fonnte.mock_enabled', false);
+        Config::set('services.fonnte.token', 'valid_token_123');
+
+        // Matikan event GPS Check-in di settings
+        SystemSetting::updateOrCreate(
+            ['key' => 'wa_notify_gps_checkin'],
+            ['value' => '0', 'description' => 'Toggle GPS Check-in WA']
+        );
+
+        $result = FonnteService::sendMessage('081234567890', 'Teknisi Check-In di Toko', 'GPS_CHECKIN');
+
+        $this->assertTrue($result['success']);
+        $this->assertTrue($result['skipped']);
+        $this->assertEquals('SKIPPED', $result['status']);
+
+        // Pastikan tidak ada request HTTP yang dikirim ke Fonnte
+        Http::assertNothingSent();
+
+        // Pastikan tercatat di database sebagai SKIPPED
+        $this->assertDatabaseHas('notification_logs', [
+            'recipient' => '6281234567890',
+            'status' => 'SKIPPED',
+            'message_type' => 'GPS_CHECKIN',
+        ]);
+    }
 }

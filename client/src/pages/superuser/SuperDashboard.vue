@@ -389,7 +389,195 @@
         </div>
       </div>
 
-      <!-- 2. Security & Geofencing GPS Parameters Card -->
+      <!-- 2. WhatsApp Notification Events Matrix Selection Card -->
+      <div class="glass-card rounded-3xl p-6 shadow-glass border border-white/80 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-purple-700 text-white flex items-center justify-center shadow-sm">
+              <Bell class="w-4 h-4" />
+            </div>
+            <div>
+              <h3 class="font-black text-sm text-slate-900">Seleksi Otomasi Notifikasi WhatsApp (Event Triggers)</h3>
+              <p class="text-[11px] text-slate-500">Pilih event pekerjaan lapangan yang diizinkan mengirim notifikasi WhatsApp otomatis ke penerima.</p>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200 self-start sm:self-auto">
+            6 Kategori Event
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          <!-- 1. SPK Baru / Ditugaskan -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs flex flex-col justify-between hover:border-purple-300 transition-all">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Briefcase class="w-3.5 h-3.5 text-purple-700" />
+                  <span>SPK Baru & Penugasan</span>
+                </span>
+                <span :class="['px-2 py-0.5 rounded text-[10px] font-bold', waNotifSpkAssigned === '1' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500']">
+                  {{ waNotifSpkAssigned === '1' ? 'AKTIF' : 'NONAKTIF' }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Kirim rincian SPK, target SLA, dan link lokasi ke Teknisi / Vendor.</p>
+            </div>
+            <button
+              type="button"
+              @click="toggleWaNotif('wa_notify_spk_assigned', waNotifSpkAssigned)"
+              :class="[
+                'w-full py-1.5 font-bold rounded-xl text-xs transition-all cursor-pointer shadow-2xs',
+                waNotifSpkAssigned === '1'
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              ]"
+            >
+              {{ waNotifSpkAssigned === '1' ? 'Nonaktifkan' : 'Aktifkan Notifikasi' }}
+            </button>
+          </div>
+
+          <!-- 2. Presensi GPS Check-In -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs flex flex-col justify-between hover:border-blue-300 transition-all">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                  <MapPin class="w-3.5 h-3.5 text-blue-600" />
+                  <span>Presensi GPS Check-In</span>
+                </span>
+                <span :class="['px-2 py-0.5 rounded text-[10px] font-bold', waNotifGpsCheckin === '1' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500']">
+                  {{ waNotifGpsCheckin === '1' ? 'AKTIF' : 'NONAKTIF' }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Konfirmasi kehadiran teknisi di radius toko valid dikirim ke Supervisor.</p>
+            </div>
+            <button
+              type="button"
+              @click="toggleWaNotif('wa_notify_gps_checkin', waNotifGpsCheckin)"
+              :class="[
+                'w-full py-1.5 font-bold rounded-xl text-xs transition-all cursor-pointer shadow-2xs',
+                waNotifGpsCheckin === '1'
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              ]"
+            >
+              {{ waNotifGpsCheckin === '1' ? 'Nonaktifkan' : 'Aktifkan Notifikasi' }}
+            </button>
+          </div>
+
+          <!-- 3. Upload Foto Bukti Kerja -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-all">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Camera class="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Upload Foto Bukti Kerja</span>
+                </span>
+                <span :class="['px-2 py-0.5 rounded text-[10px] font-bold', waNotifEvidenceUpload === '1' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500']">
+                  {{ waNotifEvidenceUpload === '1' ? 'AKTIF' : 'NONAKTIF' }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Notifikasi saat foto Before/Process/After diunggah dikirim ke Supervisor.</p>
+            </div>
+            <button
+              type="button"
+              @click="toggleWaNotif('wa_notify_evidence_upload', waNotifEvidenceUpload)"
+              :class="[
+                'w-full py-1.5 font-bold rounded-xl text-xs transition-all cursor-pointer shadow-2xs',
+                waNotifEvidenceUpload === '1'
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              ]"
+            >
+              {{ waNotifEvidenceUpload === '1' ? 'Nonaktifkan' : 'Aktifkan Notifikasi' }}
+            </button>
+          </div>
+
+          <!-- 4. Laporan Kendala Lapangan (Urgent) -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs flex flex-col justify-between hover:border-amber-300 transition-all">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                  <AlertTriangle class="w-3.5 h-3.5 text-amber-600" />
+                  <span>Kendala Lapangan (Urgent)</span>
+                </span>
+                <span :class="['px-2 py-0.5 rounded text-[10px] font-bold', waNotifIssueReported === '1' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500']">
+                  {{ waNotifIssueReported === '1' ? 'AKTIF' : 'NONAKTIF' }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Peringatan prioritas tinggi jika ada hambatan kerja (cuaca/izin/listrik padam).</p>
+            </div>
+            <button
+              type="button"
+              @click="toggleWaNotif('wa_notify_issue_reported', waNotifIssueReported)"
+              :class="[
+                'w-full py-1.5 font-bold rounded-xl text-xs transition-all cursor-pointer shadow-2xs',
+                waNotifIssueReported === '1'
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              ]"
+            >
+              {{ waNotifIssueReported === '1' ? 'Nonaktifkan' : 'Aktifkan Notifikasi' }}
+            </button>
+          </div>
+
+          <!-- 5. SPK Selesai Dikerjakan -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs flex flex-col justify-between hover:border-teal-300 transition-all">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                  <CheckCircle2 class="w-3.5 h-3.5 text-teal-600" />
+                  <span>SPK Selesai Dikerjakan</span>
+                </span>
+                <span :class="['px-2 py-0.5 rounded text-[10px] font-bold', waNotifSpkSubmitted === '1' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500']">
+                  {{ waNotifSpkSubmitted === '1' ? 'AKTIF' : 'NONAKTIF' }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Notifikasi pengerjaan lapangan selesai dan siap diverifikasi oleh QC.</p>
+            </div>
+            <button
+              type="button"
+              @click="toggleWaNotif('wa_notify_spk_submitted', waNotifSpkSubmitted)"
+              :class="[
+                'w-full py-1.5 font-bold rounded-xl text-xs transition-all cursor-pointer shadow-2xs',
+                waNotifSpkSubmitted === '1'
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              ]"
+            >
+              {{ waNotifSpkSubmitted === '1' ? 'Nonaktifkan' : 'Aktifkan Notifikasi' }}
+            </button>
+          </div>
+
+          <!-- 6. Berita Acara (BA) Diterbitkan -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs flex flex-col justify-between hover:border-indigo-300 transition-all">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                  <FileCheck class="w-3.5 h-3.5 text-indigo-700" />
+                  <span>Berita Acara (BA) Terbit</span>
+                </span>
+                <span :class="['px-2 py-0.5 rounded text-[10px] font-bold', waNotifBaIssued === '1' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500']">
+                  {{ waNotifBaIssued === '1' ? 'AKTIF' : 'NONAKTIF' }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Kirim notifikasi dokumen BA digital dan link PDF resmi ke Client / Vendor.</p>
+            </div>
+            <button
+              type="button"
+              @click="toggleWaNotif('wa_notify_ba_issued', waNotifBaIssued)"
+              :class="[
+                'w-full py-1.5 font-bold rounded-xl text-xs transition-all cursor-pointer shadow-2xs',
+                waNotifBaIssued === '1'
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              ]"
+            >
+              {{ waNotifBaIssued === '1' ? 'Nonaktifkan' : 'Aktifkan Notifikasi' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Security & Geofencing GPS Parameters Card -->
       <div class="glass-card rounded-3xl p-6 shadow-glass border border-white/80 space-y-4">
         <div class="flex items-center gap-2.5 border-b border-slate-200/80 pb-3">
           <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
@@ -712,7 +900,12 @@ import {
   Send,
   MapPin,
   Globe,
-  AlertTriangle
+  AlertTriangle,
+  Bell,
+  Briefcase,
+  Camera,
+  CheckCircle2,
+  FileCheck
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -751,6 +944,14 @@ const gatewayInfo = ref({
   total_failed: 0,
   success_rate: 0
 });
+
+// WhatsApp Notification Event Toggles (1 = Active, 0 = Disabled)
+const waNotifSpkAssigned = ref('1');
+const waNotifGpsCheckin = ref('1');
+const waNotifEvidenceUpload = ref('1');
+const waNotifIssueReported = ref('1');
+const waNotifSpkSubmitted = ref('1');
+const waNotifBaIssued = ref('1');
 
 // Other Settings States
 const geofenceRadius = ref('200');
@@ -820,6 +1021,14 @@ function parseSettings() {
   strictGps.value = String(getVal('require_strict_gps', '1'));
   shaLock.value = String(getVal('sha256_integrity_lock', '1'));
   appName.value = getVal('app_name', 'SGX Vendor Work Evidence');
+
+  // WhatsApp Event Toggles
+  waNotifSpkAssigned.value = String(getVal('wa_notify_spk_assigned', '1'));
+  waNotifGpsCheckin.value = String(getVal('wa_notify_gps_checkin', '1'));
+  waNotifEvidenceUpload.value = String(getVal('wa_notify_evidence_upload', '1'));
+  waNotifIssueReported.value = String(getVal('wa_notify_issue_reported', '1'));
+  waNotifSpkSubmitted.value = String(getVal('wa_notify_spk_submitted', '1'));
+  waNotifBaIssued.value = String(getVal('wa_notify_ba_issued', '1'));
 }
 
 const filteredUsers = computed(() => {
@@ -854,11 +1063,11 @@ async function refreshGatewayStatus() {
   refreshingGateway.value = true;
   try {
     const res = await api.getGatewayStatus();
-    if (res.data) {
+    if (res?.data) {
       gatewayInfo.value = res.data;
     }
   } catch (err) {
-    console.warn('Failed to refresh gateway status:', err);
+    console.error('Failed to refresh gateway status:', err);
   } finally {
     refreshingGateway.value = false;
   }
@@ -877,18 +1086,14 @@ async function saveSetting(key, value) {
   }
 }
 
-async function saveFonnteKey() {
-  const token = (fonnteApiKey.value || '').trim();
-  if (!token) {
-    alert('Mohon masukkan Token Fonnte terlebih dahulu.');
-    return;
-  }
+async function saveFonnteApiKey() {
+  if (!fonnteApiKey.value) return;
   savingSetting.value = true;
   try {
-    await api.updateSetting('fonnte_api_key', token);
-    await refreshGatewayStatus();
-    alert('Token WhatsApp Fonnte berhasil disimpan! Status Gateway: ONLINE');
-    loadData();
+    await api.updateSetting('fonnte_api_key', fonnteApiKey.value.trim());
+    await api.updateSetting('FONNTE_API_KEY', fonnteApiKey.value.trim());
+    await loadData();
+    alert(`Token WhatsApp Fonnte berhasil disimpan! Status Gateway: ${gatewayInfo.value.state === 'ACTIVE' ? 'ONLINE' : 'TERSIMPAN'}`);
   } catch (err) {
     alert(`Gagal menyimpan token: ${err.message}`);
   } finally {
@@ -906,6 +1111,17 @@ async function toggleShaLock() {
   const nextVal = shaLock.value === '1' ? '0' : '1';
   shaLock.value = nextVal;
   await saveSetting('sha256_integrity_lock', nextVal);
+}
+
+async function toggleWaNotif(key, currentRef) {
+  const nextVal = currentRef === '1' ? '0' : '1';
+  if (key === 'wa_notify_spk_assigned') waNotifSpkAssigned.value = nextVal;
+  if (key === 'wa_notify_gps_checkin') waNotifGpsCheckin.value = nextVal;
+  if (key === 'wa_notify_evidence_upload') waNotifEvidenceUpload.value = nextVal;
+  if (key === 'wa_notify_issue_reported') waNotifIssueReported.value = nextVal;
+  if (key === 'wa_notify_spk_submitted') waNotifSpkSubmitted.value = nextVal;
+  if (key === 'wa_notify_ba_issued') waNotifBaIssued.value = nextVal;
+  await saveSetting(key, nextVal);
 }
 
 async function handleTestWhatsApp() {
