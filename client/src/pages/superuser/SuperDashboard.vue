@@ -202,7 +202,16 @@
       <div class="glass-card rounded-3xl p-6 shadow-glass border border-white/80 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+            <div
+              :class="[
+                'w-8 h-8 rounded-xl text-white flex items-center justify-center shadow-sm',
+                gatewayInfo.state === 'ACTIVE'
+                  ? 'bg-emerald-600'
+                  : gatewayInfo.state === 'MOCK'
+                  ? 'bg-amber-600'
+                  : 'bg-rose-600'
+              ]"
+            >
               <MessageSquare class="w-4 h-4" />
             </div>
             <div>
@@ -210,10 +219,44 @@
               <p class="text-[11px] text-slate-500">Integrasi pengiriman pesan notifikasi otomatis untuk SPK, Check-In, dan Berita Acara.</p>
             </div>
           </div>
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 self-start sm:self-auto">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Gateway Fonnte Aktif</span>
+          <span
+            :class="[
+              'px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5 self-start sm:self-auto',
+              gatewayInfo.state === 'ACTIVE'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : gatewayInfo.state === 'MOCK'
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : 'bg-rose-50 text-rose-800 border-rose-200'
+            ]"
+          >
+            <span
+              :class="[
+                'w-2 h-2 rounded-full',
+                gatewayInfo.state === 'ACTIVE'
+                  ? 'bg-emerald-500 animate-pulse'
+                  : gatewayInfo.state === 'MOCK'
+                  ? 'bg-amber-500'
+                  : 'bg-rose-500'
+              ]"
+            ></span>
+            <span>
+              {{ gatewayInfo.state === 'ACTIVE' ? 'Gateway Fonnte Aktif' : gatewayInfo.state === 'MOCK' ? 'Mode Mock (Testing)' : 'Belum Dikonfigurasi (Offline)' }}
+            </span>
           </span>
+        </div>
+
+        <!-- Peringatan Visual Jika Gateway Belum Dikonfigurasi -->
+        <div
+          v-if="gatewayInfo.state === 'UNCONFIGURED'"
+          class="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-900 text-xs font-medium shadow-xs"
+        >
+          <ShieldAlert class="w-5 h-5 text-rose-600 shrink-0" />
+          <div>
+            <div class="font-bold">⚠️ WhatsApp Gateway belum terkonfigurasi</div>
+            <p class="text-[11px] text-rose-700 mt-0.5">
+              API Token Fonnte masih kosong atau bernilai placeholder. Seluruh notifikasi otomatis ke nomor WhatsApp penerima tidak akan terkirim. Silakan masukkan token resmi dari dashboard Fonnte Anda di bawah ini.
+            </p>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1">
@@ -649,11 +692,19 @@ const loading = ref(true);
 const savingSetting = ref(false);
 
 // WhatsApp Testing States
-const fonnteApiKey = ref('GoPzcxdiUP2yt5HbByUK');
+const fonnteApiKey = ref('');
 const testWaPhone = ref('');
 const testWaMessage = ref('🔔 SGX System Test: Uji coba gateway WhatsApp Fonnte terkoneksi dengan sukses.');
 const testingWa = ref(false);
 const testWaStatus = ref(null);
+const gatewayInfo = ref({
+  state: 'UNCONFIGURED',
+  token_configured: false,
+  mock_enabled: false,
+  total_sent: 0,
+  total_failed: 0,
+  success_rate: 0
+});
 
 // Other Settings States
 const geofenceRadius = ref('200');
@@ -686,7 +737,8 @@ async function loadData() {
       api.getUsers(),
       api.getSettings(),
       api.getAuditLogs({ limit: 100 }),
-      api.getVendors()
+      api.getVendors(),
+      api.getGatewayStatus()
     ]);
 
     if (results[0].status === 'fulfilled' && results[0].value?.data) {
@@ -702,6 +754,9 @@ async function loadData() {
     if (results[3].status === 'fulfilled' && results[3].value?.data) {
       vendors.value = results[3].value.data;
     }
+    if (results[4].status === 'fulfilled' && results[4].value?.data) {
+      gatewayInfo.value = results[4].value.data;
+    }
   } catch (err) {
     console.error('Failed to load superuser data:', err);
   } finally {
@@ -714,7 +769,7 @@ function parseSettings() {
     const item = settings.value.find(s => s.key === key);
     return item ? item.value : fallback;
   };
-  fonnteApiKey.value = getVal('fonnte_api_key', 'GoPzcxdiUP2yt5HbByUK');
+  fonnteApiKey.value = getVal('fonnte_api_key', '');
   geofenceRadius.value = getVal('geofence_default_radius_meters', '200');
   strictGps.value = String(getVal('require_strict_gps', '1'));
   shaLock.value = String(getVal('sha256_integrity_lock', '1'));

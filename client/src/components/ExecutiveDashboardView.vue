@@ -405,18 +405,76 @@
           <p class="text-[11px] text-slate-500 mt-0.5">Status integrasi WhatsApp & aktivitas terbaru.</p>
         </div>
 
-        <!-- WhatsApp Gateway Status Box -->
-        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between">
+        <!-- WhatsApp Gateway Status Box (Dinamis & Jujur) -->
+        <div
+          :class="[
+            'p-3 border rounded-2xl flex items-center justify-between transition-all',
+            gatewayData.state === 'ACTIVE'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
+              : gatewayData.state === 'MOCK'
+              ? 'bg-amber-50 border-amber-200 text-amber-950'
+              : 'bg-rose-50 border-rose-200 text-rose-950'
+          ]"
+        >
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+            <div
+              :class="[
+                'w-8 h-8 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-xs',
+                gatewayData.state === 'ACTIVE'
+                  ? 'bg-emerald-600'
+                  : gatewayData.state === 'MOCK'
+                  ? 'bg-amber-600'
+                  : 'bg-rose-600'
+              ]"
+            >
               WA
             </div>
             <div>
-              <div class="font-bold text-emerald-950 text-xs">WhatsApp Gateway (Fonnte)</div>
-              <div class="text-[10px] text-emerald-700">Tingkat Pengiriman: 100% (Online)</div>
+              <div class="font-bold text-xs flex items-center gap-1.5">
+                <span>WhatsApp Gateway (Fonnte)</span>
+                <span
+                  :class="[
+                    'text-[9px] font-mono font-bold px-1.5 py-0.2 rounded',
+                    gatewayData.state === 'ACTIVE'
+                      ? 'bg-emerald-200/80 text-emerald-800'
+                      : gatewayData.state === 'MOCK'
+                      ? 'bg-amber-200/80 text-amber-800'
+                      : 'bg-rose-200/80 text-rose-800'
+                  ]"
+                >
+                  {{ gatewayData.state === 'ACTIVE' ? 'LIVE ONLINE' : gatewayData.state === 'MOCK' ? 'MOCK MODE' : 'OFFLINE' }}
+                </span>
+              </div>
+              <div
+                :class="[
+                  'text-[10px] font-medium mt-0.5',
+                  gatewayData.state === 'ACTIVE'
+                    ? 'text-emerald-700'
+                    : gatewayData.state === 'MOCK'
+                    ? 'text-amber-700'
+                    : 'text-rose-700'
+                ]"
+              >
+                {{
+                  gatewayData.state === 'ACTIVE'
+                    ? (gatewayData.has_logs ? `Tingkat Pengiriman: ${gatewayData.success_rate}% (${gatewayData.total_sent}/${gatewayData.total_logs} Terkirim)` : 'Gateway Aktif (Siap Kirim Notifikasi)')
+                    : gatewayData.state === 'MOCK'
+                    ? 'Simulasi Pengujian Lokal (Mock Mode Aktif)'
+                    : '⚠️ Belum Dikonfigurasi (Token Kosong di Dashboard/.env)'
+                }}
+              </div>
             </div>
           </div>
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+          <span
+            :class="[
+              'w-2.5 h-2.5 rounded-full',
+              gatewayData.state === 'ACTIVE'
+                ? 'bg-emerald-500 animate-ping'
+                : gatewayData.state === 'MOCK'
+                ? 'bg-amber-500'
+                : 'bg-rose-500'
+            ]"
+          ></span>
         </div>
 
         <!-- Live Feed List -->
@@ -446,7 +504,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { api } from '../services/api';
 import {
   Clock,
   CheckCircle2,
@@ -466,6 +525,32 @@ import {
   Sticker,
   Lightbulb
 } from 'lucide-vue-next';
+
+const gatewayData = ref({
+  state: 'UNCONFIGURED',
+  token_configured: false,
+  mock_enabled: false,
+  total_sent: 0,
+  total_failed: 0,
+  total_logs: 0,
+  success_rate: 0,
+  has_logs: false
+});
+
+async function loadGatewayStatus() {
+  try {
+    const res = await api.getGatewayStatus();
+    if (res.data) {
+      gatewayData.value = res.data;
+    }
+  } catch (err) {
+    console.warn('Failed to load gateway status:', err.message);
+  }
+}
+
+onMounted(() => {
+  loadGatewayStatus();
+});
 
 const maxTrendVal = 35;
 

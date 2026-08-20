@@ -121,6 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // System Settings & Audit Logs (Superuser Console)
     Route::get('/system/settings', [MasterDataController::class, 'settings']);
     Route::put('/system/settings', [MasterDataController::class, 'updateSetting']);
+    Route::get('/system/gateway-status', [MasterDataController::class, 'gatewayStatus']);
     Route::match(['post', 'get'], '/system/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
     Route::match(['post', 'get'], '/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
     Route::get('/system/audit-logs', [MasterDataController::class, 'auditLogs']);

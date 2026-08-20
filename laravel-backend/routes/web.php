@@ -53,9 +53,6 @@ Route::get('/api/storage-stream/{path}', $streamerHandler)->where('path', '.*');
 Route::get('/api/storage/{path}', $streamerHandler)->where('path', '.*');
 Route::get('/api/evidence/photos/{id}/view', [\App\Http\Controllers\Api\EvidenceController::class, 'streamPhoto']);
 Route::get('/evidence/photos/{id}/view', [\App\Http\Controllers\Api\EvidenceController::class, 'streamPhoto']);
-Route::match(['get', 'post'], '/api/system/test-whatsapp', [\App\Http\Controllers\Api\MasterDataController::class, 'testWhatsApp']);
-Route::match(['get', 'post'], '/system/test-whatsapp', [\App\Http\Controllers\Api\MasterDataController::class, 'testWhatsApp']);
-Route::match(['get', 'post'], '/api/test-whatsapp', [\App\Http\Controllers\Api\MasterDataController::class, 'testWhatsApp']);
 
 // 2. Root SPA View
 Route::get('/', function () {

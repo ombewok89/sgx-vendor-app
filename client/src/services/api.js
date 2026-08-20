@@ -130,6 +130,7 @@ export const api = {
   },
   getSettings: () => request('/system/settings'),
   updateSetting: (key, value) => request('/system/settings', { method: 'PUT', body: JSON.stringify({ key, value }) }),
+  getGatewayStatus: () => request('/system/gateway-status'),
   testWhatsApp: (phone, message) => request('/system/test-whatsapp', { method: 'POST', body: JSON.stringify({ phone, message }) }),
 
   // Dynamic RBAC & Permissions (Supervisor only)

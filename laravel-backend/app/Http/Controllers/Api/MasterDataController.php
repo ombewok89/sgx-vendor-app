@@ -350,71 +350,37 @@ class MasterDataController extends Controller
             'message' => 'nullable|string',
         ]);
 
-        $phone = preg_replace('/[^0-9]/', '', $request->phone);
-        if (str_starts_with($phone, '08')) {
-            $phone = '628' . substr($phone, 2);
-        }
-
-        $apiKey = SystemSetting::where('key', 'fonnte_api_key')->value('value') ?: env('FONNTE_API_KEY', 'GoPzcxdiUP2yt5HbByUK');
         $msg = $request->message ?: "🔔 *SGX Work Evidence System Test*\n\nUji coba konektivitas WhatsApp Gateway Fonnte berhasil terhubung secara normal pada " . now()->format('d/m/Y H:i:s') . " WIB.";
 
-        try {
-            $ch = curl_init('https://api.fonnte.com/send');
-            curl_setopt_array($ch, [
-                CURLOPT_POST => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => [
-                    "Authorization: {$apiKey}",
-                ],
-                CURLOPT_POSTFIELDS => [
-                    'target' => $phone,
-                    'message' => $msg,
-                    'countryCode' => '62',
-                ],
-                CURLOPT_TIMEOUT => 15,
+        $result = \App\Services\FonnteService::sendMessage($request->phone, $msg, 'TEST_MESSAGE');
+
+        if ($user = $request->user()) {
+            \App\Services\AuditService::log($user, 'TEST_WHATSAPP_GATEWAY', 'SYSTEM', null, null, [
+                'target' => $request->phone,
+                'result' => $result,
             ]);
+        }
 
-            $response = curl_exec($ch);
-            $err = curl_error($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($err) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Gagal menghubungi server Fonnte: ' . $err,
-                ], 500);
-            }
-
-            $resData = json_decode($response, true) ?: ['raw' => $response];
-
-            if ($user = $request->user()) {
-                AuditService::log($user, 'TEST_WHATSAPP_GATEWAY', 'SYSTEM', null, null, [
-                    'target' => $phone,
-                    'status_code' => $httpCode,
-                    'response' => $resData,
-                ]);
-            }
-
-            if (isset($resData['status']) && $resData['status'] === false) {
-                $reason = $resData['reason'] ?? 'Gagal memproses pesan di Fonnte';
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Fonnte Gateway Error: ' . $reason . ' (Pastikan API Token dan Device di Fonnte sudah aktif / Connected).',
-                    'data' => $resData,
-                ], 400);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Pesan WhatsApp berhasil dikirim ke antrean Fonnte (' . ($resData['detail'] ?? 'Proses Sukses') . ').',
-                'data' => $resData,
-            ]);
-        } catch (\Throwable $e) {
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
-            ], 500);
+                'message' => $result['message'] ?? $result['error'] ?? 'Gagal mengirim pesan WhatsApp.',
+                'data' => $result['data'] ?? null,
+            ], 400);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message'] ?? 'Pesan WhatsApp berhasil dikirim ke antrean Fonnte.',
+            'data' => $result,
+        ]);
+    }
+
+    public function gatewayStatus()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => \App\Services\FonnteService::getGatewayStatus(),
+        ]);
     }
 }
