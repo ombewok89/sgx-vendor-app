@@ -78,7 +78,21 @@ if (strpos($uri, 'test-whatsapp') !== false || strpos($uri, 'test-wa') !== false
     }
 
     $data = json_decode($res, true) ?: ['raw' => $res];
-    echo json_encode(['success' => true, 'message' => 'Uji coba pengiriman notifikasi WhatsApp berhasil dikirim.', 'data' => $data]);
+    if (isset($data['status']) && $data['status'] === false) {
+        $reason = $data['reason'] ?? 'Gagal memproses pesan di Fonnte';
+        echo json_encode([
+            'success' => false,
+            'message' => 'Fonnte Gateway Error: ' . $reason . ' (Pastikan API Token dan Device di Fonnte sudah aktif / Connected).',
+            'data' => $data
+        ]);
+        exit;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Pesan WhatsApp berhasil dikirim ke antrean Fonnte (' . ($data['detail'] ?? 'Proses Sukses') . ').',
+        'data' => $data
+    ]);
     exit;
 }
 

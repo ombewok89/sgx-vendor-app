@@ -396,9 +396,18 @@ class MasterDataController extends Controller
                 ]);
             }
 
+            if (isset($resData['status']) && $resData['status'] === false) {
+                $reason = $resData['reason'] ?? 'Gagal memproses pesan di Fonnte';
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Fonnte Gateway Error: ' . $reason . ' (Pastikan API Token dan Device di Fonnte sudah aktif / Connected).',
+                    'data' => $resData,
+                ], 400);
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Uji coba pengiriman notifikasi WhatsApp berhasil dikirim.',
+                'message' => 'Pesan WhatsApp berhasil dikirim ke antrean Fonnte (' . ($resData['detail'] ?? 'Proses Sukses') . ').',
                 'data' => $resData,
             ]);
         } catch (\Throwable $e) {
