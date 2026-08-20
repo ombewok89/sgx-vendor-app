@@ -54,4 +54,80 @@ router.put('/settings', requireRoles('SUPERUSER'), async (req, res) => {
   }
 });
 
+// Test WhatsApp Gateway
+router.post('/test-whatsapp', requireRoles('SUPERUSER', 'ADMIN'), async (req, res) => {
+  try {
+    const { phone, message } = req.body;
+    if (!phone) {
+      return res.status(400).json({ success: false, message: 'Nomor telepon WhatsApp tujuan wajib diisi.' });
+    }
+
+    let target = String(phone).replace(/[^0-9]/g, '');
+    if (target.startsWith('08')) {
+      target = '628' + target.substring(2);
+    }
+
+    const settings = await getSystemSettings();
+    const fonnteKeySetting = settings.find(s => s.key === 'fonnte_api_key');
+    const apiKey = fonnteKeySetting?.value || process.env.FONNTE_API_KEY || 'GoPzcxdiUP2yt5HbByUK';
+
+    const msg = message || `🔔 *SGX Work Evidence System Test*\n\nUji coba konektivitas WhatsApp Gateway Fonnte berhasil terhubung secara normal pada ${new Date().toLocaleString('id-ID')} WIB.`;
+
+    const https = require('https');
+    const payload = JSON.stringify({
+      target: target,
+      message: msg,
+      countryCode: '62'
+    });
+
+    const options = {
+      hostname: 'api.fonnte.com',
+      path: '/send',
+      method: 'POST',
+      headers: {
+        'Authorization': apiKey,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      },
+      timeout: 15000
+    };
+
+    const request = https.request(options, (response) => {
+      let data = '';
+      response.on('data', chunk => { data += chunk; });
+      response.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          return res.json({
+            success: true,
+            message: 'Uji coba pengiriman notifikasi WhatsApp berhasil dikirim.',
+            data: parsed
+          });
+        } catch (e) {
+          return res.json({
+            success: true,
+            message: 'Uji coba pengiriman notifikasi WhatsApp berhasil dikirim.',
+            data: { raw: data }
+          });
+        }
+      });
+    });
+
+    request.on('error', (e) => {
+      return res.status(500).json({
+        success: false,
+        message: 'Gagal menghubungi server Fonnte: ' + e.message
+      });
+    });
+
+    request.write(payload);
+    request.end();
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal mengirim pesan WhatsApp: ' + err.message
+    });
+  }
+});
+
 module.exports = router;
