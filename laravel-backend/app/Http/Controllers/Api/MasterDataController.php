@@ -383,4 +383,15 @@ class MasterDataController extends Controller
             'data' => \App\Services\FonnteService::getGatewayStatus(),
         ]);
     }
+
+    public function whatsappLogs(Request $request)
+    {
+        $limit = (int)$request->get('limit', 100);
+        $logs = \App\Models\NotificationLog::orderBy('id', 'desc')->limit($limit)->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $logs,
+        ]);
+    }
 }

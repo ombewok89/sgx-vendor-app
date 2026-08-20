@@ -134,10 +134,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['post', 'get'], '/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
     Route::get('/system/audit-logs', [MasterDataController::class, 'auditLogs']);
     Route::get('/system/notifications', [NotificationController::class, 'index']);
+    Route::get('/system/whatsapp/logs', [\App\Http\Controllers\Api\WhatsAppController::class, 'logs']);
+    Route::get('/system/notifications/whatsapp-logs', [NotificationController::class, 'whatsappLogs']);
 
     // In-App Notification Feed
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::get('/notifications-feed', [NotificationController::class, 'index']);
+    Route::get('/notifications/whatsapp-logs', [NotificationController::class, 'whatsappLogs']);
+    Route::get('/notifications/logs', [NotificationController::class, 'whatsappLogs']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications-feed/mark-read/{id}', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications-feed/mark-all-read', [NotificationController::class, 'markAllAsRead']);

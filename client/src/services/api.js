@@ -161,5 +161,15 @@ export const api = {
     return request(`/notifications-feed${qs ? '?' + qs : ''}`);
   },
   markNotificationRead: (id) => request(`/notifications-feed/mark-read/${id}`, { method: 'POST' }),
-  markAllNotificationsRead: () => request('/notifications-feed/mark-all-read', { method: 'POST' })
+  markAllNotificationsRead: () => request('/notifications-feed/mark-all-read', { method: 'POST' }),
+
+  // Technical WhatsApp Gateway Delivery Logs
+  getWhatsAppLogs: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/system/whatsapp/logs${qs ? `?${qs}` : ''}`);
+  },
+  getNotifications: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/system/whatsapp/logs${qs ? `?${qs}` : ''}`);
+  }
 };

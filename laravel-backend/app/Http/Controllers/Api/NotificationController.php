@@ -89,4 +89,15 @@ class NotificationController extends Controller
             'message' => 'Semua notifikasi yang relevan telah ditandai sebagai dibaca.',
         ]);
     }
+
+    public function whatsappLogs(Request $request)
+    {
+        $limit = (int)$request->get('limit', 100);
+        $logs = \App\Models\NotificationLog::orderBy('id', 'desc')->limit($limit)->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $logs,
+        ]);
+    }
 }

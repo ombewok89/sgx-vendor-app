@@ -41,7 +41,7 @@
       </button>
 
       <button
-        @click="activeTab = 'wa'"
+        @click="activeTab = 'wa'; loadWaLogs();"
         :class="[
           'px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2',
           activeTab === 'wa'
@@ -268,7 +268,7 @@ async function loadInAppNotifications() {
 async function loadWaLogs() {
   loading.value = true;
   try {
-    const res = await api.getNotifications();
+    const res = await api.getWhatsAppLogs({ limit: 100 });
     waLogs.value = res.data || [];
   } catch (err) {
     console.error('Failed to load WA logs:', err);
