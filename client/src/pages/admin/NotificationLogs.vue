@@ -182,11 +182,33 @@
                   </span>
                 </td>
                 <td class="py-3.5 px-4 text-slate-600 max-w-sm">
-                  {{ parsePayload(log.payload).text || '-' }}
+                  <div class="line-clamp-2 text-[11px] whitespace-pre-line">
+                    {{ log.message || parsePayload(log.payload).text || '-' }}
+                  </div>
+                  <div v-if="log.error_message" class="text-[10px] text-rose-600 font-medium mt-0.5 flex items-center gap-1">
+                    <AlertTriangle class="w-3 h-3 text-rose-500 shrink-0" />
+                    <span>{{ log.error_message }}</span>
+                  </div>
                 </td>
-                <td class="py-3.5 px-4">
-                  <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-300 inline-flex items-center gap-1.5">
-                    <CheckCircle2 class="w-3.5 h-3.5" />
+                <td class="py-3.5 px-4 text-center">
+                  <span
+                    v-if="log.status === 'SENT'"
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1"
+                  >
+                    <CheckCircle2 class="w-3 h-3" />
+                    <span>TERKIRIM</span>
+                  </span>
+                  <span
+                    v-else-if="log.status === 'FAILED'"
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300 inline-flex items-center gap-1"
+                  >
+                    <AlertTriangle class="w-3 h-3" />
+                    <span>GAGAL</span>
+                  </span>
+                  <span
+                    v-else
+                    class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300"
+                  >
                     {{ log.status }}
                   </span>
                 </td>
