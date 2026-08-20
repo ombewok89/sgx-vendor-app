@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\MasterDataController;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Fail-safe Route Binding: Ensures WhatsApp & Gateway routes are ALWAYS accessible regardless of route cache state
+        Route::match(['get', 'post', 'options'], '/api/system/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
+        Route::match(['get', 'post', 'options'], '/system/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
+        Route::match(['get', 'post', 'options'], '/api/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
+        Route::match(['get', 'post', 'options'], '/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
+        Route::match(['get', 'post', 'options'], '/api/system/gateway-status', [MasterDataController::class, 'gatewayStatus']);
+        Route::match(['get', 'post', 'options'], '/system/gateway-status', [MasterDataController::class, 'gatewayStatus']);
     }
 }
