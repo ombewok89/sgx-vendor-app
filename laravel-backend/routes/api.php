@@ -23,7 +23,8 @@ Route::get('/health', function () {
 });
 
 // Public Authentication
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::match(['get', 'post'], '/auth/login', [AuthController::class, 'login'])->name('login');
+Route::match(['get', 'post'], '/login', [AuthController::class, 'login']);
 
 // Public Direct Storage & Evidence Image Streamer (Hardened with Canonical Realpath Containment & Extension Allowlist)
 Route::get('/storage-stream/{path}', function ($path) {
@@ -116,7 +117,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // System Settings & Audit Logs (Superuser Console)
     Route::get('/system/settings', [MasterDataController::class, 'settings']);
     Route::put('/system/settings', [MasterDataController::class, 'updateSetting']);
-    Route::post('/system/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
+    Route::match(['post', 'get'], '/system/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
+    Route::match(['post', 'get'], '/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
     Route::get('/system/audit-logs', [MasterDataController::class, 'auditLogs']);
     Route::get('/system/notifications', [NotificationController::class, 'index']);
 

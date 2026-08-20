@@ -16,7 +16,14 @@ class MasterDataController extends Controller
 {
     private function checkAdminAuth(Request $request)
     {
-        if (!$request->user()->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated: Sesi login tidak ditemukan.',
+            ], 401);
+        }
+        if (!$user->hasAnyRole(['SUPERUSER', 'SUPERVISOR', 'ADMIN'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses Ditolak: Hanya Administrator/Superuser yang berwenang mengelola data master.',
