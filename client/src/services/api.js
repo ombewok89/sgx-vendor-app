@@ -127,18 +127,9 @@ export const api = {
     const qs = new URLSearchParams(params).toString();
     return request(`/system/audit-logs${qs ? `?${qs}` : ''}`);
   },
-  getNotifications: () => request('/system/notifications'),
-  getWhatsAppStats: () => request('/system/whatsapp/stats'),
-  getWhatsAppLogs: (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
-    return request(`/system/whatsapp/logs${qs ? `?${qs}` : ''}`);
-  },
-  getWhatsAppTemplates: () => request('/system/whatsapp/templates'),
-  retryWhatsAppNotification: (id) => request(`/system/whatsapp/logs/${id}/retry`, { method: 'POST' }),
-  testWhatsAppConnection: () => request('/system/whatsapp/test-connection', { method: 'POST' }),
-  sendTestWhatsAppMessage: (data) => request('/system/whatsapp/send-test', { method: 'POST', body: JSON.stringify(data) }),
   getSettings: () => request('/system/settings'),
   updateSetting: (key, value) => request('/system/settings', { method: 'PUT', body: JSON.stringify({ key, value }) }),
+  testWhatsApp: (phone, message) => request('/system/test-whatsapp', { method: 'POST', body: JSON.stringify({ phone, message }) }),
 
   // Dynamic RBAC & Permissions (Supervisor only)
   getPermissionMatrix: (role = 'ADMIN') => request(`/permissions/matrix?role=${role}`),

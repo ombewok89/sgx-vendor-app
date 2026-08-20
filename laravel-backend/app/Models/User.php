@@ -42,31 +42,6 @@ class User extends Authenticatable
         return $this->belongsTo(Vendor::class);
     }
 
-    public function hasRole($role, $guard = null): bool
-    {
-        try {
-            if ($this->roles()->where('name', $role)->exists()) {
-                return true;
-            }
-        } catch (\Throwable $e) {}
-
-        return strtolower($this->role ?? '') === strtolower($role);
-    }
-
-    public function hasAnyRole(...$roles): bool
-    {
-        $rolesList = is_array($roles[0] ?? null) ? $roles[0] : $roles;
-        try {
-            if ($this->roles()->whereIn('name', $rolesList)->exists()) {
-                return true;
-            }
-        } catch (\Throwable $e) {}
-
-        $userRole = strtoupper($this->role ?? '');
-        $upperList = array_map('strtoupper', $rolesList);
-        return in_array($userRole, $upperList);
-    }
-
     public function assignedWorkOrders()
     {
         return $this->belongsToMany(WorkOrder::class, 'work_order_user')
@@ -78,5 +53,46 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(FieldTeam::class, 'field_team_user')
             ->withTimestamps();
+    }
+
+    /**
+     * Enhanced role check that handles Sanctum, Web, and memory caches safely.
+     */
+    public function hasRole($roles, string $guard = null): bool
+    {
+        $roleList = is_array($roles) ? $roles : [$roles];
+        
+        // Get user role names from relation or eager-loaded collection
+        $userRoles = $this->relationLoaded('roles')
+            ? $this->roles->pluck('name')->toArray()
+            : $this->roles()->pluck('name')->toArray();
+
+        foreach ($roleList as $r) {
+            if (in_array($r, $userRoles, true)) {
+                return true;
+            }
+            // SUPERUSER is also SUPERVISOR and vice versa for system permissions
+            if (in_array($r, ['SUPERUSER', 'SUPERVISOR'], true) && (in_array('SUPERUSER', $userRoles, true) || in_array('SUPERVISOR', $userRoles, true))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Enhanced hasAnyRole check.
+     */
+    public function hasAnyRole(...$roles): bool
+    {
+        $flattened = [];
+        foreach ($roles as $role) {
+            if (is_array($role)) {
+                $flattened = array_merge($flattened, $role);
+            } else {
+                $flattened[] = $role;
+            }
+        }
+        return $this->hasRole($flattened);
     }
 }

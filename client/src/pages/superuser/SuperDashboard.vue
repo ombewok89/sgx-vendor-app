@@ -1,6 +1,6 @@
 <template>
-  <div class="space-y-5">
-    <!-- Title -->
+  <div class="space-y-6">
+    <!-- Title Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
         <div class="flex items-center gap-2.5">
@@ -16,7 +16,7 @@
         class="px-3.5 py-2 glass-card hover:bg-white rounded-xl text-slate-700 hover:text-slate-900 text-xs font-bold flex items-center gap-2 shadow-xs transition-all duration-200 active:scale-95 border border-slate-200/80 self-start sm:self-auto cursor-pointer"
       >
         <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
-        <span>Refresh</span>
+        <span>Segarkan Data</span>
       </button>
     </div>
 
@@ -25,7 +25,7 @@
       <button
         @click="activeTab = 'dashboard'"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer',
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap',
           activeTab === 'dashboard' ? 'bg-purple-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100/80'
         ]"
       >
@@ -36,7 +36,7 @@
       <button
         @click="activeTab = 'permissions'"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer',
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap',
           activeTab === 'permissions' ? 'bg-purple-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100/80'
         ]"
       >
@@ -47,7 +47,7 @@
       <button
         @click="activeTab = 'users'"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer',
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap',
           activeTab === 'users' ? 'bg-purple-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100/80'
         ]"
       >
@@ -58,18 +58,18 @@
       <button
         @click="activeTab = 'settings'"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer',
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap',
           activeTab === 'settings' ? 'bg-purple-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100/80'
         ]"
       >
         <Settings class="w-4 h-4" />
-        <span>Pengaturan Gateway & Sistem ({{ settings.length }})</span>
+        <span>Pengaturan Gateway & Sistem</span>
       </button>
 
       <button
         @click="activeTab = 'audit'"
         :class="[
-          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer',
+          'flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap',
           activeTab === 'audit' ? 'bg-purple-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100/80'
         ]"
       >
@@ -78,22 +78,46 @@
       </button>
     </div>
 
-    <!-- Executive Dashboard Tab -->
+    <!-- TAB 1: Executive Dashboard Tab -->
     <div v-if="activeTab === 'dashboard'">
       <ExecutiveDashboardView />
     </div>
 
-    <!-- Permissions Matrix Tab -->
+    <!-- TAB 2: Permissions Matrix Tab -->
     <div v-if="activeTab === 'permissions'">
       <PermissionMatrix />
     </div>
 
-    <!-- Users Tab -->
+    <!-- TAB 3: Users Management Tab -->
     <div v-if="activeTab === 'users'" class="space-y-4">
-      <div class="flex justify-end">
+      <!-- Search & Action Bar -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <div class="relative w-full sm:w-72">
+            <Search class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              v-model="userSearchQuery"
+              type="text"
+              placeholder="Cari nama, email, atau telepon..."
+              class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-700 focus:outline-none shadow-2xs"
+            />
+          </div>
+
+          <select
+            v-model="userRoleFilter"
+            class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-purple-700 shadow-2xs"
+          >
+            <option value="">Semua Role ({{ users.length }})</option>
+            <option value="SUPERUSER">SUPERUSER</option>
+            <option value="ADMIN">ADMIN</option>
+            <option value="FIELD_TEAM">FIELD_TEAM</option>
+            <option value="VENDOR">CLIENT / VENDOR</option>
+          </select>
+        </div>
+
         <button
           @click="openAddUserModal"
-          class="px-4 py-2 bg-gradient-to-r from-purple-900 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-purple-900/20 active:scale-95 transition-all cursor-pointer"
+          class="px-4 py-2 bg-gradient-to-r from-purple-900 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-purple-900/20 active:scale-95 transition-all cursor-pointer whitespace-nowrap self-end sm:self-auto"
         >
           <Plus class="w-4 h-4" />
           <span>Tambah Pengguna Baru</span>
@@ -107,7 +131,7 @@
               <tr>
                 <th class="py-3 px-4">Nama Lengkap</th>
                 <th class="py-3 px-4">Email Login</th>
-                <th class="py-3 px-4">Telepon</th>
+                <th class="py-3 px-4">Telepon / WA</th>
                 <th class="py-3 px-4">Role Hak Akses</th>
                 <th class="py-3 px-4">Afiliasi Client</th>
                 <th class="py-3 px-4">Status Akun</th>
@@ -120,11 +144,11 @@
                   <td colspan="7" class="py-10 text-center text-slate-400 font-medium">Memuat data pengguna...</td>
                 </tr>
               </template>
-              <template v-else-if="users.length > 0">
-                <tr v-for="u in users" :key="u.id" class="hover:bg-purple-50/30 transition-colors">
+              <template v-else-if="filteredUsers.length > 0">
+                <tr v-for="u in filteredUsers" :key="u.id" class="hover:bg-purple-50/30 transition-colors">
                   <td class="py-3.5 px-4 font-bold text-slate-900">{{ u.name }}</td>
                   <td class="py-3.5 px-4 font-mono">{{ u.email }}</td>
-                  <td class="py-3.5 px-4 font-mono">{{ u.phone || '-' }}</td>
+                  <td class="py-3.5 px-4 font-mono text-slate-600">{{ u.phone || '-' }}</td>
                   <td class="py-3.5 px-4">
                     <span :class="[
                       'px-2.5 py-0.5 rounded-full font-bold text-[10px] border',
@@ -163,7 +187,7 @@
               </template>
               <template v-else>
                 <tr>
-                  <td colspan="7" class="py-10 text-center text-slate-400 font-medium">Belum ada pengguna.</td>
+                  <td colspan="7" class="py-10 text-center text-slate-400 font-medium">Tidak ada pengguna yang sesuai dengan filter.</td>
                 </tr>
               </template>
             </tbody>
@@ -172,44 +196,259 @@
       </div>
     </div>
 
-    <!-- Settings Tab -->
-    <div v-if="activeTab === 'settings'" class="glass-card rounded-3xl p-6 shadow-glass border border-white/80 space-y-4 text-xs">
-      <h3 class="font-black text-sm text-slate-900 border-b border-slate-200/80 pb-2.5">
-        Konfigurasi Sistem Global & Integrasi
-      </h3>
-
-      <div class="space-y-4">
-        <div v-for="s in settings" :key="s.id" class="p-4.5 bg-white/70 border border-slate-200/80 rounded-2xl space-y-2 shadow-xs">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="font-mono font-bold text-slate-900 text-sm">{{ s.key }}</span>
-              <p class="text-slate-500 text-[11px] mt-0.5 font-medium">{{ s.description }}</p>
+    <!-- TAB 4: Gateway & System Settings Tab (Enterprise Layout) -->
+    <div v-if="activeTab === 'settings'" class="space-y-5">
+      <!-- 1. WhatsApp Gateway Configuration & Real-Time Test Card -->
+      <div class="glass-card rounded-3xl p-6 shadow-glass border border-white/80 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+              <MessageSquare class="w-4 h-4" />
             </div>
-            <span class="text-[10px] text-slate-400 font-mono">
-              Diperbarui: {{ new Date(s.updated_at).toLocaleString('id-ID') }}
-            </span>
+            <div>
+              <h3 class="font-black text-sm text-slate-900">WhatsApp Gateway (Fonnte API)</h3>
+              <p class="text-[11px] text-slate-500">Integrasi pengiriman pesan notifikasi otomatis untuk SPK, Check-In, dan Berita Acara.</p>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 self-start sm:self-auto">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Gateway Fonnte Aktif</span>
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1">
+          <!-- Left: API Key Configuration -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs">
+            <div>
+              <label class="block font-bold text-slate-800 text-xs mb-1">Fonnte API Token / Secret Key</label>
+              <p class="text-[11px] text-slate-500 mb-2">Token API resmi dari akun Fonnte Anda untuk otorisasi pengiriman pesan WhatsApp.</p>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  v-model="fonnteApiKey"
+                  placeholder="Masukkan API Token Fonnte..."
+                  class="w-full px-3.5 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-700 font-mono text-xs shadow-xs"
+                />
+                <button
+                  @click="saveFonnteKey"
+                  :disabled="savingSetting"
+                  class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl whitespace-nowrap shadow-xs active:scale-95 transition-all cursor-pointer text-xs"
+                >
+                  {{ savingSetting ? 'Menyimpan...' : 'Simpan Token' }}
+                </button>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl text-[11px] text-slate-600 space-y-1 font-mono">
+              <div class="font-bold text-slate-800">📌 Info Endpoint Fonnte:</div>
+              <div>URL: <span class="text-emerald-700 font-semibold">https://api.fonnte.com/send</span></div>
+              <div>Format Target: 628xxxxxxxxxx</div>
+            </div>
           </div>
 
-          <div class="flex items-center gap-2 pt-1">
-            <input
-              type="text"
-              v-model="s.value"
-              class="w-full px-3.5 py-2.5 border border-slate-200/80 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 font-mono text-xs shadow-xs"
-            />
-            <button
-              @click="handleUpdateSetting(s.key, s.value)"
-              :disabled="savingSetting"
-              class="px-5 py-2.5 bg-gradient-to-r from-purple-900 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white font-bold rounded-xl whitespace-nowrap shadow-xs active:scale-95 transition-all cursor-pointer"
-            >
-              Simpan
-            </button>
+          <!-- Right: Test Send WhatsApp Message Panel -->
+          <div class="p-4 bg-purple-50/50 border border-purple-200/80 rounded-2xl space-y-3 shadow-xs">
+            <div>
+              <h4 class="font-bold text-purple-950 text-xs flex items-center gap-1.5">
+                <Send class="w-3.5 h-3.5 text-purple-700" />
+                <span>Uji Coba Pengiriman Notifikasi WhatsApp</span>
+              </h4>
+              <p class="text-[11px] text-slate-600 mt-0.5">Kirim pesan pengujian langsung ke nomor tujuan untuk memastikan gateway berfungsi.</p>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 text-[11px] mb-1">Nomor WhatsApp Tujuan</label>
+                <input
+                  type="text"
+                  v-model="testWaPhone"
+                  placeholder="Contoh: 081234567890"
+                  class="w-full px-3 py-1.5 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-700 font-mono text-xs"
+                />
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 text-[11px] mb-1">Isi Pesan Uji Coba</label>
+                <textarea
+                  v-model="testWaMessage"
+                  rows="2"
+                  class="w-full px-3 py-1.5 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-700 text-xs font-mono"
+                  placeholder="Tulis pesan pengujian..."
+                ></textarea>
+              </div>
+
+              <div class="flex items-center justify-between pt-1">
+                <span v-if="testWaStatus" :class="[
+                  'text-[11px] font-bold',
+                  testWaStatus.success ? 'text-emerald-700' : 'text-rose-700'
+                ]">
+                  {{ testWaStatus.message }}
+                </span>
+                <span v-else></span>
+
+                <button
+                  type="button"
+                  @click="handleTestWhatsApp"
+                  :disabled="testingWa || !testWaPhone"
+                  class="px-4 py-2 bg-gradient-to-r from-purple-900 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white font-bold rounded-xl shadow-xs active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 text-xs ml-auto"
+                >
+                  <Send :class="['w-3.5 h-3.5', testingWa ? 'animate-spin' : '']" />
+                  <span>{{ testingWa ? 'Mengirim...' : 'Kirim Test WA' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Security & Geofencing GPS Parameters Card -->
+      <div class="glass-card rounded-3xl p-6 shadow-glass border border-white/80 space-y-4">
+        <div class="flex items-center gap-2.5 border-b border-slate-200/80 pb-3">
+          <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
+            <MapPin class="w-4 h-4" />
+          </div>
+          <div>
+            <h3 class="font-black text-sm text-slate-900">Keamanan Geofencing GPS & Integritas Evidensi</h3>
+            <p class="text-[11px] text-slate-500">Konfigurasi radius toleransi presensi teknisi lapangan dan segel kriptografi foto bukti.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <!-- Radius Geofencing -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-2 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="font-bold text-slate-900">Radius Geofencing (Meter)</div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Toleransi jarak maksimum GPS teknisi dari titik toko saat check-in.</p>
+            </div>
+            <div class="flex items-center gap-2 pt-2">
+              <input
+                type="number"
+                v-model="geofenceRadius"
+                class="w-full px-3 py-1.5 border border-slate-200 rounded-xl bg-white font-mono text-xs"
+              />
+              <button
+                @click="saveSetting('geofence_default_radius_meters', geofenceRadius)"
+                class="px-3.5 py-1.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Simpan
+              </button>
+            </div>
+          </div>
+
+          <!-- Strict GPS Toggle -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-2 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="font-bold text-slate-900">Validasi GPS Ketat</div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Wajibkan akurasi GPS terverifikasi browser sebelum upload foto.</p>
+            </div>
+            <div class="flex items-center justify-between pt-2">
+              <span class="font-bold text-xs font-mono" :class="strictGps === '1' ? 'text-emerald-700' : 'text-slate-500'">
+                {{ strictGps === '1' ? 'AKTIF (1)' : 'NONAKTIF (0)' }}
+              </span>
+              <button
+                @click="toggleStrictGps"
+                class="px-3.5 py-1.5 rounded-xl font-bold text-xs cursor-pointer transition-all"
+                :class="strictGps === '1' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'"
+              >
+                {{ strictGps === '1' ? 'Nonaktifkan' : 'Aktifkan' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- SHA256 Integrity Lock Toggle -->
+          <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-2 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="font-bold text-slate-900">Segel Integritas SHA-256</div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Kunci hash kriptografis untuk membuktikan keaslian foto tanpa manipulasi.</p>
+            </div>
+            <div class="flex items-center justify-between pt-2">
+              <span class="font-bold text-xs font-mono" :class="shaLock === '1' ? 'text-emerald-700' : 'text-slate-500'">
+                {{ shaLock === '1' ? 'AKTIF (1)' : 'NONAKTIF (0)' }}
+              </span>
+              <button
+                @click="toggleShaLock"
+                class="px-3.5 py-1.5 rounded-xl font-bold text-xs cursor-pointer transition-all"
+                :class="shaLock === '1' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'"
+              >
+                {{ shaLock === '1' ? 'Nonaktifkan' : 'Aktifkan' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Identity & General Platform Settings Card -->
+      <div class="glass-card rounded-3xl p-6 shadow-glass border border-white/80 space-y-4">
+        <div class="flex items-center gap-2.5 border-b border-slate-200/80 pb-3">
+          <div class="w-8 h-8 rounded-xl bg-purple-700 text-white flex items-center justify-center shadow-sm">
+            <Globe class="w-4 h-4" />
+          </div>
+          <div>
+            <h3 class="font-black text-sm text-slate-900">Identitas & Metadata Platform</h3>
+            <p class="text-[11px] text-slate-500">Nama resmi aplikasi yang tercantum pada dokumen PDF Berita Acara (BA) dan notifikasi.</p>
+          </div>
+        </div>
+
+        <div class="p-4 bg-white/80 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs text-xs">
+          <div>
+            <label class="block font-bold text-slate-800 text-xs mb-1">Nama Resmi Platform Aplikasi</label>
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                v-model="appName"
+                class="w-full px-3.5 py-2 border border-slate-200 rounded-xl bg-white font-medium text-xs shadow-xs"
+              />
+              <button
+                @click="saveSetting('app_name', appName)"
+                class="px-4 py-2 bg-purple-900 hover:bg-purple-800 text-white font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Simpan
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Audit Tab -->
+    <!-- TAB 5: Audit Trail Explorer Tab -->
     <div v-if="activeTab === 'audit'" class="space-y-4">
+      <!-- Search & Filters -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <div class="relative w-full sm:w-72">
+            <Search class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              v-model="auditSearchQuery"
+              type="text"
+              placeholder="Cari event, pengguna, entitas, atau IP..."
+              class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-700 focus:outline-none shadow-2xs"
+            />
+          </div>
+
+          <select
+            v-model="auditActionFilter"
+            class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-purple-700 shadow-2xs"
+          >
+            <option value="">Semua Event ({{ auditLogs.length }})</option>
+            <option value="LOGIN">LOGIN</option>
+            <option value="CREATE">CREATE</option>
+            <option value="UPDATE">UPDATE</option>
+            <option value="DELETE">DELETE</option>
+            <option value="GENERATE_BA">GENERATE_BA</option>
+            <option value="SYSTEM">SYSTEM</option>
+          </select>
+        </div>
+
+        <button
+          @click="loadData"
+          class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs self-end sm:self-auto"
+        >
+          <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
+          <span>Muat Ulang Log</span>
+        </button>
+      </div>
+
+      <!-- Audit Logs Table -->
       <div class="glass-card rounded-3xl border border-white/80 shadow-glass overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
@@ -220,7 +459,7 @@
                 <th class="py-3 px-4">Aksi / Event</th>
                 <th class="py-3 px-4">Entitas</th>
                 <th class="py-3 px-4">Detail Perubahan</th>
-                <th class="py-3 px-4">Alamat IP</th>
+                <th class="py-3 px-4 text-center">Alamat IP</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100/80 text-slate-700 font-mono text-[11px]">
@@ -229,20 +468,35 @@
                   <td colspan="6" class="py-10 text-center text-slate-400 font-medium font-sans">Memuat log audit...</td>
                 </tr>
               </template>
-              <template v-else-if="auditLogs.length > 0">
-                <tr v-for="log in auditLogs" :key="log.id" class="hover:bg-purple-50/30 transition-colors">
-                  <td class="py-3.5 px-4 whitespace-nowrap">{{ new Date(log.created_at).toLocaleString('id-ID') }}</td>
-                  <td class="py-3.5 px-4 font-bold text-slate-900">{{ log.user_name || 'System' }}</td>
+              <template v-else-if="filteredAuditLogs.length > 0">
+                <tr v-for="log in filteredAuditLogs" :key="log.id" class="hover:bg-purple-50/30 transition-colors">
+                  <td class="py-3.5 px-4 whitespace-nowrap text-slate-600">
+                    {{ new Date(log.created_at).toLocaleString('id-ID') }}
+                  </td>
+                  <td class="py-3.5 px-4 font-bold text-slate-900 font-sans">{{ log.user_name || 'System' }}</td>
                   <td class="py-3.5 px-4">
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-200">
+                    <span :class="[
+                      'px-2 py-0.5 rounded-full text-[10px] font-bold border',
+                      log.action.includes('CREATE') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      log.action.includes('UPDATE') ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      log.action.includes('DELETE') ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                      log.action.includes('LOGIN') ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-700 border-slate-200'
+                    ]">
                       {{ log.action }}
                     </span>
                   </td>
-                  <td class="py-3.5 px-4">{{ log.entity_type }} #{{ log.entity_id || '-' }}</td>
-                  <td class="py-3.5 px-4 truncate max-w-xs font-sans text-slate-600">
+                  <td class="py-3.5 px-4 font-bold text-slate-800">{{ log.entity_type }} #{{ log.entity_id || '-' }}</td>
+                  <td class="py-3.5 px-4 truncate max-w-xs font-sans text-slate-600 text-[11px]">
                     {{ log.new_value ? (typeof log.new_value === 'string' ? log.new_value : JSON.stringify(log.new_value)) : '-' }}
                   </td>
-                  <td class="py-3.5 px-4 text-slate-400">{{ log.ip_address || '127.0.0.1' }}</td>
+                  <td class="py-3.5 px-4 text-center text-slate-400">{{ log.ip_address || '127.0.0.1' }}</td>
+                </tr>
+              </template>
+              <template v-else>
+                <tr>
+                  <td colspan="6" class="py-10 text-center text-slate-400 font-medium font-sans">
+                    Tidak ada log audit yang sesuai dengan filter.
+                  </td>
                 </tr>
               </template>
             </tbody>
@@ -350,7 +604,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { api } from '../../services/api';
 import PermissionMatrix from '../../components/PermissionMatrix.vue';
 import ExecutiveDashboardView from '../../components/ExecutiveDashboardView.vue';
@@ -364,7 +618,12 @@ import {
   RefreshCw,
   LayoutDashboard,
   Pencil,
-  Trash2
+  Trash2,
+  Search,
+  MessageSquare,
+  Send,
+  MapPin,
+  Globe
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -389,6 +648,25 @@ const vendors = ref([]);
 const loading = ref(true);
 const savingSetting = ref(false);
 
+// WhatsApp Testing States
+const fonnteApiKey = ref('GoPzcxdiUP2yt5HbByUK');
+const testWaPhone = ref('');
+const testWaMessage = ref('🔔 SGX System Test: Uji coba gateway WhatsApp Fonnte terkoneksi dengan sukses.');
+const testingWa = ref(false);
+const testWaStatus = ref(null);
+
+// Other Settings States
+const geofenceRadius = ref('200');
+const strictGps = ref('1');
+const shaLock = ref('1');
+const appName = ref('SGX Vendor Work Evidence');
+
+// Filters
+const userSearchQuery = ref('');
+const userRoleFilter = ref('');
+const auditSearchQuery = ref('');
+const auditActionFilter = ref('');
+
 const showUserModal = ref(false);
 const isEditingUser = ref(false);
 const newUser = ref({
@@ -404,20 +682,120 @@ const newUser = ref({
 async function loadData() {
   loading.value = true;
   try {
-    const [uRes, sRes, aRes, vRes] = await Promise.all([
+    const results = await Promise.allSettled([
       api.getUsers(),
       api.getSettings(),
       api.getAuditLogs({ limit: 100 }),
       api.getVendors()
     ]);
-    users.value = uRes.data || [];
-    settings.value = sRes.data || [];
-    auditLogs.value = aRes.data || [];
-    vendors.value = vRes.data || [];
+
+    if (results[0].status === 'fulfilled' && results[0].value?.data) {
+      users.value = results[0].value.data;
+    }
+    if (results[1].status === 'fulfilled' && results[1].value?.data) {
+      settings.value = results[1].value.data;
+      parseSettings();
+    }
+    if (results[2].status === 'fulfilled' && results[2].value?.data) {
+      auditLogs.value = results[2].value.data;
+    }
+    if (results[3].status === 'fulfilled' && results[3].value?.data) {
+      vendors.value = results[3].value.data;
+    }
   } catch (err) {
     console.error('Failed to load superuser data:', err);
   } finally {
     loading.value = false;
+  }
+}
+
+function parseSettings() {
+  const getVal = (key, fallback) => {
+    const item = settings.value.find(s => s.key === key);
+    return item ? item.value : fallback;
+  };
+  fonnteApiKey.value = getVal('fonnte_api_key', 'GoPzcxdiUP2yt5HbByUK');
+  geofenceRadius.value = getVal('geofence_default_radius_meters', '200');
+  strictGps.value = String(getVal('require_strict_gps', '1'));
+  shaLock.value = String(getVal('sha256_integrity_lock', '1'));
+  appName.value = getVal('app_name', 'SGX Vendor Work Evidence');
+}
+
+const filteredUsers = computed(() => {
+  return users.value.filter(u => {
+    const matchSearch = !userSearchQuery.value ||
+      (u.name?.toLowerCase().includes(userSearchQuery.value.toLowerCase())) ||
+      (u.email?.toLowerCase().includes(userSearchQuery.value.toLowerCase())) ||
+      (u.phone?.toLowerCase().includes(userSearchQuery.value.toLowerCase()));
+
+    const matchRole = !userRoleFilter.value || (u.role === userRoleFilter.value);
+    return matchSearch && matchRole;
+  });
+});
+
+const filteredAuditLogs = computed(() => {
+  return auditLogs.value.filter(log => {
+    const q = auditSearchQuery.value.toLowerCase();
+    const matchSearch = !q ||
+      (log.action?.toLowerCase().includes(q)) ||
+      (log.user_name?.toLowerCase().includes(q)) ||
+      (log.entity_type?.toLowerCase().includes(q)) ||
+      (log.ip_address?.toLowerCase().includes(q));
+
+    const matchAction = !auditActionFilter.value || log.action?.includes(auditActionFilter.value);
+    return matchSearch && matchAction;
+  });
+});
+
+async function saveSetting(key, value) {
+  savingSetting.value = true;
+  try {
+    await api.updateSetting(key, value);
+    alert(`Pengaturan '${key}' berhasil disimpan!`);
+    loadData();
+  } catch (err) {
+    alert(`Gagal menyimpan pengaturan: ${err.message}`);
+  } finally {
+    savingSetting.value = false;
+  }
+}
+
+async function saveFonnteKey() {
+  await saveSetting('fonnte_api_key', fonnteApiKey.value);
+}
+
+async function toggleStrictGps() {
+  const nextVal = strictGps.value === '1' ? '0' : '1';
+  strictGps.value = nextVal;
+  await saveSetting('require_strict_gps', nextVal);
+}
+
+async function toggleShaLock() {
+  const nextVal = shaLock.value === '1' ? '0' : '1';
+  shaLock.value = nextVal;
+  await saveSetting('sha256_integrity_lock', nextVal);
+}
+
+async function handleTestWhatsApp() {
+  if (!testWaPhone.value) return;
+  testingWa.value = true;
+  testWaStatus.value = null;
+
+  try {
+    const res = await api.testWhatsApp(testWaPhone.value, testWaMessage.value);
+    testWaStatus.value = {
+      success: true,
+      message: res.message || 'Pesan uji coba WhatsApp berhasil dikirim!'
+    };
+    alert('Pesan uji coba WhatsApp berhasil dikirim!');
+  } catch (err) {
+    testWaStatus.value = {
+      success: false,
+      message: `Gagal kirim: ${err.message}`
+    };
+    alert(`Gagal kirim WA: ${err.message}`);
+  } finally {
+    testingWa.value = false;
   }
 }
 
@@ -475,19 +853,6 @@ async function handleDeleteUser(user) {
     loadData();
   } catch (err) {
     alert(`Gagal menghapus user: ${err.message}`);
-  }
-}
-
-async function handleUpdateSetting(key, value) {
-  savingSetting.value = true;
-  try {
-    await api.updateSetting(key, value);
-    alert(`Pengaturan '${key}' berhasil diperbarui!`);
-    loadData();
-  } catch (err) {
-    alert(`Gagal update setting: ${err.message}`);
-  } finally {
-    savingSetting.value = false;
   }
 }
 

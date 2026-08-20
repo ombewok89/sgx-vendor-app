@@ -11,7 +11,6 @@ use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\PermissionController;
-use App\Http\Controllers\Api\WhatsAppController;
 
 // Public Health Check
 Route::get('/health', function () {
@@ -20,14 +19,6 @@ Route::get('/health', function () {
         'app' => 'SGX Vendor Work Evidence API (Laravel Native)',
         'timestamp' => now()->toIso8601String(),
         'environment' => app()->environment(),
-    ]);
-});
-
-Route::get('/debug-version', function () {
-    return response()->json([
-        'version' => '2026-08-20-v1',
-        'base_path' => base_path(),
-        'routes_file' => __FILE__,
     ]);
 });
 
@@ -125,17 +116,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // System Settings & Audit Logs (Superuser Console)
     Route::get('/system/settings', [MasterDataController::class, 'settings']);
     Route::put('/system/settings', [MasterDataController::class, 'updateSetting']);
+    Route::post('/system/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
     Route::get('/system/audit-logs', [MasterDataController::class, 'auditLogs']);
     Route::get('/system/notifications', [NotificationController::class, 'index']);
-    Route::get('/system/whatsapp/stats', [WhatsAppController::class, 'stats']);
-    Route::get('/system/whatsapp/logs', [WhatsAppController::class, 'logs']);
-    Route::get('/system/whatsapp/templates', [WhatsAppController::class, 'templates']);
-    Route::post('/system/whatsapp/logs/{id}/retry', [WhatsAppController::class, 'retry'])->whereNumber('id');
-    Route::post('/system/whatsapp/test-connection', [WhatsAppController::class, 'testConnection']);
-    Route::post('/system/whatsapp/send-test', [WhatsAppController::class, 'sendTestMessage']);
-    // Fallback aliases
-    Route::post('/whatsapp/send-test', [WhatsAppController::class, 'sendTestMessage']);
-    Route::post('/master/whatsapp/send-test', [MasterDataController::class, 'sendWhatsAppTest']);
 
     // In-App Notification Feed
     Route::get('/notifications', [NotificationController::class, 'index']);

@@ -243,11 +243,6 @@ class DatabaseSeeder extends Seeder
                 'description' => 'API Token untuk WhatsApp Gateway Fonnte',
             ],
             [
-                'key' => 'whatsapp_enabled',
-                'value' => '1',
-                'description' => 'Aktifkan/nonaktifkan integrasi WhatsApp Gateway (1 = aktif, 0 = mati)',
-            ],
-            [
                 'key' => 'app_name',
                 'value' => 'SGX Vendor Work Evidence',
                 'description' => 'Nama resmi platform aplikasi',

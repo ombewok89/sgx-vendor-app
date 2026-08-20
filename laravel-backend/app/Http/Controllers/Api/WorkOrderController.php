@@ -7,7 +7,6 @@ use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
 use App\Services\AuditService;
 use App\Services\WorkOrderService;
-use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -152,17 +151,12 @@ class WorkOrderController extends Controller
 
             AuditService::log($user, 'CREATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, $workOrder->toArray());
 
-            return $workOrder;
+            return response()->json([
+                'success' => true,
+                'message' => "Surat Perintah Kerja {$workOrder->spk_number} berhasil diterbitkan.",
+                'data' => $workOrder->load(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+            ], 201);
         });
-
-        // WhatsApp Notification (Post-Commit Trigger 1 & 2)
-        WhatsAppNotificationService::onWorkOrderCreated($workOrder);
-
-        return response()->json([
-            'success' => true,
-            'message' => "Surat Perintah Kerja {$workOrder->spk_number} berhasil diterbitkan.",
-            'data' => $workOrder->load(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
-        ], 201);
     }
 
     public function update(Request $request, $id)
@@ -379,17 +373,12 @@ class WorkOrderController extends Controller
                 'member_ids' => $memberIds,
             ]);
 
-            return $workOrder;
+            return response()->json([
+                'success' => true,
+                'message' => 'Penugasan tim lapangan berhasil diperbarui.',
+                'data' => $workOrder->load(['pic', 'assignments', 'vendor', 'area', 'jobType']),
+            ]);
         });
-
-        // WhatsApp Notification (Post-Commit Trigger 2)
-        WhatsAppNotificationService::onWorkOrderAssigned($workOrder);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Penugasan tim lapangan berhasil diperbarui.',
-            'data' => $workOrder->load(['pic', 'assignments', 'vendor', 'area', 'jobType']),
-        ]);
     }
 
     public function submit(Request $request, $id)
@@ -436,12 +425,9 @@ class WorkOrderController extends Controller
 
         $workOrder->update([
             'status' => 'SUBMITTED',
-            'progress_percent' => 80,
+            'progress_percent' => 100,
         ]);
         AuditService::log($user, 'SUBMIT_FOR_REVIEW', 'WORK_ORDER', $workOrder->id);
-
-        // WhatsApp Notification (Post-Commit Trigger 3)
-        WhatsAppNotificationService::onSubmissionReceived($workOrder);
 
         return response()->json([
             'success' => true,

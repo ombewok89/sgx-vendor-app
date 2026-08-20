@@ -269,6 +269,43 @@ class MasterDataController extends Controller
     {
         if ($deny = $this->checkAdminAuth($request)) return $deny;
 
+        // Auto-seed default settings if empty
+        if (SystemSetting::where('key', 'fonnte_api_key')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'fonnte_api_key',
+                'value' => 'GoPzcxdiUP2yt5HbByUK',
+                'description' => 'API Token untuk WhatsApp Gateway Fonnte',
+            ]);
+        }
+        if (SystemSetting::where('key', 'app_name')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'app_name',
+                'value' => 'SGX Vendor Work Evidence',
+                'description' => 'Nama resmi platform aplikasi',
+            ]);
+        }
+        if (SystemSetting::where('key', 'geofence_default_radius_meters')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'geofence_default_radius_meters',
+                'value' => '200',
+                'description' => 'Radius toleransi geofencing default dalam meter',
+            ]);
+        }
+        if (SystemSetting::where('key', 'require_strict_gps')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'require_strict_gps',
+                'value' => '1',
+                'description' => 'Wajibkan GPS browser terverifikasi saat check-in',
+            ]);
+        }
+        if (SystemSetting::where('key', 'sha256_integrity_lock')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'sha256_integrity_lock',
+                'value' => '1',
+                'description' => 'Segel integritas kriptografi bukti foto',
+            ]);
+        }
+
         $settings = SystemSetting::orderBy('id')->get();
         return response()->json(['success' => true, 'data' => $settings]);
     }
@@ -291,7 +328,7 @@ class MasterDataController extends Controller
             $setting = SystemSetting::create([
                 'key' => $request->key,
                 'value' => $request->value,
-                'description' => $request->key,
+                'description' => $request->description ?? $request->key,
             ]);
             AuditService::log($request->user(), 'CREATE_SETTING', 'SYSTEM_SETTING', $setting->id, null, $setting->toArray());
         }
@@ -301,16 +338,67 @@ class MasterDataController extends Controller
 
     public function testWhatsApp(Request $request)
     {
-        return (new WhatsAppController())->testConnection($request);
-    }
+        if ($deny = $this->checkAdminAuth($request)) return $deny;
 
-    public function sendWhatsAppTest(Request $request)
-    {
-        return (new WhatsAppController())->sendTestMessage($request);
-    }
+        $request->validate([
+            'phone' => 'required|string',
+            'message' => 'nullable|string',
+        ]);
 
-    public function whatsAppLogs(Request $request)
-    {
-        return (new WhatsAppController())->logs($request);
+        $phone = preg_replace('/[^0-9]/', '', $request->phone);
+        if (str_starts_with($phone, '08')) {
+            $phone = '628' . substr($phone, 2);
+        }
+
+        $apiKey = SystemSetting::where('key', 'fonnte_api_key')->value('value') ?: env('FONNTE_API_KEY', 'GoPzcxdiUP2yt5HbByUK');
+        $msg = $request->message ?: "🔔 *SGX Work Evidence System Test*\n\nUji coba konektivitas WhatsApp Gateway Fonnte berhasil terhubung secara normal pada " . now()->format('d/m/Y H:i:s') . " WIB.";
+
+        try {
+            $ch = curl_init('https://api.fonnte.com/send');
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => [
+                    "Authorization: {$apiKey}",
+                ],
+                CURLOPT_POSTFIELDS => [
+                    'target' => $phone,
+                    'message' => $msg,
+                    'countryCode' => '62',
+                ],
+                CURLOPT_TIMEOUT => 15,
+            ]);
+
+            $response = curl_exec($ch);
+            $err = curl_error($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($err) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghubungi server Fonnte: ' . $err,
+                ], 500);
+            }
+
+            $resData = json_decode($response, true) ?: ['raw' => $response];
+
+            AuditService::log($request->user(), 'TEST_WHATSAPP_GATEWAY', 'SYSTEM', null, null, [
+                'target' => $phone,
+                'status_code' => $httpCode,
+                'response' => $resData,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Uji coba pengiriman notifikasi WhatsApp berhasil dikirim.',
+                'data' => $resData,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

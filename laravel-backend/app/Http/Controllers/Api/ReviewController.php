@@ -8,7 +8,6 @@ use App\Models\Revision;
 use App\Models\WorkOrder;
 use App\Services\AuditService;
 use App\Services\BaDocumentService;
-use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -54,23 +53,15 @@ class ReviewController extends Controller
                 'status' => 'COMPLETED'
             ]);
 
-            return [
-                'work_order'  => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos', 'baDocument']),
-                'ba_document' => $ba,
-            ];
+            return response()->json([
+                'success' => true,
+                'message' => 'Pekerjaan berhasil disetujui, Berita Acara (BA) diterbitkan, dan SPK otomatis selesai (COMPLETED 100%).',
+                'data' => [
+                    'work_order' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos', 'baDocument']),
+                    'ba_document' => $ba,
+                ],
+            ]);
         });
-
-        // WhatsApp Notification (Post-Commit Trigger 4A & 5)
-        WhatsAppNotificationService::onReviewApproved($result['work_order']);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Pekerjaan berhasil disetujui, Berita Acara (BA) diterbitkan, dan SPK otomatis selesai (COMPLETED 100%).',
-            'data' => [
-                'work_order' => $result['work_order'],
-                'ba_document' => $result['ba_document'],
-            ],
-        ]);
     }
 
     public function requestRevision(Request $request, $workOrderId = null)
@@ -115,16 +106,11 @@ class ReviewController extends Controller
 
             AuditService::log($user, 'REQUEST_REVISION', 'WORK_ORDER', $workOrder->id, null, $revision->toArray());
 
-            return $revision;
+            return response()->json([
+                'success' => true,
+                'message' => 'Permintaan revisi berhasil dikirimkan ke tim teknisi lapangan.',
+                'data' => $revision,
+            ]);
         });
-
-        // WhatsApp Notification (Post-Commit Trigger 4B)
-        WhatsAppNotificationService::onRevisionRequired($workOrder, $revision);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Permintaan revisi berhasil dikirimkan ke tim teknisi lapangan.',
-            'data' => $revision,
-        ]);
     }
 }
