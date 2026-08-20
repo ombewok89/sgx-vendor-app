@@ -28,5 +28,13 @@ class AppServiceProvider extends ServiceProvider
         Route::match(['get', 'post', 'options'], '/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
         Route::match(['get', 'post', 'options'], '/api/system/gateway-status', [MasterDataController::class, 'gatewayStatus']);
         Route::match(['get', 'post', 'options'], '/system/gateway-status', [MasterDataController::class, 'gatewayStatus']);
+        Route::match(['get', 'post', 'options'], '/api/system/whatsapp/send-test', [\App\Http\Controllers\Api\WhatsAppController::class, 'sendTestMessage']);
+        Route::match(['get', 'post', 'options'], '/system/whatsapp/send-test', [\App\Http\Controllers\Api\WhatsAppController::class, 'sendTestMessage']);
+        Route::match(['get', 'post', 'options'], '/api/system/whatsapp/test-connection', [\App\Http\Controllers\Api\WhatsAppController::class, 'testConnection']);
+        Route::match(['get', 'post', 'options'], '/system/whatsapp/test-connection', [\App\Http\Controllers\Api\WhatsAppController::class, 'testConnection']);
+        Route::match(['get', 'post', 'options'], '/api/system/whatsapp/stats', [\App\Http\Controllers\Api\WhatsAppController::class, 'stats']);
+        Route::match(['get', 'post', 'options'], '/system/whatsapp/stats', [\App\Http\Controllers\Api\WhatsAppController::class, 'stats']);
+        Route::match(['get', 'post', 'options'], '/api/system/whatsapp/logs', [\App\Http\Controllers\Api\WhatsAppController::class, 'logs']);
+        Route::match(['get', 'post', 'options'], '/system/whatsapp/logs', [\App\Http\Controllers\Api\WhatsAppController::class, 'logs']);
     }
 }

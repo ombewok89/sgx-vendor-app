@@ -129,9 +129,26 @@ export const api = {
     return request(`/system/audit-logs${qs ? `?${qs}` : ''}`);
   },
   getSettings: () => request('/system/settings'),
-  updateSetting: (key, value) => request('/system/settings', { method: 'PUT', body: JSON.stringify({ key, value }) }),
-  getGatewayStatus: () => request('/system/gateway-status'),
-  testWhatsApp: (phone, message) => request('/system/test-whatsapp', { method: 'POST', body: JSON.stringify({ phone, message }) }),
+  getGatewayStatus: async () => {
+    try {
+      return await request('/system/gateway-status');
+    } catch (e) {
+      if (e.message && (e.message.includes('not be found') || e.message.includes('404'))) {
+        return await request('/system/whatsapp/stats');
+      }
+      throw e;
+    }
+  },
+  testWhatsApp: async (phone, message) => {
+    try {
+      return await request('/system/test-whatsapp', { method: 'POST', body: JSON.stringify({ phone, message }) });
+    } catch (e) {
+      if (e.message && (e.message.includes('not be found') || e.message.includes('404'))) {
+        return await request('/system/whatsapp/send-test', { method: 'POST', body: JSON.stringify({ phone, message }) });
+      }
+      throw e;
+    }
+  },
 
   // Dynamic RBAC & Permissions (Supervisor only)
   getPermissionMatrix: (role = 'ADMIN') => request(`/permissions/matrix?role=${role}`),

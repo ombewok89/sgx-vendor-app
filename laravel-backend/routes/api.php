@@ -32,6 +32,12 @@ Route::match(['get', 'post', 'options'], '/test-whatsapp', [MasterDataController
 Route::match(['get', 'post', 'options'], '/system/gateway-status', [MasterDataController::class, 'gatewayStatus']);
 Route::match(['get', 'post', 'options'], '/gateway-status', [MasterDataController::class, 'gatewayStatus']);
 
+// Legacy & Alternative WhatsApp Gateway Endpoints (Dual Compatibility)
+Route::match(['get', 'post', 'options'], '/system/whatsapp/send-test', [\App\Http\Controllers\Api\WhatsAppController::class, 'sendTestMessage']);
+Route::match(['get', 'post', 'options'], '/system/whatsapp/test-connection', [\App\Http\Controllers\Api\WhatsAppController::class, 'testConnection']);
+Route::match(['get', 'post', 'options'], '/system/whatsapp/stats', [\App\Http\Controllers\Api\WhatsAppController::class, 'stats']);
+Route::match(['get', 'post', 'options'], '/system/whatsapp/logs', [\App\Http\Controllers\Api\WhatsAppController::class, 'logs']);
+
 // Public Direct Storage & Evidence Image Streamer (Hardened with Canonical Realpath Containment & Extension Allowlist)
 Route::get('/storage-stream/{path}', function ($path) {
     if (empty($path) || str_contains($path, '..') || str_contains($path, "\0")) {
