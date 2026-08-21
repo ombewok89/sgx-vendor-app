@@ -31,6 +31,8 @@ Route::match(['get', 'post', 'options'], '/system/test-whatsapp', [MasterDataCon
 Route::match(['get', 'post', 'options'], '/test-whatsapp', [MasterDataController::class, 'testWhatsApp']);
 Route::match(['get', 'post', 'options'], '/system/gateway-status', [MasterDataController::class, 'gatewayStatus']);
 Route::match(['get', 'post', 'options'], '/gateway-status', [MasterDataController::class, 'gatewayStatus']);
+Route::match(['get', 'options'], '/system/settings', [MasterDataController::class, 'settings']);
+Route::match(['put', 'post', 'options'], '/system/settings', [MasterDataController::class, 'updateSetting']);
 
 // Legacy & Alternative WhatsApp Gateway Endpoints (Dual Compatibility)
 Route::match(['get', 'post', 'options'], '/system/whatsapp/send-test', [\App\Http\Controllers\Api\WhatsAppController::class, 'sendTestMessage']);

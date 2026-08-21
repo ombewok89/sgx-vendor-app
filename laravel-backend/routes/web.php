@@ -63,6 +63,8 @@ Route::match(['get', 'post', 'options'], '/api/system/gateway-status', [\App\Htt
 Route::match(['get', 'post', 'options'], '/system/gateway-status', [\App\Http\Controllers\Api\MasterDataController::class, 'gatewayStatus']);
 Route::match(['get', 'post', 'options'], '/api/system/settings', [\App\Http\Controllers\Api\MasterDataController::class, 'settings']);
 Route::match(['put', 'post', 'options'], '/api/system/settings', [\App\Http\Controllers\Api\MasterDataController::class, 'updateSetting']);
+Route::match(['get', 'post', 'options'], '/system/settings', [\App\Http\Controllers\Api\MasterDataController::class, 'settings']);
+Route::match(['put', 'post', 'options'], '/system/settings', [\App\Http\Controllers\Api\MasterDataController::class, 'updateSetting']);
 
 // 2. Root SPA View
 Route::get('/', function () {

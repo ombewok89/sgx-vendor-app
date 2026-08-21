@@ -36,5 +36,9 @@ class AppServiceProvider extends ServiceProvider
         Route::match(['get', 'post', 'options'], '/system/whatsapp/stats', [\App\Http\Controllers\Api\WhatsAppController::class, 'stats']);
         Route::match(['get', 'post', 'options'], '/api/system/whatsapp/logs', [\App\Http\Controllers\Api\WhatsAppController::class, 'logs']);
         Route::match(['get', 'post', 'options'], '/system/whatsapp/logs', [\App\Http\Controllers\Api\WhatsAppController::class, 'logs']);
+        Route::match(['get', 'options'], '/api/system/settings', [MasterDataController::class, 'settings']);
+        Route::match(['get', 'options'], '/system/settings', [MasterDataController::class, 'settings']);
+        Route::match(['put', 'post', 'options'], '/api/system/settings', [MasterDataController::class, 'updateSetting']);
+        Route::match(['put', 'post', 'options'], '/system/settings', [MasterDataController::class, 'updateSetting']);
     }
 }
