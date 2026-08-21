@@ -49,10 +49,8 @@
       </div>
 
       <div class="flex items-center gap-2 text-slate-500 font-mono text-[11px] self-end sm:self-auto">
-        <span>Total Nilai Pengesahan:</span>
-        <strong class="text-slate-900 font-bold text-xs font-mono">
-          Rp {{ (totalApprovedValue / 1000000).toFixed(1) }} Juta
-        </strong>
+        <FileCheck2 class="w-4 h-4 text-emerald-600" />
+        <span>Dokumen Berita Acara Terverifikasi Resmi</span>
       </div>
     </div>
 
@@ -90,12 +88,10 @@
         </div>
 
         <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100 font-mono">
-          <span class="text-slate-500">
-            {{ new Date(ba.ba_date || ba.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }}
+          <span class="text-slate-500 text-[11px]">
+            Tgl Terbit: {{ new Date(ba.ba_date || ba.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }}
           </span>
-          <strong class="text-slate-900 font-bold">
-            Rp {{ Number(ba.contract_value || 15000000).toLocaleString('id-ID') }}
-          </strong>
+          <span class="text-emerald-700 font-bold text-[11px]">100% Selesai</span>
         </div>
 
         <button
@@ -119,7 +115,6 @@
               <th class="py-3.5 px-4">Nama Toko Cabang</th>
               <th class="py-3.5 px-4">Tanggal Terbit</th>
               <th class="py-3.5 px-4">Tgl Selesai</th>
-              <th class="py-3.5 px-4 text-right">Nilai Kontrak</th>
               <th class="py-3.5 px-4 text-center">Status Legalitas</th>
               <th class="py-3.5 px-4 text-center">Aksi Dokumen</th>
             </tr>
@@ -127,7 +122,7 @@
           <tbody class="divide-y divide-slate-100 text-slate-700">
             <template v-if="loading">
               <tr>
-                <td colspan="8" class="py-12 text-center text-slate-400 font-medium">
+                <td colspan="7" class="py-12 text-center text-slate-400 font-medium">
                   <Loader2 class="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
                   <span>Memuat arsip Berita Acara...</span>
                 </td>
@@ -153,9 +148,6 @@
                 </td>
                 <td class="py-3.5 px-4 font-mono text-emerald-700 font-semibold text-[11px]">
                   {{ ba.completed_at ? new Date(ba.completed_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : (ba.deadline ? new Date(ba.deadline).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—') }}
-                </td>
-                <td class="py-3.5 px-4 font-mono font-bold text-slate-900 text-right">
-                  Rp {{ Number(ba.contract_value || 15000000).toLocaleString('id-ID') }}
                 </td>
                 <td class="py-3.5 px-4 text-center">
                   <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-600 text-white shadow-xs">

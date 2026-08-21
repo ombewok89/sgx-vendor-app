@@ -92,10 +92,10 @@
                 <td class="py-2.5 px-4 font-semibold text-slate-600">Perusahaan Client (Pemberi Tugas)</td>
                 <td class="py-2.5 px-4 font-medium">{{ wo?.vendor_name || baData?.vendor_name || baData?.work_order?.vendor?.name || 'Client SGX' }}</td>
               </tr>
-              <tr class="border-b border-slate-200">
+              <tr v-if="canViewFinancial" class="border-b border-slate-200">
                 <td class="py-2.5 px-4 font-semibold text-slate-600">Nilai Kontrak Pekerjaan</td>
                 <td class="py-2.5 px-4 font-mono font-bold text-emerald-800">
-                  Rp {{ Number(wo?.contract_value || 15000000).toLocaleString('id-ID') }}
+                  Rp {{ Number(wo?.contract_value || 0).toLocaleString('id-ID') }}
                 </td>
               </tr>
               <tr class="border-b border-slate-200 bg-slate-50/80">
@@ -194,6 +194,10 @@
 import { computed } from 'vue';
 import { Printer, ShieldCheck } from 'lucide-vue-next';
 import { getFileUrl } from '../services/api';
+import { useAuth } from '../composables/useAuth';
+
+const auth = useAuth();
+const canViewFinancial = computed(() => ['SUPERUSER', 'SUPERVISOR', 'ADMIN'].includes(auth.state.user?.role));
 
 const props = defineProps({
   baData: {

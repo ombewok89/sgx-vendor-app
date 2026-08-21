@@ -135,7 +135,7 @@
                   <span>Area Operasional:</span>
                   <span class="font-bold text-slate-900">{{ workOrder.area?.name || workOrder.area_name || '-' }}</span>
                 </div>
-                <div class="flex justify-between">
+                <div v-if="canViewFinancial" class="flex justify-between">
                   <span>Nilai Kontrak (Rp):</span>
                   <span class="font-bold font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                     Rp {{ Number(workOrder.contract_value || 0).toLocaleString('id-ID') }}
@@ -431,6 +431,7 @@ import {
 
 const auth = useAuth();
 const isSupervisor = computed(() => ['SUPERUSER', 'SUPERVISOR'].includes(auth.state.user?.role));
+const canViewFinancial = computed(() => ['SUPERUSER', 'SUPERVISOR', 'ADMIN'].includes(auth.state.user?.role));
 const isEditModalOpen = ref(false);
 
 const props = defineProps({
