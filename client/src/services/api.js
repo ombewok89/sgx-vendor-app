@@ -129,6 +129,7 @@ export const api = {
     return request(`/system/audit-logs${qs ? `?${qs}` : ''}`);
   },
   getSettings: () => request('/system/settings'),
+  updateSetting: (key, value) => request('/system/settings', { method: 'PUT', body: JSON.stringify({ key, value }) }),
   getGatewayStatus: async () => {
     try {
       return await request('/system/gateway-status');
