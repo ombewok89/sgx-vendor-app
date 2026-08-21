@@ -198,18 +198,36 @@ class FonnteService
             ];
         }
 
-        // 3. Live Fonnte API Dispatch
+        // Anti-Flood / Deduplication Check (Max 1 duplicate message per phone every 60 seconds)
+        if (!in_array($messageType, ['TEST_MESSAGE', 'TEST', 'CUSTOM'])) {
+            $cacheKey = 'wa_flood_' . md5($normalizedPhone . '_' . $messageType . '_' . substr($message, 0, 40));
+            if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                return [
+                    'success' => true,
+                    'skipped' => true,
+                    'status' => 'SKIPPED',
+                    'message' => 'Pengiriman dilewati untuk mencegah spam berulang dalam waktu singkat (Anti-Flood Guard).'
+                ];
+            }
+            \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addSeconds(60));
+        }
+
+        // 3. Live Fonnte API Dispatch with Natural Delay (Anti-Ban Safe Guard)
         try {
             $url = config('services.fonnte.url', 'https://api.fonnte.com/send');
+            $randomDelaySeconds = rand(4, 9); // Natural jitter delay
+
             $payload = [
                 'target' => $normalizedPhone,
                 'message' => $message,
                 'countryCode' => '62',
+                'delay' => (string)$randomDelaySeconds,
+                'schedule' => '0',
             ];
 
             $response = Http::withHeaders([
                 'Authorization' => $token,
-            ])->timeout(15)->post($url, $payload);
+            ])->timeout(20)->post($url, $payload);
 
             $body = $response->json();
             if (!$body && $response->body()) {

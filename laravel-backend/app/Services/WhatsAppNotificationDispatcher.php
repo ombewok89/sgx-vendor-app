@@ -120,11 +120,18 @@ class WhatsAppNotificationDispatcher
     }
 
     /**
-     * 3. Trigger when Evidence Photo is uploaded
+     * 3. Trigger when Evidence Photo is uploaded (Smart Debounce: Max 1 notification per 15 min per SPK)
      */
     public static function onEvidenceUpload(WorkOrder $workOrder, $user, $photo): void
     {
         try {
+            // Anti-Spam / Smart Throttling: Max 1 summary per 15 minutes per SPK
+            $throttleKey = 'wa_photo_throttle_' . $workOrder->id;
+            if (\Illuminate\Support\Facades\Cache::has($throttleKey)) {
+                return; // Skip repeated upload alerts for the same SPK session
+            }
+            \Illuminate\Support\Facades\Cache::put($throttleKey, true, now()->addMinutes(15));
+
             $adminPhones = self::getAdminSupervisorPhones();
             if (empty($adminPhones)) {
                 return;
@@ -134,13 +141,13 @@ class WhatsAppNotificationDispatcher
             $stage = strtoupper($photo->stage ?? 'EVIDENCE');
             $waktu = now()->format('d/m/Y H:i:s');
 
-            $msg = "📷 *UPLOAD FOTO BUKTI PEKERJAAN*\n\n"
+            $msg = "📷 *PROGRES DOKUMENTASI FOTO LAPANGAN*\n\n"
                  . "• *No. SPK:* {$workOrder->spk_number}\n"
                  . "• *Lokasi Toko:* {$workOrder->location_name}\n"
-                 . "• *Tahap Dokumentasi:* {$stage}\n"
-                 . "• *Diupload Oleh:* {$userName}\n"
+                 . "• *Tahap Terkini:* {$stage}\n"
+                 . "• *Teknisi:* {$userName}\n"
                  . "• *Waktu:* {$waktu} WIB\n\n"
-                 . "Foto bukti pengerjaan berhasil diunggah dengan segel metadata GPS & Timestamp.";
+                 . "Tim lapangan sedang aktif mendokumentasikan progres foto di lokasi pekerjaan.";
 
             foreach ($adminPhones as $phone) {
                 FonnteService::sendMessage($phone, $msg, 'EVIDENCE_UPLOAD');
