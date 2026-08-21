@@ -26,18 +26,23 @@
     </div>
 
     <div className="flex items-center gap-2.5 sm:gap-3">
-      <!-- In-App Notification Bell Button -->
+      <!-- In-App Notification Bell Button with Sound & Badge -->
       <button
         @click="isNotificationOpen = true"
-        className="relative p-2 rounded-xl text-slate-600 hover:text-purple-900 hover:bg-purple-50 active:scale-95 transition-all cursor-pointer border border-slate-200/80 bg-white/80 shadow-2xs"
+        :class="[
+          'relative p-2 rounded-xl active:scale-95 transition-all cursor-pointer border shadow-2xs',
+          unreadCount > 0 
+            ? 'bg-purple-50 text-purple-900 border-purple-300 ring-2 ring-purple-500/20' 
+            : 'bg-white/80 text-slate-600 hover:text-purple-900 hover:bg-purple-50 border-slate-200/80'
+        ]"
         title="Buka Notifikasi Pekerjaan"
       >
-        <Bell className="w-4.5 h-4.5" />
+        <Bell :class="['w-4.5 h-4.5 transition-transform duration-300', isRinging ? 'animate-bounce text-purple-700' : '']" />
         <span
           v-if="unreadCount > 0"
-          className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 rounded-full bg-rose-600 text-white font-mono text-[9px] font-black flex items-center justify-center shadow-xs animate-pulse border-2 border-white"
+          class="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1.5 rounded-full bg-rose-600 text-white font-mono text-[10px] font-black flex items-center justify-center shadow-md animate-pulse border-2 border-white ring-2 ring-rose-500/30"
         >
-          {{ unreadCount > 9 ? '9+' : unreadCount }}
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
         </span>
       </button>
 
@@ -90,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { Menu, Bell, LogOut, Settings } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
 import { api } from '../services/api';
@@ -103,13 +108,68 @@ const auth = useAuth();
 const isNotificationOpen = ref(false);
 const isProfileOpen = ref(false);
 const unreadCount = ref(0);
+const isRinging = ref(false);
+let pollingTimer = null;
+let isFirstLoad = true;
+
+/**
+ * Web Audio API Chime Synthesizer
+ * Plays a pleasant, crystal-clear 2-tone melodic notification chime.
+ */
+function playNotificationChime() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    // First Tone: E5 (659.25 Hz)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(659.25, now);
+    gain1.gain.setValueAtTime(0.25, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    // Second Tone: A5 (880.00 Hz)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(880.00, now + 0.12);
+    gain2.gain.setValueAtTime(0.35, now + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.12);
+    osc2.stop(now + 0.65);
+  } catch (e) {
+    // Non-blocking if audio context is restricted
+  }
+}
 
 async function fetchUnreadCount() {
   if (!auth.state.user) return;
   try {
     const res = await api.getNotificationFeed({ limit: 50 });
     if (res.data && Array.isArray(res.data)) {
-      unreadCount.value = res.data.filter(n => !n.is_read).length;
+      const newCount = res.data.filter(n => !n.is_read).length;
+
+      // Detect newly arrived notifications
+      if (!isFirstLoad && newCount > unreadCount.value) {
+        playNotificationChime();
+        isRinging.value = true;
+        setTimeout(() => {
+          isRinging.value = false;
+        }, 1500);
+      }
+
+      unreadCount.value = newCount;
+      isFirstLoad = false;
     }
   } catch (err) {
     // non-blocking
@@ -118,5 +178,11 @@ async function fetchUnreadCount() {
 
 onMounted(() => {
   fetchUnreadCount();
+  // Poll every 25 seconds for real-time notification alerts
+  pollingTimer = setInterval(fetchUnreadCount, 25000);
+});
+
+onUnmounted(() => {
+  if (pollingTimer) clearInterval(pollingTimer);
 });
 </script>
