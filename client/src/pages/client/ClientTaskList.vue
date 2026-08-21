@@ -210,6 +210,16 @@
 
               <div class="flex items-center gap-2 self-start sm:self-auto">
                 <button
+                  type="button"
+                  @click="showShareModal = true"
+                  class="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 font-bold text-xs rounded-xl shadow-2xs flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                  title="Bagikan Tautan Pemantauan Langsung (Live Tracking)"
+                >
+                  <Share2 class="w-4 h-4 text-purple-700" />
+                  <span>Bagikan</span>
+                </button>
+
+                <button
                   v-if="selectedOrder.ba_document"
                   @click="$emit('preview-ba', selectedOrder.ba_document)"
                   class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
@@ -463,6 +473,13 @@
       :initialIndex="selectedLightboxIndex"
       @close="isLightboxOpen = false"
     />
+
+    <!-- Share Live Tracking SPK Modal -->
+    <ShareSpkModal
+      v-if="showShareModal && selectedOrder"
+      :workOrder="selectedOrder"
+      @close="showShareModal = false"
+    />
   </div>
 </template>
 
@@ -472,6 +489,7 @@ import { api, getFileUrl } from '../../services/api';
 import StatusBadge from '../../components/StatusBadge.vue';
 import StepperProgress from '../../components/StepperProgress.vue';
 import PhotoLightboxModal from '../../components/PhotoLightboxModal.vue';
+import ShareSpkModal from '../../components/ShareSpkModal.vue';
 import {
   Store,
   Search,
@@ -485,7 +503,8 @@ import {
   Download,
   RefreshCw,
   Loader2,
-  Sparkles
+  Sparkles,
+  Share2
 } from 'lucide-vue-next';
 
 defineEmits(['preview-ba']);
@@ -493,6 +512,7 @@ defineEmits(['preview-ba']);
 const workOrders = ref([]);
 const selectedOrder = ref(null);
 const loading = ref(true);
+const showShareModal = ref(false);
 
 const searchQuery = ref('');
 const selectedStatus = ref('ALL');

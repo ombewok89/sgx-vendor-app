@@ -172,5 +172,10 @@ export const api = {
   getNotifications: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/system/whatsapp/logs${qs ? `?${qs}` : ''}`);
-  }
+  },
+
+  // Public Live Tracking & Work Order Share Links
+  getPublicTracking: (token) => request(`/public/track/${token}`),
+  getWorkOrderShareToken: (workOrderId) => request(`/work-orders/${workOrderId}/share-token`, { method: 'POST' }),
+  toggleWorkOrderShare: (workOrderId) => request(`/work-orders/${workOrderId}/toggle-share`, { method: 'POST' })
 };

@@ -14,10 +14,22 @@
         </div>
 
         <div class="flex items-center gap-2">
+          <!-- Share Live Tracking Button -->
+          <button
+            type="button"
+            @click="showShareModal = true"
+            class="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 font-bold text-xs rounded-xl shadow-2xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            title="Bagikan Tautan Pemantauan Langsung (Live Tracking)"
+          >
+            <Share2 class="w-3.5 h-3.5 text-purple-700" />
+            <span class="hidden sm:inline">Bagikan</span>
+          </button>
+
           <!-- Edit SPK Button (Supervisor Only) -->
           <button
             v-if="isSupervisor"
             @click="isEditModalOpen = true"
+            type="button"
             class="px-3.5 py-2 bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-700 hover:to-indigo-600 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
             title="Edit Data & Pengaturan SPK (Supervisor Only)"
           >
@@ -404,6 +416,13 @@
       @close="isEditModalOpen = false"
       @updated="onSpkUpdated"
     />
+
+    <!-- Share Live Tracking SPK Modal -->
+    <ShareSpkModal
+      v-if="showShareModal && workOrder"
+      :workOrder="workOrder"
+      @close="showShareModal = false"
+    />
   </div>
 </template>
 
@@ -415,6 +434,7 @@ import StatusBadge from '../../components/StatusBadge.vue';
 import StepperProgress from '../../components/StepperProgress.vue';
 import PhotoLightboxModal from '../../components/PhotoLightboxModal.vue';
 import WorkOrderEditModal from './WorkOrderEditModal.vue';
+import ShareSpkModal from '../../components/ShareSpkModal.vue';
 import {
   X,
   MapPin,
@@ -426,13 +446,15 @@ import {
   RotateCcw,
   Download,
   Pencil,
-  Check
+  Check,
+  Share2
 } from 'lucide-vue-next';
 
 const auth = useAuth();
 const isSupervisor = computed(() => ['SUPERUSER', 'SUPERVISOR'].includes(auth.state.user?.role));
 const canViewFinancial = computed(() => ['SUPERUSER', 'SUPERVISOR', 'ADMIN'].includes(auth.state.user?.role));
 const isEditModalOpen = ref(false);
+const showShareModal = ref(false);
 
 const props = defineProps({
   workOrderId: {

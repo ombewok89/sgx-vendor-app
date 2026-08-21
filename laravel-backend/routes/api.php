@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\PublicTrackingController;
 
 // Public Health Check
 Route::get('/health', function () {
@@ -21,6 +22,10 @@ Route::get('/health', function () {
         'environment' => app()->environment(),
     ]);
 });
+
+// Public Live Tracking for Guest / Third-Party
+Route::get('/public/track/{token}', [PublicTrackingController::class, 'track']);
+Route::get('/track/{token}', [PublicTrackingController::class, 'track']);
 
 // Public Authentication
 Route::match(['get', 'post'], '/auth/login', [AuthController::class, 'login'])->name('login');
@@ -159,6 +164,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/work-orders/{id}/assign', [WorkOrderController::class, 'assignTeam'])->whereNumber('id');
     Route::post('/work-orders/{id}/submit', [WorkOrderController::class, 'submit'])->whereNumber('id');
     Route::post('/work-orders/{id}/check-in', [CheckInController::class, 'checkIn'])->whereNumber('id');
+    Route::post('/work-orders/{id}/share-token', [PublicTrackingController::class, 'getOrCreateShareToken'])->whereNumber('id');
+    Route::post('/work-orders/{id}/toggle-share', [PublicTrackingController::class, 'toggleShareable'])->whereNumber('id');
 
     // Check-In (Geofencing)
     Route::post('/check-ins', [CheckInController::class, 'store']);

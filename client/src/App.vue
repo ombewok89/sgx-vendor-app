@@ -1,6 +1,12 @@
 <template>
+  <!-- 0. Public Guest Live Tracking (No Login Required) -->
+  <PublicSpkTracker
+    v-if="publicTrackToken"
+    :token="publicTrackToken"
+  />
+
   <!-- 1. Full Screen Loading State -->
-  <div v-if="auth.loading.value" class="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
+  <div v-else-if="auth.loading.value" class="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
     <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 p-1.5 shadow-2xl shadow-amber-500/20 border border-white/20 animate-pulse">
       <img src="/sgx_logo.png" alt="Sinar Grafika Logo" class="w-full h-full object-contain rounded-xl" />
     </div>
@@ -111,6 +117,7 @@ import { api } from './services/api';
 
 // Auth Page
 import LoginPage from './pages/auth/LoginPage.vue';
+import PublicSpkTracker from './pages/public/PublicSpkTracker.vue';
 
 // Components
 import Navbar from './components/Navbar.vue';
@@ -153,6 +160,29 @@ import SuperDashboard from './pages/superuser/SuperDashboard.vue';
 const auth = useAuth();
 const activeTab = ref('admin_dashboard');
 const sidebarOpen = ref(false);
+const publicTrackToken = ref('');
+
+function detectPublicTrackRoute() {
+  const path = window.location.pathname;
+  const searchParams = new URLSearchParams(window.location.search);
+  const hash = window.location.hash;
+
+  if (path.includes('/track/')) {
+    const segments = path.split('/track/');
+    publicTrackToken.value = segments[1]?.split('/')[0] || '';
+  } else if (searchParams.get('track')) {
+    publicTrackToken.value = searchParams.get('track').trim();
+  } else if (hash.includes('track=')) {
+    const parts = hash.split('track=');
+    publicTrackToken.value = parts[1]?.split('&')[0] || '';
+  } else if (hash.includes('/track/')) {
+    const parts = hash.split('/track/');
+    publicTrackToken.value = parts[1]?.split('/')[0] || '';
+  }
+}
+
+detectPublicTrackRoute();
+window.addEventListener('popstate', detectPublicTrackRoute);
 
 // Global Modals State
 const showCreateModal = ref(false);

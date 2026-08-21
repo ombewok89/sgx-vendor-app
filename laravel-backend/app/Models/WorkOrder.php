@@ -23,6 +23,8 @@ class WorkOrder extends Model
         'status',
         'progress_percent',
         'notes',
+        'share_token',
+        'is_shareable',
         'created_by',
     ];
 
@@ -30,6 +32,7 @@ class WorkOrder extends Model
         'target_lat' => 'decimal:7',
         'target_lng' => 'decimal:7',
         'require_checkin' => 'boolean',
+        'is_shareable' => 'boolean',
         'progress_percent' => 'integer',
         'start_date' => 'date:Y-m-d',
         'deadline' => 'date:Y-m-d',
@@ -42,7 +45,13 @@ class WorkOrder extends Model
         'pic_phone',
         'area_name',
         'job_type_name',
+        'share_url',
     ];
+
+    public function getShareUrlAttribute()
+    {
+        return $this->share_token ? url('/track/' . $this->share_token) : null;
+    }
 
     public function getVendorNameAttribute()
     {
