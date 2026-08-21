@@ -49,6 +49,9 @@ class EvidenceController extends Controller
         try {
             $photo = EvidenceService::storePhoto($user, $workOrder, $file, $request->all());
 
+            // Automated WhatsApp Notification to Admin/Supervisor
+            \App\Services\WhatsAppNotificationDispatcher::onEvidenceUpload($workOrder, $user, $photo);
+
             return response()->json([
                 'success' => true,
                 'message' => "Foto bukti tahap {$photo->stage} berhasil diunggah.",
@@ -244,6 +247,9 @@ class EvidenceController extends Controller
         ]);
 
         AuditService::log($user, 'REPORT_ISSUE', 'ISSUE', $issue->id, null, $issue->toArray());
+
+        // Automated WhatsApp Notification to Admin/Supervisor
+        \App\Services\WhatsAppNotificationDispatcher::onIssueReported($workOrder, $user, $issue);
 
         return response()->json([
             'success' => true,

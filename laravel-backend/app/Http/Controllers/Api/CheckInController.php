@@ -47,6 +47,9 @@ class CheckInController extends Controller
         try {
             $checkIn = CheckInService::checkIn($workOrder, $user, $request->all());
 
+            // Automated WhatsApp Notification to Admin/Supervisor
+            \App\Services\WhatsAppNotificationDispatcher::onGpsCheckIn($workOrder, $user, $checkIn);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Presensi check-in lokasi berhasil diverifikasi.',

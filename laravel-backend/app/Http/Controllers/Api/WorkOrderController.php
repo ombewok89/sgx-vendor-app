@@ -151,6 +151,11 @@ class WorkOrderController extends Controller
 
             AuditService::log($user, 'CREATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, $workOrder->toArray());
 
+            // Automated WhatsApp Notification to Field Team
+            if ($workOrder->pic_user_id || ($request->has('member_ids') && count($request->member_ids) > 0)) {
+                \App\Services\WhatsAppNotificationDispatcher::onSpkAssigned($workOrder);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => "Surat Perintah Kerja {$workOrder->spk_number} berhasil diterbitkan.",
@@ -373,6 +378,9 @@ class WorkOrderController extends Controller
                 'member_ids' => $memberIds,
             ]);
 
+            // Automated WhatsApp Notification to Field Team on reassignment
+            \App\Services\WhatsAppNotificationDispatcher::onSpkAssigned($workOrder);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Penugasan tim lapangan berhasil diperbarui.',
@@ -384,7 +392,7 @@ class WorkOrderController extends Controller
     public function submit(Request $request, $id)
     {
         $user = $request->user();
-        $workOrder = WorkOrder::with(['evidencePhotos', 'jobType', 'items'])->findOrFail($id);
+        $workOrder = WorkOrder::with(['evidencePhotos', 'jobType', 'items', 'vendor', 'area', 'pic'])->findOrFail($id);
 
         if ($user->hasRole('FIELD_TEAM')) {
             $isAssigned = $workOrder->pic_user_id === $user->id ||
@@ -428,6 +436,9 @@ class WorkOrderController extends Controller
             'progress_percent' => 100,
         ]);
         AuditService::log($user, 'SUBMIT_FOR_REVIEW', 'WORK_ORDER', $workOrder->id);
+
+        // Automated WhatsApp Notification to Admin/Supervisor
+        \App\Services\WhatsAppNotificationDispatcher::onSpkSubmitted($workOrder, $user);
 
         return response()->json([
             'success' => true,

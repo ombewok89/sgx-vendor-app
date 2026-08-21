@@ -60,6 +60,9 @@ class ReviewController extends Controller
                 'status' => 'COMPLETED'
             ]);
 
+            // Automated WhatsApp Notification for BA Issuance
+            \App\Services\WhatsAppNotificationDispatcher::onBaIssued($workOrder, $ba);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Pekerjaan berhasil disetujui, Berita Acara (BA) diterbitkan, dan SPK otomatis selesai (COMPLETED 100%).',
