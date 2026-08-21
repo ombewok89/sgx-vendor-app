@@ -147,13 +147,14 @@
             </div>
 
             <!-- Review Decision Action Buttons -->
-            <div class="flex items-center gap-2">
-              <template v-if="!['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(selectedOrder.status)">
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- STATE 1: Ready for Review (Submitted by Field Team) -->
+              <template v-if="['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(selectedOrder.status)">
                 <button
                   type="button"
                   @click="showRevisionModal = true"
                   :disabled="actionLoading"
-                  class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                  class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
                 >
                   <RotateCcw class="w-3.5 h-3.5" />
                   <span>Minta Revisi</span>
@@ -168,7 +169,9 @@
                   <span>Setujui (Approve)</span>
                 </button>
               </template>
-              <template v-else>
+
+              <!-- STATE 2: Approved / Completed -->
+              <template v-else-if="['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(selectedOrder.status)">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-xs rounded-xl flex items-center gap-1.5">
                     <Check class="w-4 h-4 text-emerald-600" />
@@ -195,6 +198,34 @@
                       <span>Lihat BA Opname</span>
                     </button>
                   </template>
+                </div>
+              </template>
+
+              <!-- STATE 3: Under Active Revision by Field Team -->
+              <template v-else-if="selectedOrder.status === 'REVISION'">
+                <div class="flex items-center gap-2">
+                  <span class="px-3 py-1.5 bg-rose-50 text-rose-800 border border-rose-200 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-2xs">
+                    <RotateCcw class="w-3.5 h-3.5 text-rose-600" />
+                    <span>Sedang Dalam Perbaikan Revisi Lapangan</span>
+                  </span>
+                  <button
+                    type="button"
+                    @click="showApproveModal = true"
+                    :disabled="actionLoading"
+                    class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
+                    title="Setujui jika hasil foto perbaikan telah lengkap"
+                  >
+                    <CheckCircle2 class="w-3.5 h-3.5" />
+                    <span>Setujui Perbaikan</span>
+                  </button>
+                </div>
+              </template>
+
+              <!-- STATE 4: Not Submitted Yet (Assigned / In Progress) -->
+              <template v-else>
+                <div class="px-3.5 py-2 bg-amber-50 text-amber-900 border border-amber-200 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-2xs">
+                  <Clock class="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>Pekerjaan Sedang Berjalan (Belum Diajukan Review)</span>
                 </div>
               </template>
             </div>
@@ -450,7 +481,8 @@ import {
   Download,
   Search,
   Store,
-  RefreshCw
+  RefreshCw,
+  Clock
 } from 'lucide-vue-next';
 
 const props = defineProps({

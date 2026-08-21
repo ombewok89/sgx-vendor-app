@@ -26,6 +26,13 @@ class ReviewController extends Controller
 
         $workOrder = WorkOrder::with(['evidencePhotos', 'items'])->findOrFail($id);
 
+        if (!in_array($workOrder->status, ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW', 'REVISION'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pekerjaan belum dapat disetujui karena belum diajukan untuk review oleh tim lapangan.',
+            ], 422);
+        }
+
         return DB::transaction(function () use ($user, $workOrder, $request) {
             $old = $workOrder->toArray();
 
@@ -81,6 +88,13 @@ class ReviewController extends Controller
         ]);
 
         $workOrder = WorkOrder::findOrFail($id);
+
+        if (!in_array($workOrder->status, ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW', 'REVISION', 'IN_PROGRESS'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pekerjaan belum dalam tahap yang dapat diminta revisi.',
+            ], 422);
+        }
 
         return DB::transaction(function () use ($user, $workOrder, $request) {
             $review = Review::create([
