@@ -23,11 +23,18 @@ class NotificationController extends Controller
             });
         }
 
+        // Fast in-memory lookup for user's read notifications (O(1) complexity)
+        $readIds = \Illuminate\Support\Facades\DB::table('notification_feed_user_read')
+            ->where('user_id', $user->id)
+            ->pluck('notification_feed_id')
+            ->toArray();
+        $readSet = array_flip($readIds);
+
         $notifications = $query->orderByDesc('id')
             ->limit(100)
             ->get()
-            ->map(function ($n) use ($user) {
-                $isRead = $n->readUsers()->where('users.id', $user->id)->exists();
+            ->map(function ($n) use ($user, $readSet) {
+                $isRead = isset($readSet[$n->id]) || (bool)$n->is_read;
                 return [
                     'id' => $n->id,
                     'work_order_id' => $n->work_order_id,
@@ -52,8 +59,16 @@ class NotificationController extends Controller
     public function markAsRead(Request $request, $id)
     {
         $user = $request->user();
-        $notification = NotificationFeed::findOrFail($id);
-        $notification->readUsers()->syncWithoutDetaching([$user->id => ['read_at' => now()]]);
+        
+        \Illuminate\Support\Facades\DB::table('notification_feed_user_read')->updateOrInsert(
+            [
+                'notification_feed_id' => (int)$id,
+                'user_id' => (int)$user->id,
+            ],
+            [
+                'read_at' => now(),
+            ]
+        );
 
         return response()->json([
             'success' => true,
@@ -77,12 +92,22 @@ class NotificationController extends Controller
         }
 
         $allIds = $query->pluck('id')->toArray();
-        $syncData = [];
-        foreach ($allIds as $nid) {
-            $syncData[$nid] = ['read_at' => now()];
+        if (!empty($allIds)) {
+            $now = now();
+            $data = [];
+            foreach ($allIds as $nid) {
+                $data[] = [
+                    'notification_feed_id' => (int)$nid,
+                    'user_id' => (int)$user->id,
+                    'read_at' => $now,
+                ];
+            }
+            \Illuminate\Support\Facades\DB::table('notification_feed_user_read')->upsert(
+                $data,
+                ['notification_feed_id', 'user_id'],
+                ['read_at']
+            );
         }
-
-        $user->readNotifications()->syncWithoutDetaching($syncData);
 
         return response()->json([
             'success' => true,

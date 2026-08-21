@@ -215,13 +215,29 @@ const filteredList = computed(() => {
   return notifications.value;
 });
 
-async function fetchNotifications() {
+async function fetchNotifications(autoMarkRead = true) {
   loading.value = true;
   try {
     const res = await api.getNotificationFeed({ limit: 50 });
-    notifications.value = res.data || [];
-    unreadCount.value = res.unreadCount || 0;
-    emit('update-unread-count', unreadCount.value);
+    const list = res.data || [];
+    notifications.value = list;
+    const unread = list.filter(n => !n.is_read).length;
+    unreadCount.value = unread;
+    emit('update-unread-count', unread);
+
+    // Auto mark all as read upon opening the notification drawer
+    if (autoMarkRead && unread > 0) {
+      setTimeout(async () => {
+        try {
+          await api.markAllNotificationsRead();
+          notifications.value.forEach(n => n.is_read = true);
+          unreadCount.value = 0;
+          emit('update-unread-count', 0);
+        } catch (e) {
+          // silently fail
+        }
+      }, 800);
+    }
   } catch (err) {
     console.error('Failed to fetch notifications:', err);
   } finally {
@@ -230,7 +246,7 @@ async function fetchNotifications() {
 }
 
 async function handleMarkSingleRead(notif) {
-  notif.is_read = 1;
+  notif.is_read = true;
   unreadCount.value = Math.max(0, unreadCount.value - 1);
   emit('update-unread-count', unreadCount.value);
   try {
@@ -244,7 +260,7 @@ async function handleMarkAllRead() {
   markingAll.value = true;
   try {
     await api.markAllNotificationsRead();
-    notifications.value.forEach(n => n.is_read = 1);
+    notifications.value.forEach(n => n.is_read = true);
     unreadCount.value = 0;
     emit('update-unread-count', 0);
   } catch (err) {
@@ -303,23 +319,17 @@ function formatTimeAgo(isoDate) {
 
 watch(() => props.isOpen, (open) => {
   if (open) {
-    fetchNotifications();
+    fetchNotifications(true);
   }
 });
 
 watch(() => auth.state.user?.id, () => {
-  fetchNotifications();
-});
-
-watch(() => auth.state.user?.role, () => {
-  fetchNotifications();
+  if (auth.state.user?.id) {
+    fetchNotifications(false);
+  }
 });
 
 onMounted(() => {
-  fetchNotifications();
-  // Live polling every 20 seconds
-  setInterval(() => {
-    fetchNotifications();
-  }, 20000);
+  fetchNotifications(false);
 });
 </script>

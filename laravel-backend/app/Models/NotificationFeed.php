@@ -40,8 +40,7 @@ class NotificationFeed extends Model
 
     public function readUsers()
     {
-        return $this->belongsToMany(User::class, 'notification_feed_user_read')
-            ->withPivot('read_at')
-            ->withTimestamps();
+        return $this->belongsToMany(User::class, 'notification_feed_user_read', 'notification_feed_id', 'user_id')
+            ->withPivot('read_at');
     }
 }
