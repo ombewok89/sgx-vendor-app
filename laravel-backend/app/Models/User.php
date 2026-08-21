@@ -55,6 +55,12 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function readNotifications()
+    {
+        return $this->belongsToMany(NotificationFeed::class, 'notification_feed_user_read', 'user_id', 'notification_feed_id')
+            ->withPivot('read_at');
+    }
+
     /**
      * Enhanced role check that handles Sanctum, Web, and memory caches safely.
      */

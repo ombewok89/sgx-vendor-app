@@ -47,6 +47,18 @@ class WhatsAppNotificationDispatcher
         try {
             $workOrder->loadMissing(['pic', 'vendor', 'area', 'jobType', 'assignments']);
 
+            // 1. Dispatch In-App Notification Feed
+            NotificationFeed::create([
+                'work_order_id' => $workOrder->id,
+                'client_id' => $workOrder->vendor_id,
+                'target_user_id' => $workOrder->pic_user_id,
+                'target_role' => 'ALL',
+                'category' => 'SPK_ASSIGNED',
+                'title' => "SPK Ditugaskan: {$workOrder->spk_number}",
+                'message' => "Surat Perintah Kerja {$workOrder->spk_number} ({$workOrder->location_name}) telah ditugaskan ke {$workOrder->pic?->name}.",
+            ]);
+
+            // 2. Dispatch WhatsApp Notification
             $recipients = [];
             if ($workOrder->pic?->phone) {
                 $recipients[] = $workOrder->pic->phone;
@@ -91,17 +103,28 @@ class WhatsAppNotificationDispatcher
     public static function onGpsCheckIn(WorkOrder $workOrder, $user, $checkIn): void
     {
         try {
-            $adminPhones = self::getAdminSupervisorPhones();
-            if (empty($adminPhones)) {
-                return;
-            }
-
             $userName = $user?->name ?? 'Teknisi Lapangan';
             $userPhone = $user?->phone ? " ({$user->phone})" : '';
             $lat = round((float)($checkIn->latitude ?? 0), 5);
             $lng = round((float)($checkIn->longitude ?? 0), 5);
             $accuracy = round((float)($checkIn->accuracy ?? 0));
             $waktu = now()->format('d/m/Y H:i:s');
+
+            // 1. Dispatch In-App Notification Feed
+            NotificationFeed::create([
+                'work_order_id' => $workOrder->id,
+                'client_id' => $workOrder->vendor_id,
+                'target_role' => 'ALL',
+                'category' => 'GPS_CHECKIN',
+                'title' => "Presensi Check-In: {$workOrder->location_name}",
+                'message' => "Teknisi {$userName} telah berhasil melakukan check-in GPS resmi di lokasi cabang.",
+            ]);
+
+            // 2. Dispatch WhatsApp Notification
+            $adminPhones = self::getAdminSupervisorPhones();
+            if (empty($adminPhones)) {
+                return;
+            }
 
             $msg = "📍 *PRESENSI GPS CHECK-IN LAPANGAN*\n\n"
                  . "• *No. SPK:* {$workOrder->spk_number}\n"
@@ -125,7 +148,25 @@ class WhatsAppNotificationDispatcher
     public static function onEvidenceUpload(WorkOrder $workOrder, $user, $photo): void
     {
         try {
-            // Anti-Spam / Smart Throttling: Max 1 summary per 15 minutes per SPK
+            $userName = $user?->name ?? 'Teknisi';
+            $stage = strtoupper($photo->stage ?? 'EVIDENCE');
+            $waktu = now()->format('d/m/Y H:i:s');
+
+            // 1. Dispatch In-App Notification Feed (Debounced 15m)
+            $feedKey = 'feed_photo_throttle_' . $workOrder->id . '_' . $stage;
+            if (!\Illuminate\Support\Facades\Cache::has($feedKey)) {
+                NotificationFeed::create([
+                    'work_order_id' => $workOrder->id,
+                    'client_id' => $workOrder->vendor_id,
+                    'target_role' => 'ALL',
+                    'category' => 'EVIDENCE_UPLOAD',
+                    'title' => "Dokumentasi Foto: {$stage}",
+                    'message' => "Foto dokumentasi tahap {$stage} telah diunggah oleh {$userName} pada {$workOrder->spk_number}.",
+                ]);
+                \Illuminate\Support\Facades\Cache::put($feedKey, true, now()->addMinutes(15));
+            }
+
+            // 2. Dispatch WhatsApp Notification (Throttled)
             $throttleKey = 'wa_photo_throttle_' . $workOrder->id;
             if (\Illuminate\Support\Facades\Cache::has($throttleKey)) {
                 return; // Skip repeated upload alerts for the same SPK session
@@ -136,10 +177,6 @@ class WhatsAppNotificationDispatcher
             if (empty($adminPhones)) {
                 return;
             }
-
-            $userName = $user?->name ?? 'Teknisi';
-            $stage = strtoupper($photo->stage ?? 'EVIDENCE');
-            $waktu = now()->format('d/m/Y H:i:s');
 
             $msg = "📷 *PROGRES DOKUMENTASI FOTO LAPANGAN*\n\n"
                  . "• *No. SPK:* {$workOrder->spk_number}\n"
@@ -163,15 +200,26 @@ class WhatsAppNotificationDispatcher
     public static function onIssueReported(WorkOrder $workOrder, $user, $issue): void
     {
         try {
+            $userName = $user?->name ?? 'Teknisi Lapangan';
+            $category = $issue->category ?? $issue->issue_type ?? 'Kendala Lapangan';
+            $desc = $issue->description ?? $issue->notes ?? '-';
+            $waktu = now()->format('d/m/Y H:i:s');
+
+            // 1. Dispatch In-App Notification Feed
+            NotificationFeed::create([
+                'work_order_id' => $workOrder->id,
+                'client_id' => $workOrder->vendor_id,
+                'target_role' => 'ALL',
+                'category' => 'ISSUE_REPORTED',
+                'title' => "Kendala Lapangan: {$workOrder->location_name}",
+                'message' => "Kendala [{$category}]: {$desc} dilaporkan oleh {$userName}.",
+            ]);
+
+            // 2. Dispatch WhatsApp Notification
             $adminPhones = self::getAdminSupervisorPhones();
             if (empty($adminPhones)) {
                 return;
             }
-
-            $userName = $user?->name ?? 'Teknisi Lapangan';
-            $category = $issue->category ?? 'Kendala Teknis';
-            $desc = $issue->description ?? '-';
-            $waktu = now()->format('d/m/Y H:i:s');
 
             $msg = "⚠️ *LAPORAN KENDALA LAPANGAN (URGENT)*\n\n"
                  . "• *No. SPK:* {$workOrder->spk_number}\n"
@@ -196,15 +244,26 @@ class WhatsAppNotificationDispatcher
     public static function onSpkSubmitted(WorkOrder $workOrder, $user): void
     {
         try {
-            $adminPhones = self::getAdminSupervisorPhones();
-            if (empty($adminPhones)) {
-                return;
-            }
-
             $userName = $user?->name ?? 'Tim Lapangan';
             $clientName = $workOrder->vendor?->name ?? 'Client';
             $totalPhotos = $workOrder->evidencePhotos()->count();
             $waktu = now()->format('d/m/Y H:i:s');
+
+            // 1. Dispatch In-App Notification Feed
+            NotificationFeed::create([
+                'work_order_id' => $workOrder->id,
+                'client_id' => $workOrder->vendor_id,
+                'target_role' => 'ALL',
+                'category' => 'SPK_SUBMITTED',
+                'title' => "Pengajuan Review: {$workOrder->spk_number}",
+                'message' => "Tim lapangan telah selesai mengerjakan {$workOrder->location_name} dan mengajukan review.",
+            ]);
+
+            // 2. Dispatch WhatsApp Notification
+            $adminPhones = self::getAdminSupervisorPhones();
+            if (empty($adminPhones)) {
+                return;
+            }
 
             $msg = "✅ *PENGAJUAN REVIEW HASIL PEKERJAAN*\n\n"
                  . "• *No. SPK:* {$workOrder->spk_number}\n"
@@ -233,6 +292,21 @@ class WhatsAppNotificationDispatcher
         try {
             $workOrder->loadMissing(['pic', 'vendor']);
 
+            $baNumber = $baDocument->ba_number ?? "BA-{$workOrder->spk_number}";
+            $clientName = $workOrder->vendor?->name ?? 'Client';
+            $waktu = now()->format('d/m/Y H:i:s');
+
+            // 1. Dispatch In-App Notification Feed
+            NotificationFeed::create([
+                'work_order_id' => $workOrder->id,
+                'client_id' => $workOrder->vendor_id,
+                'target_role' => 'ALL',
+                'category' => 'BA_ISSUED',
+                'title' => "BA Opname Terbit: {$baNumber}",
+                'message' => "Pekerjaan {$workOrder->spk_number} ({$workOrder->location_name}) telah disetujui & BA resmi diterbitkan.",
+            ]);
+
+            // 2. Dispatch WhatsApp Notification
             $recipients = self::getAdminSupervisorPhones();
             if ($workOrder->pic?->phone) {
                 $recipients[] = $workOrder->pic->phone;
@@ -245,10 +319,6 @@ class WhatsAppNotificationDispatcher
             if (empty($recipients)) {
                 return;
             }
-
-            $baNumber = $baDocument->ba_number ?? "BA-{$workOrder->spk_number}";
-            $clientName = $workOrder->vendor?->name ?? 'Client';
-            $waktu = now()->format('d/m/Y H:i:s');
 
             $msg = "📄 *BERITA ACARA (BA) OPNAME RESMI TERBIT*\n\n"
                  . "• *No. BA:* {$baNumber}\n"

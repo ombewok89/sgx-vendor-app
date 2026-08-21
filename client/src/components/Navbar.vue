@@ -90,9 +90,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Menu, Bell, LogOut, Settings } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
+import { api } from '../services/api';
 import NotificationDrawer from './NotificationDrawer.vue';
 import UserProfileModal from './UserProfileModal.vue';
 
@@ -102,4 +103,20 @@ const auth = useAuth();
 const isNotificationOpen = ref(false);
 const isProfileOpen = ref(false);
 const unreadCount = ref(0);
+
+async function fetchUnreadCount() {
+  if (!auth.state.user) return;
+  try {
+    const res = await api.getNotificationFeed({ limit: 50 });
+    if (res.data && Array.isArray(res.data)) {
+      unreadCount.value = res.data.filter(n => !n.is_read).length;
+    }
+  } catch (err) {
+    // non-blocking
+  }
+}
+
+onMounted(() => {
+  fetchUnreadCount();
+});
 </script>
