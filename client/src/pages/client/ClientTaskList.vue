@@ -332,87 +332,137 @@
                   </span>
                 </div>
 
-                <!-- Before vs After Split Columns for this Sub-Task -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <!-- Before Photo Box -->
-                  <div class="border border-slate-200 rounded-2xl p-3 bg-amber-50/30 space-y-2">
-                    <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs">
-                        KONDISI AWAL (BEFORE)
-                      </span>
-                      <span class="text-[10px] font-mono text-slate-400">
-                        {{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto
-                      </span>
-                    </div>
+                <!-- Before vs Process vs After Triptych Columns for this Sub-Task -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <!-- 1. Before Photo Box -->
+                  <div class="border border-slate-200 rounded-2xl p-3 bg-amber-50/30 space-y-2 flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs">
+                          KONDISI AWAL (BEFORE)
+                        </span>
+                        <span class="text-[10px] font-mono text-slate-400">
+                          {{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto
+                        </span>
+                      </div>
 
-                    <div v-if="getPhotosForItemStage(item.id, 'BEFORE').length > 0" class="space-y-2">
-                      <div
-                        v-for="p in getPhotosForItemStage(item.id, 'BEFORE')"
-                        :key="p.id"
-                        class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
-                        @click="openLightbox(p)"
-                      >
-                        <img
-                          :src="getFileUrl(p.file_path)"
-                          alt="Foto Sebelum"
-                          class="w-full h-full object-cover group-hover:scale-105 transition-all"
-                        />
-                        <button
-                          type="button"
-                          @click.stop="downloadSinglePhoto(p)"
-                          class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                      <div v-if="getPhotosForItemStage(item.id, 'BEFORE').length > 0" class="space-y-2">
+                        <div
+                          v-for="p in getPhotosForItemStage(item.id, 'BEFORE')"
+                          :key="p.id"
+                          class="h-40 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                          @click="openLightbox(p)"
                         >
-                          <Download class="w-3 h-3" />
-                        </button>
-                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
-                          <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                          <img
+                            :src="getFileUrl(p.file_path)"
+                            alt="Foto Sebelum"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-all"
+                          />
+                          <button
+                            type="button"
+                            @click.stop="downloadSinglePhoto(p)"
+                            class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                            title="Unduh Foto Before"
+                          >
+                            <Download class="w-3 h-3" />
+                          </button>
+                          <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
+                            <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div v-else class="h-36 rounded-xl border border-dashed border-amber-200 flex flex-col items-center justify-center text-slate-400 text-xs">
-                      <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
-                      <span>Foto Before Belum Tersedia</span>
+                      <div v-else class="h-36 rounded-xl border border-dashed border-amber-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+                        <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
+                        <span>Foto Before Belum Tersedia</span>
+                      </div>
                     </div>
                   </div>
 
-                  <!-- After Photo Box -->
-                  <div class="border border-slate-200 rounded-2xl p-3 bg-emerald-50/30 space-y-2">
-                    <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
-                        HASIL AKHIR (AFTER)
-                      </span>
-                      <span class="text-[10px] font-mono text-emerald-700 font-bold">
-                        {{ getPhotosForItemStage(item.id, 'AFTER').length > 0 ? 'Selesai ✓' : 'Menunggu' }}
-                      </span>
-                    </div>
+                  <!-- 2. Process Photo Box -->
+                  <div class="border border-slate-200 rounded-2xl p-3 bg-blue-50/30 space-y-2 flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-2xs">
+                          PROSES KERJA (PROCESS)
+                        </span>
+                        <span class="text-[10px] font-mono text-slate-400">
+                          {{ getPhotosForItemStage(item.id, 'PROCESS').length }} Foto
+                        </span>
+                      </div>
 
-                    <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="space-y-2">
-                      <div
-                        v-for="p in getPhotosForItemStage(item.id, 'AFTER')"
-                        :key="p.id"
-                        class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
-                        @click="openLightbox(p)"
-                      >
-                        <img
-                          :src="getFileUrl(p.file_path)"
-                          alt="Foto Selesai"
-                          class="w-full h-full object-cover group-hover:scale-105 transition-all"
-                        />
-                        <button
-                          type="button"
-                          @click.stop="downloadSinglePhoto(p)"
-                          class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                      <div v-if="getPhotosForItemStage(item.id, 'PROCESS').length > 0" class="space-y-2">
+                        <div
+                          v-for="p in getPhotosForItemStage(item.id, 'PROCESS')"
+                          :key="p.id"
+                          class="h-40 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                          @click="openLightbox(p)"
                         >
-                          <Download class="w-3 h-3" />
-                        </button>
-                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
-                          <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                          <img
+                            :src="getFileUrl(p.file_path)"
+                            alt="Foto Proses"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-all"
+                          />
+                          <button
+                            type="button"
+                            @click.stop="downloadSinglePhoto(p)"
+                            class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                            title="Unduh Foto Process"
+                          >
+                            <Download class="w-3 h-3" />
+                          </button>
+                          <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
+                            <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                          </div>
                         </div>
                       </div>
+                      <div v-else class="h-36 rounded-xl border border-dashed border-blue-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+                        <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
+                        <span>{{ item.doc_mode === 'AFTER_ONLY' ? 'Mode Tanpa Foto Proses' : 'Foto Proses Belum Tersedia' }}</span>
+                      </div>
                     </div>
-                    <div v-else class="h-36 rounded-xl border border-dashed border-emerald-200 flex flex-col items-center justify-center text-slate-400 text-xs">
-                      <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
-                      <span>Foto After Belum Tersedia</span>
+                  </div>
+
+                  <!-- 3. After Photo Box -->
+                  <div class="border border-slate-200 rounded-2xl p-3 bg-emerald-50/30 space-y-2 flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
+                          HASIL AKHIR (AFTER)
+                        </span>
+                        <span class="text-[10px] font-mono text-emerald-700 font-bold">
+                          {{ getPhotosForItemStage(item.id, 'AFTER').length > 0 ? 'Selesai ✓' : 'Menunggu' }}
+                        </span>
+                      </div>
+
+                      <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="space-y-2">
+                        <div
+                          v-for="p in getPhotosForItemStage(item.id, 'AFTER')"
+                          :key="p.id"
+                          class="h-40 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                          @click="openLightbox(p)"
+                        >
+                          <img
+                            :src="getFileUrl(p.file_path)"
+                            alt="Foto Selesai"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-all"
+                          />
+                          <button
+                            type="button"
+                            @click.stop="downloadSinglePhoto(p)"
+                            class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                            title="Unduh Foto After"
+                          >
+                            <Download class="w-3 h-3" />
+                          </button>
+                          <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
+                            <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="h-36 rounded-xl border border-dashed border-emerald-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+                        <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
+                        <span>Foto After Belum Tersedia</span>
+                      </div>
                     </div>
                   </div>
                 </div>
