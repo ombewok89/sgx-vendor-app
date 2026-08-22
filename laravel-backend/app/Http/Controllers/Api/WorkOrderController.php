@@ -476,6 +476,8 @@ class WorkOrderController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $this->ensureAddendumColumnExists();
+
         $workOrder = WorkOrder::with(['items', 'assignments', 'pic'])->findOrFail($id);
 
         if (in_array($workOrder->status, ['APPROVED', 'COMPLETED', 'BA_OPNAME'])) {
@@ -549,6 +551,37 @@ class WorkOrderController extends Controller
         });
     }
 
+    private function ensureArchiveColumnsExist()
+    {
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'is_archived')) {
+                \Illuminate\Support\Facades\Schema::table('work_orders', function ($table) {
+                    $table->boolean('is_archived')->default(false)->after('progress_percent');
+                });
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'archived_at')) {
+                \Illuminate\Support\Facades\Schema::table('work_orders', function ($table) {
+                    $table->timestamp('archived_at')->nullable()->after('is_archived');
+                });
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Auto-migration for archive columns: ' . $e->getMessage());
+        }
+    }
+
+    private function ensureAddendumColumnExists()
+    {
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('work_order_items', 'is_addendum')) {
+                \Illuminate\Support\Facades\Schema::table('work_order_items', function ($table) {
+                    $table->boolean('is_addendum')->default(false)->after('status');
+                });
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Auto-migration for addendum column: ' . $e->getMessage());
+        }
+    }
+
     public function archive(Request $request, $id)
     {
         $user = $request->user();
@@ -558,6 +591,8 @@ class WorkOrderController extends Controller
                 'message' => 'Akses Ditolak: Hanya Superuser yang berwenang mengarsipkan SPK.',
             ], 403);
         }
+
+        $this->ensureArchiveColumnsExist();
 
         $workOrder = WorkOrder::findOrFail($id);
 
@@ -594,6 +629,8 @@ class WorkOrderController extends Controller
                 'message' => 'Akses Ditolak: Hanya Superuser yang berwenang memulihkan SPK dari arsip.',
             ], 403);
         }
+
+        $this->ensureArchiveColumnsExist();
 
         $workOrder = WorkOrder::findOrFail($id);
 
