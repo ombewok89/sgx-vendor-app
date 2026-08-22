@@ -283,9 +283,17 @@
                     {{ itmIdx + 1 }}
                   </span>
                   <div>
-                    <h4 class="font-black text-slate-100 text-sm sm:text-base">
-                      {{ item.item_name }}
-                    </h4>
+                    <div class="flex items-center gap-2">
+                      <h4 class="font-black text-slate-100 text-sm sm:text-base">
+                        {{ item.item_name }}
+                      </h4>
+                      <span
+                        v-if="item.is_addendum"
+                        class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 shadow-md animate-pulse"
+                      >
+                        + ADDENDUM / TAMBAHAN
+                      </span>
+                    </div>
                     <span class="text-[10px] font-mono text-slate-400">Bobot: {{ item.weight_percent || 100 }}%</span>
                   </div>
                 </div>

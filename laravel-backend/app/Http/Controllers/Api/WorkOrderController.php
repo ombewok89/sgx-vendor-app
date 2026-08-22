@@ -446,4 +446,93 @@ class WorkOrderController extends Controller
             'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos']),
         ]);
     }
+
+    public function addAddendumItem(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN', 'SUPERVISOR'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser, Admin, atau Supervisor yang dapat menambahkan pekerjaan pada SPK.',
+            ], 403);
+        }
+
+        $request->validate([
+            'item_name' => 'required|string|max:255',
+            'doc_mode' => 'nullable|string|in:BEFORE_PROCESS_AFTER,BEFORE_AFTER,AFTER_ONLY',
+            'notes' => 'nullable|string',
+        ]);
+
+        $workOrder = WorkOrder::with(['items', 'assignments', 'pic'])->findOrFail($id);
+
+        if (in_array($workOrder->status, ['APPROVED', 'COMPLETED', 'BA_OPNAME'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'SPK ini sudah disetujui / selesai dan tidak dapat ditambahkan pekerjaan baru secara langsung.',
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($user, $workOrder, $request) {
+            // 1. Buat Sub-Pekerjaan Baru (Addendum)
+            $newItem = WorkOrderItem::create([
+                'work_order_id' => $workOrder->id,
+                'item_name' => $request->item_name,
+                'job_type_id' => $workOrder->job_type_id,
+                'doc_mode' => $request->doc_mode ?? $workOrder->doc_mode ?? 'BEFORE_PROCESS_AFTER',
+                'weight_percent' => 0,
+                'status' => 'PENDING',
+                'is_addendum' => true,
+                'notes' => $request->notes,
+            ]);
+
+            // 2. Hitung Ulang Bobot Seluruh Items
+            $allItems = WorkOrderItem::where('work_order_id', $workOrder->id)->get();
+            $totalCount = $allItems->count();
+            if ($totalCount > 0) {
+                $baseWeight = floor(100 / $totalCount);
+                $remainder = 100 - ($baseWeight * $totalCount);
+
+                foreach ($allItems as $idx => $itm) {
+                    $w = ($idx === $totalCount - 1) ? ($baseWeight + $remainder) : $baseWeight;
+                    $itm->update(['weight_percent' => $w]);
+                }
+            }
+
+            // 3. Jika SPK sedang review atau submitted, kembalikan ke IN_PROGRESS agar teknisi dapat melengkapi foto item baru
+            $oldStatus = $workOrder->status;
+            if (in_array($oldStatus, ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'])) {
+                $workOrder->update(['status' => 'IN_PROGRESS']);
+            }
+
+            // 4. Hitung ulang progres
+            $calc = WorkOrderService::recalculateProgress($workOrder);
+            $workOrder->update(['progress_percent' => $calc]);
+
+            // 5. Audit Log
+            AuditService::log($user, 'ADD_ADDENDUM_ITEM', 'WORK_ORDER', $workOrder->id, null, [
+                'item_id' => $newItem->id,
+                'item_name' => $newItem->item_name,
+                'is_addendum' => true,
+                'previous_status' => $oldStatus,
+            ]);
+
+            // 6. WhatsApp Dispatcher to Field Team if assigned
+            try {
+                if ($workOrder->pic_user_id) {
+                    \App\Services\WhatsAppNotificationDispatcher::onCustomAlert(
+                        $workOrder,
+                        "🔔 *Penambahan Pekerjaan (Addendum)* pada SPK {$workOrder->spk_number}\nItem Baru: *{$newItem->item_name}*\nMohon lengkapi dokumentasi foto di lokasi."
+                    );
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Addendum WA notification failed: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Pekerjaan tambahan '{$newItem->item_name}' berhasil ditambahkan ke SPK {$workOrder->spk_number}.",
+                'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos']),
+            ], 201);
+        });
+    }
 }

@@ -162,6 +162,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['put', 'post'], '/work-orders/{id}', [WorkOrderController::class, 'update'])->whereNumber('id');
     Route::post('/work-orders/{id}/update', [WorkOrderController::class, 'update'])->whereNumber('id');
     Route::post('/work-orders/{id}/assign', [WorkOrderController::class, 'assignTeam'])->whereNumber('id');
+    Route::post('/work-orders/{id}/add-item', [WorkOrderController::class, 'addAddendumItem'])->whereNumber('id');
     Route::post('/work-orders/{id}/submit', [WorkOrderController::class, 'submit'])->whereNumber('id');
     Route::post('/work-orders/{id}/check-in', [CheckInController::class, 'checkIn'])->whereNumber('id');
     Route::post('/work-orders/{id}/share-token', [PublicTrackingController::class, 'getOrCreateShareToken'])->whereNumber('id');

@@ -309,9 +309,17 @@
                       {{ itmIdx + 1 }}
                     </span>
                     <div>
-                      <h5 class="font-black text-slate-900 text-sm">
-                        {{ item.item_name }}
-                      </h5>
+                      <div class="flex items-center gap-2">
+                        <h5 class="font-black text-slate-900 text-sm">
+                          {{ item.item_name }}
+                        </h5>
+                        <span
+                          v-if="item.is_addendum"
+                          class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs animate-pulse"
+                        >
+                          + PEKERJAAN TAMBAHAN (ADDENDUM)
+                        </span>
+                      </div>
                       <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
                         <span class="bg-purple-50 text-purple-900 font-bold px-2 py-0.5 rounded">Bobot: {{ item.weight_percent || 100 }}%</span>
                         <span>•</span>

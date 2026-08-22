@@ -13,11 +13,13 @@ class WorkOrderItem extends Model
         'doc_mode',
         'weight_percent',
         'status',
+        'is_addendum',
         'notes',
     ];
 
     protected $casts = [
         'weight_percent' => 'integer',
+        'is_addendum' => 'boolean',
     ];
 
     public function workOrder()

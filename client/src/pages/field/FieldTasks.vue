@@ -288,15 +288,21 @@
                   {{ idx + 1 }}
                 </span>
                 <span class="truncate max-w-[160px]">{{ itm.item_name }}</span>
+                <span v-if="itm.is_addendum" class="px-1.5 py-0.2 rounded text-[8px] font-black uppercase bg-amber-500 text-white shrink-0 shadow-2xs">
+                  + Addendum
+                </span>
                 <CheckCircle2 v-if="isItemComplete(itm)" class="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               </button>
             </div>
 
             <!-- Active Sub-Item Header Info -->
             <div v-if="activeItem" class="p-3 bg-brand-50/50 border border-brand-100 rounded-xl flex items-center justify-between text-xs">
-              <div>
+              <div class="flex items-center gap-2">
                 <span class="font-bold text-slate-900">{{ activeItem.item_name }}</span>
-                <span class="text-[11px] text-slate-500 ml-2">({{ activeItem.doc_mode }})</span>
+                <span v-if="activeItem.is_addendum" class="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500 text-white shadow-2xs animate-pulse">
+                  + PEKERJAAN TAMBAHAN (ADDENDUM)
+                </span>
+                <span class="text-[11px] text-slate-500">({{ activeItem.doc_mode }})</span>
               </div>
               <span v-if="isItemComplete(activeItem)" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                 Foto Lengkap ✓

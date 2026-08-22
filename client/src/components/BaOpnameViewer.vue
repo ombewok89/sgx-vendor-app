@@ -135,7 +135,14 @@
               <tbody class="divide-y divide-slate-200">
                 <tr v-for="(itm, idx) in items" :key="itm.id || idx" class="hover:bg-slate-50">
                   <td class="py-2.5 px-3 font-mono font-bold text-slate-500">{{ idx + 1 }}</td>
-                  <td class="py-2.5 px-3 font-bold text-slate-900">{{ itm.item_name }}</td>
+                  <td class="py-2.5 px-3 font-bold text-slate-900">
+                    <div class="flex items-center gap-2">
+                      <span>{{ itm.item_name }}</span>
+                      <span v-if="itm.is_addendum" class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                        + Addendum
+                      </span>
+                    </div>
+                  </td>
                   <td class="py-2.5 px-3 text-slate-600">{{ itm.doc_mode }}</td>
                   <td class="py-2.5 px-3 text-right font-bold text-emerald-800">SELESAI 100% ✓</td>
                 </tr>

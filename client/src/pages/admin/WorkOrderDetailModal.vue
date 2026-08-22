@@ -343,7 +343,19 @@
                 <p class="text-[11px] text-slate-500">Dokumentasi foto disusun dan dikelompokkan secara terstruktur per sub-lingkup pekerjaan.</p>
               </div>
 
-              <div class="flex items-center gap-2 self-start sm:self-auto">
+              <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                <!-- Add Sub-Work Order Item Button (Addendum) -->
+                <button
+                  v-if="!['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(workOrder.status) && isSupervisor"
+                  type="button"
+                  @click="openAddendumModal"
+                  class="px-3 py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  title="Tambah lingkup pekerjaan baru pada SPK ini"
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                  <span>+ Tambah Sub-Pekerjaan</span>
+                </button>
+
                 <!-- Toggle View Mode: By Item vs All Stages -->
                 <div class="bg-slate-200/80 p-0.5 rounded-xl flex items-center text-[10px] font-bold">
                   <button
@@ -395,9 +407,17 @@
                       {{ itmIdx + 1 }}
                     </span>
                     <div>
-                      <h5 class="font-black text-slate-900 text-xs sm:text-sm">
-                        {{ item.item_name }}
-                      </h5>
+                      <div class="flex items-center gap-2">
+                        <h5 class="font-black text-slate-900 text-xs sm:text-sm">
+                          {{ item.item_name }}
+                        </h5>
+                        <span
+                          v-if="item.is_addendum"
+                          class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs animate-pulse"
+                        >
+                          + ADDENDUM / TAMBAHAN
+                        </span>
+                      </div>
                       <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
                         <span class="bg-slate-100 px-1.5 py-0.5 rounded font-mono">Bobot: {{ item.weight_percent || 100 }}%</span>
                         <span>•</span>
@@ -621,6 +641,85 @@
       :workOrder="workOrder"
       @close="showShareModal = false"
     />
+
+    <!-- Add Addendum Sub-Task Modal Dialog -->
+    <Teleport to="body">
+      <div
+        v-if="showAddendumModal"
+        class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+      >
+        <div class="glass-modal rounded-3xl max-w-md w-full shadow-2xl p-6 space-y-4 text-xs border border-white/80">
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+              <Plus class="w-4 h-4 text-amber-600" />
+              <span>Tambah Sub-Pekerjaan (Addendum)</span>
+            </h3>
+            <button @click="showAddendumModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+
+          <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-[11px] space-y-1">
+            <p class="font-bold">Penambahan lingkup kerja pada SPK berjalan:</p>
+            <p class="font-mono text-[10px]">{{ workOrder?.spk_number }} - {{ workOrder?.title }}</p>
+            <p class="text-amber-800 text-[10px]">Item baru akan otomatis muncul di tugas teknisi lapangan dan portal klien dengan status pekerjaan tambahan.</p>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Lingkup / Sub-Pekerjaan Tambahan <span class="text-rose-500">*</span>:</label>
+              <input
+                type="text"
+                v-model="addendumForm.itemName"
+                placeholder="Contoh: Pemasangan Stiker Sandblast Kaca Depan (12 m²)"
+                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Mode Dokumentasi Foto:</label>
+              <select
+                v-model="addendumForm.docMode"
+                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs"
+              >
+                <option value="BEFORE_PROCESS_AFTER">BEFORE ➔ PROCESS ➔ AFTER (Standar Lengkap)</option>
+                <option value="BEFORE_AFTER">BEFORE ➔ AFTER (Tanpa Foto Proses)</option>
+                <option value="AFTER_ONLY">AFTER ONLY (Hanya Foto Hasil Akhir)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Catatan / Spesifikasi Tambahan:</label>
+              <textarea
+                rows="2"
+                v-model="addendumForm.notes"
+                placeholder="Spesifikasi material, ukuran, atau instruksi khusus dari klien/pengawas..."
+                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs"
+              />
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+            <button
+              type="button"
+              @click="showAddendumModal = false"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              @click="handleSubmitAddendum"
+              :disabled="submittingAddendum"
+              class="px-5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+            >
+              <Plus class="w-3.5 h-3.5" />
+              <span>{{ submittingAddendum ? 'Menyimpan...' : 'Simpan & Terbitkan Item' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -646,15 +745,62 @@ import {
   Pencil,
   Check,
   Share2,
-  CheckSquare
+  CheckSquare,
+  Plus
 } from 'lucide-vue-next';
 
 const auth = useAuth();
-const isSupervisor = computed(() => ['SUPERUSER', 'SUPERVISOR'].includes(auth.state.user?.role));
+const isSupervisor = computed(() => ['SUPERUSER', 'SUPERVISOR', 'ADMIN'].includes(auth.state.user?.role));
 const canViewFinancial = computed(() => ['SUPERUSER', 'SUPERVISOR', 'ADMIN'].includes(auth.state.user?.role));
 const isEditModalOpen = ref(false);
 const showShareModal = ref(false);
 const photoViewMode = ref('BY_ITEM'); // 'BY_ITEM' | 'ALL_STAGES'
+
+// Addendum Sub-Task Modal State
+const showAddendumModal = ref(false);
+const submittingAddendum = ref(false);
+const addendumForm = ref({
+  itemName: '',
+  docMode: 'BEFORE_PROCESS_AFTER',
+  notes: ''
+});
+
+function openAddendumModal() {
+  addendumForm.value = {
+    itemName: '',
+    docMode: workOrder.value?.doc_mode || 'BEFORE_PROCESS_AFTER',
+    notes: ''
+  };
+  showAddendumModal.value = true;
+}
+
+async function handleSubmitAddendum() {
+  if (!addendumForm.value.itemName.trim()) {
+    alert('Nama sub-pekerjaan tambahan wajib diisi!');
+    return;
+  }
+
+  submittingAddendum.value = true;
+  try {
+    const res = await api.addWorkOrderItem(props.workOrderId, {
+      item_name: addendumForm.value.itemName.trim(),
+      doc_mode: addendumForm.value.docMode,
+      notes: addendumForm.value.notes.trim()
+    });
+
+    if (res.success || res.data) {
+      alert(`Pekerjaan tambahan '${addendumForm.value.itemName}' berhasil ditambahkan ke SPK.`);
+      showAddendumModal.value = false;
+      await loadDetail();
+      emit('refresh-list');
+    }
+  } catch (err) {
+    console.error('Failed to add addendum item:', err);
+    alert('Gagal menambahkan sub-pekerjaan: ' + (err.message || 'Terjadi kesalahan'));
+  } finally {
+    submittingAddendum.value = false;
+  }
+}
 
 const props = defineProps({
   workOrderId: {
