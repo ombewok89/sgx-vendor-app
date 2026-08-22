@@ -242,25 +242,26 @@ export async function stampGpsWatermark(file, metadata = {}) {
           ctx.fillText(truncatedAddr, textMarginL, currentY);
           ctx.restore();
 
-          // BLOK KOORDINAT (Enlarged Solid Black Badge with Bright White Text)
-          currentY += (26 * scale);
-          const coordText = `Koordinat: ${latFormatted}, ${lngFormatted}`;
-          ctx.font = `800 ${22 * scale}px "JetBrains Mono", monospace, Arial`;
+          // BLOK KOORDINAT (High-Visibility Solid Badge with Gold Trim & Bright Accent)
+          currentY += (28 * scale);
+          const accText = metadata.accuracy ? ` (±${Math.round(metadata.accuracy)}m)` : '';
+          const coordText = `📍 GPS: ${latFormatted}, ${lngFormatted}${accText}`;
+          ctx.font = `800 ${23 * scale}px "JetBrains Mono", monospace, Arial`;
           const coordTextW = ctx.measureText(coordText).width;
           const badgePadX = 18 * scale;
-          const badgeH = 42 * scale;
+          const badgeH = 44 * scale;
 
           ctx.save();
-          ctx.shadowColor = 'rgba(0,0,0,0.85)';
-          ctx.shadowBlur = 10 * scale;
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.92)';
+          ctx.shadowColor = 'rgba(0,0,0,0.95)';
+          ctx.shadowBlur = 12 * scale;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
           ctx.fillRect(textMarginL, currentY, coordTextW + (badgePadX * 2), badgeH);
-          ctx.strokeStyle = '#64748B';
-          ctx.lineWidth = 2 * scale;
+          ctx.strokeStyle = '#FACC15'; // Bright Gold Border
+          ctx.lineWidth = 2.5 * scale;
           ctx.strokeRect(textMarginL, currentY, coordTextW + (badgePadX * 2), badgeH);
 
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillText(coordText, textMarginL + badgePadX, currentY + (29 * scale));
+          ctx.fillStyle = '#FEF08A'; // Soft Gold Text for instant readability
+          ctx.fillText(coordText, textMarginL + badgePadX, currentY + (30 * scale));
           ctx.restore();
 
           // 5. Draw Mini GPS Satellite Map on the right (Real Satellite Map Tile)

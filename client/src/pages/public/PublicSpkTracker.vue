@@ -337,7 +337,11 @@
                       <Clock class="w-3 h-3 text-slate-500" />
                       {{ photo.captured_at || '-' }}
                     </span>
-                    <span v-if="photo.latitude" class="text-purple-400">
+                    <span v-if="isValidGps(photo.latitude)" class="text-purple-300 font-bold flex items-center gap-1">
+                      <MapPin class="w-3 h-3 text-purple-400" />
+                      <span>{{ Number(photo.latitude).toFixed(4) }}, {{ Number(photo.longitude).toFixed(4) }}</span>
+                    </span>
+                    <span v-else class="text-purple-400">
                       GPS ✓
                     </span>
                   </div>

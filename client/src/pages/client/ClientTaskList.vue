@@ -306,8 +306,17 @@
                     <span>Foto Before Belum Tersedia</span>
                   </div>
                 </div>
-                <div v-if="beforePhoto" class="text-[10px] text-slate-500 font-mono truncate">
-                  SHA-256: {{ beforePhoto.file_hash?.substring(0, 16) }}... ✓
+                <div v-if="beforePhoto" class="text-[10px] space-y-0.5">
+                  <div class="flex items-center justify-between font-mono text-slate-500">
+                    <span class="text-emerald-700 font-bold flex items-center gap-1">
+                      <MapPin class="w-3 h-3 text-emerald-600" />
+                      <span>GPS: {{ beforePhoto.latitude ? `${Number(beforePhoto.latitude).toFixed(5)}, ${Number(beforePhoto.longitude).toFixed(5)}` : 'Terverifikasi' }}</span>
+                    </span>
+                    <span class="text-[9px] text-slate-400">{{ beforePhoto.server_timestamp ? new Date(beforePhoto.server_timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '' }}</span>
+                  </div>
+                  <div class="text-[9px] text-slate-400 font-mono truncate">
+                    SHA-256: {{ beforePhoto.file_hash?.substring(0, 16) }}... ✓
+                  </div>
                 </div>
               </div>
 
@@ -332,8 +341,17 @@
                     <span>Foto After Belum Tersedia</span>
                   </div>
                 </div>
-                <div v-if="afterPhoto" class="text-[10px] text-slate-500 font-mono truncate">
-                  SHA-256: {{ afterPhoto.file_hash?.substring(0, 16) }}... ✓
+                <div v-if="afterPhoto" class="text-[10px] space-y-0.5">
+                  <div class="flex items-center justify-between font-mono text-slate-500">
+                    <span class="text-emerald-700 font-bold flex items-center gap-1">
+                      <MapPin class="w-3 h-3 text-emerald-600" />
+                      <span>GPS: {{ afterPhoto.latitude ? `${Number(afterPhoto.latitude).toFixed(5)}, ${Number(afterPhoto.longitude).toFixed(5)}` : 'Terverifikasi' }}</span>
+                    </span>
+                    <span class="text-[9px] text-slate-400">{{ afterPhoto.server_timestamp ? new Date(afterPhoto.server_timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '' }}</span>
+                  </div>
+                  <div class="text-[9px] text-slate-400 font-mono truncate">
+                    SHA-256: {{ afterPhoto.file_hash?.substring(0, 16) }}... ✓
+                  </div>
                 </div>
               </div>
             </div>
@@ -403,8 +421,12 @@
 
                 <div class="px-1 space-y-1">
                   <div class="flex items-center justify-between text-[9px] font-mono text-slate-500">
-                    <span class="truncate max-w-[120px]">{{ p.uploader_name || 'Tim Lapangan' }}</span>
+                    <span class="truncate max-w-[110px]">{{ p.uploader_name || 'Tim Lapangan' }}</span>
                     <span class="text-emerald-700 font-bold">Valid ✓</span>
+                  </div>
+                  <div class="text-[9px] font-mono text-purple-900 font-bold flex items-center gap-1 truncate">
+                    <MapPin class="w-3 h-3 text-purple-600 shrink-0" />
+                    <span>{{ p.latitude ? `${Number(p.latitude).toFixed(5)}, ${Number(p.longitude).toFixed(5)}` : 'Lokasi Terdaftar' }}</span>
                   </div>
                   <div v-if="p.notes" class="text-[10px] text-slate-700 italic truncate">
                     "{{ p.notes }}"

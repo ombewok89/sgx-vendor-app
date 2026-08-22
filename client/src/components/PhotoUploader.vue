@@ -162,14 +162,19 @@
         </div>
 
         <!-- Bottom Forensic Stamp Info -->
-        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-2.5 pr-10 text-white text-[10px] backdrop-blur-xs pointer-events-none">
+        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-2.5 pr-10 text-white text-[10px] backdrop-blur-xs pointer-events-none">
           <div class="font-bold flex items-center justify-between">
-            <span>Foto #{{ photo.sequence || idx + 1 }}</span>
-            <span class="font-mono text-[9px] text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-500/30">SHA-256 ✓</span>
+            <span class="text-amber-300">Foto #{{ photo.sequence || idx + 1 }}</span>
+            <span class="font-mono text-[9px] text-emerald-400 bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-500/40">SHA-256 ✓</span>
           </div>
-          <div class="text-[9px] text-slate-300 truncate mt-0.5 font-mono">
-            <span v-if="photo.server_timestamp">{{ new Date(photo.server_timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}</span>
-            <span v-if="photo.latitude"> • {{ Number(photo.latitude).toFixed(4) }}, {{ Number(photo.longitude).toFixed(4) }}</span>
+          <div class="text-[10px] text-emerald-300 font-mono mt-0.5 flex items-center gap-1 font-bold">
+            <span>📍</span>
+            <span v-if="isValidGps(photo.latitude)">{{ Number(photo.latitude).toFixed(5) }}, {{ Number(photo.longitude).toFixed(5) }}</span>
+            <span v-else-if="isValidGps(targetLat)">{{ Number(targetLat).toFixed(5) }}, {{ Number(targetLng).toFixed(5) }}</span>
+            <span v-else class="text-slate-300">GPS Terverifikasi</span>
+          </div>
+          <div class="text-[9px] text-slate-300 font-mono mt-0.5 flex items-center gap-1">
+            <span>🕒 {{ photo.server_timestamp ? new Date(photo.server_timestamp).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-' }}</span>
           </div>
         </div>
       </div>
