@@ -16,7 +16,7 @@
                 AUTONOMOUS GPS
               </span>
             </div>
-            <p class="text-[11px] text-slate-400">Kamera GPS Otomatis Sinar Grafika — Lokasi & Waktu Asli Google Maps</p>
+            <p class="text-[11px] text-slate-400">Kamera GPS Otomatis Sinar Grafika — Lokasi Asli Google Maps & Keterangan Kerja</p>
           </div>
         </div>
 
@@ -34,7 +34,7 @@
     <!-- Main Content Area -->
     <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6">
       
-      <!-- Live Real-Time Location & Privacy Bar -->
+      <!-- Live Real-Time Location & Status Bar -->
       <div class="p-3.5 sm:p-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-lg">
         <div class="flex items-start gap-3">
           <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0 border border-emerald-500/20">
@@ -67,6 +67,34 @@
         </button>
       </div>
 
+      <!-- Keterangan Pekerjaan Input Box (Bisa Diedit Bebas) -->
+      <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg space-y-2">
+        <label class="block font-bold text-xs text-slate-300 flex items-center gap-2">
+          <FileText class="w-4 h-4 text-purple-400" />
+          <span>Keterangan Pekerjaan / Catatan Lapangan:</span>
+        </label>
+        <div class="flex flex-col sm:flex-row items-center gap-3">
+          <input
+            type="text"
+            v-model="stampForm.jobDescription"
+            @input="debouncedRender"
+            placeholder="Contoh: Pemasangan Signage / Survey Lokasi / Maintenance"
+            class="flex-1 w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-purple-500 focus:outline-none text-white text-xs font-semibold shadow-inner"
+          />
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <select
+              v-model="stampForm.timeZone"
+              @change="renderWatermarkCanvas"
+              class="px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold text-xs focus:border-purple-500 focus:outline-none cursor-pointer"
+            >
+              <option value="WIB">WIB (UTC+7)</option>
+              <option value="WITA">WITA (UTC+8)</option>
+              <option value="WIT">WIT (UTC+9)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <!-- STATE 1: CAMERA & UPLOAD VIEWFINDER (Belum Ambil Foto) -->
       <div v-if="!capturedImage" class="space-y-6 animate-fade-in">
         
@@ -90,7 +118,7 @@
             </div>
             <div>
               <h3 class="text-base font-bold text-white">Kamera Siap Digunakan</h3>
-              <p class="text-xs text-slate-400 mt-1">Buka kamera langsung atau pilih foto dari galeri. Stempel waktu dan lokasi asli Google Maps akan otomatis tertempel.</p>
+              <p class="text-xs text-slate-400 mt-1">Buka kamera langsung atau pilih foto dari galeri. Stempel waktu, lokasi Google Maps, dan keterangan kerja akan otomatis tertempel di bawah foto.</p>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
               <button
@@ -183,7 +211,7 @@
             
             <div v-if="processingWatermark" class="absolute inset-0 bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 text-xs text-white">
               <Loader2 class="w-8 h-8 animate-spin text-purple-500" />
-              <p class="font-bold">Menerapkan Stempel Sinar Grafika (1/3 Layar)...</p>
+              <p class="font-bold">Menerapkan Stempel Sinar Grafika...</p>
             </div>
           </div>
 
@@ -229,7 +257,7 @@
     <!-- Footer -->
     <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500 bg-slate-950">
       <p class="font-semibold text-slate-400">PT Sinar Graha Kreatif</p>
-      <p class="text-[11px] mt-0.5">Standalone Public Timestamp Camera — Lokasi & Waktu Otomatis Terverifikasi</p>
+      <p class="text-[11px] mt-0.5">Standalone Public Timestamp Camera — Lokasi & Waktu Asli Google Maps</p>
     </footer>
 
   </div>
@@ -248,6 +276,7 @@ import {
   RotateCcw,
   Home,
   X,
+  FileText,
   Loader2
 } from 'lucide-vue-next';
 import { reverseGeocodeCoordinates } from '../../utils/geoCoder';
@@ -271,6 +300,7 @@ const canShare = typeof navigator !== 'undefined' && !!navigator.share;
 const stampForm = reactive({
   companyName: 'Sinar Grafika',
   companyPhone: '082388885251',
+  jobDescription: 'Pemasangan Signage / Dokumentasi Lapangan',
   timeZone: 'WIB'
 });
 
@@ -445,7 +475,16 @@ function handleFileSelected(event) {
   reader.readAsDataURL(file);
 }
 
-// 5. HTML5 Canvas Watermark Rendering Engine (Default SGX 1/3 Screen)
+// 5. Debounce Rendering
+let debounceTimer = null;
+function debouncedRender() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    renderWatermarkCanvas();
+  }, 300);
+}
+
+// 6. HTML5 Canvas Watermark Rendering Engine (Full-Width Bottom Bar)
 async function renderWatermarkCanvas() {
   if (!capturedImage.value) return;
   processingWatermark.value = true;
@@ -453,7 +492,7 @@ async function renderWatermarkCanvas() {
   const logoImg = await loadLogoImage();
   const lat = gpsLocation.value ? Number(gpsLocation.value.lat) : -3.824921;
   const lng = gpsLocation.value ? Number(gpsLocation.value.lng) : 102.286299;
-  const satelliteImg = await fetchRealSatelliteTile(lat, lng, 340, 260);
+  const satelliteImg = await fetchRealSatelliteTile(lat, lng, 320, 240);
 
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -478,19 +517,22 @@ async function renderWatermarkCanvas() {
 
     const latFormatted = lat.toFixed(6);
     const lngFormatted = lng.toFixed(6);
+    const acc = gpsLocation.value?.accuracy || 5;
 
     const w = canvas.width;
     const h = canvas.height;
     const s = Math.max(1.0, w / 1000);
 
-    // 3. Render Standar SGX 1/3 Screen Layout with Enlarged Timeslip Fonts & Perfect Map Alignment
-    renderSgxPremiumTemplate(ctx, w, h, s, {
+    // 3. Render Bottom Full-Width Watermark Bar
+    renderBottomBarWatermark(ctx, w, h, s, {
       timeStr,
       dayName,
       dateStr,
       lat: latFormatted,
       lng: lngFormatted,
+      acc,
       address: detectedAddress.value || 'Ratu Agung, Sumatera, Gading Cempaka',
+      jobDescription: stampForm.jobDescription || 'Dokumentasi Lapangan',
       logoImg,
       satelliteImg
     });
@@ -502,160 +544,167 @@ async function renderWatermarkCanvas() {
 }
 
 /**
- * STANDAR DEFAUL WATERMARK SGX (1/3 LAYAR - UKURAN TIMESLIP BESAR & SEJAJAR MAP)
+ * FULL-WIDTH BOTTOM WATERMARK BAR (KOMPAK DI BAWAH FOTO - SEPERTI TIMESTAMP CAMERA)
+ * - Bar Penuh di BAWAH Foto (Full-Width)
+ * - Jam Digital Besar + Tanggal & Hari
+ * - Keterangan Pekerjaan / Catatan
+ * - Nama Lokasi & Alamat Asli Google Maps (Ukuran Font Besar)
+ * - Titik Koordinat GPS (Ukuran Font Besar)
+ * - Mini Map Google Satelit (Kanan Bawah)
+ * - Footer Strip Branding Sinar Grafika
  */
-function renderSgxPremiumTemplate(ctx, w, h, s, meta) {
-  // 1. Draw Top-Left SGX Diamond Logo
-  const topLogoSize = Math.round(110 * s);
-  const topLogoX = Math.round(30 * s);
-  const topLogoY = Math.round(30 * s);
+function renderBottomBarWatermark(ctx, w, h, s, meta) {
+  // 1. Draw Top-Left SGX Diamond Logo on photo
+  const topLogoSize = Math.round(95 * s);
+  const topLogoX = Math.round(28 * s);
+  const topLogoY = Math.round(28 * s);
 
   if (meta.logoImg) {
-    drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 22 * s);
+    drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 20 * s);
   }
 
-  // 2. Calculate 1/3 Screen Proportions for Bottom Watermark
-  const footerBarH = Math.round(115 * s); // Solid White branding bar height
-  const infoPanelH = Math.round(h * 0.26); // Overlay area height (~26% of photo height, total ~35% or 1/3 screen)
-  const totalWatermarkH = infoPanelH + footerBarH;
-  const panelY = h - totalWatermarkH;
+  // 2. Bar Dimensions at Bottom of Photo (Full-Width Bar)
+  const footerBarH = Math.round(75 * s); // Solid White footer strip
+  const mainBarH = Math.round(200 * s);   // Dark information bar height
+  const totalBarH = mainBarH + footerBarH;
+  const barY = h - totalBarH;
 
-  // 3. Mini Map Satellite on the Right Side (Enlarged & Defined Bounds)
-  const mapMarginR = Math.round(30 * s);
-  const mapTopY = panelY + Math.round(10 * s);
-  const mapH = Math.min(infoPanelH - Math.round(20 * s), Math.round(280 * s));
+  // Background Gradient Overlay for Main Bar (Full-Width Dark Glass)
+  ctx.save();
+  const barGrad = ctx.createLinearGradient(0, barY, 0, barY + mainBarH);
+  barGrad.addColorStop(0, 'rgba(15, 23, 42, 0.85)');
+  barGrad.addColorStop(1, 'rgba(2, 6, 23, 0.95)');
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0, barY, w, mainBarH);
+
+  // Top Accent Border Line
+  ctx.fillStyle = '#EAB308';
+  ctx.fillRect(0, barY, w, Math.round(3.5 * s));
+  ctx.restore();
+
+  // 3. Mini Map Satellite on the Right Side of Bar
+  const mapMarginR = Math.round(24 * s);
+  const mapH = Math.round(mainBarH - (24 * s));
   const mapW = Math.round(mapH * 1.08);
   const mapX = w - mapW - mapMarginR;
-  const mapY = mapTopY;
-  const mapBottomY = mapY + mapH;
+  const mapY = barY + Math.round(12 * s);
 
-  // 4. Left Content Column (Perfect Top & Bottom Alignment with Map)
-  const textMarginL = Math.round(34 * s);
-  const maxTextW = mapX - textMarginL - (24 * s);
+  // 4. Left Content Column
+  const textMarginL = Math.round(28 * s);
+  const maxTextW = mapX - textMarginL - (20 * s);
 
-  // A. DIGITAL CLOCK (EXTRA LARGE e.g. 00:14) - Aligned to mapTopY
-  const clockFontS = Math.round(116 * s);
-  const clockBaselineY = mapTopY + Math.round(96 * s);
+  let curY = barY + (48 * s);
 
+  // A. DIGITAL CLOCK & DATE ROW (Bold & Large)
   ctx.save();
+  const clockFontS = Math.round(52 * s);
   ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 20 * s;
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 9 * s;
-  ctx.strokeText(meta.timeStr, textMarginL, clockBaselineY);
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.timeStr, textMarginL, clockBaselineY);
+  ctx.fillText(meta.timeStr, textMarginL, curY);
 
   const timeW = ctx.measureText(meta.timeStr).width;
 
-  // B. VERTICAL GOLD SEPARATOR - Exactly spans clock height
-  const sepX = textMarginL + timeW + (20 * s);
-  const sepH = Math.round(92 * s);
-  const sepTopY = mapTopY + Math.round(6 * s);
+  // Vertical Gold Separator
+  const sepX = textMarginL + timeW + (14 * s);
   ctx.fillStyle = '#EAB308';
-  ctx.fillRect(sepX, sepTopY, Math.round(5.5 * s), sepH);
+  ctx.fillRect(sepX, barY + (14 * s), Math.round(4 * s), Math.round(38 * s));
 
-  // C. DATE (23/08/2026) & DAY NAME (Minggu) - Enlarged Fonts
-  const dateFontS = Math.round(34 * s);
-  const dayFontS = Math.round(36 * s);
+  // Date & Day Text
+  ctx.font = `800 ${Math.round(22 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillStyle = '#FDE047';
+  ctx.fillText(`${meta.dayName}, ${meta.dateStr}`, sepX + (14 * s), curY - (18 * s));
 
-  ctx.font = `800 ${dateFontS}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.strokeText(meta.dateStr, sepX + (18 * s), sepTopY + (34 * s));
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.dateStr, sepX + (18 * s), sepTopY + (34 * s));
-
-  ctx.font = `800 ${dayFontS}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.strokeText(meta.dayName, sepX + (18 * s), sepTopY + (82 * s));
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.dayName, sepX + (18 * s), sepTopY + (82 * s));
+  // Job Description Tag
+  if (meta.jobDescription) {
+    ctx.font = `700 ${Math.round(18 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+    ctx.fillStyle = '#38BDF8';
+    const cleanJob = truncateText(ctx, `📌 ${meta.jobDescription}`, maxTextW - (sepX + 14 * s - textMarginL));
+    ctx.fillText(cleanJob, sepX + (14 * s), curY + (6 * s));
+  }
   ctx.restore();
 
-  // D. ADDRESS TEXT (Multi-line with bold drop shadow & larger font)
-  let addrBaselineY = clockBaselineY + Math.round(48 * s);
-  const fullAddress = meta.address || 'Ratu Agung, Sumatera, Gading Cempaka';
-  
+  // B. NAMA LOKASI & ALAMAT ASLI GOOGLE MAPS (UKURAN FONT LEBIH BESAR & TEGAS)
+  curY += (40 * s);
   ctx.save();
-  ctx.font = `800 ${Math.round(32 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.font = `800 ${Math.round(30 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 18 * s;
+  ctx.shadowBlur = 14 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 8 * s;
+  ctx.lineWidth = 6 * s;
 
-  const addressLines = wrapTextLines(ctx, fullAddress, maxTextW, 2);
+  const addressLines = wrapTextLines(ctx, meta.address, maxTextW, 2);
   addressLines.forEach((line) => {
-    ctx.strokeText(line, textMarginL, addrBaselineY);
+    ctx.strokeText(line, textMarginL, curY);
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(line, textMarginL, addrBaselineY);
-    addrBaselineY += Math.round(40 * s);
+    ctx.fillText(line, textMarginL, curY);
+    curY += (34 * s);
   });
   ctx.restore();
 
-  // E. DARK COORDINATE PILL BADGE - Perfectly Aligned with mapBottomY
-  const coordText = `Koordinat: ${meta.lat}, ${meta.lng}`;
-  const badgeFontS = Math.round(25 * s);
-  const badgeH = Math.round(46 * s);
-  const badgePadX = Math.round(20 * s);
-  const badgeY = mapBottomY - badgeH; // Exactly aligned with bottom of map
-
+  // C. TITIK KOORDINAT GPS (UKURAN FONT LEBIH BESAR & TEGAS)
+  curY += (4 * s);
+  const coordText = `📍 Koordinat: ${meta.lat}, ${meta.lng} (±${meta.acc}m)`;
   ctx.save();
-  ctx.font = `700 ${badgeFontS}px "Inter", "Segoe UI", monospace, Arial`;
+  ctx.font = `800 ${Math.round(24 * s)}px "Inter", "Segoe UI", monospace, Arial`;
   const coordTextW = ctx.measureText(coordText).width;
+  const badgePadX = Math.round(14 * s);
+  const badgeH = Math.round(34 * s);
+  const badgeY = curY - (22 * s);
 
-  // Semi-transparent rounded background pill
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+  // Semi-transparent dark rounded badge
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
   ctx.beginPath();
-  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(9 * s));
+  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(7 * s));
   ctx.fill();
 
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = '#FEF08A'; // Bright soft gold for high contrast
   ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-  ctx.shadowBlur = 12 * s;
-  ctx.fillText(coordText, textMarginL + badgePadX, badgeY + Math.round(32 * s));
+  ctx.shadowBlur = 8 * s;
+  ctx.fillText(coordText, textMarginL + badgePadX, curY + (2 * s));
   ctx.restore();
 
   // 5. Draw Right Google Mini-Map Satellite
   drawGoogleSatelliteMiniMap(ctx, mapX, mapY, mapW, mapH, s, meta.satelliteImg);
 
-  // 6. Draw Solid White Footer Bar with Logo, Name & Phone
+  // 6. Draw Bottom Solid White Footer Bar
   const footerY = h - footerBarH;
   ctx.save();
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, footerY, w, footerBarH);
 
-  // Top separator line
-  ctx.fillStyle = '#E2E8F0';
-  ctx.fillRect(0, footerY, w, 2.5 * s);
+  // Top dividing line
+  ctx.fillStyle = '#CBD5E1';
+  ctx.fillRect(0, footerY, w, 2 * s);
 
   // Left SGX Logo in footer
-  const footerLogoSize = Math.round(82 * s);
+  const footerLogoSize = Math.round(55 * s);
   const footerLogoY = footerY + Math.round((footerBarH - footerLogoSize) / 2);
   if (meta.logoImg) {
     ctx.drawImage(meta.logoImg, textMarginL, footerLogoY, footerLogoSize, footerLogoSize);
   }
 
-  // Sinar Grafika + Phone Number Text
-  const textX = textMarginL + footerLogoSize + (20 * s);
+  // Sinar Grafika + WhatsApp Contact
+  const textX = textMarginL + footerLogoSize + (14 * s);
   ctx.fillStyle = '#0F172A';
-  ctx.font = `900 ${32 * s}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + (48 * s));
+  ctx.font = `900 ${22 * s}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + (32 * s));
 
   ctx.fillStyle = '#334155';
-  ctx.font = `700 ${24 * s}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + (86 * s));
+  ctx.font = `700 ${17 * s}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + (58 * s));
 
   // Diagonal dividing slash in center
-  const midX = w * 0.68;
+  const midX = w * 0.72;
   ctx.strokeStyle = '#CBD5E1';
-  ctx.lineWidth = 2.5 * s;
+  ctx.lineWidth = 2 * s;
   ctx.beginPath();
-  ctx.moveTo(midX + (22 * s), footerY + (14 * s));
-  ctx.lineTo(midX - (22 * s), footerY + footerBarH - (14 * s));
+  ctx.moveTo(midX + (16 * s), footerY + (10 * s));
+  ctx.lineTo(midX - (16 * s), footerY + footerBarH - (10 * s));
   ctx.stroke();
 
   // Right SGX Emblem in Footer
   if (meta.logoImg) {
-    const rightLogoX = w - footerLogoSize - (45 * s);
+    const rightLogoX = w - footerLogoSize - (35 * s);
     ctx.drawImage(meta.logoImg, rightLogoX, footerLogoY, footerLogoSize, footerLogoSize);
   }
   ctx.restore();
@@ -668,7 +717,7 @@ function drawGoogleSatelliteMiniMap(ctx, x, y, width, height, s, satelliteImg) {
   ctx.save();
 
   // Rounded outer border
-  const radius = 16 * s;
+  const radius = 12 * s;
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
   ctx.clip();
@@ -687,7 +736,7 @@ function drawGoogleSatelliteMiniMap(ctx, x, y, width, height, s, satelliteImg) {
 
     // Street line
     ctx.strokeStyle = '#D97706';
-    ctx.lineWidth = 7 * s;
+    ctx.lineWidth = 5 * s;
     ctx.beginPath();
     ctx.moveTo(x, y + height * 0.7);
     ctx.lineTo(x + width, y + height * 0.25);
@@ -701,33 +750,33 @@ function drawGoogleSatelliteMiniMap(ctx, x, y, width, height, s, satelliteImg) {
   ctx.fillStyle = 'rgba(16, 185, 129, 0.68)';
   ctx.beginPath();
   ctx.moveTo(pinX, pinY);
-  ctx.arc(pinX, pinY, 52 * s, -Math.PI * 0.85, -Math.PI * 0.3);
+  ctx.arc(pinX, pinY, 44 * s, -Math.PI * 0.85, -Math.PI * 0.3);
   ctx.closePath();
   ctx.fill();
 
   // 3. Blue GPS Location Dot with White Ring
   ctx.fillStyle = '#0284C7';
   ctx.beginPath();
-  ctx.arc(pinX, pinY, 13 * s, 0, Math.PI * 2);
+  ctx.arc(pinX, pinY, 10 * s, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 3.5 * s;
+  ctx.lineWidth = 2.5 * s;
   ctx.stroke();
 
   // 4. "Google" Watermark at Bottom Left of Mini Map
-  ctx.font = `bold ${18 * s}px Arial, sans-serif`;
+  ctx.font = `bold ${14 * s}px Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
   ctx.shadowBlur = 4 * s;
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText('Google', x + (14 * s), y + height - (14 * s));
+  ctx.fillText('Google', x + (10 * s), y + height - (10 * s));
 
   ctx.restore();
 
   // White Border around Mini Map
   ctx.save();
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
-  ctx.lineWidth = 3 * s;
+  ctx.lineWidth = 2.5 * s;
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
   ctx.stroke();
@@ -750,6 +799,16 @@ function drawRoundedImage(ctx, img, x, y, width, height, radius) {
   ctx.roundRect(x, y, width, height, radius);
   ctx.stroke();
   ctx.restore();
+}
+
+function truncateText(ctx, text, maxWidth) {
+  if (!text) return '';
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let truncated = text;
+  while (truncated.length > 0 && ctx.measureText(truncated + '...').width > maxWidth) {
+    truncated = truncated.slice(0, -1);
+  }
+  return truncated + '...';
 }
 
 function wrapTextLines(ctx, text, maxWidth, maxLines = 2) {
@@ -775,7 +834,7 @@ function wrapTextLines(ctx, text, maxWidth, maxLines = 2) {
   return lines.slice(0, maxLines);
 }
 
-// 6. Download & Share Actions
+// 7. Download & Share Actions
 function downloadResult() {
   if (!watermarkedImage.value) return;
 
