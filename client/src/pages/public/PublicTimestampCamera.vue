@@ -151,31 +151,31 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
             <div>
-              <label class="block font-bold text-slate-400 mb-1">Nama Kegiatan / Proyek:</label>
+              <label class="block font-bold text-slate-400 mb-1">Nama Perusahaan / Header:</label>
               <input
                 type="text"
-                v-model="stampForm.projectName"
-                placeholder="Contoh: Pemasangan Signage / Monitoring"
+                v-model="stampForm.companyName"
+                placeholder="Sinar Grafika"
                 class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-purple-500 focus:outline-none text-white font-medium shadow-inner"
               />
             </div>
 
             <div>
-              <label class="block font-bold text-slate-400 mb-1">Nama Petugas / Pelaksana:</label>
+              <label class="block font-bold text-slate-400 mb-1">Nomor Kontak / WhatsApp:</label>
               <input
                 type="text"
-                v-model="stampForm.officerName"
-                placeholder="Contoh: Budi Santoso"
+                v-model="stampForm.companyPhone"
+                placeholder="082388885251"
                 class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-purple-500 focus:outline-none text-white font-medium shadow-inner"
               />
             </div>
 
             <div>
-              <label class="block font-bold text-slate-400 mb-1">Nama Lokasi / Cabang:</label>
+              <label class="block font-bold text-slate-400 mb-1">Alamat / Lokasi Lapangan:</label>
               <input
                 type="text"
-                v-model="stampForm.locationName"
-                placeholder="Contoh: Cabang Kalimalang / Toko A"
+                v-model="stampForm.addressText"
+                placeholder="Alamat akan terisi otomatis via GPS..."
                 class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-purple-500 focus:outline-none text-white font-medium shadow-inner"
               />
             </div>
@@ -186,7 +186,7 @@
                 v-model="stampForm.templatePreset"
                 class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-purple-500 focus:outline-none text-white font-bold cursor-pointer shadow-inner"
               >
-                <option value="SGX_PREMIUM">SGX Premium Dark Badge (Default)</option>
+                <option value="SGX_PREMIUM">SGX Premium 1/3 Screen (Standar Sinar Grafika)</option>
                 <option value="COMPACT_CORNER">Compact Corner Badge (Minimalis)</option>
                 <option value="SIDEBAR_REPORT">Sidebar Technical Strip (Samping)</option>
                 <option value="CLASSIC_GPS">Classic GPS Map Camera (Klasik Kuning)</option>
@@ -206,11 +206,11 @@
             </div>
 
             <div>
-              <label class="block font-bold text-slate-400 mb-1">Catatan Tambahan (Opsional):</label>
+              <label class="block font-bold text-slate-400 mb-1">Keterangan / Proyek (Opsional):</label>
               <input
                 type="text"
-                v-model="stampForm.extraNotes"
-                placeholder="Contoh: Selesai 100% / Kondisi Cerah"
+                v-model="stampForm.projectName"
+                placeholder="Contoh: Pemasangan Signage / Survey"
                 class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-purple-500 focus:outline-none text-white font-medium shadow-inner"
               />
             </div>
@@ -232,7 +232,7 @@
             
             <div v-if="processingWatermark" class="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 text-xs text-white">
               <Loader2 class="w-8 h-8 animate-spin text-purple-500" />
-              <p class="font-bold">Menerapkan Stempel Digital...</p>
+              <p class="font-bold">Menerapkan Stempel Sinar Grafika (1/3 Layar)...</p>
             </div>
           </div>
 
@@ -285,7 +285,7 @@
                 @change="renderWatermarkCanvas"
                 class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold text-xs"
               >
-                <option value="SGX_PREMIUM">SGX Premium Dark Badge</option>
+                <option value="SGX_PREMIUM">SGX Premium 1/3 Screen</option>
                 <option value="COMPACT_CORNER">Compact Corner Badge</option>
                 <option value="SIDEBAR_REPORT">Sidebar Technical Strip</option>
                 <option value="CLASSIC_GPS">Classic GPS Map Camera</option>
@@ -293,20 +293,20 @@
             </div>
 
             <div>
-              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Nama Kegiatan:</label>
+              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Alamat / Lokasi:</label>
               <input
                 type="text"
-                v-model="stampForm.projectName"
+                v-model="stampForm.addressText"
                 @input="debouncedRender"
                 class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
               />
             </div>
 
             <div>
-              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Nama Petugas:</label>
+              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Nomor WhatsApp:</label>
               <input
                 type="text"
-                v-model="stampForm.officerName"
+                v-model="stampForm.companyPhone"
                 @input="debouncedRender"
                 class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
               />
@@ -346,6 +346,7 @@ import {
   X,
   Loader2
 } from 'lucide-vue-next';
+import { reverseGeocodeCoordinates } from '../../utils/geoCoder';
 
 const videoRef = ref(null);
 const canvasRef = ref(null);
@@ -363,45 +364,113 @@ const captureTimestamp = ref(null);
 const canShare = typeof navigator !== 'undefined' && !!navigator.share;
 
 const stampForm = reactive({
+  companyName: 'Sinar Grafika',
+  companyPhone: '082388885251',
   projectName: 'Dokumentasi Lapangan',
-  officerName: 'Teknisi SGX',
-  locationName: 'Lokasi Pekerjaan',
-  extraNotes: 'Kondisi Selesai / Terverifikasi',
+  addressText: '',
   templatePreset: 'SGX_PREMIUM',
   timeZone: 'WIB'
 });
+
+// Cache Logo SGX
+let cachedLogoImg = null;
+function loadLogoImage() {
+  return new Promise((resolve) => {
+    if (cachedLogoImg && cachedLogoImg.complete && cachedLogoImg.naturalWidth > 0) {
+      return resolve(cachedLogoImg);
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      cachedLogoImg = img;
+      resolve(img);
+    };
+    img.onerror = () => resolve(null);
+    img.src = '/sgx_logo.png';
+  });
+}
+
+// Fetch 100% Real Satellite Imagery Tile from Esri World Imagery (No API Key Required)
+function fetchRealSatelliteTile(lat, lng, width, height) {
+  return new Promise((resolve) => {
+    if (lat == null || lng == null) return resolve(null);
+    const delta = 0.0012;
+    const minLng = (Number(lng) - delta).toFixed(6);
+    const maxLng = (Number(lng) + delta).toFixed(6);
+    const minLat = (Number(lat) - (delta * 0.75)).toFixed(6);
+    const maxLat = (Number(lat) + (delta * 0.75)).toFixed(6);
+    const tileW = Math.min(500, Math.max(260, Math.round(width)));
+    const tileH = Math.min(420, Math.max(200, Math.round(height)));
+
+    const url = `https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&size=${tileW},${tileH}&f=image`;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const timer = setTimeout(() => resolve(null), 2500);
+
+    img.onload = () => {
+      clearTimeout(timer);
+      resolve(img);
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
 
 function goBackHome() {
   window.location.href = '/';
 }
 
 // 1. Geolocation Handling
-function refreshGps() {
+async function refreshGps() {
   if (!navigator.geolocation) {
-    gpsLocation.value = { lat: -6.2088, lng: 106.8456, accuracy: 10 };
+    gpsLocation.value = { lat: -3.293262, lng: 102.895628, accuracy: 5 };
+    updateAddressFromGps();
     return;
   }
 
   fetchingGps.value = true;
   navigator.geolocation.getCurrentPosition(
-    (pos) => {
+    async (pos) => {
       gpsLocation.value = {
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
         accuracy: Math.round(pos.coords.accuracy || 5)
       };
+      await updateAddressFromGps();
       fetchingGps.value = false;
     },
-    (err) => {
+    async (err) => {
       console.warn('GPS access error:', err);
-      // Fallback Jakarta coordinate if denied
       if (!gpsLocation.value) {
-        gpsLocation.value = { lat: -6.2088, lng: 106.8456, accuracy: 15 };
+        gpsLocation.value = { lat: -3.293262, lng: 102.895628, accuracy: 10 };
       }
+      await updateAddressFromGps();
       fetchingGps.value = false;
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
+}
+
+async function updateAddressFromGps() {
+  if (!gpsLocation.value) return;
+  if (!stampForm.addressText || stampForm.addressText === 'Alamat akan terisi otomatis via GPS...') {
+    try {
+      const addr = await reverseGeocodeCoordinates(
+        gpsLocation.value.lat,
+        gpsLocation.value.lng,
+        'Taba Jemekeh, Kec. Lubuk Linggau Tim. I, Kota Lubuklinggau, Sumatera Selatan 31625'
+      );
+      if (addr) {
+        stampForm.addressText = addr;
+      }
+    } catch (e) {
+      stampForm.addressText = 'Taba Jemekeh, Kec. Lubuk Linggau Tim. I, Kota Lubuklinggau, Sumatera Selatan 31625';
+    }
+  }
 }
 
 // 2. Camera Controls
@@ -487,9 +556,14 @@ function debouncedRender() {
   }, 300);
 }
 
-function renderWatermarkCanvas() {
+async function renderWatermarkCanvas() {
   if (!capturedImage.value) return;
   processingWatermark.value = true;
+
+  const logoImg = await loadLogoImage();
+  const lat = gpsLocation.value ? Number(gpsLocation.value.lat) : -3.293262;
+  const lng = gpsLocation.value ? Number(gpsLocation.value.lng) : 102.895628;
+  const satelliteImg = await fetchRealSatelliteTile(lat, lng, 320, 240);
 
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -504,99 +578,278 @@ function renderWatermarkCanvas() {
 
     // 2. Prepare Metadata Strings
     const now = captureTimestamp.value || new Date();
-    const dateStr = now.toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-    const timeStr = now.toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    }) + ` ${stampForm.timeZone}`;
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
 
-    const lat = gpsLocation.value ? Number(gpsLocation.value.lat).toFixed(6) : '-6.208800';
-    const lng = gpsLocation.value ? Number(gpsLocation.value.lng).toFixed(6) : '106.845600';
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const dayName = days[now.getDay()];
+    const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
+    const latFormatted = lat.toFixed(6);
+    const lngFormatted = lng.toFixed(6);
     const acc = gpsLocation.value?.accuracy || 5;
 
     const w = canvas.width;
     const h = canvas.height;
-    const baseScale = Math.max(w, h) / 1000;
+    const s = Math.max(1.0, w / 1100);
 
     // 3. Render Chosen Template
     if (stampForm.templatePreset === 'SGX_PREMIUM') {
-      renderSgxPremiumTemplate(ctx, w, h, baseScale, { dateStr, timeStr, lat, lng, acc });
+      renderSgxPremiumTemplate(ctx, w, h, s, {
+        timeStr,
+        dayName,
+        dateStr,
+        lat: latFormatted,
+        lng: lngFormatted,
+        acc,
+        logoImg,
+        satelliteImg
+      });
     } else if (stampForm.templatePreset === 'COMPACT_CORNER') {
-      renderCompactCornerTemplate(ctx, w, h, baseScale, { dateStr, timeStr, lat, lng, acc });
+      renderCompactCornerTemplate(ctx, w, h, s, { timeStr, dateStr, lat: latFormatted, lng: lngFormatted, acc });
     } else if (stampForm.templatePreset === 'SIDEBAR_REPORT') {
-      renderSidebarReportTemplate(ctx, w, h, baseScale, { dateStr, timeStr, lat, lng, acc });
+      renderSidebarReportTemplate(ctx, w, h, s, { timeStr, dateStr, lat: latFormatted, lng: lngFormatted });
     } else {
-      renderClassicGpsTemplate(ctx, w, h, baseScale, { dateStr, timeStr, lat, lng, acc });
+      renderClassicGpsTemplate(ctx, w, h, s, { timeStr, dateStr, lat: latFormatted, lng: lngFormatted, acc });
     }
 
-    watermarkedImage.value = canvas.toDataURL('image/jpeg', 0.92);
+    watermarkedImage.value = canvas.toDataURL('image/jpeg', 0.94);
     processingWatermark.value = false;
   };
   img.src = capturedImage.value;
 }
 
-// Template 1: SGX Premium Dark Badge
+/**
+ * TEMPLATE 1: SGX PREMIUM 1/3 SCREEN (PERSIS SEPERTI GAMBAR CONTOH USER)
+ * - Top Left: Official SGX Diamond Logo
+ * - Bottom ~1/3 Screen:
+ *   - Left: Extra Large Digital Clock (e.g. 14:16) + Gold Separator + Date (07/08/2026) & Day (Jumat)
+ *   - Full Address Text with strong drop shadow & wrapping
+ *   - Dark pill badge: "Koordinat: -3.293262, 102.895628"
+ *   - Right: Real Satellite Google Mini-Map with blue dot & green radar beam + "Google" watermark
+ *   - Bottom Footer: Solid White Bar with Logo + "Sinar Grafika" + "082388885251" + diagonal dividing line + watermark logo
+ */
 function renderSgxPremiumTemplate(ctx, w, h, s, meta) {
-  const badgeH = Math.max(120 * s, 160);
-  const badgeY = h - badgeH;
+  // 1. Draw Top-Left SGX Diamond Logo
+  const topLogoSize = Math.round(100 * s);
+  const topLogoX = Math.round(28 * s);
+  const topLogoY = Math.round(28 * s);
 
-  // Background gradient overlay
-  const grad = ctx.createLinearGradient(0, badgeY, 0, h);
-  grad.addColorStop(0, 'rgba(15, 23, 42, 0.88)');
-  grad.addColorStop(1, 'rgba(2, 6, 23, 0.98)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, badgeY, w, badgeH);
-
-  // Top accent line
-  const accentGrad = ctx.createLinearGradient(0, 0, w, 0);
-  accentGrad.addColorStop(0, '#f59e0b');
-  accentGrad.addColorStop(0.5, '#9333ea');
-  accentGrad.addColorStop(1, '#10b981');
-  ctx.fillStyle = accentGrad;
-  ctx.fillRect(0, badgeY, w, Math.max(4 * s, 4));
-
-  // Left SGX Emblem Badge
-  const pad = 16 * s;
-  ctx.fillStyle = '#f59e0b';
-  ctx.font = `bold ${Math.round(14 * s)}px sans-serif`;
-  ctx.fillText('PT SINAR GRAHA KREATIF', pad, badgeY + 28 * s);
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `bold ${Math.round(18 * s)}px sans-serif`;
-  ctx.fillText(stampForm.projectName || 'Dokumentasi Lapangan', pad, badgeY + 54 * s);
-
-  // Metadata Grid
-  ctx.fillStyle = '#cbd5e1';
-  ctx.font = `${Math.round(12 * s)}px sans-serif`;
-  ctx.fillText(`👤 Petugas : ${stampForm.officerName || 'Teknisi SGX'}`, pad, badgeY + 78 * s);
-  ctx.fillText(`📍 Lokasi  : ${stampForm.locationName || 'Lokasi Pekerjaan'}`, pad, badgeY + 98 * s);
-
-  // Right Side Info (Time & GPS)
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#fde047';
-  ctx.font = `bold ${Math.round(15 * s)}px monospace`;
-  ctx.fillText(`${meta.dateStr} | ${meta.timeStr}`, w - pad, badgeY + 34 * s);
-
-  ctx.fillStyle = '#38bdf8';
-  ctx.font = `bold ${Math.round(13 * s)}px monospace`;
-  ctx.fillText(`GPS: ${meta.lat}, ${meta.lng} (±${meta.acc}m)`, w - pad, badgeY + 58 * s);
-
-  if (stampForm.extraNotes) {
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = `italic ${Math.round(11 * s)}px sans-serif`;
-    ctx.fillText(`Note: ${stampForm.extraNotes}`, w - pad, badgeY + 82 * s);
+  if (meta.logoImg) {
+    drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 20 * s);
   }
 
-  ctx.fillStyle = '#34d399';
-  ctx.font = `bold ${Math.round(10 * s)}px monospace`;
-  ctx.fillText('🛡️ DIGITAL TIMESTAMP VERIFIED', w - pad, badgeY + 104 * s);
+  // 2. Calculate 1/3 Screen Proportions for Bottom Watermark
+  const footerBarH = Math.round(105 * s); // White branding bar height
+  const infoPanelH = Math.round(h * 0.26); // Overlay area (~26% of photo height, total ~35% or 1/3 screen)
+  const totalWatermarkH = infoPanelH + footerBarH;
+  const panelY = h - totalWatermarkH;
 
-  ctx.textAlign = 'left'; // Reset
+  // 3. Mini Map Satellite on the Right Side
+  const mapMarginR = Math.round(28 * s);
+  const mapH = Math.min(infoPanelH - (20 * s), Math.round(220 * s));
+  const mapW = Math.round(mapH * 1.05);
+  const mapX = w - mapW - mapMarginR;
+  const mapY = panelY + Math.round((infoPanelH - mapH) / 2);
+
+  // 4. Left Content Column
+  const textMarginL = Math.round(32 * s);
+  const maxTextW = mapX - textMarginL - (24 * s);
+
+  let curY = panelY + (72 * s);
+
+  // A. DIGITAL CLOCK (EXTRA LARGE e.g. 14:16)
+  ctx.save();
+  ctx.font = `900 ${88 * s}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+  ctx.shadowBlur = 16 * s;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+  ctx.lineWidth = 7 * s;
+  ctx.strokeText(meta.timeStr, textMarginL, curY);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(meta.timeStr, textMarginL, curY);
+
+  const timeW = ctx.measureText(meta.timeStr).width;
+
+  // B. VERTICAL GOLD SEPARATOR
+  const sepX = textMarginL + timeW + (18 * s);
+  const sepTopY = panelY + (8 * s);
+  const sepH = 72 * s;
+  ctx.fillStyle = '#EAB308';
+  ctx.fillRect(sepX, sepTopY, 4.5 * s, sepH);
+
+  // C. DATE (07/08/2026) & DAY NAME (Jumat)
+  ctx.font = `800 ${28 * s}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.strokeText(meta.dateStr, sepX + (16 * s), curY - (40 * s));
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(meta.dateStr, sepX + (16 * s), curY - (40 * s));
+
+  ctx.font = `800 ${30 * s}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.strokeText(meta.dayName, sepX + (16 * s), curY - (4 * s));
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(meta.dayName, sepX + (16 * s), curY - (4 * s));
+  ctx.restore();
+
+  // D. ADDRESS TEXT (Multi-line with bold drop shadow)
+  curY += (44 * s);
+  const fullAddress = stampForm.addressText || 'Taba Jemekeh, Kec. Lubuk Linggau Tim. I, Kota Lubuklinggau, Sumatera Selatan 31625';
+  
+  ctx.save();
+  ctx.font = `800 ${26 * s}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+  ctx.shadowBlur = 14 * s;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+  ctx.lineWidth = 6 * s;
+
+  const addressLines = wrapTextLines(ctx, fullAddress, maxTextW, 2);
+  addressLines.forEach((line) => {
+    ctx.strokeText(line, textMarginL, curY);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(line, textMarginL, curY);
+    curY += (34 * s);
+  });
+  ctx.restore();
+
+  // E. DARK COORDINATE PILL BADGE: "Koordinat: -3.293262, 102.895628"
+  curY += (6 * s);
+  const coordText = `Koordinat: ${meta.lat}, ${meta.lng}`;
+  ctx.save();
+  ctx.font = `700 ${22 * s}px "Inter", "Segoe UI", monospace, Arial`;
+  const coordTextW = ctx.measureText(coordText).width;
+  const badgePadX = 16 * s;
+  const badgeH = 38 * s;
+
+  // Semi-transparent rounded background pill
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+  ctx.beginPath();
+  ctx.roundRect(textMarginL, curY, coordTextW + (badgePadX * 2), badgeH, 8 * s);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+  ctx.shadowBlur = 8 * s;
+  ctx.fillText(coordText, textMarginL + badgePadX, curY + (26 * s));
+  ctx.restore();
+
+  // 5. Draw Right Google Mini-Map Satellite
+  drawGoogleSatelliteMiniMap(ctx, mapX, mapY, mapW, mapH, s, meta.satelliteImg);
+
+  // 6. Draw Solid White Footer Bar with Logo, Name & Phone
+  const footerY = h - footerBarH;
+  ctx.save();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, footerY, w, footerBarH);
+
+  // Top separator line
+  ctx.fillStyle = '#E2E8F0';
+  ctx.fillRect(0, footerY, w, 2 * s);
+
+  // Left SGX Logo in footer
+  const footerLogoSize = Math.round(75 * s);
+  const footerLogoY = footerY + Math.round((footerBarH - footerLogoSize) / 2);
+  if (meta.logoImg) {
+    ctx.drawImage(meta.logoImg, textMarginL, footerLogoY, footerLogoSize, footerLogoSize);
+  }
+
+  // Sinar Grafika + Phone Number Text
+  const textX = textMarginL + footerLogoSize + (18 * s);
+  ctx.fillStyle = '#0F172A';
+  ctx.font = `900 ${28 * s}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + (44 * s));
+
+  ctx.fillStyle = '#334155';
+  ctx.font = `700 ${22 * s}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + (78 * s));
+
+  // Diagonal dividing slash in center
+  const midX = w * 0.68;
+  ctx.strokeStyle = '#CBD5E1';
+  ctx.lineWidth = 2 * s;
+  ctx.beginPath();
+  ctx.moveTo(midX + (20 * s), footerY + (12 * s));
+  ctx.lineTo(midX - (20 * s), footerY + footerBarH - (12 * s));
+  ctx.stroke();
+
+  // Right SGX Emblem in Footer
+  if (meta.logoImg) {
+    const rightLogoX = w - footerLogoSize - (45 * s);
+    ctx.drawImage(meta.logoImg, rightLogoX, footerLogoY, footerLogoSize, footerLogoSize);
+  }
+  ctx.restore();
+}
+
+/**
+ * Draw Satellite Mini Map with Google watermark, Blue GPS Dot & Green Vision Cone
+ */
+function drawGoogleSatelliteMiniMap(ctx, x, y, width, height, s, satelliteImg) {
+  ctx.save();
+
+  // Rounded outer border
+  const radius = 14 * s;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, radius);
+  ctx.clip();
+
+  // 1. Draw Satellite Imagery
+  if (satelliteImg && satelliteImg.complete && satelliteImg.naturalWidth > 0) {
+    ctx.drawImage(satelliteImg, x, y, width, height);
+  } else {
+    // Terrain fallback
+    ctx.fillStyle = '#2C3E50';
+    ctx.fillRect(x, y, width, height);
+    ctx.fillStyle = '#274E13';
+    ctx.fillRect(x, y, width * 0.5, height * 0.5);
+    ctx.fillStyle = '#38761D';
+    ctx.fillRect(x + width * 0.5, y + height * 0.4, width * 0.5, height * 0.6);
+
+    // Street line
+    ctx.strokeStyle = '#D97706';
+    ctx.lineWidth = 6 * s;
+    ctx.beginPath();
+    ctx.moveTo(x, y + height * 0.7);
+    ctx.lineTo(x + width, y + height * 0.25);
+    ctx.stroke();
+  }
+
+  // 2. Green Directional Radar Beam (Field of View Angle)
+  const pinX = x + width * 0.52;
+  const pinY = y + height * 0.48;
+
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.65)';
+  ctx.beginPath();
+  ctx.moveTo(pinX, pinY);
+  ctx.arc(pinX, pinY, 46 * s, -Math.PI * 0.85, -Math.PI * 0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  // 3. Blue GPS Location Dot with White Ring
+  ctx.fillStyle = '#0284C7';
+  ctx.beginPath();
+  ctx.arc(pinX, pinY, 12 * s, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 3 * s;
+  ctx.stroke();
+
+  // 4. "Google" Watermark at Bottom Left of Mini Map
+  ctx.font = `bold ${16 * s}px Arial, sans-serif`;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 4 * s;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText('Google', x + (12 * s), y + height - (12 * s));
+
+  ctx.restore();
+
+  // White Border around Mini Map
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.lineWidth = 2.5 * s;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, radius);
+  ctx.stroke();
+  ctx.restore();
 }
 
 // Template 2: Compact Corner Badge
@@ -653,16 +906,7 @@ function renderSidebarReportTemplate(ctx, w, h, s, meta) {
   curY += 25 * s;
   ctx.fillStyle = '#ffffff';
   ctx.font = `bold ${Math.round(14 * s)}px sans-serif`;
-  ctx.fillText(stampForm.projectName, pad, curY);
-
-  curY += 30 * s;
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = `${Math.round(10 * s)}px sans-serif`;
-  ctx.fillText('PETUGAS:', pad, curY);
-  curY += 16 * s;
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `bold ${Math.round(11 * s)}px sans-serif`;
-  ctx.fillText(stampForm.officerName, pad, curY);
+  ctx.fillText(stampForm.projectName || 'Dokumentasi', pad, curY);
 
   curY += 28 * s;
   ctx.fillStyle = '#94a3b8';
@@ -699,7 +943,7 @@ function renderClassicGpsTemplate(ctx, w, h, s, meta) {
   ctx.shadowBlur = 4;
   ctx.fillStyle = '#fde047';
   ctx.font = `bold ${Math.round(16 * s)}px sans-serif`;
-  ctx.fillText(`${stampForm.projectName} - ${stampForm.locationName}`, pad, y);
+  ctx.fillText(`${stampForm.projectName} - ${stampForm.addressText || 'Lokasi Pekerjaan'}`, pad, y);
 
   y += 24 * s;
   ctx.fillStyle = '#ffffff';
@@ -708,9 +952,50 @@ function renderClassicGpsTemplate(ctx, w, h, s, meta) {
 
   y += 22 * s;
   ctx.fillStyle = '#38bdf8';
-  ctx.fillText(`${meta.dateStr}, ${meta.timeStr} | Oleh: ${stampForm.officerName}`, pad, y);
+  ctx.fillText(`${meta.dateStr}, ${meta.timeStr} | ${stampForm.companyName}`, pad, y);
 
-  ctx.shadowBlur = 0; // Reset
+  ctx.shadowBlur = 0;
+}
+
+// Helpers
+function drawRoundedImage(ctx, img, x, y, width, height, radius) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, radius);
+  ctx.clip();
+  ctx.drawImage(img, x, y, width, height);
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.lineWidth = Math.max(2, radius * 0.15);
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, radius);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function wrapTextLines(ctx, text, maxWidth, maxLines = 2) {
+  if (!text) return [];
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = words[0] || '';
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    const width = ctx.measureText(currentLine + ' ' + word).width;
+    if (width < maxWidth) {
+      currentLine += ' ' + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+      if (lines.length === maxLines - 1) {
+        break;
+      }
+    }
+  }
+  lines.push(currentLine);
+  return lines.slice(0, maxLines);
 }
 
 // 6. Download & Share Actions
@@ -725,8 +1010,8 @@ function downloadResult() {
     String(now.getMinutes()).padStart(2, '0') +
     String(now.getSeconds()).padStart(2, '0');
 
-  const cleanTitle = (stampForm.projectName || 'TIMESLIP').replace(/[^a-zA-Z0-9]/g, '_');
-  const filename = `SGX_${cleanTitle}_${dateNum}.jpg`;
+  const cleanTitle = (stampForm.companyName || 'SGX').replace(/[^a-zA-Z0-9]/g, '_');
+  const filename = `SGX_TIMESLIP_${cleanTitle}_${dateNum}.jpg`;
 
   const link = document.createElement('a');
   link.href = watermarkedImage.value;
@@ -745,8 +1030,8 @@ async function shareResult() {
     const file = new File([blob], 'SGX_Timeslip.jpg', { type: 'image/jpeg' });
 
     await navigator.share({
-      title: stampForm.projectName || 'Foto Timeslip SGX',
-      text: `Dokumentasi Timestamp: ${stampForm.projectName} di ${stampForm.locationName}`,
+      title: stampForm.companyName || 'Foto Timeslip SGX',
+      text: `Dokumentasi Timestamp Sinar Grafika di ${stampForm.addressText}`,
       files: [file]
     });
   } catch (err) {
