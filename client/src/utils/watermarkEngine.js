@@ -38,13 +38,14 @@ function loadLogoImage() {
 function fetchRealSatelliteTile(lat, lng, width, height) {
   return new Promise((resolve) => {
     if (lat == null || lng == null) return resolve(null);
-    const delta = 0.0035;
+    // Higher zoom level (closer satellite view: delta 0.0012)
+    const delta = 0.0012;
     const minLng = (Number(lng) - delta).toFixed(6);
     const maxLng = (Number(lng) + delta).toFixed(6);
     const minLat = (Number(lat) - (delta * 0.75)).toFixed(6);
     const maxLat = (Number(lat) + (delta * 0.75)).toFixed(6);
-    const tileW = Math.min(480, Math.max(240, Math.round(width)));
-    const tileH = Math.min(380, Math.max(180, Math.round(height)));
+    const tileW = Math.min(500, Math.max(260, Math.round(width)));
+    const tileH = Math.min(420, Math.max(200, Math.round(height)));
 
     const url = `https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&size=${tileW},${tileH}&f=image`;
 
@@ -173,11 +174,13 @@ export async function stampGpsWatermark(file, metadata = {}) {
 
           // NO dark covering background - 100% transparent so field photo is fully visible!
 
-          // 3. Mini Map Dimensions (Right side - Lower height profile)
-          const mapW = Math.round(270 * scale);
-          const mapH = Math.round(160 * scale); // Ketinggian map lebih rendah dan kompak
+          // 3. Mini Map Dimensions (Right side - Perfectly Aligned Top & Bottom with Left Content)
+          const mapTopY = panelY + (10 * scale);
+          const mapBottomY = panelY + (232 * scale);
+          const mapH = mapBottomY - mapTopY; // Exactly 222 * scale
+          const mapW = Math.round(mapH * 1.08); // Balanced aspect ratio
           const mapX = width - mapW - (28 * scale);
-          const mapY = panelY + (105 * scale); // Posisi diselaraskan lebih rendah mendekati footer bar
+          const mapY = mapTopY;
 
           // 4. Draw Left Text Metadata (Large, High-Contrast with Text Strokes)
           const textMarginL = Math.round(32 * scale);
