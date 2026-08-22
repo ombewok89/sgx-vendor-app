@@ -11,15 +11,42 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = NotificationFeed::with(['workOrder:id,spk_number,title,location_name', 'client:id,name']);
+        $query = NotificationFeed::with(['workOrder:id,spk_number,title,location_name,vendor_id', 'client:id,name']);
 
         if ($user->hasRole('CLIENT')) {
             $query->where(function ($q) {
                 $q->where('target_role', 'CLIENT')->orWhere('target_role', 'ALL');
             });
+
+            // Scoping ketat SPK: Client HANYA menerima notifikasi untuk SPK yang dikerjakan untuk perusahaannya
+            if ($user->vendor_id) {
+                $query->where(function ($q) use ($user) {
+                    $q->whereHas('workOrder', function ($wq) use ($user) {
+                        $wq->where('vendor_id', $user->vendor_id);
+                    })->orWhere('client_id', $user->vendor_id);
+                });
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         } elseif ($user->hasRole('VENDOR')) {
             $query->where(function ($q) {
                 $q->where('target_role', 'VENDOR')->orWhere('target_role', 'ALL');
+            });
+
+            if ($user->vendor_id) {
+                $query->where(function ($q) use ($user) {
+                    $q->whereHas('workOrder', function ($wq) use ($user) {
+                        $wq->where('vendor_id', $user->vendor_id);
+                    })->orWhere('client_id', $user->vendor_id);
+                });
+            }
+        } elseif ($user->hasRole('FIELD_TEAM')) {
+            $query->where(function ($q) use ($user) {
+                $q->where('target_user_id', $user->id)
+                  ->orWhereHas('workOrder', function ($wq) use ($user) {
+                      $wq->where('pic_user_id', $user->id)
+                         ->orWhereHas('assignments', fn($aq) => $aq->where('users.id', $user->id));
+                  });
             });
         }
 
@@ -85,9 +112,35 @@ class NotificationController extends Controller
             $query->where(function ($q) {
                 $q->where('target_role', 'CLIENT')->orWhere('target_role', 'ALL');
             });
+
+            if ($user->vendor_id) {
+                $query->where(function ($q) use ($user) {
+                    $q->whereHas('workOrder', function ($wq) use ($user) {
+                        $wq->where('vendor_id', $user->vendor_id);
+                    })->orWhere('client_id', $user->vendor_id);
+                });
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         } elseif ($user->hasRole('VENDOR')) {
             $query->where(function ($q) {
                 $q->where('target_role', 'VENDOR')->orWhere('target_role', 'ALL');
+            });
+
+            if ($user->vendor_id) {
+                $query->where(function ($q) use ($user) {
+                    $q->whereHas('workOrder', function ($wq) use ($user) {
+                        $wq->where('vendor_id', $user->vendor_id);
+                    })->orWhere('client_id', $user->vendor_id);
+                });
+            }
+        } elseif ($user->hasRole('FIELD_TEAM')) {
+            $query->where(function ($q) use ($user) {
+                $q->where('target_user_id', $user->id)
+                  ->orWhereHas('workOrder', function ($wq) use ($user) {
+                      $wq->where('pic_user_id', $user->id)
+                         ->orWhereHas('assignments', fn($aq) => $aq->where('users.id', $user->id));
+                  });
             });
         }
 
