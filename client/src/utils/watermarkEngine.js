@@ -101,7 +101,7 @@ export async function stampGpsWatermark(file, metadata = {}) {
     }
 
     // 3. Preload Real Satellite Map Imagery Tile for the exact coordinates (with 2.5s fallback)
-    const satelliteImg = await fetchRealSatelliteTile(finalLat, finalLng, 320, 260);
+    const satelliteImg = await fetchRealSatelliteTile(finalLat, finalLng, 300, 190);
 
     // Prioritize EXIF original capture time, fallback to metadata/current time
     let photoDate = new Date();
@@ -173,11 +173,11 @@ export async function stampGpsWatermark(file, metadata = {}) {
 
           // NO dark covering background - 100% transparent so field photo is fully visible!
 
-          // 3. Mini Map Dimensions (Right side)
-          const mapW = Math.round(280 * scale);
-          const mapH = Math.round(240 * scale);
+          // 3. Mini Map Dimensions (Right side - Lower height profile)
+          const mapW = Math.round(270 * scale);
+          const mapH = Math.round(160 * scale); // Ketinggian map lebih rendah dan kompak
           const mapX = width - mapW - (28 * scale);
-          const mapY = panelY + (30 * scale);
+          const mapY = panelY + (105 * scale); // Posisi diselaraskan lebih rendah mendekati footer bar
 
           // 4. Draw Left Text Metadata (Large, High-Contrast with Text Strokes)
           const textMarginL = Math.round(32 * scale);
