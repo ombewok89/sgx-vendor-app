@@ -231,6 +231,17 @@
                 <span v-else>Masuk ke Sistem</span>
                 <ArrowRight v-if="!loading" class="w-3.5 h-3.5" />
               </button>
+
+              <!-- Public Timestamp Camera Shortcut Button -->
+              <div class="pt-1">
+                <a
+                  href="/timestamp"
+                  class="w-full py-2 bg-slate-950 hover:bg-slate-800 border border-amber-500/30 text-amber-300 hover:text-amber-200 font-bold text-[11px] rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
+                >
+                  <Camera class="w-3.5 h-3.5 text-amber-400" />
+                  <span>Kamera Timestamp Publik (Tanpa Login)</span>
+                </a>
+              </div>
             </form>
 
             <!-- Footer Security Badges -->

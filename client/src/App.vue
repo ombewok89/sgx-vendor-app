@@ -5,6 +5,11 @@
     :token="publicTrackToken"
   />
 
+  <!-- 0.1 Public Standalone Timestamp Camera (No Login Required) -->
+  <PublicTimestampCamera
+    v-else-if="isPublicTimestampCamera"
+  />
+
   <!-- 1. Full Screen Loading State -->
   <div v-else-if="auth.loading.value" class="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
     <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 p-1.5 shadow-2xl shadow-amber-500/20 border border-white/20 animate-pulse">
@@ -115,9 +120,10 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useAuth } from './composables/useAuth';
 import { api } from './services/api';
 
-// Auth Page
+// Auth & Public Standalone Pages
 import LoginPage from './pages/auth/LoginPage.vue';
 import PublicSpkTracker from './pages/public/PublicSpkTracker.vue';
+import PublicTimestampCamera from './pages/public/PublicTimestampCamera.vue';
 
 // Components
 import Navbar from './components/Navbar.vue';
@@ -161,12 +167,30 @@ const auth = useAuth();
 const activeTab = ref('admin_dashboard');
 const sidebarOpen = ref(false);
 const publicTrackToken = ref('');
+const isPublicTimestampCamera = ref(false);
 
 function detectPublicTrackRoute() {
   const path = window.location.pathname;
   const searchParams = new URLSearchParams(window.location.search);
   const hash = window.location.hash;
 
+  // 1. Detect Standalone Timestamp Camera Route
+  if (
+    path.includes('/timestamp') ||
+    path.includes('/timeslip') ||
+    path.includes('/gps-camera') ||
+    searchParams.get('timestamp') ||
+    searchParams.get('timeslip') ||
+    hash.includes('timestamp') ||
+    hash.includes('timeslip')
+  ) {
+    isPublicTimestampCamera.value = true;
+    publicTrackToken.value = '';
+    return;
+  }
+  isPublicTimestampCamera.value = false;
+
+  // 2. Detect Live Work Tracker Route
   if (path.includes('/track/')) {
     const segments = path.split('/track/');
     publicTrackToken.value = segments[1]?.split('/')[0] || '';
