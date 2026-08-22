@@ -563,41 +563,41 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 20 * s);
   }
 
-  // 2. Bar Dimensions at Bottom of Photo (Full-Width Bar)
-  const footerBarH = Math.round(75 * s); // Solid White footer strip
-  const mainBarH = Math.round(200 * s);   // Dark information bar height
+  // 2. Bar Dimensions at Bottom of Photo (Tinggi Bar 140px)
+  const footerBarH = Math.round(55 * s); // Solid White footer strip
+  const mainBarH = Math.round(140 * s);   // Dark information bar height (140px)
   const totalBarH = mainBarH + footerBarH;
   const barY = h - totalBarH;
 
   // Background Gradient Overlay for Main Bar (Full-Width Dark Glass)
   ctx.save();
   const barGrad = ctx.createLinearGradient(0, barY, 0, barY + mainBarH);
-  barGrad.addColorStop(0, 'rgba(15, 23, 42, 0.85)');
-  barGrad.addColorStop(1, 'rgba(2, 6, 23, 0.95)');
+  barGrad.addColorStop(0, 'rgba(15, 23, 42, 0.88)');
+  barGrad.addColorStop(1, 'rgba(2, 6, 23, 0.96)');
   ctx.fillStyle = barGrad;
   ctx.fillRect(0, barY, w, mainBarH);
 
   // Top Accent Border Line
   ctx.fillStyle = '#EAB308';
-  ctx.fillRect(0, barY, w, Math.round(3.5 * s));
+  ctx.fillRect(0, barY, w, Math.round(3 * s));
   ctx.restore();
 
   // 3. Mini Map Satellite on the Right Side of Bar
-  const mapMarginR = Math.round(24 * s);
-  const mapH = Math.round(mainBarH - (24 * s));
+  const mapMarginR = Math.round(20 * s);
+  const mapH = Math.round(mainBarH - (18 * s));
   const mapW = Math.round(mapH * 1.08);
   const mapX = w - mapW - mapMarginR;
-  const mapY = barY + Math.round(12 * s);
+  const mapY = barY + Math.round(9 * s);
 
   // 4. Left Content Column
-  const textMarginL = Math.round(28 * s);
-  const maxTextW = mapX - textMarginL - (20 * s);
+  const textMarginL = Math.round(24 * s);
+  const maxTextW = mapX - textMarginL - (16 * s);
 
-  let curY = barY + (48 * s);
+  let curY = barY + (32 * s);
 
-  // A. DIGITAL CLOCK & DATE ROW (Bold & Large)
+  // A. DIGITAL CLOCK & DATE ROW (Top Row)
   ctx.save();
-  const clockFontS = Math.round(52 * s);
+  const clockFontS = Math.round(34 * s);
   ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(meta.timeStr, textMarginL, curY);
@@ -605,63 +605,57 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   const timeW = ctx.measureText(meta.timeStr).width;
 
   // Vertical Gold Separator
-  const sepX = textMarginL + timeW + (14 * s);
+  const sepX = textMarginL + timeW + (10 * s);
   ctx.fillStyle = '#EAB308';
-  ctx.fillRect(sepX, barY + (14 * s), Math.round(4 * s), Math.round(38 * s));
+  ctx.fillRect(sepX, barY + (10 * s), Math.round(3.5 * s), Math.round(26 * s));
 
   // Date & Day Text
-  ctx.font = `800 ${Math.round(22 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.font = `800 ${Math.round(18 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.fillStyle = '#FDE047';
-  ctx.fillText(`${meta.dayName}, ${meta.dateStr}`, sepX + (14 * s), curY - (18 * s));
-
-  // Job Description Tag
-  if (meta.jobDescription) {
-    ctx.font = `700 ${Math.round(18 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-    ctx.fillStyle = '#38BDF8';
-    const cleanJob = truncateText(ctx, `📌 ${meta.jobDescription}`, maxTextW - (sepX + 14 * s - textMarginL));
-    ctx.fillText(cleanJob, sepX + (14 * s), curY + (6 * s));
-  }
+  ctx.fillText(`${meta.dayName}, ${meta.dateStr}`, sepX + (10 * s), curY - (6 * s));
   ctx.restore();
 
-  // B. NAMA LOKASI & ALAMAT ASLI GOOGLE MAPS (UKURAN FONT LEBIH BESAR & TEGAS)
-  curY += (40 * s);
+  // B. NAMA LOKASI & ALAMAT ASLI GOOGLE MAPS (UKURAN FONT BESAR & TEGAS)
+  curY += (26 * s);
   ctx.save();
-  ctx.font = `800 ${Math.round(30 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.font = `800 ${Math.round(22 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 14 * s;
+  ctx.shadowBlur = 10 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 6 * s;
+  ctx.lineWidth = 5 * s;
 
-  const addressLines = wrapTextLines(ctx, meta.address, maxTextW, 2);
-  addressLines.forEach((line) => {
-    ctx.strokeText(line, textMarginL, curY);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(line, textMarginL, curY);
-    curY += (34 * s);
-  });
+  const addressLine = truncateText(ctx, meta.address, maxTextW);
+  ctx.strokeText(addressLine, textMarginL, curY);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(addressLine, textMarginL, curY);
   ctx.restore();
 
-  // C. TITIK KOORDINAT GPS (UKURAN FONT LEBIH BESAR & TEGAS)
-  curY += (4 * s);
+  // C. TITIK KOORDINAT GPS (UKURAN FONT BESAR & TEGAS)
+  curY += (26 * s);
   const coordText = `📍 Koordinat: ${meta.lat}, ${meta.lng} (±${meta.acc}m)`;
   ctx.save();
-  ctx.font = `800 ${Math.round(24 * s)}px "Inter", "Segoe UI", monospace, Arial`;
-  const coordTextW = ctx.measureText(coordText).width;
-  const badgePadX = Math.round(14 * s);
-  const badgeH = Math.round(34 * s);
-  const badgeY = curY - (22 * s);
-
-  // Semi-transparent dark rounded badge
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-  ctx.beginPath();
-  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(7 * s));
-  ctx.fill();
-
-  ctx.fillStyle = '#FEF08A'; // Bright soft gold for high contrast
+  ctx.font = `800 ${Math.round(19 * s)}px "Inter", "Segoe UI", monospace, Arial`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
   ctx.shadowBlur = 8 * s;
-  ctx.fillText(coordText, textMarginL + badgePadX, curY + (2 * s));
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+  ctx.lineWidth = 4 * s;
+  ctx.strokeText(coordText, textMarginL, curY);
+  ctx.fillStyle = '#FEF08A'; // Bright gold
+  ctx.fillText(coordText, textMarginL, curY);
   ctx.restore();
+
+  // D. KETERANGAN PEKERJAAN (POSISI DI BAWAH KOORDINAT)
+  if (meta.jobDescription) {
+    curY += (24 * s);
+    ctx.save();
+    ctx.font = `700 ${Math.round(17 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+    ctx.shadowBlur = 6 * s;
+    const cleanJob = truncateText(ctx, `📌 ${meta.jobDescription}`, maxTextW);
+    ctx.fillStyle = '#38BDF8'; // Bright Cyan
+    ctx.fillText(cleanJob, textMarginL, curY);
+    ctx.restore();
+  }
 
   // 5. Draw Right Google Mini-Map Satellite
   drawGoogleSatelliteMiniMap(ctx, mapX, mapY, mapW, mapH, s, meta.satelliteImg);
@@ -677,34 +671,34 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   ctx.fillRect(0, footerY, w, 2 * s);
 
   // Left SGX Logo in footer
-  const footerLogoSize = Math.round(55 * s);
+  const footerLogoSize = Math.round(42 * s);
   const footerLogoY = footerY + Math.round((footerBarH - footerLogoSize) / 2);
   if (meta.logoImg) {
     ctx.drawImage(meta.logoImg, textMarginL, footerLogoY, footerLogoSize, footerLogoSize);
   }
 
   // Sinar Grafika + WhatsApp Contact
-  const textX = textMarginL + footerLogoSize + (14 * s);
+  const textX = textMarginL + footerLogoSize + (12 * s);
   ctx.fillStyle = '#0F172A';
-  ctx.font = `900 ${22 * s}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + (32 * s));
+  ctx.font = `900 ${18 * s}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + (24 * s));
 
   ctx.fillStyle = '#334155';
-  ctx.font = `700 ${17 * s}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + (58 * s));
+  ctx.font = `700 ${14 * s}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + (44 * s));
 
   // Diagonal dividing slash in center
   const midX = w * 0.72;
   ctx.strokeStyle = '#CBD5E1';
-  ctx.lineWidth = 2 * s;
+  ctx.lineWidth = 1.5 * s;
   ctx.beginPath();
-  ctx.moveTo(midX + (16 * s), footerY + (10 * s));
-  ctx.lineTo(midX - (16 * s), footerY + footerBarH - (10 * s));
+  ctx.moveTo(midX + (12 * s), footerY + (8 * s));
+  ctx.lineTo(midX - (12 * s), footerY + footerBarH - (8 * s));
   ctx.stroke();
 
   // Right SGX Emblem in Footer
   if (meta.logoImg) {
-    const rightLogoX = w - footerLogoSize - (35 * s);
+    const rightLogoX = w - footerLogoSize - (28 * s);
     ctx.drawImage(meta.logoImg, rightLogoX, footerLogoY, footerLogoSize, footerLogoSize);
   }
   ctx.restore();
