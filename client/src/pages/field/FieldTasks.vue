@@ -319,6 +319,10 @@
                   :locationName="selectedTask.location_name"
                   :workOrderTitle="selectedTask.title"
                   :address="selectedTask.address_note || selectedTask.location_name"
+                  :targetLat="selectedTask.target_lat"
+                  :targetLng="selectedTask.target_lng"
+                  :checkInLat="selectedTask.check_ins?.[0]?.latitude"
+                  :checkInLng="selectedTask.check_ins?.[0]?.longitude"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
                 />
                 <PhotoUploader
@@ -331,6 +335,10 @@
                   :locationName="selectedTask.location_name"
                   :workOrderTitle="selectedTask.title"
                   :address="selectedTask.address_note || selectedTask.location_name"
+                  :targetLat="selectedTask.target_lat"
+                  :targetLng="selectedTask.target_lng"
+                  :checkInLat="selectedTask.check_ins?.[0]?.latitude"
+                  :checkInLng="selectedTask.check_ins?.[0]?.longitude"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
                 />
                 <PhotoUploader
@@ -343,6 +351,10 @@
                   :locationName="selectedTask.location_name"
                   :workOrderTitle="selectedTask.title"
                   :address="selectedTask.address_note || selectedTask.location_name"
+                  :targetLat="selectedTask.target_lat"
+                  :targetLng="selectedTask.target_lng"
+                  :checkInLat="selectedTask.check_ins?.[0]?.latitude"
+                  :checkInLng="selectedTask.check_ins?.[0]?.longitude"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
                 />
               </div>
@@ -357,6 +369,10 @@
                   :locationName="selectedTask.location_name"
                   :workOrderTitle="selectedTask.title"
                   :address="selectedTask.address_note || selectedTask.location_name"
+                  :targetLat="selectedTask.target_lat"
+                  :targetLng="selectedTask.target_lng"
+                  :checkInLat="selectedTask.check_ins?.[0]?.latitude"
+                  :checkInLng="selectedTask.check_ins?.[0]?.longitude"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
                 />
               </div>

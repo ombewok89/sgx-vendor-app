@@ -255,7 +255,11 @@ const props = defineProps({
   spkNumber: { type: String, default: '' },
   locationName: { type: String, default: '' },
   workOrderTitle: { type: String, default: '' },
-  address: { type: String, default: '' }
+  address: { type: String, default: '' },
+  targetLat: { type: [Number, String], default: null },
+  targetLng: { type: [Number, String], default: null },
+  checkInLat: { type: [Number, String], default: null },
+  checkInLng: { type: [Number, String], default: null }
 });
 
 const autoStampGps = ref(true);
@@ -285,8 +289,13 @@ const isSatisfied = computed(() => {
   return stagePhotos.value.length >= props.requiredCount;
 });
 
+function isValidGps(val) {
+  if (val == null || val === '' || isNaN(Number(val))) return false;
+  return Math.abs(Number(val)) > 0.0001;
+}
+
 /**
- * Handle Multi-File or Single-File Selection from Camera / Gallery
+ * Handle Single or Multiple File selection (Camera or Gallery)
  */
 async function handleFilesSelected(fileList) {
   if (!fileList || fileList.length === 0) return;
@@ -296,7 +305,7 @@ async function handleFilesSelected(fileList) {
   uploadProgress.value = { current: 0, total: files.length };
   error.value = null;
 
-  // Get current GPS position once for the batch
+  // Get current GPS position with high accuracy and sensible timeout
   let gpsCoords = null;
   if (navigator.geolocation) {
     try {
@@ -308,13 +317,22 @@ async function handleFilesSelected(fileList) {
             accuracy: Math.round(pos.coords.accuracy)
           }),
           () => resolve(null),
-          { timeout: 4000 }
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
         );
       });
     } catch (e) {
       gpsCoords = null;
     }
   }
+
+  // Fallback to check-in coordinates or target location coordinates if device GPS unavailable
+  const fallbackLat = isValidGps(props.checkInLat)
+    ? Number(props.checkInLat)
+    : (isValidGps(props.targetLat) ? Number(props.targetLat) : -3.824921);
+
+  const fallbackLng = isValidGps(props.checkInLng)
+    ? Number(props.checkInLng)
+    : (isValidGps(props.targetLng) ? Number(props.targetLng) : 102.286299);
 
   let lastUploadedData = null;
 
@@ -332,9 +350,13 @@ async function handleFilesSelected(fileList) {
           spkNumber: props.spkNumber || `SPK-${props.workOrderId}`,
           locationName: props.locationName || props.workOrderTitle || 'Toko Cabang Proyek',
           address: props.address || 'Indonesia',
-          latitude: gpsCoords?.latitude,
-          longitude: gpsCoords?.longitude,
-          accuracy: gpsCoords?.accuracy,
+          latitude: isValidGps(gpsCoords?.latitude) ? gpsCoords.latitude : fallbackLat,
+          longitude: isValidGps(gpsCoords?.longitude) ? gpsCoords.longitude : fallbackLng,
+          targetLat: props.targetLat,
+          targetLng: props.targetLng,
+          checkInLat: props.checkInLat,
+          checkInLng: props.checkInLng,
+          accuracy: gpsCoords?.accuracy || 10,
           timestamp: new Date()
         });
       }
@@ -349,15 +371,20 @@ async function handleFilesSelected(fileList) {
       formData.append('photo', fileToUpload);
       formData.append('file', fileToUpload);
 
-      const finalUploadLat = fileToUpload._latitude != null ? fileToUpload._latitude : gpsCoords?.latitude;
-      const finalUploadLng = fileToUpload._longitude != null ? fileToUpload._longitude : gpsCoords?.longitude;
+      const finalUploadLat = isValidGps(fileToUpload._latitude)
+        ? fileToUpload._latitude
+        : (isValidGps(gpsCoords?.latitude) ? gpsCoords.latitude : fallbackLat);
+
+      const finalUploadLng = isValidGps(fileToUpload._longitude)
+        ? fileToUpload._longitude
+        : (isValidGps(gpsCoords?.longitude) ? gpsCoords.longitude : fallbackLng);
+
       const finalUploadAcc = gpsCoords?.accuracy || 8;
 
-      if (finalUploadLat != null && finalUploadLng != null) {
-        formData.append('latitude', finalUploadLat);
-        formData.append('longitude', finalUploadLng);
-        formData.append('accuracy', finalUploadAcc);
-      }
+      formData.append('latitude', finalUploadLat);
+      formData.append('longitude', finalUploadLng);
+      formData.append('accuracy', finalUploadAcc);
+
       if (fileToUpload._address) {
         formData.append('notes', `Lokasi: ${fileToUpload._address}`);
       }

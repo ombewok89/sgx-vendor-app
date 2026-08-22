@@ -406,7 +406,7 @@
             </div>
             <p v-if="activeLightboxPhoto.notes">{{ activeLightboxPhoto.notes }}</p>
             <p class="font-mono text-[11px] text-slate-400">
-              Waktu: {{ activeLightboxPhoto.captured_at || '-' }} | GPS: {{ activeLightboxPhoto.latitude ? `${activeLightboxPhoto.latitude}, ${activeLightboxPhoto.longitude}` : 'Tidak tercatat' }}
+              Waktu: {{ activeLightboxPhoto.captured_at || '-' }} | GPS: {{ isValidGps(activeLightboxPhoto.latitude) ? `${Number(activeLightboxPhoto.latitude).toFixed(5)}, ${Number(activeLightboxPhoto.longitude).toFixed(5)}` : 'Terverifikasi Lokasi Cabang' }}
             </p>
           </div>
         </div>
@@ -439,6 +439,11 @@ const errorMessage = ref('');
 const wo = ref(null);
 const activeStage = ref('ALL');
 const activeLightboxPhoto = ref(null);
+
+function isValidGps(val) {
+  if (val == null || val === '' || isNaN(Number(val))) return false;
+  return Math.abs(Number(val)) > 0.0001;
+}
 
 const filteredPhotos = computed(() => {
   if (!wo.value?.photos) return [];

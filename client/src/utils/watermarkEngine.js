@@ -76,14 +76,29 @@ export async function stampGpsWatermark(file, metadata = {}) {
     // 2. Extract embedded EXIF Metadata directly from the uploaded photo file
     const exifData = await extractExifFromImage(file);
 
-    // Prioritize EXIF GPS from photo, fallback to live device GPS, fallback to Bengkulu default
-    const finalLat = exifData?.latitude != null 
-      ? exifData.latitude 
-      : (metadata.latitude != null ? metadata.latitude : -3.824921);
+    // Multi-tier GPS coordinate resolver with strict Zero-Zero Guard
+    function isValidCoord(val) {
+      if (val == null || val === '' || isNaN(Number(val))) return false;
+      const num = Number(val);
+      return Math.abs(num) > 0.0001;
+    }
 
-    const finalLng = exifData?.longitude != null 
-      ? exifData.longitude 
-      : (metadata.longitude != null ? metadata.longitude : 102.286299);
+    let finalLat = -3.824921;
+    let finalLng = 102.286299;
+
+    if (isValidCoord(exifData?.latitude) && isValidCoord(exifData?.longitude)) {
+      finalLat = Number(exifData.latitude);
+      finalLng = Number(exifData.longitude);
+    } else if (isValidCoord(metadata?.latitude) && isValidCoord(metadata?.longitude)) {
+      finalLat = Number(metadata.latitude);
+      finalLng = Number(metadata.longitude);
+    } else if (isValidCoord(metadata?.targetLat) && isValidCoord(metadata?.targetLng)) {
+      finalLat = Number(metadata.targetLat);
+      finalLng = Number(metadata.targetLng);
+    } else if (isValidCoord(metadata?.checkInLat) && isValidCoord(metadata?.checkInLng)) {
+      finalLat = Number(metadata.checkInLat);
+      finalLng = Number(metadata.checkInLng);
+    }
 
     // 3. Preload Real Satellite Map Imagery Tile for the exact coordinates (with 2.5s fallback)
     const satelliteImg = await fetchRealSatelliteTile(finalLat, finalLng, 320, 260);

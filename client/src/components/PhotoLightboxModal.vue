@@ -129,7 +129,7 @@
             </span>
 
             <!-- GPS Coordinates -->
-            <span v-if="currentPhoto?.latitude" class="flex items-center gap-1.5 font-mono text-emerald-400">
+            <span v-if="isValidGps(currentPhoto?.latitude)" class="flex items-center gap-1.5 font-mono text-emerald-400">
               <MapPin class="w-3.5 h-3.5 shrink-0" />
               <span>GPS: {{ Number(currentPhoto.latitude).toFixed(5) }}, {{ Number(currentPhoto.longitude).toFixed(5) }} (±{{ currentPhoto.accuracy || 10 }}m)</span>
             </span>
@@ -147,7 +147,7 @@
           </div>
 
           <!-- Right Action: Open in Maps -->
-          <div v-if="currentPhoto?.latitude" class="flex items-center gap-2">
+          <div v-if="isValidGps(currentPhoto?.latitude)" class="flex items-center gap-2">
             <a
               :href="`https://www.google.com/maps?q=${currentPhoto.latitude},${currentPhoto.longitude}`"
               target="_blank"
@@ -209,6 +209,11 @@ const currentPhoto = computed(() => {
   if (photoList.value.length === 0) return null;
   return photoList.value[currentIndex.value] || photoList.value[0];
 });
+
+function isValidGps(val) {
+  if (val == null || val === '' || isNaN(Number(val))) return false;
+  return Math.abs(Number(val)) > 0.0001;
+}
 
 function close() {
   zoom.value = 1;
