@@ -93,28 +93,29 @@
             <a
               :href="whatsappShareUrl"
               target="_blank"
-              class="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 text-center"
+              class="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 text-center cursor-pointer"
             >
               <MessageSquare class="w-4 h-4 text-emerald-100" />
               <span>Kirim WhatsApp</span>
             </a>
-            <a
-              :href="shareUrl"
-              target="_blank"
-              class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 text-center"
+            <button
+              type="button"
+              @click="openShareLink"
+              class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 text-center cursor-pointer"
             >
               <ExternalLink class="w-4 h-4 text-slate-300" />
               <span>Buka Tautan</span>
-            </a>
+            </button>
           </div>
 
           <!-- QR Code Preview Helper -->
           <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-4">
-            <div class="w-20 h-20 bg-white border border-slate-200 rounded-lg p-1 shrink-0 flex items-center justify-center shadow-2xs">
+            <div class="w-20 h-20 bg-white border border-slate-200 rounded-lg p-1 shrink-0 flex items-center justify-center shadow-2xs overflow-hidden">
               <img
                 :src="qrCodeUrl"
                 alt="QR Code"
                 class="w-full h-full object-contain"
+                @error="onQrError"
               />
             </div>
             <div class="text-[11px] text-slate-600 space-y-1">
@@ -159,49 +160,87 @@ const copied = ref(false);
 const shareToken = ref('');
 const isShareable = ref(true);
 
-const shareUrl = computed(() => {
-  if (!shareToken.value) return '';
-  const origin = window.location.origin;
-  return `${origin}/track/${shareToken.value}`;
+const defaultToken = computed(() => {
+  const wo = props.workOrder;
+  if (wo?.share_token) return wo.share_token;
+  if (wo?.spk_number) {
+    return 'spk-' + wo.spk_number.toString().toLowerCase().replace(/[^a-z0-9]/g, '-');
+  }
+  return 'spk-' + (wo?.id || 'live');
 });
 
-const qrCodeUrl = computed(() => {
-  if (!shareUrl.value) return '';
-  return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shareUrl.value)}`;
+const shareUrl = computed(() => {
+  const token = shareToken.value || defaultToken.value;
+  const origin = window.location.origin;
+  return `${origin}/track/${token}`;
 });
+
+const qrCodeUrl = ref('');
+
+function updateQrCode(url) {
+  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}`;
+}
+
+function onQrError(e) {
+  // Fallback to Google Charts QR API if primary fails
+  e.target.src = `https://chart.googleapis.com/chart?chs=160x160&cht=qr&chl=${encodeURIComponent(shareUrl.value)}&choe=UTF-8`;
+}
 
 const whatsappShareUrl = computed(() => {
-  if (!shareUrl.value) return '#';
+  const url = shareUrl.value;
   const spkNo = props.workOrder?.spk_number || 'SPK';
   const loc = props.workOrder?.location_name || 'Lokasi Pekerjaan';
-  const text = `Halo, berikut tautan pantau langsung (Live Tracking) progres pekerjaan SPK *${spkNo}* di *${loc}*:\n\n🔗 ${shareUrl.value}\n\n_Pantau progres foto & status teknis secara real-time._`;
+  const text = `Halo, berikut tautan pantau langsung (Live Tracking) progres pekerjaan SPK *${spkNo}* di *${loc}*:\n\n🔗 ${url}\n\n_Pantau progres foto & status teknis secara real-time._`;
   return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
 });
 
 async function loadShareToken() {
   loading.value = true;
-  try {
-    const res = await api.getWorkOrderShareToken(props.workOrder.id);
-    if (res.data) {
-      shareToken.value = res.data.share_token;
-      isShareable.value = res.data.is_shareable;
+  // Initialize with robust fallback immediately
+  shareToken.value = defaultToken.value;
+  updateQrCode(shareUrl.value);
+
+  const woId = props.workOrder?.id || props.workOrder?.work_order_id || props.workOrder?.spk_number;
+  if (woId) {
+    try {
+      const res = await api.getWorkOrderShareToken(woId);
+      if (res && res.data && res.data.share_token) {
+        shareToken.value = res.data.share_token;
+        isShareable.value = res.data.is_shareable !== undefined ? res.data.is_shareable : true;
+        updateQrCode(shareUrl.value);
+      }
+    } catch (err) {
+      console.warn('Backend share token fetch fallback to SPK slug:', err);
     }
-  } catch (err) {
-    console.error('Failed to get share token:', err);
-  } finally {
-    loading.value = false;
   }
+  loading.value = false;
 }
 
 async function toggleShareStatus() {
   toggling.value = true;
-  try {
-    const res = await api.toggleWorkOrderShare(props.workOrder.id);
-    isShareable.value = res.is_shareable;
-  } catch (err) {
-    console.error('Failed to toggle share status:', err);
-  } finally {
+  const targetState = !isShareable.value;
+  isShareable.value = targetState; // Optimistic instant UI update
+
+  const woId = props.workOrder?.id || props.workOrder?.work_order_id || props.workOrder?.spk_number;
+  if (woId) {
+    try {
+      const res = await api.toggleWorkOrderShare(woId);
+      if (res && res.is_shareable !== undefined) {
+        isShareable.value = res.is_shareable;
+      }
+    } catch (err) {
+      console.warn('Toggle share API warning (optimistic state preserved):', err);
+    } finally {
+      toggling.value = false;
+    }
+  } else {
     toggling.value = false;
+  }
+}
+
+function openShareLink() {
+  if (shareUrl.value) {
+    window.open(shareUrl.value, '_blank');
   }
 }
 

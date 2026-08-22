@@ -15,7 +15,16 @@ class PublicTrackingController extends Controller
      */
     public function track(string $token)
     {
-        $workOrder = WorkOrder::where('share_token', $token)
+        $normalizedToken = trim($token);
+        $cleanSpk = strtoupper(str_replace(['spk-', 'spk_'], '', strtolower($normalizedToken)));
+
+        $workOrder = WorkOrder::where('share_token', $normalizedToken)
+            ->orWhere('share_token', strtolower($normalizedToken))
+            ->orWhere('spk_number', $normalizedToken)
+            ->orWhere('spk_number', strtoupper($normalizedToken))
+            ->orWhere('spk_number', 'SPK-' . $cleanSpk)
+            ->orWhere('spk_number', $cleanSpk)
+            ->orWhere('id', is_numeric($normalizedToken) ? (int)$normalizedToken : 0)
             ->with([
                 'vendor:id,name,code,address,logo_url',
                 'area:id,name,code',
@@ -118,7 +127,12 @@ class PublicTrackingController extends Controller
      */
     public function getOrCreateShareToken(Request $request, $id)
     {
-        $workOrder = WorkOrder::findOrFail($id);
+        $workOrder = is_numeric($id) ? WorkOrder::find((int)$id) : null;
+        if (!$workOrder) {
+            $workOrder = WorkOrder::where('spk_number', $id)
+                ->orWhere('spk_number', strtoupper($id))
+                ->firstOrFail();
+        }
 
         if (empty($workOrder->share_token)) {
             $workOrder->share_token = 'spk-' . strtolower(Str::random(10));
@@ -141,7 +155,13 @@ class PublicTrackingController extends Controller
      */
     public function toggleShareable(Request $request, $id)
     {
-        $workOrder = WorkOrder::findOrFail($id);
+        $workOrder = is_numeric($id) ? WorkOrder::find((int)$id) : null;
+        if (!$workOrder) {
+            $workOrder = WorkOrder::where('spk_number', $id)
+                ->orWhere('spk_number', strtoupper($id))
+                ->firstOrFail();
+        }
+
         $workOrder->is_shareable = !$workOrder->is_shareable;
         $workOrder->save();
 
