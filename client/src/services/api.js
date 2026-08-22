@@ -58,6 +58,8 @@ export const api = {
   toggleWorkOrderCheckin: (id, require_checkin) => request('/work-orders/toggle-checkin', { method: 'POST', body: JSON.stringify({ work_order_id: id, require_checkin }) }),
   assignTeam: (id, data) => request(`/work-orders/${id}/assign`, { method: 'POST', body: JSON.stringify(data) }),
   addWorkOrderItem: (id, data) => request(`/work-orders/${id}/add-item`, { method: 'POST', body: JSON.stringify(data) }),
+  archiveWorkOrder: (id) => request(`/work-orders/${id}/archive`, { method: 'POST' }),
+  unarchiveWorkOrder: (id) => request(`/work-orders/${id}/unarchive`, { method: 'POST' }),
   submitWorkOrder: (id) => request(`/work-orders/${id}/submit`, { method: 'POST' }),
 
   // Check-In

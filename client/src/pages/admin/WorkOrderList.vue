@@ -14,7 +14,38 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-2.5">
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <!-- Superuser Archive Mode Toggle Tabs -->
+        <div v-if="isSuperuser" class="bg-slate-200/80 p-1 rounded-2xl flex items-center text-xs font-bold shadow-2xs">
+          <button
+            type="button"
+            @click="switchTab('ACTIVE')"
+            :class="[
+              'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5',
+              activeTab === 'ACTIVE'
+                ? 'bg-white text-brand-950 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            ]"
+          >
+            <Layers class="w-3.5 h-3.5 text-brand-700" />
+            <span>SPK Aktif</span>
+          </button>
+
+          <button
+            type="button"
+            @click="switchTab('ARCHIVED')"
+            :class="[
+              'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5',
+              activeTab === 'ARCHIVED'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-amber-800'
+            ]"
+          >
+            <Archive class="w-3.5 h-3.5" />
+            <span>📦 Arsip SPK</span>
+          </button>
+        </div>
+
         <button
           @click="loadData"
           class="px-4 py-2.5 glass-card hover:bg-white rounded-xl text-slate-700 hover:text-slate-900 text-xs font-bold flex items-center gap-2 shadow-xs transition-all duration-200 active:scale-95 border border-slate-200/80 cursor-pointer"
@@ -220,8 +251,16 @@
                 <!-- Column 4: Progress & Status -->
                 <td class="py-4 px-4 align-middle">
                   <div class="space-y-1.5">
-                    <div class="flex items-center justify-between">
-                      <StatusBadge :status="wo.status" />
+                    <div class="flex items-center justify-between gap-1 flex-wrap">
+                      <div class="flex items-center gap-1">
+                        <StatusBadge :status="wo.status" />
+                        <span
+                          v-if="wo.is_archived"
+                          class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-amber-500 text-white shadow-2xs"
+                        >
+                          📦 ARSIP
+                        </span>
+                      </div>
                       <span class="font-mono font-bold text-[11px] text-brand-900">{{ wo.progress_percent }}%</span>
                     </div>
                     <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200/60">
@@ -291,8 +330,15 @@ import WorkOrderEditModal from './WorkOrderEditModal.vue';
 
 const auth = useAuth();
 const isSupervisor = computed(() => ['SUPERUSER', 'SUPERVISOR'].includes(auth.state.user?.role));
+const isSuperuser = computed(() => auth.state.user?.role === 'SUPERUSER');
 const editModalOpen = ref(false);
 const editingWorkOrderId = ref(null);
+const activeTab = ref('ACTIVE'); // 'ACTIVE' | 'ARCHIVED'
+
+function switchTab(tab) {
+  activeTab.value = tab;
+  loadData();
+}
 
 function openEditSpk(id) {
   editingWorkOrderId.value = id;
@@ -312,7 +358,8 @@ import {
   Layers,
   Clock,
   CheckCircle2,
-  Pencil
+  Pencil,
+  Archive
 } from 'lucide-vue-next';
 
 defineEmits(['open-create', 'select-work-order']);
@@ -343,13 +390,19 @@ function getProgressClass(status, progress) {
 async function loadData() {
   loading.value = true;
   try {
+    const params = {
+      search: search.value,
+      status: statusFilter.value,
+      vendor_id: vendorFilter.value,
+      area_id: areaFilter.value
+    };
+
+    if (activeTab.value === 'ARCHIVED') {
+      params.archived = 'true';
+    }
+
     const [woRes, vRes, aRes] = await Promise.all([
-      api.getWorkOrders({
-        search: search.value,
-        status: statusFilter.value,
-        vendor_id: vendorFilter.value,
-        area_id: areaFilter.value
-      }),
+      api.getWorkOrders(params),
       api.getVendors(),
       api.getAreas()
     ]);

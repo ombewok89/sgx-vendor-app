@@ -25,6 +25,33 @@
             <span class="hidden sm:inline">Bagikan</span>
           </button>
 
+          <!-- Superuser Archive / Unarchive Action Buttons -->
+          <template v-if="isSuperuser">
+            <button
+              v-if="!workOrder?.is_archived && ['APPROVED', 'COMPLETED', 'BA_OPNAME', 'CANCELLED'].includes(workOrder?.status)"
+              type="button"
+              @click="handleArchiveSpk"
+              :disabled="archiving"
+              class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+              title="Arsipkan SPK yang telah selesai (Hanya Superuser)"
+            >
+              <Archive class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">{{ archiving ? 'Mengarsipkan...' : 'Arsipkan SPK' }}</span>
+            </button>
+
+            <button
+              v-else-if="workOrder?.is_archived"
+              type="button"
+              @click="handleUnarchiveSpk"
+              :disabled="archiving"
+              class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+              title="Pulihkan SPK kembali ke daftar aktif"
+            >
+              <RotateCcw class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">{{ archiving ? 'Memulihkan...' : 'Pulihkan SPK' }}</span>
+            </button>
+          </template>
+
           <!-- Edit SPK Button (Supervisor Only) -->
           <button
             v-if="isSupervisor"
@@ -56,6 +83,31 @@
           <!-- Stepper Progress -->
           <div class="glass-card rounded-2xl p-4 border border-white/60">
             <StepperProgress :status="workOrder.status" :progressPercent="workOrder.progress_percent" :hasBa="!!workOrder.ba_document" />
+          </div>
+
+          <!-- Archived SPK Banner -->
+          <div
+            v-if="workOrder.is_archived"
+            class="p-4 bg-amber-500/15 border border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md"
+          >
+            <div class="flex items-center gap-2.5 text-amber-950">
+              <Archive class="w-5 h-5 text-amber-700 shrink-0" />
+              <div>
+                <div class="font-bold text-sm">SPK Ini Telah Diarsipkan (Archived)</div>
+                <div class="text-[11px] text-amber-800">
+                  Diarsipkan pada {{ workOrder.archived_at ? new Date(workOrder.archived_at).toLocaleString('id-ID') : 'sebelumnya' }}. Seluruh bukti dan riwayat tetap tersimpan aman.
+                </div>
+              </div>
+            </div>
+            <button
+              v-if="isSuperuser"
+              type="button"
+              @click="handleUnarchiveSpk"
+              :disabled="archiving"
+              class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition-all disabled:opacity-50"
+            >
+              {{ archiving ? 'Memulihkan...' : 'Pulihkan ke Aktif' }}
+            </button>
           </div>
 
           <!-- Action Banners -->
@@ -746,15 +798,60 @@ import {
   Check,
   Share2,
   CheckSquare,
-  Plus
+  Plus,
+  Archive
 } from 'lucide-vue-next';
 
 const auth = useAuth();
+const isSuperuser = computed(() => auth.state.user?.role === 'SUPERUSER');
 const isSupervisor = computed(() => ['SUPERUSER', 'SUPERVISOR', 'ADMIN'].includes(auth.state.user?.role));
 const canViewFinancial = computed(() => ['SUPERUSER', 'SUPERVISOR', 'ADMIN'].includes(auth.state.user?.role));
 const isEditModalOpen = ref(false);
 const showShareModal = ref(false);
 const photoViewMode = ref('BY_ITEM'); // 'BY_ITEM' | 'ALL_STAGES'
+const archiving = ref(false);
+
+async function handleArchiveSpk() {
+  if (!confirm(`Apakah Anda yakin ingin mengarsipkan SPK ${workOrder.value?.spk_number}?\nSPK yang diarsipkan akan disembunyikan dari daftar aktif operasional.`)) {
+    return;
+  }
+
+  archiving.value = true;
+  try {
+    const res = await api.archiveWorkOrder(props.workOrderId);
+    if (res.success || res.data) {
+      alert(`SPK ${workOrder.value?.spk_number} berhasil diarsipkan.`);
+      await loadDetail();
+      emit('refresh-list');
+    }
+  } catch (err) {
+    console.error('Failed to archive SPK:', err);
+    alert('Gagal mengarsipkan SPK: ' + (err.message || 'Terjadi kesalahan'));
+  } finally {
+    archiving.value = false;
+  }
+}
+
+async function handleUnarchiveSpk() {
+  if (!confirm(`Apakah Anda yakin ingin memulihkan SPK ${workOrder.value?.spk_number} kembali ke daftar aktif?`)) {
+    return;
+  }
+
+  archiving.value = true;
+  try {
+    const res = await api.unarchiveWorkOrder(props.workOrderId);
+    if (res.success || res.data) {
+      alert(`SPK ${workOrder.value?.spk_number} berhasil dipulihkan ke daftar aktif.`);
+      await loadDetail();
+      emit('refresh-list');
+    }
+  } catch (err) {
+    console.error('Failed to unarchive SPK:', err);
+    alert('Gagal memulihkan SPK: ' + (err.message || 'Terjadi kesalahan'));
+  } finally {
+    archiving.value = false;
+  }
+}
 
 // Addendum Sub-Task Modal State
 const showAddendumModal = ref(false);

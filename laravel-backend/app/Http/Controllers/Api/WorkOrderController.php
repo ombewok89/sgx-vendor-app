@@ -21,7 +21,17 @@ class WorkOrderController extends Controller
 
         $query = WorkOrderService::getScopedQuery($user);
 
-        if ($request->filled('status')) {
+        // Filter is_archived:
+        // Jika request archived=true / status=ARCHIVED dan user adalah SUPERUSER -> tampilkan yang is_archived = true
+        // Default -> tampilkan yang is_archived = false (aktif)
+        $isArchivedRequest = $request->boolean('archived') || $request->status === 'ARCHIVED';
+        if ($isArchivedRequest && $user->hasRole('SUPERUSER')) {
+            $query->where('is_archived', true);
+        } else {
+            $query->where('is_archived', false);
+        }
+
+        if ($request->filled('status') && $request->status !== 'ARCHIVED') {
             $query->where('status', $request->status);
         }
         if ($request->filled('area_id')) {
@@ -534,5 +544,70 @@ class WorkOrderController extends Controller
                 'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos']),
             ], 201);
         });
+    }
+
+    public function archive(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser yang berwenang mengarsipkan SPK.',
+            ], 403);
+        }
+
+        $workOrder = WorkOrder::findOrFail($id);
+
+        if (!in_array($workOrder->status, ['APPROVED', 'COMPLETED', 'BA_OPNAME', 'CANCELLED'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya SPK yang sudah selesai (BA Opname / Approved / Completed / Cancelled) yang dapat diarsipkan.',
+            ], 422);
+        }
+
+        $workOrder->update([
+            'is_archived' => true,
+            'archived_at' => now(),
+        ]);
+
+        AuditService::log($user, 'ARCHIVE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, [
+            'spk_number' => $workOrder->spk_number,
+            'title' => $workOrder->title,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "SPK {$workOrder->spk_number} berhasil diarsipkan.",
+            'data' => $workOrder->fresh(),
+        ]);
+    }
+
+    public function unarchive(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser yang berwenang memulihkan SPK dari arsip.',
+            ], 403);
+        }
+
+        $workOrder = WorkOrder::findOrFail($id);
+
+        $workOrder->update([
+            'is_archived' => false,
+            'archived_at' => null,
+        ]);
+
+        AuditService::log($user, 'UNARCHIVE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, [
+            'spk_number' => $workOrder->spk_number,
+            'title' => $workOrder->title,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "SPK {$workOrder->spk_number} berhasil dipulihkan dari arsip ke daftar aktif.",
+            'data' => $workOrder->fresh(),
+        ]);
     }
 }
