@@ -113,6 +113,27 @@
       </div>
     </div>
 
+    <!-- Archive Mode Indicator Banner -->
+    <div
+      v-if="activeTab === 'ARCHIVED'"
+      class="p-4 bg-amber-500/10 border border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-950 backdrop-blur-md"
+    >
+      <div class="flex items-center gap-2.5">
+        <Archive class="w-5 h-5 text-amber-700 shrink-0" />
+        <div>
+          <div class="font-bold text-sm">Mode Tampilan: 📦 Arsip SPK (Superuser Only)</div>
+          <div class="text-[11px] text-amber-800">Menampilkan daftar pekerjaan lampau yang telah diarsipkan dari antrian aktif operasional.</div>
+        </div>
+      </div>
+      <button
+        type="button"
+        @click="switchTab('ACTIVE')"
+        class="px-3.5 py-1.5 bg-white text-slate-700 hover:text-slate-900 border border-slate-200 font-bold text-xs rounded-xl shadow-2xs cursor-pointer active:scale-95 transition-all self-start sm:self-auto"
+      >
+        ← Kembali ke SPK Aktif
+      </button>
+    </div>
+
     <!-- Modern Glass Search & Filter Bar -->
     <div class="glass-card rounded-2xl p-4 border border-white/80 shadow-glass">
       <form @submit.prevent="loadData" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
@@ -300,8 +321,11 @@
               <tr>
                 <td colspan="5" class="py-14 text-center text-slate-400">
                   <div class="flex flex-col items-center justify-center gap-2">
-                    <FileText class="w-8 h-8 opacity-30 text-slate-400" />
-                    <p class="font-medium">Tidak ada data pekerjaan yang sesuai dengan filter.</p>
+                    <Archive v-if="activeTab === 'ARCHIVED'" class="w-8 h-8 opacity-30 text-amber-500" />
+                    <FileText v-else class="w-8 h-8 opacity-30 text-slate-400" />
+                    <p class="font-medium">
+                      {{ activeTab === 'ARCHIVED' ? 'Belum ada pekerjaan SPK yang diarsipkan.' : 'Tidak ada data pekerjaan yang sesuai dengan filter.' }}
+                    </p>
                   </div>
                 </td>
               </tr>

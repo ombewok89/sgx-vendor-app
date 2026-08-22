@@ -17,21 +17,25 @@ class WorkOrderController extends Controller
         $user = $request->user();
         
         // Auto-normalize legacy 'REVIEW' status to standard 'SUBMITTED'
-        WorkOrder::where('status', 'REVIEW')->update(['status' => 'SUBMITTED', 'progress_percent' => 80]);
+        $this->ensureArchiveColumnsExist();
 
         $query = WorkOrderService::getScopedQuery($user);
 
-        // Filter is_archived (dengan fallback pengecekan kolom database yang aman):
-        if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'is_archived')) {
-            $isArchivedRequest = $request->boolean('archived') || $request->status === 'ARCHIVED';
-            if ($isArchivedRequest && $user->hasRole('SUPERUSER')) {
+        // Filter is_archived:
+        // Jika request archived=true / status=ARCHIVED dan user adalah SUPERUSER -> HANYA tampilkan yang is_archived = true
+        // Default -> HANYA tampilkan yang is_archived = false atau null (pekerjaan aktif)
+        $isArchivedRequest = $request->boolean('archived') || $request->status === 'ARCHIVED' || $request->input('archived') === 'true' || $request->input('archived') === '1';
+        if ($isArchivedRequest) {
+            if ($user->hasRole('SUPERUSER')) {
                 $query->where('is_archived', true);
             } else {
-                $query->where(function ($q) {
-                    $q->where('is_archived', false)
-                      ->orWhereNull('is_archived');
-                });
+                $query->whereRaw('1 = 0');
             }
+        } else {
+            $query->where(function ($q) {
+                $q->where('is_archived', false)
+                  ->orWhereNull('is_archived');
+            });
         }
 
         if ($request->filled('status') && $request->status !== 'ARCHIVED') {
