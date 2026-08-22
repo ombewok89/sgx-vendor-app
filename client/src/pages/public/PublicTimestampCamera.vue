@@ -641,95 +641,103 @@ function renderSgxPremiumTemplate(ctx, w, h, s, meta) {
   }
 
   // 2. Calculate 1/3 Screen Proportions for Bottom Watermark
-  const footerBarH = Math.round(105 * s); // White branding bar height
-  const infoPanelH = Math.round(h * 0.26); // Overlay area (~26% of photo height, total ~35% or 1/3 screen)
+  const footerBarH = Math.round(100 * s); // White branding bar height
+  const infoPanelH = Math.round(h * 0.25); // Overlay area height
   const totalWatermarkH = infoPanelH + footerBarH;
   const panelY = h - totalWatermarkH;
 
-  // 3. Mini Map Satellite on the Right Side
+  // 3. Mini Map Satellite on the Right Side (Defined with explicit top & bottom bounds)
   const mapMarginR = Math.round(28 * s);
-  const mapH = Math.min(infoPanelH - (20 * s), Math.round(220 * s));
-  const mapW = Math.round(mapH * 1.05);
+  const mapTopY = panelY + Math.round(12 * s);
+  const mapH = Math.min(infoPanelH - Math.round(24 * s), Math.round(260 * s));
+  const mapW = Math.round(mapH * 1.06);
   const mapX = w - mapW - mapMarginR;
-  const mapY = panelY + Math.round((infoPanelH - mapH) / 2);
+  const mapY = mapTopY;
+  const mapBottomY = mapY + mapH;
 
-  // 4. Left Content Column
+  // 4. Left Content Column (Perfect Top & Bottom Alignment with Map)
   const textMarginL = Math.round(32 * s);
   const maxTextW = mapX - textMarginL - (24 * s);
 
-  let curY = panelY + (72 * s);
+  // A. DIGITAL CLOCK (EXTRA LARGE e.g. 00:14) - Aligned to mapTopY
+  const clockFontS = Math.round(102 * s);
+  const clockBaselineY = mapTopY + Math.round(86 * s);
 
-  // A. DIGITAL CLOCK (EXTRA LARGE e.g. 14:16)
   ctx.save();
-  ctx.font = `900 ${88 * s}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
+  ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+  ctx.shadowBlur = 18 * s;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+  ctx.lineWidth = 8 * s;
+  ctx.strokeText(meta.timeStr, textMarginL, clockBaselineY);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(meta.timeStr, textMarginL, clockBaselineY);
+
+  const timeW = ctx.measureText(meta.timeStr).width;
+
+  // B. VERTICAL GOLD SEPARATOR - Exactly spans clock height
+  const sepX = textMarginL + timeW + (18 * s);
+  const sepH = Math.round(82 * s);
+  const sepTopY = mapTopY + Math.round(6 * s);
+  ctx.fillStyle = '#EAB308';
+  ctx.fillRect(sepX, sepTopY, Math.round(5 * s), sepH);
+
+  // C. DATE (23/08/2026) & DAY NAME (Minggu) - Larger Fonts
+  const dateFontS = Math.round(30 * s);
+  const dayFontS = Math.round(32 * s);
+
+  ctx.font = `800 ${dateFontS}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.strokeText(meta.dateStr, sepX + (16 * s), sepTopY + (30 * s));
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(meta.dateStr, sepX + (16 * s), sepTopY + (30 * s));
+
+  ctx.font = `800 ${dayFontS}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.strokeText(meta.dayName, sepX + (16 * s), sepTopY + (72 * s));
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(meta.dayName, sepX + (16 * s), sepTopY + (72 * s));
+  ctx.restore();
+
+  // D. ADDRESS TEXT (Multi-line with bold drop shadow & larger font)
+  let addrBaselineY = clockBaselineY + Math.round(44 * s);
+  const fullAddress = stampForm.addressText || 'Taba Jemekeh, Kec. Lubuk Linggau Tim. I, Kota Lubuklinggau, Sumatera Selatan 31625';
+  
+  ctx.save();
+  ctx.font = `800 ${Math.round(28 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
   ctx.shadowBlur = 16 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
   ctx.lineWidth = 7 * s;
-  ctx.strokeText(meta.timeStr, textMarginL, curY);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.timeStr, textMarginL, curY);
-
-  const timeW = ctx.measureText(meta.timeStr).width;
-
-  // B. VERTICAL GOLD SEPARATOR
-  const sepX = textMarginL + timeW + (18 * s);
-  const sepTopY = panelY + (8 * s);
-  const sepH = 72 * s;
-  ctx.fillStyle = '#EAB308';
-  ctx.fillRect(sepX, sepTopY, 4.5 * s, sepH);
-
-  // C. DATE (07/08/2026) & DAY NAME (Jumat)
-  ctx.font = `800 ${28 * s}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.strokeText(meta.dateStr, sepX + (16 * s), curY - (40 * s));
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.dateStr, sepX + (16 * s), curY - (40 * s));
-
-  ctx.font = `800 ${30 * s}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.strokeText(meta.dayName, sepX + (16 * s), curY - (4 * s));
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.dayName, sepX + (16 * s), curY - (4 * s));
-  ctx.restore();
-
-  // D. ADDRESS TEXT (Multi-line with bold drop shadow)
-  curY += (44 * s);
-  const fullAddress = stampForm.addressText || 'Taba Jemekeh, Kec. Lubuk Linggau Tim. I, Kota Lubuklinggau, Sumatera Selatan 31625';
-  
-  ctx.save();
-  ctx.font = `800 ${26 * s}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 14 * s;
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
-  ctx.lineWidth = 6 * s;
 
   const addressLines = wrapTextLines(ctx, fullAddress, maxTextW, 2);
   addressLines.forEach((line) => {
-    ctx.strokeText(line, textMarginL, curY);
+    ctx.strokeText(line, textMarginL, addrBaselineY);
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(line, textMarginL, curY);
-    curY += (34 * s);
+    ctx.fillText(line, textMarginL, addrBaselineY);
+    addrBaselineY += Math.round(36 * s);
   });
   ctx.restore();
 
-  // E. DARK COORDINATE PILL BADGE: "Koordinat: -3.293262, 102.895628"
-  curY += (6 * s);
+  // E. DARK COORDINATE PILL BADGE - Perfectly Aligned with mapBottomY
   const coordText = `Koordinat: ${meta.lat}, ${meta.lng}`;
+  const badgeFontS = Math.round(23 * s);
+  const badgeH = Math.round(42 * s);
+  const badgePadX = Math.round(18 * s);
+  const badgeY = mapBottomY - badgeH; // Exactly aligned with bottom of map
+
   ctx.save();
-  ctx.font = `700 ${22 * s}px "Inter", "Segoe UI", monospace, Arial`;
+  ctx.font = `700 ${badgeFontS}px "Inter", "Segoe UI", monospace, Arial`;
   const coordTextW = ctx.measureText(coordText).width;
-  const badgePadX = 16 * s;
-  const badgeH = 38 * s;
 
   // Semi-transparent rounded background pill
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.68)';
   ctx.beginPath();
-  ctx.roundRect(textMarginL, curY, coordTextW + (badgePadX * 2), badgeH, 8 * s);
+  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(8 * s));
   ctx.fill();
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-  ctx.shadowBlur = 8 * s;
-  ctx.fillText(coordText, textMarginL + badgePadX, curY + (26 * s));
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+  ctx.shadowBlur = 10 * s;
+  ctx.fillText(coordText, textMarginL + badgePadX, badgeY + Math.round(29 * s));
   ctx.restore();
 
   // 5. Draw Right Google Mini-Map Satellite
