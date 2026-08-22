@@ -48,7 +48,7 @@ class PublicTrackingController extends Controller
                 ->orWhere('id', is_numeric($normalizedToken) ? (int)$normalizedToken : 0)
                 ->with([
                     'vendor:id,name,code,address',
-                    'area:id,name,code',
+                    'area:id,name',
                     'jobType:id,name,code',
                     'pic:id,name',
                     'checkIns' => function ($q) {
