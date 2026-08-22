@@ -235,148 +235,224 @@
           </div>
         </div>
 
-        <!-- Photo Documentation Gallery -->
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+        <!-- Section: Structured Sub-Tasks & Photo Evidence -->
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 class="font-black text-sm uppercase text-slate-200 tracking-wider flex items-center gap-2">
+              <h3 class="font-black text-sm uppercase text-slate-300 tracking-wider flex items-center gap-2">
                 <Camera class="w-4 h-4 text-purple-400" />
-                <span>Dokumentasi Foto Lapangan</span>
+                <span>Lingkup Sub-Pekerjaan & Evidensi Fisik ({{ displayItems.length }} Item)</span>
               </h3>
-              <p class="text-[11px] text-slate-400">Bukti visual digital dengan enkripsi stempel metadata resmi</p>
+              <p class="text-[11px] text-slate-500">Dokumentasi hasil pengerjaan fisik disusun per sub-lingkup pekerjaan cabang.</p>
             </div>
 
-            <!-- Stage Filter Tabs -->
-            <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+            <!-- Stage Filter -->
+            <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold self-start sm:self-auto">
               <button
-                @click="activeStage = 'ALL'"
+                @click="activeViewMode = 'BY_ITEM'"
                 :class="[
                   'px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-                  activeStage === 'ALL' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  activeViewMode === 'BY_ITEM' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
                 ]"
               >
-                Semua ({{ wo.photos?.length || 0 }})
+                Per Sub-Item
               </button>
               <button
-                @click="activeStage = 'BEFORE'"
+                @click="activeViewMode = 'ALL_PHOTOS'"
                 :class="[
                   'px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-                  activeStage === 'BEFORE' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  activeViewMode === 'ALL_PHOTOS' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
                 ]"
               >
-                Before
-              </button>
-              <button
-                @click="activeStage = 'PROCESS'"
-                :class="[
-                  'px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-                  activeStage === 'PROCESS' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                ]"
-              >
-                Process
-              </button>
-              <button
-                @click="activeStage = 'AFTER'"
-                :class="[
-                  'px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-                  activeStage === 'AFTER' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                ]"
-              >
-                After
+                Semua Foto ({{ wo.photos?.length || 0 }})
               </button>
             </div>
           </div>
 
-          <!-- Photo Grid -->
-          <div v-if="filteredPhotos.length === 0" class="py-12 text-center text-xs text-slate-500">
-            <Camera class="w-8 h-8 mx-auto mb-2 text-slate-700" />
-            <p>Belum ada foto dokumentasi untuk tahap yang dipilih.</p>
-          </div>
-
-          <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <!-- MODE 1: TRIPTYCH SUB-TASK CARDS -->
+          <div v-if="activeViewMode === 'BY_ITEM'" class="space-y-4">
             <div
-              v-for="photo in filteredPhotos"
-              :key="photo.id"
-              class="group relative bg-slate-950 border border-slate-800 hover:border-purple-500/50 rounded-2xl overflow-hidden transition-all duration-300 shadow-md flex flex-col"
+              v-for="(item, itmIdx) in displayItems"
+              :key="item.id || itmIdx"
+              class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4"
             >
-              <!-- Photo Image -->
-              <div class="relative aspect-4/3 overflow-hidden bg-slate-900 cursor-pointer" @click="activeLightboxPhoto = photo">
-                <img
-                  :src="getFileUrl(photo.file_path)"
-                  :alt="`Dokumentasi ${photo.stage}`"
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                  @error="$event.target.src = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500&auto=format&fit=crop&q=60'"
-                />
-
-                <!-- Stage Badge -->
-                <div class="absolute top-2 left-2">
-                  <span
-                    :class="[
-                      'px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-md',
-                      photo.stage === 'BEFORE' ? 'bg-amber-950/90 text-amber-300 border-amber-500/40' :
-                      photo.stage === 'PROCESS' ? 'bg-blue-950/90 text-blue-300 border-blue-500/40' :
-                      'bg-emerald-950/90 text-emerald-300 border-emerald-500/40'
-                    ]"
-                  >
-                    {{ photo.stage }}
+              <!-- Sub-Task Header -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-xl bg-purple-900 text-white font-bold text-xs flex items-center justify-center shadow-md">
+                    {{ itmIdx + 1 }}
                   </span>
+                  <div>
+                    <h4 class="font-black text-slate-100 text-sm sm:text-base">
+                      {{ item.item_name }}
+                    </h4>
+                    <span class="text-[10px] font-mono text-slate-400">Bobot: {{ item.weight_percent || 100 }}%</span>
+                  </div>
                 </div>
 
-                <!-- Hover Overlay Icon -->
-                <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                  <Maximize2 class="w-6 h-6 drop-shadow-md" />
-                </div>
+                <span
+                  :class="[
+                    'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border',
+                    isItemCompleted(item)
+                      ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
+                      : 'bg-amber-950 text-amber-300 border-amber-500/40'
+                  ]"
+                >
+                  {{ isItemCompleted(item) ? 'Evidensi Lengkap ✓' : 'Dalam Pengerjaan ⏳' }}
+                </span>
               </div>
 
-              <!-- Photo Metadata Card -->
-              <div class="p-3 bg-slate-900/90 border-t border-slate-800 text-[11px] space-y-1.5 flex-1 flex flex-col justify-between">
-                <div class="space-y-0.5">
-                  <div class="flex items-center justify-between text-slate-400 font-mono text-[10px]">
-                    <span class="flex items-center gap-1">
-                      <Clock class="w-3 h-3 text-slate-500" />
-                      {{ photo.captured_at || '-' }}
+              <!-- Grid Before / Process / After for this Sub-Task -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- BEFORE -->
+                <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-950 text-amber-300 border border-amber-500/30">
+                      BEFORE
                     </span>
-                    <span v-if="isValidGps(photo.latitude)" class="text-purple-300 font-bold flex items-center gap-1">
-                      <MapPin class="w-3 h-3 text-purple-400" />
-                      <span>{{ Number(photo.latitude).toFixed(4) }}, {{ Number(photo.longitude).toFixed(4) }}</span>
+                    <span class="text-[9px] font-mono text-slate-500">{{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto</span>
+                  </div>
+                  <div v-if="getPhotosForItemStage(item.id, 'BEFORE').length > 0" class="space-y-2">
+                    <div
+                      v-for="p in getPhotosForItemStage(item.id, 'BEFORE')"
+                      :key="p.id"
+                      class="h-32 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                      @click="activeLightboxPhoto = p"
+                    >
+                      <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono">
+                        <span class="text-purple-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="h-24 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-[10px]">
+                    Belum ada foto
+                  </div>
+                </div>
+
+                <!-- PROCESS -->
+                <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-950 text-blue-300 border border-blue-500/30">
+                      PROCESS
                     </span>
-                    <span v-else class="text-purple-400">
-                      GPS ✓
+                    <span class="text-[9px] font-mono text-slate-500">{{ getPhotosForItemStage(item.id, 'PROCESS').length }} Foto</span>
+                  </div>
+                  <div v-if="getPhotosForItemStage(item.id, 'PROCESS').length > 0" class="space-y-2">
+                    <div
+                      v-for="p in getPhotosForItemStage(item.id, 'PROCESS')"
+                      :key="p.id"
+                      class="h-32 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                      @click="activeLightboxPhoto = p"
+                    >
+                      <img :src="getFileUrl(p.file_path)" alt="Process" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono">
+                        <span class="text-purple-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="h-24 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-[10px]">
+                    Belum ada foto
+                  </div>
+                </div>
+
+                <!-- AFTER -->
+                <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/30">
+                      AFTER
+                    </span>
+                    <span class="text-[9px] font-mono text-slate-500">{{ getPhotosForItemStage(item.id, 'AFTER').length }} Foto</span>
+                  </div>
+                  <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="space-y-2">
+                    <div
+                      v-for="p in getPhotosForItemStage(item.id, 'AFTER')"
+                      :key="p.id"
+                      class="h-32 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                      @click="activeLightboxPhoto = p"
+                    >
+                      <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono">
+                        <span class="text-purple-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="h-24 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-[10px]">
+                    Belum ada foto
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODE 2: FLAT PHOTO GRID -->
+          <div v-else class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+            <div v-if="filteredPhotos.length === 0" class="py-12 text-center text-xs text-slate-500">
+              <Camera class="w-8 h-8 mx-auto mb-2 text-slate-700" />
+              <p>Belum ada foto dokumentasi untuk tahap yang dipilih.</p>
+            </div>
+
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div
+                v-for="photo in filteredPhotos"
+                :key="photo.id"
+                class="group relative bg-slate-950 border border-slate-800 hover:border-purple-500/50 rounded-2xl overflow-hidden transition-all duration-300 shadow-md flex flex-col"
+              >
+                <!-- Photo Image -->
+                <div class="relative aspect-4/3 overflow-hidden bg-slate-900 cursor-pointer" @click="activeLightboxPhoto = photo">
+                  <img
+                    :src="getFileUrl(photo.file_path)"
+                    :alt="`Dokumentasi ${photo.stage}`"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    @error="$event.target.src = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500&auto=format&fit=crop&q=60'"
+                  />
+
+                  <!-- Stage Badge -->
+                  <div class="absolute top-2 left-2">
+                    <span
+                      :class="[
+                        'px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-md',
+                        photo.stage === 'BEFORE' ? 'bg-amber-950/90 text-amber-300 border-amber-500/40' :
+                        photo.stage === 'PROCESS' ? 'bg-blue-950/90 text-blue-300 border-blue-500/40' :
+                        'bg-emerald-950/90 text-emerald-300 border-emerald-500/40'
+                      ]"
+                    >
+                      {{ photo.stage }}
                     </span>
                   </div>
-                  <p v-if="photo.notes" class="text-slate-300 line-clamp-2 text-xs pt-1">{{ photo.notes }}</p>
+
+                  <!-- Hover Overlay Icon -->
+                  <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                    <Maximize2 class="w-6 h-6 drop-shadow-md" />
+                  </div>
                 </div>
 
-                <div v-if="photo.file_hash" class="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[9px] font-mono text-slate-500">
-                  <span class="truncate">Hash: {{ photo.file_hash.substring(0, 14) }}...</span>
-                  <span class="text-emerald-400 shrink-0 font-bold">Terverifikasi</span>
+                <!-- Photo Metadata Card -->
+                <div class="p-3 bg-slate-900/90 border-t border-slate-800 text-[11px] space-y-1.5 flex-1 flex flex-col justify-between">
+                  <div class="space-y-0.5">
+                    <div class="flex items-center justify-between text-slate-400 font-mono text-[10px]">
+                      <span class="flex items-center gap-1">
+                        <Clock class="w-3 h-3 text-slate-500" />
+                        {{ photo.captured_at || '-' }}
+                      </span>
+                      <span v-if="isValidGps(photo.latitude)" class="text-purple-300 font-bold flex items-center gap-1">
+                        <MapPin class="w-3 h-3 text-purple-400" />
+                        <span>{{ Number(photo.latitude).toFixed(4) }}, {{ Number(photo.longitude).toFixed(4) }}</span>
+                      </span>
+                      <span v-else class="text-purple-400">
+                        GPS ✓
+                      </span>
+                    </div>
+                    <p v-if="photo.notes" class="text-slate-300 line-clamp-2 text-xs pt-1">{{ photo.notes }}</p>
+                  </div>
+
+                  <div v-if="photo.file_hash" class="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[9px] font-mono text-slate-500">
+                    <span class="truncate">Hash: {{ photo.file_hash.substring(0, 14) }}...</span>
+                    <span class="text-emerald-400 shrink-0 font-bold">Terverifikasi</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Work Order Items List if available -->
-        <div v-if="wo.items && wo.items.length > 0" class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
-          <h3 class="font-black text-sm uppercase text-slate-300 tracking-wider flex items-center gap-2">
-            <CheckSquare class="w-4 h-4 text-purple-400" />
-            <span>Daftar Sub-Pekerjaan & Lingkup Kerja</span>
-          </h3>
-          <div class="divide-y divide-slate-800">
-            <div v-for="item in wo.items" :key="item.id" class="py-2.5 flex items-center justify-between text-xs">
-              <div class="space-y-0.5">
-                <span class="font-bold text-slate-200 block">{{ item.item_name }}</span>
-                <span v-if="item.notes" class="text-[11px] text-slate-400">{{ item.notes }}</span>
-              </div>
-              <span
-                :class="[
-                  'px-2 py-0.5 rounded-md text-[10px] font-bold uppercase',
-                  item.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
-                ]"
-              >
-                {{ item.status }}
-              </span>
             </div>
           </div>
         </div>
@@ -442,11 +518,40 @@ const loading = ref(true);
 const errorMessage = ref('');
 const wo = ref(null);
 const activeStage = ref('ALL');
+const activeViewMode = ref('BY_ITEM'); // 'BY_ITEM' | 'ALL_PHOTOS'
 const activeLightboxPhoto = ref(null);
 
 function isValidGps(val) {
   if (val == null || val === '' || isNaN(Number(val))) return false;
   return Math.abs(Number(val)) > 0.0001;
+}
+
+const displayItems = computed(() => {
+  if (wo.value?.items && wo.value.items.length > 0) {
+    return wo.value.items;
+  }
+  return [{
+    id: null,
+    item_name: wo.value?.title || 'Lingkup Pekerjaan Utama',
+    weight_percent: 100
+  }];
+});
+
+function getPhotosForItemStage(itemId, stage) {
+  const photos = wo.value?.photos || [];
+  return photos.filter(p => {
+    const stageMatch = p.stage === stage;
+    if (!stageMatch) return false;
+    if (itemId) {
+      return p.item_id === itemId || !p.item_id;
+    }
+    return true;
+  });
+}
+
+function isItemCompleted(item) {
+  const afterPhotos = getPhotosForItemStage(item.id, 'AFTER');
+  return afterPhotos.length > 0;
 }
 
 const filteredPhotos = computed(() => {

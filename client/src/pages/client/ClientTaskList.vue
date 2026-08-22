@@ -269,102 +269,19 @@
             </div>
           </div>
 
-          <!-- BEFORE vs AFTER Visual Comparator Card -->
-          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <!-- Sub-Tasks & Visual Evidence Per Sub-Item -->
+          <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
                   <Eye class="w-4 h-4 text-purple-700" />
-                  <span>Perbandingan Visual Sebelum (Before) vs Sesudah (After)</span>
+                  <span>Lingkup Sub-Pekerjaan Toko & Hasil Visual ({{ displayItems.length }} Item)</span>
                 </h4>
-                <p class="text-[11px] text-slate-500">Verifikasi kualitas visual fisik branding dan plang toko cabang secara langsung.</p>
-              </div>
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-200">
-                SPLIT VIEW
-              </span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <!-- Before Photo Box -->
-              <div class="border border-slate-200 rounded-2xl p-3 bg-amber-50/30 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
-                    KONDISI AWAL (BEFORE)
-                  </span>
-                  <span class="text-[10px] font-mono text-slate-400">Sebelum Dikerjakan</span>
-                </div>
-                <div class="h-44 rounded-xl overflow-hidden bg-slate-900 relative">
-                  <img
-                    v-if="beforePhoto"
-                    :src="getFileUrl(beforePhoto.file_path)"
-                    alt="Foto Sebelum"
-                    class="w-full h-full object-cover cursor-pointer hover:scale-105 transition-all"
-                    @click="openLightbox(beforePhoto)"
-                  />
-                  <div v-else class="w-full h-full flex flex-col items-center justify-center text-slate-400 text-xs">
-                    <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
-                    <span>Foto Before Belum Tersedia</span>
-                  </div>
-                </div>
-                <div v-if="beforePhoto" class="text-[10px] space-y-0.5">
-                  <div class="flex items-center justify-between font-mono text-slate-500">
-                    <span class="text-emerald-700 font-bold flex items-center gap-1">
-                      <MapPin class="w-3 h-3 text-emerald-600" />
-                      <span>GPS: {{ beforePhoto.latitude ? `${Number(beforePhoto.latitude).toFixed(5)}, ${Number(beforePhoto.longitude).toFixed(5)}` : 'Terverifikasi' }}</span>
-                    </span>
-                    <span class="text-[9px] text-slate-400">{{ beforePhoto.server_timestamp ? new Date(beforePhoto.server_timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '' }}</span>
-                  </div>
-                  <div class="text-[9px] text-slate-400 font-mono truncate">
-                    SHA-256: {{ beforePhoto.file_hash?.substring(0, 16) }}... ✓
-                  </div>
-                </div>
+                <p class="text-[11px] text-slate-500">Periksa foto kondisi sebelum & hasil pengerjaan pada setiap item pekerjaan cabang toko Anda.</p>
               </div>
 
-              <!-- After Photo Box -->
-              <div class="border border-slate-200 rounded-2xl p-3 bg-emerald-50/30 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-xs">
-                    HASIL AKHIR (AFTER)
-                  </span>
-                  <span class="text-[10px] font-mono text-emerald-700 font-bold">100% Selesai ✓</span>
-                </div>
-                <div class="h-44 rounded-xl overflow-hidden bg-slate-900 relative">
-                  <img
-                    v-if="afterPhoto"
-                    :src="getFileUrl(afterPhoto.file_path)"
-                    alt="Foto Selesai"
-                    class="w-full h-full object-cover cursor-pointer hover:scale-105 transition-all"
-                    @click="openLightbox(afterPhoto)"
-                  />
-                  <div v-else class="w-full h-full flex flex-col items-center justify-center text-slate-400 text-xs">
-                    <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
-                    <span>Foto After Belum Tersedia</span>
-                  </div>
-                </div>
-                <div v-if="afterPhoto" class="text-[10px] space-y-0.5">
-                  <div class="flex items-center justify-between font-mono text-slate-500">
-                    <span class="text-emerald-700 font-bold flex items-center gap-1">
-                      <MapPin class="w-3 h-3 text-emerald-600" />
-                      <span>GPS: {{ afterPhoto.latitude ? `${Number(afterPhoto.latitude).toFixed(5)}, ${Number(afterPhoto.longitude).toFixed(5)}` : 'Terverifikasi' }}</span>
-                    </span>
-                    <span class="text-[9px] text-slate-400">{{ afterPhoto.server_timestamp ? new Date(afterPhoto.server_timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '' }}</span>
-                  </div>
-                  <div class="text-[9px] text-slate-400 font-mono truncate">
-                    SHA-256: {{ afterPhoto.file_hash?.substring(0, 16) }}... ✓
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Complete Photo Evidence Gallery -->
-          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-              <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
-                <Camera class="w-4 h-4 text-purple-700" />
-                <span>Dokumentasi Foto Evidensi Lengkap ({{ selectedOrder.evidence_photos?.length || 0 }} Foto)</span>
-              </h4>
-              <div class="flex items-center gap-2">
+              <!-- Filter Tab for Gallery -->
+              <div class="flex items-center gap-2 self-start sm:self-auto">
                 <button
                   v-if="selectedOrder.evidence_photos && selectedOrder.evidence_photos.length > 0"
                   type="button"
@@ -373,70 +290,134 @@
                   title="Unduh semua foto bukti toko ini"
                 >
                   <Download class="w-3.5 h-3.5" />
-                  <span>Unduh Semua Foto SPK</span>
+                  <span>Unduh Semua Foto ({{ selectedOrder.evidence_photos.length }})</span>
                 </button>
-                <span class="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  SHA-256 CERTIFIED ✓
-                </span>
               </div>
             </div>
 
-            <div v-if="selectedOrder.evidence_photos && selectedOrder.evidence_photos.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- List of Sub-Task Cards with Before vs After Comparison -->
+            <div class="space-y-4">
               <div
-                v-for="(p, pIdx) in selectedOrder.evidence_photos"
-                :key="p.id"
-                @click="openLightbox(p)"
-                class="bg-slate-50 rounded-2xl overflow-hidden p-2 border border-slate-200 hover:border-purple-300 transition-all group cursor-pointer relative shadow-xs"
+                v-for="(item, itmIdx) in displayItems"
+                :key="item.id || itmIdx"
+                class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4"
               >
-                <div class="h-32 rounded-xl overflow-hidden bg-slate-900 relative mb-2">
-                  <img
-                    :src="getFileUrl(p.file_path)"
-                    :alt="`Bukti ${p.stage}`"
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
+                <!-- Sub-Task Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-xl bg-purple-900 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
+                      {{ itmIdx + 1 }}
+                    </span>
+                    <div>
+                      <h5 class="font-black text-slate-900 text-sm">
+                        {{ item.item_name }}
+                      </h5>
+                      <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                        <span class="bg-purple-50 text-purple-900 font-bold px-2 py-0.5 rounded">Bobot: {{ item.weight_percent || 100 }}%</span>
+                        <span>•</span>
+                        <span>Mode: <strong class="text-slate-700">{{ item.doc_mode || selectedOrder.doc_mode }}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+
                   <span
                     :class="[
-                      'absolute top-2 left-2 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider',
-                      p.stage === 'BEFORE' ? 'bg-amber-500 text-white' :
-                      p.stage === 'PROCESS' ? 'bg-indigo-600 text-white' :
-                      'bg-emerald-600 text-white'
+                      'px-3 py-1 rounded-full text-[10px] font-bold border',
+                      isItemFullyDocumented(item)
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        : 'bg-amber-50 text-amber-800 border-amber-300'
                     ]"
                   >
-                    {{ p.stage }} #{{ p.sequence || pIdx + 1 }}
+                    {{ isItemFullyDocumented(item) ? 'Selesai Dikerjakan ✓' : 'Dalam Proses Pengerjaan ⏳' }}
                   </span>
-
-                  <!-- Download button -->
-                  <div class="absolute bottom-1.5 right-1.5 z-10">
-                    <button
-                      type="button"
-                      @click.stop="downloadSinglePhoto(p)"
-                      class="w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/40"
-                      title="Unduh Foto"
-                    >
-                      <Download class="w-3 h-3" />
-                    </button>
-                  </div>
                 </div>
 
-                <div class="px-1 space-y-1">
-                  <div class="flex items-center justify-between text-[9px] font-mono text-slate-500">
-                    <span class="truncate max-w-[110px]">{{ p.uploader_name || 'Tim Lapangan' }}</span>
-                    <span class="text-emerald-700 font-bold">Valid ✓</span>
+                <!-- Before vs After Split Columns for this Sub-Task -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <!-- Before Photo Box -->
+                  <div class="border border-slate-200 rounded-2xl p-3 bg-amber-50/30 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs">
+                        KONDISI AWAL (BEFORE)
+                      </span>
+                      <span class="text-[10px] font-mono text-slate-400">
+                        {{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto
+                      </span>
+                    </div>
+
+                    <div v-if="getPhotosForItemStage(item.id, 'BEFORE').length > 0" class="space-y-2">
+                      <div
+                        v-for="p in getPhotosForItemStage(item.id, 'BEFORE')"
+                        :key="p.id"
+                        class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                        @click="openLightbox(p)"
+                      >
+                        <img
+                          :src="getFileUrl(p.file_path)"
+                          alt="Foto Sebelum"
+                          class="w-full h-full object-cover group-hover:scale-105 transition-all"
+                        />
+                        <button
+                          type="button"
+                          @click.stop="downloadSinglePhoto(p)"
+                          class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                        >
+                          <Download class="w-3 h-3" />
+                        </button>
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
+                          <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="h-36 rounded-xl border border-dashed border-amber-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+                      <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
+                      <span>Foto Before Belum Tersedia</span>
+                    </div>
                   </div>
-                  <div class="text-[9px] font-mono text-purple-900 font-bold flex items-center gap-1 truncate">
-                    <MapPin class="w-3 h-3 text-purple-600 shrink-0" />
-                    <span>{{ p.latitude ? `${Number(p.latitude).toFixed(5)}, ${Number(p.longitude).toFixed(5)}` : 'Lokasi Terdaftar' }}</span>
-                  </div>
-                  <div v-if="p.notes" class="text-[10px] text-slate-700 italic truncate">
-                    "{{ p.notes }}"
+
+                  <!-- After Photo Box -->
+                  <div class="border border-slate-200 rounded-2xl p-3 bg-emerald-50/30 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
+                        HASIL AKHIR (AFTER)
+                      </span>
+                      <span class="text-[10px] font-mono text-emerald-700 font-bold">
+                        {{ getPhotosForItemStage(item.id, 'AFTER').length > 0 ? 'Selesai ✓' : 'Menunggu' }}
+                      </span>
+                    </div>
+
+                    <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="space-y-2">
+                      <div
+                        v-for="p in getPhotosForItemStage(item.id, 'AFTER')"
+                        :key="p.id"
+                        class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                        @click="openLightbox(p)"
+                      >
+                        <img
+                          :src="getFileUrl(p.file_path)"
+                          alt="Foto Selesai"
+                          class="w-full h-full object-cover group-hover:scale-105 transition-all"
+                        />
+                        <button
+                          type="button"
+                          @click.stop="downloadSinglePhoto(p)"
+                          class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                        >
+                          <Download class="w-3 h-3" />
+                        </button>
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
+                          <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="h-36 rounded-xl border border-dashed border-emerald-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+                      <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
+                      <span>Foto After Belum Tersedia</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <p v-else class="text-slate-400 text-xs italic text-center py-6">
-              Foto dokumentasi akan muncul otomatis saat teknisi mengunggah bukti dari toko.
-            </p>
           </div>
 
           <!-- Field Issues Log Card if any -->
@@ -658,6 +639,40 @@ const filteredOrders = computed(() => {
     return true;
   });
 });
+
+const displayItems = computed(() => {
+  if (selectedOrder.value?.items && selectedOrder.value.items.length > 0) {
+    return selectedOrder.value.items;
+  }
+  return [{
+    id: null,
+    item_name: selectedOrder.value?.title || 'Lingkup Pekerjaan Toko',
+    doc_mode: selectedOrder.value?.doc_mode || 'BEFORE_PROCESS_AFTER',
+    weight_percent: 100
+  }];
+});
+
+function getPhotosForItemStage(itemId, stage) {
+  const photos = selectedOrder.value?.evidence_photos || [];
+  return photos.filter(p => {
+    const stageMatch = p.stage === stage;
+    if (!stageMatch) return false;
+    if (itemId) {
+      return p.item_id === itemId || !p.item_id;
+    }
+    return true;
+  });
+}
+
+function isItemFullyDocumented(item) {
+  const docMode = item.doc_mode || selectedOrder.value?.doc_mode || 'BEFORE_PROCESS_AFTER';
+  const afterPhotos = getPhotosForItemStage(item.id, 'AFTER');
+  if (docMode === 'AFTER_ONLY') {
+    return afterPhotos.length > 0;
+  }
+  const beforePhotos = getPhotosForItemStage(item.id, 'BEFORE');
+  return beforePhotos.length > 0 && afterPhotos.length > 0;
+}
 
 const beforePhoto = computed(() => {
   return selectedOrder.value?.evidence_photos?.find(p => p.stage === 'BEFORE') || null;

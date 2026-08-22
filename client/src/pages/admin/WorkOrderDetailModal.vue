@@ -332,70 +332,268 @@
             <p v-else class="text-slate-400 text-xs italic">Tidak ada catatan kendala teknis untuk pekerjaan cabang ini (Pekerjaan berjalan lancar).</p>
           </div>
 
-          <!-- Photo Evidence Section -->
-          <div class="space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h4 class="font-bold text-slate-900 flex items-center gap-2">
-                <Camera class="w-4 h-4 text-brand-600" />
-                <span>Dokumentasi Foto Evidence Terunggah ({{ workOrder.evidence_photos?.length || 0 }} Foto)</span>
-              </h4>
-              <button
-                v-if="workOrder.evidence_photos && workOrder.evidence_photos.length > 0"
-                type="button"
-                @click="downloadAllPhotos"
-                class="px-3 py-1.5 bg-gradient-to-r from-purple-800 to-indigo-600 hover:from-purple-700 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer self-start sm:self-auto"
-                title="Unduh semua foto bukti SPK ini"
-              >
-                <Download class="w-3.5 h-3.5" />
-                <span>Unduh Semua Foto SPK</span>
-              </button>
+          <!-- Sub-Tasks & Grouped Photo Evidence Section -->
+          <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                  <CheckSquare class="w-4 h-4 text-purple-700" />
+                  <span>Lingkup Sub-Pekerjaan & Evidensi Fisik ({{ displayItems.length }} Item)</span>
+                </h4>
+                <p class="text-[11px] text-slate-500">Dokumentasi foto disusun dan dikelompokkan secara terstruktur per sub-lingkup pekerjaan.</p>
+              </div>
+
+              <div class="flex items-center gap-2 self-start sm:self-auto">
+                <!-- Toggle View Mode: By Item vs All Stages -->
+                <div class="bg-slate-200/80 p-0.5 rounded-xl flex items-center text-[10px] font-bold">
+                  <button
+                    type="button"
+                    @click="photoViewMode = 'BY_ITEM'"
+                    :class="[
+                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
+                      photoViewMode === 'BY_ITEM' ? 'bg-white text-purple-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                    ]"
+                  >
+                    Per Sub-Item
+                  </button>
+                  <button
+                    type="button"
+                    @click="photoViewMode = 'ALL_STAGES'"
+                    :class="[
+                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
+                      photoViewMode === 'ALL_STAGES' ? 'bg-white text-purple-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                    ]"
+                  >
+                    Semua Tahap
+                  </button>
+                </div>
+
+                <button
+                  v-if="workOrder.evidence_photos && workOrder.evidence_photos.length > 0"
+                  type="button"
+                  @click="downloadAllPhotos"
+                  class="px-3 py-1.5 bg-gradient-to-r from-purple-800 to-indigo-600 hover:from-purple-700 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  title="Unduh semua foto bukti SPK ini"
+                >
+                  <Download class="w-3.5 h-3.5" />
+                  <span class="hidden sm:inline">Unduh Semua Foto</span>
+                </button>
+              </div>
             </div>
 
-            <template v-for="stage in ['BEFORE', 'PROCESS', 'AFTER', 'ISSUE']" :key="stage">
+            <!-- MODE 1: STRUCTURED SUB-TASK TRIPTYCH CARDS (Per Sub-Pekerjaan) -->
+            <div v-if="photoViewMode === 'BY_ITEM'" class="space-y-4">
               <div
-                v-if="!(workOrder.evidence_photos?.filter(p => p.stage === stage).length === 0 && workOrder.doc_mode === 'AFTER_ONLY' && stage !== 'AFTER')"
-                class="glass-card rounded-2xl p-3.5 border border-white/70"
+                v-for="(item, itmIdx) in displayItems"
+                :key="item.id || itmIdx"
+                class="glass-card rounded-2xl p-4 sm:p-5 border border-white/80 space-y-3.5 shadow-xs"
               >
-                <div class="font-bold text-xs text-slate-800 mb-2.5 flex items-center justify-between">
-                  <span>TAHAP: {{ stage }}</span>
-                  <span class="text-slate-400 font-normal">({{ workOrder.evidence_photos?.filter(p => p.stage === stage).length || 0 }} foto)</span>
-                </div>
-                <div
-                  v-if="workOrder.evidence_photos?.filter(p => p.stage === stage).length > 0"
-                  class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"
-                >
-                  <div
-                    v-for="(p, pIdx) in workOrder.evidence_photos.filter(p => p.stage === stage)"
-                    :key="p.id"
-                    @click="openLightbox(p)"
-                    class="bg-slate-900 rounded-xl overflow-hidden p-1 shadow-xs group relative cursor-pointer hover:shadow-md transition-all"
-                  >
-                    <img
-                      :src="getFileUrl(p.file_path)"
-                      :alt="p.file_name"
-                      class="w-full h-24 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
-                      @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=400&auto=format&fit=crop&q=60'"
-                    />
+                <!-- Sub-Task Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-6 h-6 rounded-lg bg-purple-900 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                      {{ itmIdx + 1 }}
+                    </span>
+                    <div>
+                      <h5 class="font-black text-slate-900 text-xs sm:text-sm">
+                        {{ item.item_name }}
+                      </h5>
+                      <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                        <span class="bg-slate-100 px-1.5 py-0.5 rounded font-mono">Bobot: {{ item.weight_percent || 100 }}%</span>
+                        <span>•</span>
+                        <span>Mode: <strong class="text-purple-900">{{ item.doc_mode || workOrder.doc_mode }}</strong></span>
+                      </div>
+                    </div>
+                  </div>
 
-                    <!-- Corner Download Button (Bottom-Right) -->
-                    <button
-                      type="button"
-                      @click.stop="downloadSinglePhoto(p)"
-                      class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/40 backdrop-blur-xs z-10"
-                      title="Unduh Foto Resolusi Asli"
+                  <!-- Item Completeness Status Badge -->
+                  <div class="flex items-center gap-2">
+                    <span
+                      :class="[
+                        'px-2.5 py-1 rounded-full text-[10px] font-bold border',
+                        isItemFullyDocumented(item)
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                          : 'bg-amber-50 text-amber-800 border-amber-300'
+                      ]"
                     >
-                      <Download class="w-3 h-3" />
-                    </button>
+                      {{ isItemFullyDocumented(item) ? 'Evidensi Lengkap ✓' : 'Dalam Pengerjaan ⏳' }}
+                    </span>
+                  </div>
+                </div>
 
-                    <div class="p-1.5 text-[10px] text-white">
-                      <div class="font-bold truncate">Foto #{{ p.sequence || pIdx + 1 }}</div>
-                      <div class="text-[8px] font-mono text-emerald-400 truncate">SHA-256: {{ p.file_hash?.substring(0, 10) }}...</div>
+                <!-- Triptych Grid: BEFORE, PROCESS, AFTER Columns for this Sub-Task -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <!-- BEFORE Column -->
+                  <div class="p-3 bg-amber-50/40 rounded-xl border border-amber-200/70 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs">
+                        KONDISI AWAL (BEFORE)
+                      </span>
+                      <span class="text-[9px] font-mono text-slate-400">
+                        {{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto
+                      </span>
+                    </div>
+
+                    <div v-if="getPhotosForItemStage(item.id, 'BEFORE').length > 0" class="space-y-2">
+                      <div
+                        v-for="(p, pIdx) in getPhotosForItemStage(item.id, 'BEFORE')"
+                        :key="p.id"
+                        @click="openLightbox(p)"
+                        class="h-32 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs border border-white/60"
+                      >
+                        <img
+                          :src="getFileUrl(p.file_path)"
+                          alt="Foto Before"
+                          class="w-full h-full object-cover group-hover:scale-105 transition-all"
+                        />
+                        <button
+                          type="button"
+                          @click.stop="downloadSinglePhoto(p)"
+                          class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                        >
+                          <Download class="w-3 h-3" />
+                        </button>
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
+                          <div class="truncate text-emerald-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="h-28 rounded-lg border-2 border-dashed border-amber-200/80 flex flex-col items-center justify-center text-slate-400 text-[10px] text-center p-2">
+                      <span>Belum ada foto Before</span>
+                    </div>
+                  </div>
+
+                  <!-- PROCESS Column -->
+                  <div class="p-3 bg-blue-50/40 rounded-xl border border-blue-200/70 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-2xs">
+                        PROSES KERJA (PROCESS)
+                      </span>
+                      <span class="text-[9px] font-mono text-slate-400">
+                        {{ getPhotosForItemStage(item.id, 'PROCESS').length }} Foto
+                      </span>
+                    </div>
+
+                    <div v-if="getPhotosForItemStage(item.id, 'PROCESS').length > 0" class="space-y-2">
+                      <div
+                        v-for="(p, pIdx) in getPhotosForItemStage(item.id, 'PROCESS')"
+                        :key="p.id"
+                        @click="openLightbox(p)"
+                        class="h-32 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs border border-white/60"
+                      >
+                        <img
+                          :src="getFileUrl(p.file_path)"
+                          alt="Foto Process"
+                          class="w-full h-full object-cover group-hover:scale-105 transition-all"
+                        />
+                        <button
+                          type="button"
+                          @click.stop="downloadSinglePhoto(p)"
+                          class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                        >
+                          <Download class="w-3 h-3" />
+                        </button>
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
+                          <div class="truncate text-emerald-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="h-28 rounded-lg border-2 border-dashed border-blue-200/80 flex flex-col items-center justify-center text-slate-400 text-[10px] text-center p-2">
+                      <span>{{ item.doc_mode === 'AFTER_ONLY' ? 'Mode Hanya Foto Selesai' : 'Belum ada foto Process' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- AFTER Column -->
+                  <div class="p-3 bg-emerald-50/40 rounded-xl border border-emerald-200/70 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
+                        HASIL AKHIR (AFTER)
+                      </span>
+                      <span class="text-[9px] font-mono text-slate-400">
+                        {{ getPhotosForItemStage(item.id, 'AFTER').length }} Foto
+                      </span>
+                    </div>
+
+                    <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="space-y-2">
+                      <div
+                        v-for="(p, pIdx) in getPhotosForItemStage(item.id, 'AFTER')"
+                        :key="p.id"
+                        @click="openLightbox(p)"
+                        class="h-32 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs border border-white/60"
+                      >
+                        <img
+                          :src="getFileUrl(p.file_path)"
+                          alt="Foto After"
+                          class="w-full h-full object-cover group-hover:scale-105 transition-all"
+                        />
+                        <button
+                          type="button"
+                          @click.stop="downloadSinglePhoto(p)"
+                          class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                        >
+                          <Download class="w-3 h-3" />
+                        </button>
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
+                          <div class="truncate text-emerald-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="h-28 rounded-lg border-2 border-dashed border-emerald-200/80 flex flex-col items-center justify-center text-slate-400 text-[10px] text-center p-2">
+                      <span>Belum ada foto After</span>
                     </div>
                   </div>
                 </div>
-                <div v-else class="text-slate-400 text-xs italic">Belum ada foto pada tahap {{ stage }}.</div>
               </div>
-            </template>
+            </div>
+
+            <!-- MODE 2: FLAT STAGE VIEW (Semua Tahap) -->
+            <div v-else class="space-y-3">
+              <template v-for="stage in ['BEFORE', 'PROCESS', 'AFTER', 'ISSUE']" :key="stage">
+                <div
+                  v-if="!(workOrder.evidence_photos?.filter(p => p.stage === stage).length === 0 && workOrder.doc_mode === 'AFTER_ONLY' && stage !== 'AFTER')"
+                  class="glass-card rounded-2xl p-3.5 border border-white/70"
+                >
+                  <div class="font-bold text-xs text-slate-800 mb-2.5 flex items-center justify-between">
+                    <span>TAHAP: {{ stage }}</span>
+                    <span class="text-slate-400 font-normal">({{ workOrder.evidence_photos?.filter(p => p.stage === stage).length || 0 }} foto)</span>
+                  </div>
+                  <div
+                    v-if="workOrder.evidence_photos?.filter(p => p.stage === stage).length > 0"
+                    class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"
+                  >
+                    <div
+                      v-for="(p, pIdx) in workOrder.evidence_photos.filter(p => p.stage === stage)"
+                      :key="p.id"
+                      @click="openLightbox(p)"
+                      class="bg-slate-900 rounded-xl overflow-hidden p-1 shadow-xs group relative cursor-pointer hover:shadow-md transition-all"
+                    >
+                      <img
+                        :src="getFileUrl(p.file_path)"
+                        :alt="p.file_name"
+                        class="w-full h-24 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                        @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=400&auto=format&fit=crop&q=60'"
+                      />
+
+                      <!-- Corner Download Button (Bottom-Right) -->
+                      <button
+                        type="button"
+                        @click.stop="downloadSinglePhoto(p)"
+                        class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/40 backdrop-blur-xs z-10"
+                        title="Unduh Foto Resolusi Asli"
+                      >
+                        <Download class="w-3 h-3" />
+                      </button>
+
+                      <div class="p-1.5 text-[10px] text-white">
+                        <div class="font-bold truncate">Foto #{{ p.sequence || pIdx + 1 }}</div>
+                        <div class="text-[8px] font-mono text-emerald-400 truncate">SHA-256: {{ p.file_hash?.substring(0, 10) }}...</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="text-slate-400 text-xs italic">Belum ada foto pada tahap {{ stage }}.</div>
+                </div>
+              </template>
+            </div>
           </div>
         </template>
       </div>
@@ -447,7 +645,8 @@ import {
   Download,
   Pencil,
   Check,
-  Share2
+  Share2,
+  CheckSquare
 } from 'lucide-vue-next';
 
 const auth = useAuth();
@@ -455,6 +654,7 @@ const isSupervisor = computed(() => ['SUPERUSER', 'SUPERVISOR'].includes(auth.st
 const canViewFinancial = computed(() => ['SUPERUSER', 'SUPERVISOR', 'ADMIN'].includes(auth.state.user?.role));
 const isEditModalOpen = ref(false);
 const showShareModal = ref(false);
+const photoViewMode = ref('BY_ITEM'); // 'BY_ITEM' | 'ALL_STAGES'
 
 const props = defineProps({
   workOrderId: {
@@ -471,6 +671,40 @@ const loading = ref(true);
 const assigning = ref(false);
 const selectedPic = ref('');
 const selectedMembers = ref([]);
+
+const displayItems = computed(() => {
+  if (workOrder.value?.items && workOrder.value.items.length > 0) {
+    return workOrder.value.items;
+  }
+  return [{
+    id: null,
+    item_name: workOrder.value?.title || 'Lingkup Pekerjaan Utama',
+    doc_mode: workOrder.value?.doc_mode || 'BEFORE_PROCESS_AFTER',
+    weight_percent: 100
+  }];
+});
+
+function getPhotosForItemStage(itemId, stage) {
+  const photos = workOrder.value?.evidence_photos || [];
+  return photos.filter(p => {
+    const stageMatch = p.stage === stage;
+    if (!stageMatch) return false;
+    if (itemId) {
+      return p.item_id === itemId || !p.item_id;
+    }
+    return true;
+  });
+}
+
+function isItemFullyDocumented(item) {
+  const docMode = item.doc_mode || workOrder.value?.doc_mode || 'BEFORE_PROCESS_AFTER';
+  const afterPhotos = getPhotosForItemStage(item.id, 'AFTER');
+  if (docMode === 'AFTER_ONLY') {
+    return afterPhotos.length > 0;
+  }
+  const beforePhotos = getPhotosForItemStage(item.id, 'BEFORE');
+  return beforePhotos.length > 0 && afterPhotos.length > 0;
+}
 
 async function onSpkUpdated(updatedData) {
   await loadDetail();
