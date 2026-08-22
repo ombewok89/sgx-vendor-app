@@ -72,6 +72,7 @@ export const api = {
   },
   uploadEvidence: (formData) => request('/evidence/upload', { method: 'POST', body: formData }),
   deleteEvidencePhoto: (id) => request(`/evidence/photos/${id}`, { method: 'DELETE' }),
+  bulkDeleteEvidencePhotos: (photoIds) => request('/evidence/photos/bulk-delete', { method: 'POST', body: JSON.stringify({ photo_ids: photoIds }) }),
   getFieldIssues: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/evidence/issues${qs ? `?${qs}` : ''}`);

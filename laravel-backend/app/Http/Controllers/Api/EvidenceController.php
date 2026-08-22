@@ -173,22 +173,34 @@ class EvidenceController extends Controller
     public function deletePhoto(Request $request, $id)
     {
         $user = $request->user();
-        $photo = EvidencePhoto::findOrFail($id);
-
-        // Security check: Only uploader or admin can delete
-        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN']) && $photo->user_id !== $user->id) {
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Akses Ditolak: Anda tidak memiliki izin untuk menghapus foto ini.',
+                'message' => 'Akses Ditolak: Hanya Superuser dan Administrator yang berwenang menghapus foto bukti forensik.',
             ], 403);
+        }
+
+        $photo = EvidencePhoto::with('workOrder')->findOrFail($id);
+        $workOrder = $photo->workOrder;
+
+        // Guardrail: Jika SPK sudah BA_OPNAME dan bukan Superuser, cegah kerusakan Berita Acara
+        if ($workOrder && in_array($workOrder->status, ['BA_OPNAME', 'APPROVED']) && !$user->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => "Peringatan: SPK {$workOrder->spk_number} telah disetujui / diterbitkan Berita Acara (BA). Foto ini terkunci untuk menjaga keabsahan dokumen.",
+            ], 422);
         }
 
         // Delete physical file
         $relativeDiskPath = str_replace('/storage/', '', $photo->file_path);
         Storage::disk('public')->delete($relativeDiskPath);
 
-        $workOrder = $photo->workOrder;
-        AuditService::log($user, 'DELETE_PHOTO', 'EVIDENCE_PHOTO', $photo->id, $photo->toArray());
+        AuditService::log($user, 'DELETE_PHOTO', 'EVIDENCE_PHOTO', $photo->id, null, [
+            'file_name' => $photo->file_name,
+            'stage' => $photo->stage,
+            'spk_number' => $workOrder?->spk_number,
+        ]);
+
         $photo->delete();
 
         if ($workOrder) {
@@ -197,7 +209,69 @@ class EvidenceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Foto bukti berhasil dihapus.',
+            'message' => 'Foto bukti forensik berhasil dihapus dari sistem.',
+        ]);
+    }
+
+    public function bulkDeletePhotos(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser dan Administrator yang berwenang menghapus foto bukti secara massal.',
+            ], 403);
+        }
+
+        $request->validate([
+            'photo_ids' => 'required|array|min:1',
+            'photo_ids.*' => 'integer|exists:evidence_photos,id',
+        ]);
+
+        $photoIds = $request->photo_ids;
+        $photos = EvidencePhoto::with('workOrder')->whereIn('id', $photoIds)->get();
+
+        $deletedCount = 0;
+        $affectedWorkOrders = [];
+
+        foreach ($photos as $photo) {
+            $workOrder = $photo->workOrder;
+
+            // Guardrail: Skip foto yang SPK-nya sudah BA_OPNAME jika bukan Superuser
+            if ($workOrder && in_array($workOrder->status, ['BA_OPNAME', 'APPROVED']) && !$user->hasRole('SUPERUSER')) {
+                continue;
+            }
+
+            // Hapus file fisik
+            $relativeDiskPath = str_replace('/storage/', '', $photo->file_path);
+            Storage::disk('public')->delete($relativeDiskPath);
+
+            if ($workOrder && !in_array($workOrder->id, $affectedWorkOrders)) {
+                $affectedWorkOrders[] = $workOrder->id;
+            }
+
+            AuditService::log($user, 'BULK_DELETE_PHOTO', 'EVIDENCE_PHOTO', $photo->id, null, [
+                'file_name' => $photo->file_name,
+                'stage' => $photo->stage,
+                'spk_number' => $workOrder?->spk_number,
+            ]);
+
+            $photo->delete();
+            $deletedCount++;
+        }
+
+        // Recalculate progress untuk semua SPK terkait
+        foreach ($affectedWorkOrders as $woId) {
+            $wo = WorkOrder::find($woId);
+            if ($wo) {
+                \App\Services\WorkOrderService::recalculateProgress($wo);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Sebanyak {$deletedCount} foto bukti berhasil dihapus secara permanen.",
+            'deleted_count' => $deletedCount,
         ]);
     }
 

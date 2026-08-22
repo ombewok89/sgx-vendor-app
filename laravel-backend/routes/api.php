@@ -177,6 +177,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/evidence/upload', [EvidenceController::class, 'upload']);
     Route::get('/evidence/photos', [EvidenceController::class, 'gallery']);
     Route::delete('/evidence/photos/{id}', [EvidenceController::class, 'deletePhoto']);
+    Route::post('/evidence/photos/bulk-delete', [EvidenceController::class, 'bulkDeletePhotos']);
     Route::get('/evidence/issues', [EvidenceController::class, 'issuesList']);
     Route::post('/evidence/issues', [EvidenceController::class, 'reportIssue']);
     Route::post('/evidence/issues/{id}/resolve', [EvidenceController::class, 'resolveIssue']);

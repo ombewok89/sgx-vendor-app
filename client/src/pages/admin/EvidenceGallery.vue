@@ -14,12 +14,23 @@
         </p>
       </div>
 
-      <!-- Quick Summary Badges & Bulk Download -->
-      <div class="flex items-center gap-2 self-start sm:self-auto">
+      <!-- Quick Summary Badges, Select All Toggle & Bulk Download -->
+      <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+        <button
+          v-if="canManagePhotos && filteredPhotos.length > 0"
+          type="button"
+          @click="toggleSelectAll"
+          class="px-3 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+        >
+          <CheckSquare :class="['w-3.5 h-3.5', isAllSelected ? 'text-purple-700' : 'text-slate-400']" />
+          <span>{{ isAllSelected ? 'Batalkan Pilih Semua' : 'Pilih Semua' }}</span>
+        </button>
+
         <span class="px-3 py-1 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span>{{ filteredPhotos.length }} Foto Terverifikasi</span>
         </span>
+
         <button
           v-if="filteredPhotos.length > 0"
           type="button"
@@ -94,7 +105,10 @@
       <div
         v-for="photo in filteredPhotos"
         :key="photo.id"
-        class="glass-card rounded-2xl border border-white/80 shadow-glass overflow-hidden flex flex-col justify-between hover:shadow-lg hover:border-purple-300 transition-all duration-300 group cursor-pointer"
+        :class="[
+          'glass-card rounded-2xl border shadow-glass overflow-hidden flex flex-col justify-between hover:shadow-lg transition-all duration-300 group cursor-pointer relative',
+          isSelected(photo.id) ? 'ring-2 ring-purple-600 border-purple-400 bg-purple-50/20' : 'border-white/80 hover:border-purple-300'
+        ]"
         @click="openLightbox(photo)"
       >
         <div>
@@ -107,8 +121,18 @@
               @error="handleImageError($event, photo)"
             />
 
+            <!-- Checkbox Select Overlay (Top-Left) -->
+            <div v-if="canManagePhotos" class="absolute top-2 left-2 z-20" @click.stop>
+              <input
+                type="checkbox"
+                :checked="isSelected(photo.id)"
+                @change="toggleSelect(photo.id)"
+                class="w-4 h-4 rounded border-slate-300 text-purple-700 focus:ring-purple-500 cursor-pointer shadow-md bg-white/90"
+              />
+            </div>
+
             <!-- Stage Badge -->
-            <div class="absolute top-2 left-2">
+            <div class="absolute top-2" :class="canManagePhotos ? 'left-8' : 'left-2'">
               <span
                 :class="[
                   'px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-xs',
@@ -130,8 +154,20 @@
               </span>
             </div>
 
-            <!-- DYNAMIC FLOATING CORNER DOWNLOAD BUTTON (Bottom-Right) -->
-            <div class="absolute bottom-2 right-2 z-10">
+            <!-- DYNAMIC FLOATING CORNER BUTTONS (Download & Delete) -->
+            <div class="absolute bottom-2 right-2 z-10 flex items-center gap-1.5" @click.stop>
+              <!-- Single Delete Button (Superuser / Admin) -->
+              <button
+                v-if="canManagePhotos"
+                type="button"
+                @click.stop="handleDeleteSingle(photo)"
+                class="w-7 h-7 rounded-full bg-rose-600/90 hover:bg-rose-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/40 backdrop-blur-xs"
+                title="Hapus Foto Bukti Ini"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
+              </button>
+
+              <!-- Single Download Button -->
               <button
                 type="button"
                 @click.stop="downloadSinglePhoto(photo)"
@@ -143,7 +179,7 @@
             </div>
 
             <!-- Hover Quick View Overlay -->
-            <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1.5 font-bold text-xs">
+            <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1.5 font-bold text-xs pointer-events-none">
               <Eye class="w-4 h-4" />
               <span>Lihat Foto & Forensik</span>
             </div>
@@ -160,7 +196,7 @@
                 {{ photo.work_order_title }}
               </h4>
               <p class="text-[11px] text-slate-500 truncate mt-0.5 flex items-center gap-1">
-                <MapPin class="w-3 h-3 text-slate-400 shrink-0" />
+                <MapPin class="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <span>{{ photo.location_name }}</span>
               </p>
             </div>
@@ -180,6 +216,53 @@
       </div>
     </div>
 
+    <!-- Floating Bulk Actions Bottom Bar -->
+    <Teleport to="body">
+      <div
+        v-if="selectedPhotoIds.length > 0"
+        class="fixed bottom-6 inset-x-0 z-40 flex justify-center px-4 animate-slide-up"
+      >
+        <div class="bg-slate-900/95 text-white backdrop-blur-md rounded-2xl p-3 sm:px-6 sm:py-3.5 shadow-2xl border border-slate-700 flex flex-wrap items-center justify-between gap-4 max-w-2xl w-full text-xs">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-purple-600 text-white font-bold flex items-center justify-center text-xs">
+              {{ selectedPhotoIds.length }}
+            </span>
+            <span class="font-bold text-slate-200">Foto Terpilih</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="downloadSelectedPhotos"
+              class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl flex items-center gap-1.5 border border-slate-600 transition-all cursor-pointer"
+            >
+              <Download class="w-3.5 h-3.5" />
+              <span>Unduh ({{ selectedPhotoIds.length }})</span>
+            </button>
+
+            <button
+              type="button"
+              @click="handleBulkDelete"
+              :disabled="deleting"
+              class="px-4 py-1.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+              <span>{{ deleting ? 'Menghapus...' : `Hapus Terpilih (${selectedPhotoIds.length})` }}</span>
+            </button>
+
+            <button
+              type="button"
+              @click="selectedPhotoIds = []"
+              class="p-1.5 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white cursor-pointer transition-all"
+              title="Batalkan Pilihan"
+            >
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- High-Res Full-Screen Lightbox Modal -->
     <PhotoLightboxModal
       :isOpen="isLightboxOpen"
@@ -193,6 +276,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { api, getFileUrl } from '../../services/api';
+import { useAuth } from '../../composables/useAuth';
 import PhotoLightboxModal from '../../components/PhotoLightboxModal.vue';
 import {
   Camera,
@@ -201,16 +285,24 @@ import {
   ShieldCheck,
   Eye,
   Download,
-  ImageIcon
+  ImageIcon,
+  Trash2,
+  CheckSquare,
+  X
 } from 'lucide-vue-next';
+
+const auth = useAuth();
+const canManagePhotos = computed(() => ['SUPERUSER', 'ADMIN'].includes(auth.state.user?.role));
 
 const photos = ref([]);
 const vendors = ref([]);
 const loading = ref(true);
+const deleting = ref(false);
 
 const selectedStage = ref('ALL');
 const selectedVendor = ref('');
 const searchQuery = ref('');
+const selectedPhotoIds = ref([]);
 
 const isLightboxOpen = ref(false);
 const selectedLightboxIndex = ref(0);
@@ -261,6 +353,79 @@ const filteredPhotos = computed(() => {
   });
 });
 
+// Selection System
+function isSelected(id) {
+  return selectedPhotoIds.value.includes(id);
+}
+
+function toggleSelect(id) {
+  const index = selectedPhotoIds.value.indexOf(id);
+  if (index >= 0) {
+    selectedPhotoIds.value.splice(index, 1);
+  } else {
+    selectedPhotoIds.value.push(id);
+  }
+}
+
+const isAllSelected = computed(() => {
+  if (filteredPhotos.value.length === 0) return false;
+  return filteredPhotos.value.every(p => selectedPhotoIds.value.includes(p.id));
+});
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    const filteredIds = filteredPhotos.value.map(p => p.id);
+    selectedPhotoIds.value = selectedPhotoIds.value.filter(id => !filteredIds.includes(id));
+  } else {
+    const newSelected = new Set([...selectedPhotoIds.value, ...filteredPhotos.value.map(p => p.id)]);
+    selectedPhotoIds.value = Array.from(newSelected);
+  }
+}
+
+// Single Delete
+async function handleDeleteSingle(photo) {
+  if (!confirm(`Hapus foto bukti forensik ini (#${photo.id} - ${photo.stage} SPK ${photo.spk_number || ''}) secara permanen?`)) {
+    return;
+  }
+
+  try {
+    const res = await api.deleteEvidencePhoto(photo.id);
+    if (res.success) {
+      alert(res.message || 'Foto bukti berhasil dihapus.');
+      selectedPhotoIds.value = selectedPhotoIds.value.filter(id => id !== photo.id);
+      await loadData();
+    }
+  } catch (err) {
+    console.error('Failed to delete evidence photo:', err);
+    alert('Gagal menghapus foto: ' + (err.message || 'Terjadi kesalahan'));
+  }
+}
+
+// Bulk Delete
+async function handleBulkDelete() {
+  const count = selectedPhotoIds.value.length;
+  if (count === 0) return;
+
+  if (!confirm(`PERINGATAN: Anda akan menghapus ${count} foto bukti forensik terpilih secara permanen.\n\nApakah Anda yakin ingin melanjutkan?`)) {
+    return;
+  }
+
+  deleting.value = true;
+  try {
+    const res = await api.bulkDeleteEvidencePhotos(selectedPhotoIds.value);
+    if (res.success) {
+      alert(res.message || `${count} foto bukti berhasil dihapus.`);
+      selectedPhotoIds.value = [];
+      await loadData();
+    }
+  } catch (err) {
+    console.error('Failed to bulk delete evidence photos:', err);
+    alert('Gagal menghapus foto: ' + (err.message || 'Terjadi kesalahan'));
+  } finally {
+    deleting.value = false;
+  }
+}
+
 function openLightbox(photo) {
   const idx = filteredPhotos.value.findIndex(p => p.id === photo.id);
   selectedLightboxIndex.value = idx >= 0 ? idx : 0;
@@ -287,6 +452,17 @@ function downloadFilteredPhotos() {
   }
 
   filteredPhotos.value.forEach((p, idx) => {
+    setTimeout(() => {
+      downloadSinglePhoto(p);
+    }, idx * 250);
+  });
+}
+
+function downloadSelectedPhotos() {
+  const selected = photos.value.filter(p => selectedPhotoIds.value.includes(p.id));
+  if (selected.length === 0) return;
+
+  selected.forEach((p, idx) => {
     setTimeout(() => {
       downloadSinglePhoto(p);
     }, idx * 250);
