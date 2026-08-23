@@ -320,15 +320,33 @@ function goBackHome() {
   window.location.href = '/';
 }
 
-// 1. Geolocation Handling
-async function refreshGps() {
+let gpsWatchId = null;
+
+// 1. Geolocation Handling: Two-Pass Fast-Lock & Continuous Watcher
+async function initFastGpsLock() {
+  // Pass 0: Instant Cache from Local Storage (0 ms)
+  try {
+    const cachedGps = localStorage.getItem('sgx_last_gps');
+    const cachedAddr = localStorage.getItem('sgx_last_address');
+    if (cachedGps && !gpsLocation.value) {
+      gpsLocation.value = JSON.parse(cachedGps);
+    }
+    if (cachedAddr && !detectedAddress.value) {
+      detectedAddress.value = cachedAddr;
+    }
+  } catch (e) {}
+
   if (!navigator.geolocation) {
-    gpsLocation.value = { lat: -3.824921, lng: 102.286299, accuracy: 5 };
-    await updateAddressFromGps();
+    if (!gpsLocation.value) {
+      gpsLocation.value = { lat: -3.824921, lng: 102.286299, accuracy: 5 };
+      await updateAddressFromGps();
+    }
     return;
   }
 
   fetchingGps.value = true;
+
+  // Pass 1: Quick Position (Max Age 120s, Timeout 3s - Instant response from OS/WiFi/BTS)
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
       gpsLocation.value = {
@@ -336,15 +354,82 @@ async function refreshGps() {
         lng: pos.coords.longitude,
         accuracy: Math.round(pos.coords.accuracy || 5)
       };
+      saveGpsCache();
       await updateAddressFromGps();
       fetchingGps.value = false;
     },
-    async (err) => {
-      console.warn('GPS access error:', err);
-      if (!gpsLocation.value) {
-        gpsLocation.value = { lat: -3.824921, lng: 102.286299, accuracy: 10 };
+    (err) => {
+      console.warn('Fast GPS error:', err);
+    },
+    { enableHighAccuracy: false, timeout: 3000, maximumAge: 120000 }
+  );
+
+  // Pass 2: High-Accuracy Continuous Watcher (Live Satellite GPS Keep-Alive)
+  startContinuousGpsWatcher();
+}
+
+function startContinuousGpsWatcher() {
+  if (!navigator.geolocation) return;
+  if (gpsWatchId) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+  }
+
+  gpsWatchId = navigator.geolocation.watchPosition(
+    async (pos) => {
+      const newLat = pos.coords.latitude;
+      const newLng = pos.coords.longitude;
+      const newAcc = Math.round(pos.coords.accuracy || 5);
+
+      // Update position
+      const prev = gpsLocation.value;
+      gpsLocation.value = { lat: newLat, lng: newLng, accuracy: newAcc };
+      saveGpsCache();
+      fetchingGps.value = false;
+
+      // If moved > 15 meters or no address yet, re-geocode
+      if (!prev || Math.abs(prev.lat - newLat) > 0.00015 || Math.abs(prev.lng - newLng) > 0.00015 || !detectedAddress.value) {
+        await updateAddressFromGps();
       }
+    },
+    (err) => {
+      console.warn('Continuous GPS watch error:', err);
+      fetchingGps.value = false;
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+  );
+}
+
+function saveGpsCache() {
+  try {
+    if (gpsLocation.value) {
+      localStorage.setItem('sgx_last_gps', JSON.stringify(gpsLocation.value));
+    }
+    if (detectedAddress.value) {
+      localStorage.setItem('sgx_last_address', detectedAddress.value);
+    }
+  } catch (e) {}
+}
+
+async function refreshGps() {
+  fetchingGps.value = true;
+  if (!navigator.geolocation) {
+    fetchingGps.value = false;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      gpsLocation.value = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: Math.round(pos.coords.accuracy || 5)
+      };
+      saveGpsCache();
       await updateAddressFromGps();
+      fetchingGps.value = false;
+    },
+    (err) => {
+      console.warn('Manual GPS refresh error:', err);
       fetchingGps.value = false;
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -356,12 +441,14 @@ async function updateAddressFromGps() {
   try {
     const addr = await reverseGeocodeCoordinates(
       gpsLocation.value.lat,
-      gpsLocation.value.lng,
-      'Ratu Agung, Sumatera, Gading Cempaka'
+      gpsLocation.value.lng
     );
-    detectedAddress.value = addr || 'Ratu Agung, Sumatera, Gading Cempaka';
+    if (addr) {
+      detectedAddress.value = addr;
+      saveGpsCache();
+    }
   } catch (e) {
-    detectedAddress.value = 'Ratu Agung, Sumatera, Gading Cempaka';
+    console.warn('Geocoding failed:', e);
   }
 }
 
@@ -484,7 +571,7 @@ async function renderWatermarkCanvas() {
       dateStr,
       lat: latFormatted,
       lng: lngFormatted,
-      address: detectedAddress.value || 'Ratu Agung, Sumatera, Gading Cempaka',
+      address: detectedAddress.value || `Area Koordinat (${latFormatted}, ${lngFormatted})`,
       jobDescription: stampForm.jobDescription ? stampForm.jobDescription.trim() : '',
       logoImg,
       satelliteImg
@@ -623,24 +710,24 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   ctx.fillText(coordText, textMarginL + badgePadX, curY);
   ctx.restore();
 
-  // 7. BARIS 4: Tag Keterangan Pekerjaan Fleksibel (100% Lebar Kolom Kiri)
+  // 7. BARIS 4: Tag Keterangan Pekerjaan Fleksibel (Ukuran 35px, 100% Lebar Kolom Kiri)
   if (meta.jobDescription) {
-    curY += Math.round(44 * s);
+    curY += Math.round(46 * s);
     ctx.save();
-    const jobFontS = Math.round(26 * s);
+    const jobFontS = Math.round(35 * s);
     ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
 
     const jobLines = wrapTextLines(ctx, `📌 ${meta.jobDescription}`, maxTextW, 2);
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-    ctx.shadowBlur = 11 * s;
+    ctx.shadowBlur = 14 * s;
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-    ctx.lineWidth = 5.5 * s;
+    ctx.lineWidth = 6 * s;
 
     jobLines.forEach((line) => {
       ctx.strokeText(line, textMarginL, curY);
       ctx.fillStyle = '#38BDF8'; // Bright cyan text
       ctx.fillText(line, textMarginL, curY);
-      curY += Math.round(32 * s);
+      curY += Math.round(40 * s);
     });
     ctx.restore();
   }
@@ -866,10 +953,14 @@ function resetCapture() {
 }
 
 onMounted(() => {
-  refreshGps();
+  initFastGpsLock();
 });
 
 onUnmounted(() => {
   stopCamera();
+  if (gpsWatchId && navigator.geolocation) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
 });
 </script>
