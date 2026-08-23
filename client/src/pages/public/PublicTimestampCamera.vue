@@ -639,10 +639,10 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     ctx.restore();
   }
 
-  // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 400px)
-  const totalBarH = Math.round(400 * s); // Total Tinggi Bar 400px
-  const footerBarH = Math.round(85 * s);  // White branding footer strip (85px) dengan padding lega
-  const mainBarH = totalBarH - footerBarH; // Main content area (315px)
+  // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 440px untuk Jarak Baris Lega)
+  const totalBarH = Math.round(440 * s); // Total Tinggi Bar 440px
+  const footerBarH = Math.round(85 * s);  // White branding footer strip (85px)
+  const mainBarH = totalBarH - footerBarH; // Main content area (355px)
   const barY = h - totalBarH;
 
   // Background 100% Transparan (Tanpa Background Gelap)
@@ -651,20 +651,21 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   const leftColW = w * 0.70;  // 70% Lebar untuk Tulisan
   const rightColW = w * 0.30; // 30% Lebar untuk Google Map
 
-  // A. Mini Map Satellite di Sisi Kanan (Ukuran Fleksibel Mengisi Area 30% x Tinggi Main Bar)
+  // A. Mini Map Satellite di Sisi Kanan (Dengan Jarak Jelas ke Bagian Footer)
   const mapPadX = Math.round(14 * s);
-  const mapPadY = Math.round(12 * s);
-  const mapH = mainBarH - (mapPadY * 2);
+  const mapPadTop = Math.round(14 * s);
+  const mapPadBottom = Math.round(20 * s); // Jarak lega antara map dan footer strip
+  const mapH = mainBarH - mapPadTop - mapPadBottom;
   const mapW = rightColW - (mapPadX * 2);
   const mapX = leftColW + mapPadX;
-  const mapY = barY + mapPadY;
+  const mapY = barY + mapPadTop;
 
   // B. Area Tulisan di Sisi Kiri (100% Lebar dari Kolom 70%)
   const textMarginL = Math.round(20 * s);
   const maxTextW = leftColW - textMarginL - Math.round(10 * s); // 100% lebar dari kolom kiri 70%
 
   // 4. BARIS 1: Jam Digital (100px) + Garis Emas Fleksibel + Tanggal (40px) & Hari (28px)
-  let curY = barY + Math.round(82 * s);
+  let curY = barY + Math.round(80 * s);
   ctx.save();
   const clockFontS = Math.round(100 * s);
   ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
@@ -702,8 +703,8 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(72 * s));
   ctx.restore();
 
-  // 5. BARIS 2: Nama Jalan & Alamat Lengkap Google Maps (100% Lebar Kolom Kiri 70%)
-  curY += Math.round(54 * s);
+  // 5. BARIS 2: Nama Jalan & Alamat Lengkap Google Maps (Berjarak Lega dari Baris 1)
+  curY += Math.round(58 * s);
   ctx.save();
   const addressFontS = Math.round(32 * s);
   ctx.font = `800 ${addressFontS}px "Inter", "Montserrat", Arial, sans-serif`;
@@ -717,25 +718,25 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     ctx.strokeText(line, textMarginL, curY);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(line, textMarginL, curY);
-    curY += Math.round(38 * s);
+    curY += Math.round(40 * s);
   });
   ctx.restore();
 
-  // 6. BARIS 3: Titik Koordinat GPS Fleksibel (100% Lebar Kolom Kiri)
-  curY += Math.round(12 * s);
+  // 6. BARIS 3: Titik Koordinat GPS Fleksibel (Ukuran 30px dengan Badge Pill Gelap Dinamis)
+  curY += Math.round(22 * s);
   const coordText = `📍 ${meta.lat}, ${meta.lng}`;
-  const coordFontS = Math.round(28 * s);
+  const coordFontS = Math.round(30 * s); // 30px
   ctx.save();
   ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
   const coordTextW = ctx.measureText(coordText).width;
-  const badgePadX = Math.round(14 * s);
-  const badgeH = Math.round(40 * s);
-  const badgeY = curY - Math.round(30 * s);
+  const badgePadX = Math.round(16 * s);
+  const badgeH = Math.round(44 * s);
+  const badgeY = curY - Math.round(33 * s);
 
-  // Dynamic semi-transparent dark rounded badge
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+  // Dynamic semi-transparent dark rounded badge pill
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
   ctx.beginPath();
-  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(8 * s));
+  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(10 * s));
   ctx.fill();
 
   ctx.fillStyle = '#FEF08A'; // Soft Gold untuk kontras tinggi
@@ -744,16 +745,16 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   ctx.fillText(coordText, textMarginL + badgePadX, curY);
   ctx.restore();
 
-  // 7. BARIS 4: Tag Keterangan Pekerjaan Fleksibel (Ukuran 35px, 100% Lebar Kolom Kiri)
+  // 7. BARIS 4: Tag Keterangan Pekerjaan Fleksibel (Ukuran 28px, Berjarak Lega dari Baris 3)
   if (meta.jobDescription) {
-    curY += Math.round(46 * s);
+    curY += Math.round(48 * s);
     ctx.save();
-    const jobFontS = Math.round(35 * s);
+    const jobFontS = Math.round(28 * s); // 28px
     ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
 
     const jobLines = wrapTextLines(ctx, `📌 ${meta.jobDescription}`, maxTextW, 2);
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-    ctx.shadowBlur = 14 * s;
+    ctx.shadowBlur = 12 * s;
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
     ctx.lineWidth = 6 * s;
 
@@ -761,12 +762,12 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
       ctx.strokeText(line, textMarginL, curY);
       ctx.fillStyle = '#38BDF8'; // Bright cyan text
       ctx.fillText(line, textMarginL, curY);
-      curY += Math.round(40 * s);
+      curY += Math.round(34 * s);
     });
     ctx.restore();
   }
 
-  // 8. Draw Right Google Mini-Map Satellite (Ukuran Fleksibel)
+  // 8. Draw Right Google Mini-Map Satellite (Ukuran Fleksibel dengan Jarak dari Footer)
   drawGoogleSatelliteMiniMap(ctx, mapX, mapY, mapW, mapH, s, meta.satelliteImg);
 
   // 9. Draw Bottom Solid White Footer Bar (Dengan Padding Atas yang Lega)
