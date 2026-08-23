@@ -337,4 +337,43 @@ class WhatsAppNotificationDispatcher
             Log::error('WA onBaIssued failed: ' . $e->getMessage());
         }
     }
+
+    /**
+     * 7. Trigger custom alert / Addendum Notification
+     */
+    public static function onCustomAlert(WorkOrder $workOrder, string $message): void
+    {
+        try {
+            $workOrder->loadMissing(['pic', 'vendor']);
+
+            // 1. Dispatch In-App Notification Feed
+            NotificationFeed::create([
+                'work_order_id' => $workOrder->id,
+                'client_id' => $workOrder->vendor_id,
+                'target_user_id' => $workOrder->pic_user_id,
+                'target_role' => 'ALL',
+                'category' => 'CUSTOM_ALERT',
+                'title' => "Update SPK: {$workOrder->spk_number}",
+                'message' => $message,
+            ]);
+
+            // 2. Dispatch WhatsApp Notification to PIC and Admins
+            $recipients = [];
+            if ($workOrder->pic?->phone) {
+                $recipients[] = $workOrder->pic->phone;
+            }
+            $adminPhones = self::getAdminSupervisorPhones();
+            $recipients = array_unique(array_filter(array_merge($recipients, $adminPhones)));
+
+            if (empty($recipients)) {
+                return;
+            }
+
+            foreach ($recipients as $phone) {
+                FonnteService::sendMessage($phone, $message, 'CUSTOM_ALERT');
+            }
+        } catch (\Throwable $e) {
+            Log::error('WA onCustomAlert failed: ' . $e->getMessage());
+        }
+    }
 }
