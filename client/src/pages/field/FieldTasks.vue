@@ -329,6 +329,7 @@
                   :targetLng="selectedTask.target_lng"
                   :checkInLat="selectedTask.check_ins?.[0]?.latitude"
                   :checkInLng="selectedTask.check_ins?.[0]?.longitude"
+                  :useTimestamp="selectedTask.use_timestamp !== false"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
                 />
                 <PhotoUploader
@@ -345,6 +346,7 @@
                   :targetLng="selectedTask.target_lng"
                   :checkInLat="selectedTask.check_ins?.[0]?.latitude"
                   :checkInLng="selectedTask.check_ins?.[0]?.longitude"
+                  :useTimestamp="selectedTask.use_timestamp !== false"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
                 />
                 <PhotoUploader
@@ -361,6 +363,7 @@
                   :targetLng="selectedTask.target_lng"
                   :checkInLat="selectedTask.check_ins?.[0]?.latitude"
                   :checkInLng="selectedTask.check_ins?.[0]?.longitude"
+                  :useTimestamp="selectedTask.use_timestamp !== false"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
                 />
               </div>
@@ -379,6 +382,7 @@
                   :targetLng="selectedTask.target_lng"
                   :checkInLat="selectedTask.check_ins?.[0]?.latitude"
                   :checkInLng="selectedTask.check_ins?.[0]?.longitude"
+                  :useTimestamp="selectedTask.use_timestamp !== false"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
                 />
               </div>

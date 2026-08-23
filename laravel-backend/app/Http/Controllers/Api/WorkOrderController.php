@@ -129,6 +129,7 @@ class WorkOrderController extends Controller
                 'deadline' => $request->deadline,
                 'doc_mode' => $request->doc_mode ?? 'BEFORE_PROCESS_AFTER',
                 'require_checkin' => $request->boolean('require_checkin', true),
+                'use_timestamp' => $request->boolean('use_timestamp', true),
                 'status' => $request->pic_user_id ? 'ASSIGNED' : 'READY',
                 'progress_percent' => 0,
                 'notes' => $request->notes,
@@ -203,6 +204,10 @@ class WorkOrderController extends Controller
 
             if ($request->has('require_checkin')) {
                 $data['require_checkin'] = $request->boolean('require_checkin');
+            }
+
+            if ($request->has('use_timestamp')) {
+                $data['use_timestamp'] = $request->boolean('use_timestamp');
             }
 
             if ($request->has('pic_user_id')) {

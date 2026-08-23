@@ -297,6 +297,32 @@
           </div>
         </div>
 
+        <!-- Row 6.5: Timestamp Camera Option (Use Timestamp vs Upload Bebas) -->
+        <div class="p-3 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border border-purple-200/80 rounded-2xl space-y-1.5">
+          <div class="flex items-start gap-2.5">
+            <input
+              type="checkbox"
+              id="use_timestamp"
+              v-model="formData.use_timestamp"
+              class="w-4 h-4 mt-0.5 text-purple-600 rounded cursor-pointer accent-purple-700"
+            />
+            <div class="space-y-0.5">
+              <label for="use_timestamp" class="font-bold text-slate-900 cursor-pointer text-xs flex items-center gap-1.5">
+                <Camera class="w-3.5 h-3.5 text-purple-700" />
+                <span>Wajib Dokumentasi Menggunakan Kamera Timestamp GPS (Stempel Otomatis)</span>
+              </label>
+              <p class="text-[11px] text-slate-500">
+                <span v-if="formData.use_timestamp" class="text-purple-900 font-medium">
+                  ✓ <strong>Aktif:</strong> Teknisi wajib membidik foto menggunakan kamera bawaan berstempel jam, GPS satelit, alamat OpenStreetMap & mini map.
+                </span>
+                <span v-else class="text-amber-800 font-bold">
+                  ⚠️ <strong>Nonaktif:</strong> Mode upload bebas. Dokumentasi foto murni melalui upload file galeri dan <strong>tidak ada tampilan/stempel timeslipe pada foto</strong>.
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Row 7: Notes -->
         <div>
           <label class="block font-bold text-slate-700 mb-1">Instruksi Khusus / Catatan Lapangan</label>
@@ -333,7 +359,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { api } from '../../services/api';
-import { X, FileText, AlertCircle, Layers, Plus, Trash2, MapPin, Navigation } from 'lucide-vue-next';
+import { X, FileText, AlertCircle, Layers, Plus, Trash2, MapPin, Navigation, Camera } from 'lucide-vue-next';
 
 const emit = defineEmits(['close', 'success']);
 
@@ -365,6 +391,7 @@ const formData = reactive({
   require_checkin: true,
   require_geofence: false,
   geofence_radius: 500,
+  use_timestamp: true,
   notes: ''
 });
 

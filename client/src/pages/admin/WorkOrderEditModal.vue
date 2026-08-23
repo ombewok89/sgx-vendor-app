@@ -327,6 +327,31 @@
               </div>
             </div>
 
+            <!-- Timestamp Camera Option (Use Timestamp vs Upload Bebas) -->
+            <div class="p-3 bg-purple-50/50 border border-purple-200/80 rounded-xl space-y-1.5">
+              <div class="flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  id="edit_use_timestamp"
+                  v-model="formData.use_timestamp"
+                  class="w-4 h-4 mt-0.5 text-purple-600 rounded cursor-pointer accent-purple-700"
+                />
+                <div class="space-y-0.5">
+                  <label for="edit_use_timestamp" class="font-bold text-slate-900 cursor-pointer text-xs flex items-center gap-1.5">
+                    <span>📷 Wajib Dokumentasi Menggunakan Kamera Timestamp GPS (Stempel Otomatis)</span>
+                  </label>
+                  <p class="text-[11px] text-slate-500">
+                    <span v-if="formData.use_timestamp" class="text-purple-900 font-medium">
+                      ✓ <strong>Aktif:</strong> Foto evidence dicetak stempel jam & GPS satelit.
+                    </span>
+                    <span v-else class="text-amber-800 font-bold">
+                      ⚠️ <strong>Nonaktif:</strong> Mode upload bebas tanpa stempel timeslipe pada foto.
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <!-- Notes -->
             <div>
               <label class="block font-bold text-slate-700 mb-1">Catatan / Instruksi Khusus Supervisor</label>
@@ -424,6 +449,7 @@ const formData = reactive({
   start_date: '',
   deadline: '',
   require_checkin: true,
+  use_timestamp: true,
   doc_mode: 'BEFORE_PROCESS_AFTER',
   status: 'ASSIGNED',
   notes: ''
@@ -463,6 +489,7 @@ async function loadInitialData() {
       formData.start_date = wo.start_date || '';
       formData.deadline = wo.deadline || '';
       formData.require_checkin = typeof wo.require_checkin === 'boolean' ? wo.require_checkin : true;
+      formData.use_timestamp = typeof wo.use_timestamp === 'boolean' ? wo.use_timestamp : true;
       formData.doc_mode = wo.doc_mode || 'BEFORE_PROCESS_AFTER';
       formData.status = wo.status || 'ASSIGNED';
       formData.notes = wo.notes || '';

@@ -20,11 +20,20 @@
             Wajib Min. {{ requiredCount }} Foto ({{ stagePhotos.length }}/{{ requiredCount }})
           </span>
           <span
+            v-if="useTimestamp"
             class="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-800 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-300/80 shadow-2xs"
             title="Sistem otomatis mencetak jam, koordinat GPS, peta satelit, dan logo perusahaan ke foto"
           >
             <MapPin class="w-3 h-3 text-emerald-600 animate-pulse" />
             Auto GPS Map Stamp
+          </span>
+          <span
+            v-else
+            class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-300 shadow-2xs"
+            title="Mode Upload Bebas: Foto diunggah murni tanpa stempel timestamp/GPS"
+          >
+            <FileText class="w-3 h-3 text-slate-600" />
+            Mode Upload Bebas (Tanpa Timestamp)
           </span>
         </h4>
         <p class="text-xs text-slate-500 mt-1">
@@ -37,32 +46,34 @@
 
       <!-- Dual Action Buttons: Direct Camera vs Multi-Photo Gallery -->
       <div class="flex items-center gap-2">
-        <!-- 1. Direct Camera Capture Input -->
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          ref="cameraInputRef"
-          @change="(e) => handleFilesSelected(e.target.files)"
-          class="hidden"
-          :id="`cam-input-${stage}-${workOrderId}-${itemId || 0}`"
-          :disabled="uploading"
-        />
-        <label
-          :for="`cam-input-${stage}-${workOrderId}-${itemId || 0}`"
-          :class="[
-            'inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs active:scale-95',
-            uploading
-              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-purple-900 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white cursor-pointer shadow-purple-900/20'
-          ]"
-          title="Ambil foto langsung menggunakan kamera HP"
-        >
-          <Camera class="w-3.5 h-3.5" />
-          <span class="hidden sm:inline">Kamera</span>
-        </label>
+        <!-- 1. Direct Camera Capture Input (Only if useTimestamp is active) -->
+        <template v-if="useTimestamp">
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            ref="cameraInputRef"
+            @change="(e) => handleFilesSelected(e.target.files)"
+            class="hidden"
+            :id="`cam-input-${stage}-${workOrderId}-${itemId || 0}`"
+            :disabled="uploading"
+          />
+          <label
+            :for="`cam-input-${stage}-${workOrderId}-${itemId || 0}`"
+            :class="[
+              'inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs active:scale-95',
+              uploading
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-purple-900 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white cursor-pointer shadow-purple-900/20'
+            ]"
+            title="Ambil foto langsung menggunakan kamera HP berstempel GPS satelit"
+          >
+            <Camera class="w-3.5 h-3.5" />
+            <span class="hidden sm:inline">Kamera GPS</span>
+          </label>
+        </template>
 
-        <!-- 2. Gallery Multi-Select Input -->
+        <!-- 2. Gallery / File Upload Input -->
         <input
           type="file"
           accept="image/*"
@@ -79,12 +90,14 @@
             'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs active:scale-95',
             uploading
               ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-brand-900 to-brand-700 hover:from-brand-800 hover:to-brand-600 text-white cursor-pointer shadow-brand-900/20'
+              : (useTimestamp
+                  ? 'bg-gradient-to-r from-brand-900 to-brand-700 hover:from-brand-800 hover:to-brand-600 text-white cursor-pointer shadow-brand-900/20'
+                  : 'bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-700 hover:to-indigo-600 text-white cursor-pointer shadow-md')
           ]"
-          title="Pilih satu atau banyak foto sekaligus dari memori galeri"
+          :title="useTimestamp ? 'Pilih foto dari memori galeri' : 'Unggah file foto hasil pekerjaan langsung dari penyimpanan'"
         >
           <Images class="w-3.5 h-3.5" />
-          <span>+ Galeri (Banyak Foto)</span>
+          <span>{{ useTimestamp ? '+ Galeri (Banyak Foto)' : '📁 Unggah Foto Bukti (Galeri / File)' }}</span>
         </label>
       </div>
     </div>
@@ -264,7 +277,8 @@ const props = defineProps({
   targetLat: { type: [Number, String], default: null },
   targetLng: { type: [Number, String], default: null },
   checkInLat: { type: [Number, String], default: null },
-  checkInLng: { type: [Number, String], default: null }
+  checkInLng: { type: [Number, String], default: null },
+  useTimestamp: { type: Boolean, default: true }
 });
 
 const autoStampGps = ref(true);
@@ -310,9 +324,9 @@ async function handleFilesSelected(fileList) {
   uploadProgress.value = { current: 0, total: files.length };
   error.value = null;
 
-  // Get current GPS position with high accuracy and sensible timeout
+  // Get current GPS position with high accuracy and sensible timeout (only needed if useTimestamp is true)
   let gpsCoords = null;
-  if (navigator.geolocation) {
+  if (props.useTimestamp && navigator.geolocation) {
     try {
       gpsCoords = await new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(
@@ -347,9 +361,9 @@ async function handleFilesSelected(fileList) {
     const file = files[i];
 
     try {
-      // Apply Automatic GPS Map & Clock Watermark Stamping
+      // Apply Automatic GPS Map & Clock Watermark Stamping ONLY if useTimestamp is TRUE
       let fileToUpload = file;
-      if (autoStampGps.value) {
+      if (props.useTimestamp && autoStampGps.value) {
         fileToUpload = await stampGpsWatermark(file, {
           stage: props.stage,
           spkNumber: props.spkNumber || `SPK-${props.workOrderId}`,
