@@ -520,8 +520,8 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
 
   // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 400px)
   const totalBarH = Math.round(400 * s); // Total Tinggi Bar 400px
-  const footerBarH = Math.round(70 * s);  // White branding footer strip (70px)
-  const mainBarH = totalBarH - footerBarH; // Main content area (330px)
+  const footerBarH = Math.round(85 * s);  // White branding footer strip (85px) dengan padding lega
+  const mainBarH = totalBarH - footerBarH; // Main content area (315px)
   const barY = h - totalBarH;
 
   // Background 100% Transparan (Tanpa Background Gelap)
@@ -542,47 +542,47 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   const textMarginL = Math.round(20 * s);
   const maxTextW = leftColW - textMarginL - Math.round(10 * s); // 100% lebar dari kolom kiri 70%
 
-  // 4. BARIS 1: Jam Digital Besar + Garis Emas + Hari & Tanggal (100% Lebar Kolom Kiri)
-  let curY = barY + Math.round(66 * s);
+  // 4. BARIS 1: Jam Digital (100px) + Garis Emas Fleksibel + Tanggal (40px) & Hari (28px)
+  let curY = barY + Math.round(82 * s);
   ctx.save();
-  const clockFontS = Math.round(78 * s);
+  const clockFontS = Math.round(100 * s);
   ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 15 * s;
+  ctx.shadowBlur = 18 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 6.5 * s;
+  ctx.lineWidth = 8 * s;
   ctx.strokeText(meta.timeStr, textMarginL, curY);
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(meta.timeStr, textMarginL, curY);
 
   const timeW = ctx.measureText(meta.timeStr).width;
 
-  // Vertical Gold Separator (Membentang Sepanjang Jam)
-  const sepX = textMarginL + timeW + Math.round(14 * s);
-  const sepH = Math.round(60 * s);
-  const sepTopY = curY - Math.round(58 * s);
+  // Vertical Gold Separator (Membentang Sepanjang Jam secara Fleksibel)
+  const sepX = textMarginL + timeW + Math.round(16 * s);
+  const sepH = Math.round(76 * s);
+  const sepTopY = curY - Math.round(72 * s);
   ctx.fillStyle = '#EAB308';
-  ctx.fillRect(sepX, sepTopY, Math.round(5 * s), sepH);
+  ctx.fillRect(sepX, sepTopY, Math.round(5.5 * s), sepH);
 
-  // Hari & Tanggal (Baris 1)
-  const dateTextX = sepX + Math.round(14 * s);
-  ctx.font = `800 ${Math.round(26 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  // Tanggal (40px Putih) & Hari (28px Emas #FDE047)
+  const dateTextX = sepX + Math.round(16 * s);
+  ctx.font = `800 ${Math.round(40 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 10 * s;
+  ctx.shadowBlur = 14 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 5 * s;
-  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(24 * s));
+  ctx.lineWidth = 6 * s;
+  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(36 * s));
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(24 * s));
+  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(36 * s));
 
   ctx.font = `800 ${Math.round(28 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(54 * s));
+  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(72 * s));
   ctx.fillStyle = '#FDE047';
-  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(54 * s));
+  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(72 * s));
   ctx.restore();
 
   // 5. BARIS 2: Nama Jalan & Alamat Lengkap Google Maps (100% Lebar Kolom Kiri 70%)
-  curY += Math.round(50 * s);
+  curY += Math.round(54 * s);
   ctx.save();
   const addressFontS = Math.round(32 * s);
   ctx.font = `800 ${addressFontS}px "Inter", "Montserrat", Arial, sans-serif`;
@@ -648,7 +648,7 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   // 8. Draw Right Google Mini-Map Satellite (Ukuran Fleksibel)
   drawGoogleSatelliteMiniMap(ctx, mapX, mapY, mapW, mapH, s, meta.satelliteImg);
 
-  // 9. Draw Bottom Solid White Footer Bar
+  // 9. Draw Bottom Solid White Footer Bar (Dengan Padding Atas yang Lega)
   const footerY = h - footerBarH;
   ctx.save();
   ctx.fillStyle = '#FFFFFF';
@@ -656,39 +656,39 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
 
   // Top dividing line
   ctx.fillStyle = '#CBD5E1';
-  ctx.fillRect(0, footerY, w, 2 * s);
+  ctx.fillRect(0, footerY, w, 2.5 * s);
 
   // Sisi Kiri Footer: Logo SGX + Nama Sinar Grafika + WhatsApp Contact
-  const footerLogoSize = Math.round(52 * s);
+  const footerLogoSize = Math.round(56 * s);
   const footerLogoY = footerY + Math.round((footerBarH - footerLogoSize) / 2);
   if (meta.logoImg) {
     ctx.drawImage(meta.logoImg, textMarginL, footerLogoY, footerLogoSize, footerLogoSize);
   }
 
-  const textX = textMarginL + footerLogoSize + Math.round(12 * s);
+  const textX = textMarginL + footerLogoSize + Math.round(14 * s);
   ctx.fillStyle = '#0F172A';
-  ctx.font = `900 ${Math.round(22 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + Math.round(28 * s));
+  ctx.font = `900 ${Math.round(24 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + Math.round(34 * s));
 
   ctx.fillStyle = '#334155';
-  ctx.font = `700 ${Math.round(16 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + Math.round(52 * s));
+  ctx.font = `700 ${Math.round(18 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + Math.round(62 * s));
 
   // Diagonal dividing slash di tengah
   const midX = leftColW;
   ctx.strokeStyle = '#CBD5E1';
-  ctx.lineWidth = 2 * s;
+  ctx.lineWidth = 2.5 * s;
   ctx.beginPath();
-  ctx.moveTo(midX + Math.round(16 * s), footerY + Math.round(8 * s));
-  ctx.lineTo(midX - Math.round(16 * s), footerY + footerBarH - Math.round(8 * s));
+  ctx.moveTo(midX + Math.round(16 * s), footerY + Math.round(12 * s));
+  ctx.lineTo(midX - Math.round(16 * s), footerY + footerBarH - Math.round(12 * s));
   ctx.stroke();
 
   // Sisi Kanan Footer: Branding Website Resmi vendor.sinargrafika.my.id
   const rightMarginR = Math.round(28 * s);
   ctx.fillStyle = '#0369A1'; // Deep sky blue
-  ctx.font = `800 ${Math.round(20 * s)}px "Inter", "Montserrat", monospace, Arial, sans-serif`;
+  ctx.font = `800 ${Math.round(22 * s)}px "Inter", "Montserrat", monospace, Arial, sans-serif`;
   ctx.textAlign = 'right';
-  ctx.fillText('vendor.sinargrafika.my.id', w - rightMarginR, footerY + Math.round(44 * s));
+  ctx.fillText('vendor.sinargrafika.my.id', w - rightMarginR, footerY + Math.round(52 * s));
   ctx.textAlign = 'left'; // Reset alignment
   ctx.restore();
 }
