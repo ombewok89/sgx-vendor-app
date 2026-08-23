@@ -233,7 +233,7 @@ const checkIn = computed(() => content.value?.check_in);
 const photos = computed(() => content.value?.photos || []);
 
 const hasBackgroundTemplate = computed(() => {
-  return !!(template.value?.background_image_url || props.baData?.background_image_url);
+  return true; // Always utilize official Sinar Grafika letterhead background
 });
 
 const logoUrl = computed(() => {
@@ -289,7 +289,7 @@ const signatoriesList = computed(() => {
     },
     {
       party_title: 'Pihak Kedua (SGX Management)',
-      company_name: 'PT SINAR GRAHA KONSTRUKSI',
+      company_name: 'PT SINAR KREASINDO BENCOOLEN',
       name: props.baData.signatory_first_party_name || props.baData.generator_name || 'Dian Anggraini',
       role: props.baData.signatory_first_party_role || 'Quality Assurance & Operations'
     }
@@ -297,14 +297,17 @@ const signatoriesList = computed(() => {
 });
 
 const bgStyle = computed(() => {
-  const rawBg = template.value?.background_image_url || props.baData?.background_image_url || template.value?.header_image_url || props.baData?.header_image_url;
-  if (!rawBg) return {};
-  const bgUrl = getFileUrl(rawBg);
+  const rawBg = template.value?.background_image_url || props.baData?.background_image_url || '/ba_letterhead_bg.jpg';
+  const bgUrl = rawBg.startsWith('/') || rawBg.startsWith('http') ? rawBg : getFileUrl(rawBg);
   return {
     backgroundImage: `url(${bgUrl})`,
     backgroundSize: '100% 100%',
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center'
+    backgroundPosition: 'center',
+    paddingTop: '36mm',
+    paddingBottom: '32mm',
+    paddingLeft: '20mm',
+    paddingRight: '20mm'
   };
 });
 
@@ -331,7 +334,7 @@ function handlePrint() {
     padding: 0;
     border: none;
     box-shadow: none;
-    background: transparent;
+    background: transparent !important;
   }
   #ba-printable-document, #ba-printable-document * {
     visibility: visible;
@@ -341,10 +344,16 @@ function handlePrint() {
     left: 0;
     top: 0;
     width: 100%;
+    min-height: 100vh;
     margin: 0;
-    padding: 20mm;
-    background: white !important;
+    padding: 36mm 20mm 32mm 20mm !important;
+    background-image: url('/ba_letterhead_bg.jpg') !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
     color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 </style>
