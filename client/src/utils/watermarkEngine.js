@@ -148,255 +148,153 @@ export async function stampGpsWatermark(file, metadata = {}) {
           const stage = (metadata.stage || 'AFTER').toUpperCase();
           const spkNumber = metadata.spkNumber || 'SPK-EVIDENCE';
 
-          const stageKey = (metadata.stage || 'AFTER').toUpperCase();
-          const stageColors = {
-            'BEFORE':  { bar: '#0f1a12', accent: '#5dd98a' },
-            'PROCESS': { bar: '#1a150a', accent: '#e6a817' },
-            'AFTER':   { bar: '#0a121a', accent: '#5d9ad9' },
-            'ISSUE':   { bar: '#1a0a0a', accent: '#e65d5d' },
-          };
-          const activeColors = stageColors[stageKey] || stageColors['AFTER'];
-          const accentColor = activeColors.accent;
-
           const latFormatted = Number(finalLat).toFixed(6);
           const lngFormatted = Number(finalLng).toFixed(6);
 
-          // SPESIFIKASI TEKNIS: Asumsi Resolusi 3024px standar
-          // Scale factor: $scale = $image->width() / 3024
-          const scale = width / 3024;
-          const s = scale;
+          const companyName = metadata.companyName || 'Sinar Grafika';
+          const companyPhone = metadata.companyPhone || '082388885251';
 
-          // =========================================================================
-          // ZONA 5 — Watermark SGX (Pojok Kanan Atas)
-          // Teks baris 1: "SGX VENDOR" (font-size 24*scale, bold, warna aksen)
-          // Teks baris 2: "Foto Terverifikasi" (font-size 16*scale, putih)
-          // Posisi: right: 16*scale, top: 16*scale
-          // Background: rgba(0,0,0,0.35) rounded 4px, padding 6x10px
-          // =========================================================================
+          // Base scale based on canvas width (normalized to 1100px, minimum 1.0)
+          const scale = Math.max(1.0, width / 1100);
+
+          // 1. Draw Top-Left Official SGX Logo with rounded corners & shadow
+          const topLogoSize = Math.round(110 * scale);
+          const topLogoX = Math.round(28 * scale);
+          const topLogoY = Math.round(28 * scale);
+
+          if (logoImg) {
+            drawRoundedImage(ctx, logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 22 * scale);
+          }
+
+          // 2. Bottom Geotagging & GPS Overlay (100% Transparent Over Field Photo)
+          const footerBarH = Math.round(95 * scale); // White branding bar height
+          const infoPanelH = Math.round(310 * scale); // Overlay area height
+          const totalPanelH = infoPanelH + footerBarH;
+          const panelY = height - totalPanelH;
+
+          // NO dark covering background - 100% transparent so field photo is fully visible!
+
+          // 3. Mini Map Dimensions (Right side - Perfectly Aligned Top & Bottom with Left Content)
+          const mapTopY = panelY + (10 * scale);
+          const mapBottomY = panelY + (232 * scale);
+          const mapH = mapBottomY - mapTopY; // Exactly 222 * scale
+          const mapW = Math.round(mapH * 1.08); // Balanced aspect ratio
+          const mapX = width - mapW - (28 * scale);
+          const mapY = mapTopY;
+
+          // 4. Draw Left Text Metadata (Large, High-Contrast with Text Strokes)
+          const textMarginL = Math.round(32 * scale);
+          const maxTextW = mapX - textMarginL - (24 * scale);
+          let currentY = panelY + (78 * scale);
+
+          // BLOK WAKTU (EXTRA LARGE DIGITAL TIME: e.g. 00:09)
           ctx.save();
-          const z5PadX = 14 * s;
-          const z5PadY = 10 * s;
-          const z5Font1 = Math.round(24 * s);
-          const z5Font2 = Math.round(16 * s);
-
-          ctx.font = `bold ${z5Font1}px "Inter", "Montserrat", Arial, sans-serif`;
-          const z5Text1W = ctx.measureText('SGX VENDOR').width;
-          ctx.font = `500 ${z5Font2}px "Inter", "Montserrat", Arial, sans-serif`;
-          const z5Text2W = ctx.measureText('Foto Terverifikasi').width;
-          const z5BoxW = Math.max(z5Text1W, z5Text2W) + (z5PadX * 2);
-          const z5BoxH = z5Font1 + z5Font2 + (z5PadY * 2.2);
-
-          const z5X = width - z5BoxW - (16 * s);
-          const z5Y = 16 * s;
-
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-          ctx.beginPath();
-          ctx.roundRect(z5X, z5Y, z5BoxW, z5BoxH, 6 * s);
-          ctx.fill();
-
-          ctx.fillStyle = accentColor;
-          ctx.font = `bold ${z5Font1}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.fillText('SGX VENDOR', z5X + z5PadX, z5Y + z5PadY + z5Font1 - (4 * s));
-
+          ctx.font = `900 ${92 * scale}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
+          ctx.shadowColor = 'rgba(0,0,0,0.95)';
+          ctx.shadowBlur = 16 * scale;
+          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+          ctx.lineWidth = 7 * scale;
+          ctx.strokeText(timeStr, textMarginL, currentY);
           ctx.fillStyle = '#FFFFFF';
-          ctx.font = `500 ${z5Font2}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.fillText('Foto Terverifikasi', z5X + z5PadX, z5Y + z5PadY + z5Font1 + z5Font2);
+          ctx.fillText(timeStr, textMarginL, currentY);
+          const timeW = ctx.measureText(timeStr).width;
+
+          // Vertical Gold Separator Line
+          const sepX = textMarginL + timeW + (20 * scale);
+          ctx.fillStyle = '#EAB308';
+          ctx.fillRect(sepX, panelY + (10 * scale), 5 * scale, 76 * scale);
+
+          // Date & Day
+          ctx.font = `800 ${28 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          ctx.strokeText(dateStr, sepX + (18 * scale), currentY - (42 * scale));
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(dateStr, sepX + (18 * scale), currentY - (42 * scale));
+
+          ctx.font = `800 ${30 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          ctx.strokeText(dayName, sepX + (18 * scale), currentY - (6 * scale));
+          ctx.fillStyle = '#F1F5F9';
+          ctx.fillText(dayName, sepX + (18 * scale), currentY - (6 * scale));
           ctx.restore();
 
-          // =========================================================================
-          // ZONA 3 — Bar Bawah (Footer)
-          // Tinggi bar: 140 * scale px
-          // Background: #FFFFFF (putih solid)
-          // Border top: 3px * scale solid warna aksen stage
-          // =========================================================================
-          const footerBarH = Math.round(140 * s);
-          const footerY = height - footerBarH;
+          // Stage & SPK Label Badge (Enlarged)
+          currentY += (42 * scale);
+          ctx.save();
+          ctx.font = `900 ${24 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          ctx.shadowColor = 'rgba(0,0,0,0.95)';
+          ctx.shadowBlur = 12 * scale;
+          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+          ctx.lineWidth = 5 * scale;
+          const stageBadgeText = `[${spkNumber}] • TAHAP: ${stage}`;
+          ctx.strokeText(stageBadgeText, textMarginL, currentY);
+          ctx.fillStyle = stage === 'BEFORE' ? '#FACC15' : stage === 'PROCESS' ? '#60A5FA' : '#4ADE80';
+          ctx.fillText(stageBadgeText, textMarginL, currentY);
+          ctx.restore();
 
+          // BLOK ALAMAT (Enlarged & High-Contrast)
+          currentY += (40 * scale);
+          ctx.save();
+          ctx.font = `800 ${26 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          ctx.shadowColor = 'rgba(0,0,0,0.95)';
+          ctx.shadowBlur = 14 * scale;
+          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+          ctx.lineWidth = 6 * scale;
+          const fullDisplayAddress = dynamicAddress || 'Mataram, Kec. Tugumulyo, Kabupaten Musi Rawas, Sumatera Selatan 31626';
+          const truncatedAddr = truncateText(ctx, fullDisplayAddress, maxTextW);
+          ctx.strokeText(truncatedAddr, textMarginL, currentY);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(truncatedAddr, textMarginL, currentY);
+          ctx.restore();
+
+          // BLOK KOORDINAT (High-Visibility Solid Badge with Gold Trim & Bright Accent)
+          currentY += (28 * scale);
+          const accText = metadata.accuracy ? ` (±${Math.round(metadata.accuracy)}m)` : '';
+          const coordText = `📍 GPS: ${latFormatted}, ${lngFormatted}${accText}`;
+          ctx.font = `800 ${23 * scale}px "JetBrains Mono", monospace, Arial`;
+          const coordTextW = ctx.measureText(coordText).width;
+          const badgePadX = 18 * scale;
+          const badgeH = 44 * scale;
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.95)';
+          ctx.shadowBlur = 12 * scale;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+          ctx.fillRect(textMarginL, currentY, coordTextW + (badgePadX * 2), badgeH);
+          ctx.strokeStyle = '#FACC15'; // Bright Gold Border
+          ctx.lineWidth = 2.5 * scale;
+          ctx.strokeRect(textMarginL, currentY, coordTextW + (badgePadX * 2), badgeH);
+
+          ctx.fillStyle = '#FEF08A'; // Soft Gold Text for instant readability
+          ctx.fillText(coordText, textMarginL + badgePadX, currentY + (30 * scale));
+          ctx.restore();
+
+          // 5. Draw Mini GPS Satellite Map on the right (Real Satellite Map Tile)
+          drawRealisticMiniMap(ctx, mapX, mapY, mapW, mapH, scale, satelliteImg);
+
+          // 6. Draw Bottom White/Light Branding Footer Bar (Area Kontak Perusahaan - No Icon)
+          const footerY = height - footerBarH;
           ctx.save();
           ctx.fillStyle = '#FFFFFF';
           ctx.fillRect(0, footerY, width, footerBarH);
 
-          // Border Top 3px solid warna aksen stage
-          ctx.fillStyle = accentColor;
-          ctx.fillRect(0, footerY, width, Math.max(3, 3 * s));
+          // Top dividing border
+          ctx.fillStyle = '#CBD5E1';
+          ctx.fillRect(0, footerY, width, 2 * scale);
 
-          // [KIRI] Logo SGX + Teks Sinar Grafika + Phone
-          const footerLogoSize = Math.round(75 * s);
-          const footerLogoX = Math.round(30 * s);
-          const footerLogoY = footerY + Math.round((footerBarH - footerLogoSize) / 2);
-          if (logoImg) {
-            ctx.drawImage(logoImg, footerLogoX, footerLogoY, footerLogoSize, footerLogoSize);
-          }
-
-          const footerTextX = footerLogoX + footerLogoSize + Math.round(18 * s);
+          // Left Office Address in footer
+          ctx.font = `700 ${18 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
           ctx.fillStyle = '#0F172A';
-          ctx.font = `900 ${Math.round(32 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.fillText('Sinar Grafika', footerTextX, footerY + Math.round(52 * s));
+          ctx.fillText('Jl. Ratu Agung No. 04 - Kel. Anggut Bawah, Kec. Ratu Samban, Kota Bengkulu', textMarginL, footerY + (38 * scale));
 
+          // Phone in footer
+          ctx.font = `700 ${18 * scale}px "JetBrains Mono", monospace, Arial`;
           ctx.fillStyle = '#334155';
-          ctx.font = `700 ${Math.round(24 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.fillText('082388885251', footerTextX, footerY + Math.round(92 * s));
+          ctx.fillText('Telp / WA: 0823 8888 5251', textMarginL, footerY + (72 * scale));
 
-          // [KANAN] Nomor SPK + Stage Badge + Logo SGX (repeat kecil 60x60px)
-          const rightMargin = Math.round(30 * s);
-          let curRightX = width - rightMargin;
-
-          // Logo SGX Repeat Kecil (60x60px * scale)
-          const smallLogoSize = Math.round(60 * s);
-          const smallLogoX = curRightX - smallLogoSize;
-          const smallLogoY = footerY + Math.round((footerBarH - smallLogoSize) / 2);
-          if (logoImg) {
-            ctx.drawImage(logoImg, smallLogoX, smallLogoY, smallLogoSize, smallLogoSize);
-          }
-          curRightX = smallLogoX - Math.round(20 * s);
-
-          // Stage Badge (rounded pill, background aksen stage, teks putih, font-size 20*scale, padding 6x16px * scale)
-          const badgeFontS = Math.round(20 * s);
-          const badgePadX = Math.round(16 * s);
-          const badgePadY = Math.round(8 * s);
-          ctx.font = `900 ${badgeFontS}px "Inter", "Montserrat", Arial, sans-serif`;
-          const stageTextW = ctx.measureText(stageKey).width;
-          const badgeW = stageTextW + (badgePadX * 2);
-          const badgeH = badgeFontS + (badgePadY * 2);
-          const badgeX = curRightX - badgeW;
-          const badgeY = footerY + Math.round((footerBarH - badgeH) / 2);
-
-          ctx.fillStyle = accentColor;
-          ctx.beginPath();
-          ctx.roundRect(badgeX, badgeY, badgeW, badgeH, Math.round(badgeH / 2));
-          ctx.fill();
-
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillText(stageKey, badgeX + badgePadX, badgeY + badgeFontS + (badgePadY * 0.7));
-          curRightX = badgeX - Math.round(20 * s);
-
-          // Nomor SPK (font-size 22 * scale, monospace, #888888)
-          ctx.font = `700 ${Math.round(22 * s)}px "JetBrains Mono", monospace, Arial`;
-          ctx.fillStyle = '#888888';
-          ctx.textAlign = 'right';
-          ctx.fillText(spkNumber, curRightX, footerY + Math.round(76 * s));
-          ctx.textAlign = 'left'; // Reset
+          // Website URL in right-most footer (Clean typography, no icon)
+          ctx.font = `700 ${17 * scale}px "Inter", "Montserrat", Arial, sans-serif`;
+          ctx.fillStyle = '#64748B';
+          ctx.fillText('vendor.sinargrafika.my.id', width - Math.round(280 * scale), footerY + (56 * scale));
           ctx.restore();
-
-          // =========================================================================
-          // ZONA 1 — Overlay Teks di Dalam Foto (Bottom-Left)
-          // Posisi: bottom-left, mulai dari 65% tinggi foto ke bawah
-          // Background: gradient transparan dari bawah: rgba(0,0,0,0) -> rgba(0,0,0,0.75)
-          // =========================================================================
-          const zone1TopY = height * 0.65;
-          const zone1BottomY = footerY;
-
-          ctx.save();
-          const zone1Grad = ctx.createLinearGradient(0, zone1TopY, 0, zone1BottomY);
-          zone1Grad.addColorStop(0, 'rgba(0,0,0,0)');
-          zone1Grad.addColorStop(1, 'rgba(0,0,0,0.78)');
-          ctx.fillStyle = zone1Grad;
-          ctx.fillRect(0, zone1TopY, width, zone1BottomY - zone1TopY);
-          ctx.restore();
-
-          // Elemen & Ukuran ZONA 1
-          const padLeft = Math.round(30 * s);
-          const mapZoneW = Math.round(320 * s);
-          const maxTextW = width - mapZoneW - padLeft - Math.round(40 * s);
-
-          // Perhitungan Y posisi teks dari bawah zona
-          const zoneContentBottomY = footerY - Math.round(25 * s);
-          let textY = zoneContentBottomY;
-
-          // 1. Catatan Tambahan (Jika Ada)
-          if (metadata.notes) {
-            ctx.save();
-            ctx.font = `700 ${Math.round(32 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-            ctx.shadowColor = 'rgba(0,0,0,0.95)';
-            ctx.shadowBlur = 12 * s;
-            ctx.fillStyle = '#38BDF8';
-            const cleanJob = truncateText(ctx, `📌 ${metadata.notes}`, maxTextW);
-            ctx.fillText(cleanJob, padLeft, textY);
-            textY -= Math.round(42 * s);
-            ctx.restore();
-          }
-
-          // 2. Koordinat GPS (font-size = 34 * scale, warna aksen stage)
-          ctx.save();
-          const coordFontS = Math.round(34 * s);
-          ctx.font = `800 ${coordFontS}px "JetBrains Mono", monospace, Arial`;
-          ctx.shadowColor = 'rgba(0,0,0,0.95)';
-          ctx.shadowBlur = 14 * s;
-          ctx.fillStyle = accentColor;
-          const coordStr = `📍 Koordinat: ${latFormatted}, ${lngFormatted}`;
-          ctx.fillText(coordStr, padLeft, textY);
-          textY -= Math.round(46 * s);
-          ctx.restore();
-
-          // 3. Alamat (max 2 baris, font-size = 38 * scale, putih, drop shadow)
-          ctx.save();
-          const addrFontS = Math.round(38 * s);
-          ctx.font = `800 ${addrFontS}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.shadowColor = 'rgba(0,0,0,0.95)';
-          ctx.shadowBlur = 16 * s;
-          ctx.strokeStyle = 'rgba(0,0,0,0.95)';
-          ctx.lineWidth = 6 * s;
-          ctx.fillStyle = '#FFFFFF';
-
-          const addressLines = wrapTextLines(ctx, dynamicAddress || locationName, maxTextW, 2);
-          for (let i = addressLines.length - 1; i >= 0; i--) {
-            const line = addressLines[i];
-            ctx.strokeText(line, padLeft, textY);
-            ctx.fillText(line, padLeft, textY);
-            textY -= Math.round(48 * s);
-          }
-          ctx.restore();
-
-          // 4. Jam Besar + Separator "|" + Tanggal + Hari
-          ctx.save();
-          const clockFontS = Math.round(128 * s);
-          const dateFontS = Math.round(44 * s);
-          const dayFontS = Math.round(40 * s);
-
-          ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
-          ctx.shadowColor = 'rgba(0,0,0,0.95)';
-          ctx.shadowBlur = 20 * s;
-          ctx.strokeStyle = 'rgba(0,0,0,0.95)';
-          ctx.lineWidth = 8 * s;
-          ctx.strokeText(timeStr, padLeft, textY);
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillText(timeStr, padLeft, textY);
-
-          const clockW = ctx.measureText(timeStr).width;
-
-          // Separator "|" (tinggi 80px * scale, warna aksen stage)
-          const sepX = padLeft + clockW + Math.round(20 * s);
-          const sepH = Math.round(80 * s);
-          const sepTopY = textY - Math.round(88 * s);
-          ctx.fillStyle = accentColor;
-          ctx.fillRect(sepX, sepTopY, Math.max(3, Math.round(5 * s)), sepH);
-
-          // Tanggal & Hari di sebelah kanan separator
-          const textDateX = sepX + Math.round(18 * s);
-          ctx.font = `800 ${dateFontS}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.strokeText(dateStr, textDateX, sepTopY + Math.round(34 * s));
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillText(dateStr, textDateX, sepTopY + Math.round(34 * s));
-
-          ctx.font = `700 ${dayFontS}px "Inter", "Montserrat", Arial, sans-serif`;
-          ctx.strokeText(dayName, textDateX, sepTopY + Math.round(76 * s));
-          ctx.fillStyle = '#E2E8F0';
-          ctx.fillText(dayName, textDateX, sepTopY + Math.round(76 * s));
-          ctx.restore();
-
-          // =========================================================================
-          // ZONA 2 — Mini Map (Pojok Kanan Bawah Overlay)
-          // Ukuran kotak: 320 × 280 px (* scale)
-          // Posisi: right: 20*scale, bottom: 150*scale (dari dasar foto)
-          // Border radius: 8px (* scale)
-          // Border: 2px solid warna aksen stage
-          // =========================================================================
-          const mapW = Math.round(320 * s);
-          const mapH = Math.round(280 * s);
-          const mapX = width - mapW - Math.round(20 * s);
-          const mapY = height - Math.round(150 * s) - mapH;
-
-          drawRealisticMiniMap(ctx, mapX, mapY, mapW, mapH, s, satelliteImg, accentColor);
 
           // 7. Output Final High-Resolution Stamped File with embedded GPS metadata
           canvas.toBlob(
@@ -470,16 +368,24 @@ function drawRoundedImage(ctx, img, x, y, width, height, radius) {
 }
 
 /**
- * Draw 100% Real GPS Satellite / Map Imagery (with Offline Vector Fallback)
- * Sesuai Spesifikasi: Border radius 8px * scale, Border 2px solid warna aksen stage
+ * Draw 100% Real GPS Satellite Imagery Map (with Offline Vector Fallback)
  */
-function drawRealisticMiniMap(ctx, x, y, width, height, scale, satelliteImg, accentColor = '#5d9ad9') {
+function drawRealisticMiniMap(ctx, x, y, width, height, scale, satelliteImg) {
   ctx.save();
 
-  // Outer border with rounded corners (8px * scale)
-  const radius = Math.max(6, Math.round(8 * scale));
+  // Outer border with rounded corners
+  const radius = 18 * scale;
   ctx.beginPath();
-  ctx.roundRect(x, y, width, height, radius);
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
   ctx.clip();
 
   // 1. Draw Real Satellite Image if available, otherwise draw Vector Terrain
@@ -524,8 +430,8 @@ function drawRealisticMiniMap(ctx, x, y, width, height, scale, satelliteImg, acc
   }
 
   // Vision Field Angle Cone (Emerald/Cyan wedge)
-  const pinX = x + width * 0.5;
-  const pinY = y + height * 0.5;
+  const pinX = x + width * 0.48;
+  const pinY = y + height * 0.52;
 
   ctx.fillStyle = 'rgba(16, 185, 129, 0.45)';
   ctx.beginPath();
@@ -534,33 +440,61 @@ function drawRealisticMiniMap(ctx, x, y, width, height, scale, satelliteImg, acc
   ctx.closePath();
   ctx.fill();
 
-  // Blue GPS Location Dot with White Ring
+  // Blue & Green GPS Pin Marker
   ctx.fillStyle = '#0284C7';
   ctx.beginPath();
   ctx.arc(pinX, pinY, 13 * scale, 0, Math.PI * 2);
   ctx.fill();
 
+  ctx.fillStyle = '#10B981';
+  ctx.beginPath();
+  ctx.arc(pinX, pinY, 8 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(pinX, pinY, 3.5 * scale, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = Math.max(2, 3 * scale);
+  ctx.lineWidth = 2.5 * scale;
   ctx.beginPath();
   ctx.arc(pinX, pinY, 13 * scale, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Bottom Map Watermark Banner
+  // Compass indicator on top of pin
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.moveTo(pinX, pinY - 22 * scale);
+  ctx.lineTo(pinX - 5 * scale, pinY - 14 * scale);
+  ctx.lineTo(pinX + 5 * scale, pinY - 14 * scale);
+  ctx.closePath();
+  ctx.fill();
+
+  // Bottom Google Maps Banner
   ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
   ctx.fillRect(x, y + height - (26 * scale), width, 26 * scale);
   ctx.font = `bold ${12 * scale}px "Inter", Arial`;
   ctx.fillStyle = '#F8FAFC';
-  ctx.fillText('OSM Map', x + (12 * scale), y + height - (8 * scale));
+  ctx.fillText('Google', x + (12 * scale), y + height - (8 * scale));
 
   ctx.restore();
 
-  // Border: 2px solid warna aksen stage
+  // White border outline on map container
   ctx.save();
-  ctx.strokeStyle = accentColor;
-  ctx.lineWidth = Math.max(2, 2 * scale);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.lineWidth = 3 * scale;
   ctx.beginPath();
-  ctx.roundRect(x, y, width, height, radius);
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
   ctx.stroke();
   ctx.restore();
 }
