@@ -86,7 +86,7 @@ class ReviewController extends Controller
         }
 
         $request->validate([
-            'target_stage' => 'required|in:BEFORE,PROCESS,AFTER',
+            'target_stage' => 'required|string|in:BEFORE,PROCESS,AFTER,ALL,GENERAL,ADDENDUM',
             'reason' => 'required|string',
         ]);
 
@@ -121,7 +121,21 @@ class ReviewController extends Controller
                 'status' => 'REVISION',
             ]);
 
-            AuditService::log($user, 'REQUEST_REVISION', 'WORK_ORDER', $workOrder->id, null, $revision->toArray());
+            try {
+                AuditService::log($user, 'REQUEST_REVISION', 'WORK_ORDER', $workOrder->id, null, $revision->toArray());
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Audit log error: ' . $e->getMessage());
+            }
+
+            // Automated WhatsApp Notification to Field Team on Revision
+            try {
+                \App\Services\WhatsAppNotificationDispatcher::onCustomAlert(
+                    $workOrder,
+                    "⚠️ *Permintaan Revisi Pekerjaan*\nNo. SPK: *{$workOrder->spk_number}*\nLokasi: *{$workOrder->location_name}*\nTarget: *{$request->target_stage}*\nInstruksi: {$request->reason}\n\nMohon lakukan perbaikan dan lengkapi bukti foto kembali."
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Revision WA notification error: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,
