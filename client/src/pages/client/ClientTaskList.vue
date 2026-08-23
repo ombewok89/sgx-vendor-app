@@ -269,19 +269,44 @@
             </div>
           </div>
 
-          <!-- Sub-Tasks & Visual Evidence Per Sub-Item -->
-          <div class="space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <!-- Sub-Tasks & Visual Evidence Per Sub-Item (Interactive Zero-Scroll Sub-Task Inspector) -->
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
+            
+            <!-- Section Header & Toolbar Controls -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
                 <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
                   <Eye class="w-4 h-4 text-purple-700" />
-                  <span>Lingkup Sub-Pekerjaan Toko & Hasil Visual ({{ displayItems.length }} Item)</span>
+                  <span>Lingkup Sub-Pekerjaan & Evidensi Visual ({{ displayItems.length }} Item)</span>
                 </h4>
-                <p class="text-[11px] text-slate-500">Periksa foto kondisi sebelum & hasil pengerjaan pada setiap item pekerjaan cabang toko Anda.</p>
+                <p class="text-[11px] text-slate-500">Pilih tab item di bawah untuk inspeksi cepat kondisi Sebelum, Proses, dan Sesudah tanpa perlu scrolling.</p>
               </div>
 
-              <!-- Filter Tab for Gallery -->
-              <div class="flex items-center gap-2 self-start sm:self-auto">
+              <!-- View Mode Toggle & Batch Actions -->
+              <div class="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                <div class="bg-slate-100 p-0.5 rounded-xl flex items-center gap-1 text-[10px] font-bold border border-slate-200">
+                  <button
+                    type="button"
+                    @click="viewMode = 'tabbed'"
+                    :class="[
+                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
+                      viewMode === 'tabbed' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    ]"
+                  >
+                    Fokus Tab
+                  </button>
+                  <button
+                    type="button"
+                    @click="viewMode = 'all'"
+                    :class="[
+                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
+                      viewMode === 'all' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    ]"
+                  >
+                    Semua Item
+                  </button>
+                </div>
+
                 <button
                   v-if="selectedOrder.evidence_photos && selectedOrder.evidence_photos.length > 0"
                   type="button"
@@ -290,75 +315,103 @@
                   title="Unduh semua foto bukti toko ini"
                 >
                   <Download class="w-3.5 h-3.5" />
-                  <span>Unduh Semua Foto ({{ selectedOrder.evidence_photos.length }})</span>
+                  <span>Unduh Semua ({{ selectedOrder.evidence_photos.length }})</span>
                 </button>
               </div>
             </div>
 
-            <!-- List of Sub-Task Cards with Before vs After Comparison -->
-            <div class="space-y-4">
-              <div
-                v-for="(item, itmIdx) in displayItems"
-                :key="item.id || itmIdx"
-                class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4"
-              >
-                <!-- Sub-Task Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                  <div class="flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-xl bg-purple-900 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
-                      {{ itmIdx + 1 }}
+            <!-- MODE 1: TABBED ZERO-SCROLL VIEW (Interactive Sub-Task Selector Pills) -->
+            <div v-if="viewMode === 'tabbed'" class="space-y-4">
+              <!-- Horizontal Sub-Task Pill Bar -->
+              <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none snap-x">
+                <button
+                  v-for="(item, idx) in displayItems"
+                  :key="item.id || idx"
+                  type="button"
+                  @click="activeItemIndex = idx"
+                  :class="[
+                    'px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 border cursor-pointer snap-start',
+                    activeItemIndex === idx
+                      ? 'bg-purple-900 text-white border-purple-900 shadow-md shadow-purple-900/20 ring-1 ring-purple-900'
+                      : 'bg-slate-50 hover:bg-purple-50 text-slate-700 border-slate-200 hover:border-purple-200'
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'w-5 h-5 rounded-lg text-[10px] font-black flex items-center justify-center',
+                      activeItemIndex === idx ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-900'
+                    ]"
+                  >
+                    {{ idx + 1 }}
+                  </span>
+                  <span class="truncate max-w-[180px]">{{ item.item_name }}</span>
+                  <span
+                    v-if="item.is_addendum"
+                    class="px-1.5 py-0.2 rounded text-[8px] font-black bg-amber-500 text-white uppercase"
+                  >
+                    +Addendum
+                  </span>
+                  <span
+                    :class="[
+                      'w-2 h-2 rounded-full',
+                      isItemFullyDocumented(item) ? 'bg-emerald-400' : 'bg-amber-400'
+                    ]"
+                    :title="isItemFullyDocumented(item) ? 'Selesai 100%' : 'Dalam Pengerjaan'"
+                  ></span>
+                </button>
+              </div>
+
+              <!-- Active Sub-Item Visual Stage (Side-by-Side 3-Phase Stage) -->
+              <div v-if="displayItems[activeItemIndex]" class="space-y-3.5 animate-fade-in">
+                <!-- Active Item Sub-Header -->
+                <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-6 h-6 rounded-lg bg-purple-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                      {{ activeItemIndex + 1 }}
                     </span>
-                    <div>
-                      <div class="flex items-center gap-2">
-                        <h5 class="font-black text-slate-900 text-sm">
-                          {{ item.item_name }}
-                        </h5>
-                        <span
-                          v-if="item.is_addendum"
-                          class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs animate-pulse"
-                        >
-                          + PEKERJAAN TAMBAHAN (ADDENDUM)
-                        </span>
+                    <div class="min-w-0">
+                      <div class="font-bold text-xs sm:text-sm text-slate-900 truncate">
+                        {{ displayItems[activeItemIndex].item_name }}
                       </div>
-                      <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                        <span class="bg-purple-50 text-purple-900 font-bold px-2 py-0.5 rounded">Bobot: {{ item.weight_percent || 100 }}%</span>
+                      <div class="text-[10px] text-slate-500 flex items-center gap-2">
+                        <span class="bg-purple-100 text-purple-900 font-bold px-1.5 py-0.2 rounded">Bobot: {{ displayItems[activeItemIndex].weight_percent || 100 }}%</span>
                         <span>•</span>
-                        <span>Mode: <strong class="text-slate-700">{{ item.doc_mode || selectedOrder.doc_mode }}</strong></span>
+                        <span>Mode: <strong class="text-slate-700">{{ displayItems[activeItemIndex].doc_mode || selectedOrder.doc_mode }}</strong></span>
                       </div>
                     </div>
                   </div>
 
                   <span
                     :class="[
-                      'px-3 py-1 rounded-full text-[10px] font-bold border',
-                      isItemFullyDocumented(item)
+                      'px-2.5 py-1 rounded-full text-[10px] font-bold border shrink-0',
+                      isItemFullyDocumented(displayItems[activeItemIndex])
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                         : 'bg-amber-50 text-amber-800 border-amber-300'
                     ]"
                   >
-                    {{ isItemFullyDocumented(item) ? 'Selesai Dikerjakan ✓' : 'Dalam Proses Pengerjaan ⏳' }}
+                    {{ isItemFullyDocumented(displayItems[activeItemIndex]) ? 'Selesai Dikerjakan ✓' : 'Dalam Proses ⏳' }}
                   </span>
                 </div>
 
-                <!-- Before vs Process vs After Triptych Columns for this Sub-Task -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <!-- 1. Before Photo Box -->
-                  <div class="border border-slate-200 rounded-2xl p-3 bg-amber-50/30 space-y-2 flex flex-col justify-between">
+                <!-- Side-by-Side 3-Phase Comparison Cards for Active Item -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  <!-- 1. Before Photo -->
+                  <div class="border border-slate-200 rounded-2xl p-3 bg-amber-50/20 space-y-2 flex flex-col justify-between shadow-2xs">
                     <div>
                       <div class="flex items-center justify-between mb-2">
                         <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs">
                           KONDISI AWAL (BEFORE)
                         </span>
-                        <span class="text-[10px] font-mono text-slate-400">
-                          {{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto
+                        <span class="text-[10px] font-mono text-slate-500">
+                          {{ getPhotosForItemStage(displayItems[activeItemIndex].id, 'BEFORE').length }} Foto
                         </span>
                       </div>
 
-                      <div v-if="getPhotosForItemStage(item.id, 'BEFORE').length > 0" class="space-y-2">
+                      <div v-if="getPhotosForItemStage(displayItems[activeItemIndex].id, 'BEFORE').length > 0" class="space-y-2">
                         <div
-                          v-for="p in getPhotosForItemStage(item.id, 'BEFORE')"
+                          v-for="p in getPhotosForItemStage(displayItems[activeItemIndex].id, 'BEFORE')"
                           :key="p.id"
-                          class="h-40 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                          class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
                           @click="openLightbox(p)"
                         >
                           <img
@@ -369,40 +422,40 @@
                           <button
                             type="button"
                             @click.stop="downloadSinglePhoto(p)"
-                            class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                            class="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
                             title="Unduh Foto Before"
                           >
-                            <Download class="w-3 h-3" />
+                            <Download class="w-3.5 h-3.5" />
                           </button>
                           <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
                             <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
                           </div>
                         </div>
                       </div>
-                      <div v-else class="h-36 rounded-xl border border-dashed border-amber-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+                      <div v-else class="h-40 rounded-xl border border-dashed border-amber-200 flex flex-col items-center justify-center text-slate-400 text-xs">
                         <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
                         <span>Foto Before Belum Tersedia</span>
                       </div>
                     </div>
                   </div>
 
-                  <!-- 2. Process Photo Box -->
-                  <div class="border border-slate-200 rounded-2xl p-3 bg-blue-50/30 space-y-2 flex flex-col justify-between">
+                  <!-- 2. Process Photo -->
+                  <div class="border border-slate-200 rounded-2xl p-3 bg-blue-50/20 space-y-2 flex flex-col justify-between shadow-2xs">
                     <div>
                       <div class="flex items-center justify-between mb-2">
                         <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-2xs">
                           PROSES KERJA (PROCESS)
                         </span>
-                        <span class="text-[10px] font-mono text-slate-400">
-                          {{ getPhotosForItemStage(item.id, 'PROCESS').length }} Foto
+                        <span class="text-[10px] font-mono text-slate-500">
+                          {{ getPhotosForItemStage(displayItems[activeItemIndex].id, 'PROCESS').length }} Foto
                         </span>
                       </div>
 
-                      <div v-if="getPhotosForItemStage(item.id, 'PROCESS').length > 0" class="space-y-2">
+                      <div v-if="getPhotosForItemStage(displayItems[activeItemIndex].id, 'PROCESS').length > 0" class="space-y-2">
                         <div
-                          v-for="p in getPhotosForItemStage(item.id, 'PROCESS')"
+                          v-for="p in getPhotosForItemStage(displayItems[activeItemIndex].id, 'PROCESS')"
                           :key="p.id"
-                          class="h-40 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                          class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
                           @click="openLightbox(p)"
                         >
                           <img
@@ -413,40 +466,40 @@
                           <button
                             type="button"
                             @click.stop="downloadSinglePhoto(p)"
-                            class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                            class="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
                             title="Unduh Foto Process"
                           >
-                            <Download class="w-3 h-3" />
+                            <Download class="w-3.5 h-3.5" />
                           </button>
                           <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
                             <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
                           </div>
                         </div>
                       </div>
-                      <div v-else class="h-36 rounded-xl border border-dashed border-blue-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+                      <div v-else class="h-40 rounded-xl border border-dashed border-blue-200 flex flex-col items-center justify-center text-slate-400 text-xs">
                         <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
-                        <span>{{ item.doc_mode === 'AFTER_ONLY' ? 'Mode Tanpa Foto Proses' : 'Foto Proses Belum Tersedia' }}</span>
+                        <span>{{ displayItems[activeItemIndex].doc_mode === 'AFTER_ONLY' ? 'Mode Tanpa Foto Proses' : 'Foto Proses Belum Tersedia' }}</span>
                       </div>
                     </div>
                   </div>
 
-                  <!-- 3. After Photo Box -->
-                  <div class="border border-slate-200 rounded-2xl p-3 bg-emerald-50/30 space-y-2 flex flex-col justify-between">
+                  <!-- 3. After Photo -->
+                  <div class="border border-slate-200 rounded-2xl p-3 bg-emerald-50/20 space-y-2 flex flex-col justify-between shadow-2xs">
                     <div>
                       <div class="flex items-center justify-between mb-2">
                         <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
                           HASIL AKHIR (AFTER)
                         </span>
                         <span class="text-[10px] font-mono text-emerald-700 font-bold">
-                          {{ getPhotosForItemStage(item.id, 'AFTER').length > 0 ? 'Selesai ✓' : 'Menunggu' }}
+                          {{ getPhotosForItemStage(displayItems[activeItemIndex].id, 'AFTER').length > 0 ? 'Selesai ✓' : 'Menunggu' }}
                         </span>
                       </div>
 
-                      <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="space-y-2">
+                      <div v-if="getPhotosForItemStage(displayItems[activeItemIndex].id, 'AFTER').length > 0" class="space-y-2">
                         <div
-                          v-for="p in getPhotosForItemStage(item.id, 'AFTER')"
+                          v-for="p in getPhotosForItemStage(displayItems[activeItemIndex].id, 'AFTER')"
                           :key="p.id"
-                          class="h-40 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                          class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
                           @click="openLightbox(p)"
                         >
                           <img
@@ -457,17 +510,17 @@
                           <button
                             type="button"
                             @click.stop="downloadSinglePhoto(p)"
-                            class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                            class="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
                             title="Unduh Foto After"
                           >
-                            <Download class="w-3 h-3" />
+                            <Download class="w-3.5 h-3.5" />
                           </button>
                           <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono pointer-events-none">
                             <div class="text-emerald-300 font-bold">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
                           </div>
                         </div>
                       </div>
-                      <div v-else class="h-36 rounded-xl border border-dashed border-emerald-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+                      <div v-else class="h-40 rounded-xl border border-dashed border-emerald-200 flex flex-col items-center justify-center text-slate-400 text-xs">
                         <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
                         <span>Foto After Belum Tersedia</span>
                       </div>
@@ -476,6 +529,99 @@
                 </div>
               </div>
             </div>
+
+            <!-- MODE 2: ALL ITEMS EXPANDED VIEW (Optional Full View) -->
+            <div v-else class="space-y-4">
+              <div
+                v-for="(item, itmIdx) in displayItems"
+                :key="item.id || itmIdx"
+                class="rounded-2xl p-4 sm:p-5 border border-slate-200 bg-slate-50/50 space-y-3.5"
+              >
+                <!-- Sub-Task Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-6 h-6 rounded-lg bg-purple-900 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
+                      {{ itmIdx + 1 }}
+                    </span>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <h5 class="font-black text-slate-900 text-xs sm:text-sm">
+                          {{ item.item_name }}
+                        </h5>
+                        <span
+                          v-if="item.is_addendum"
+                          class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs"
+                        >
+                          + ADDENDUM
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                        <span class="bg-purple-100 text-purple-900 font-bold px-1.5 py-0.2 rounded">Bobot: {{ item.weight_percent || 100 }}%</span>
+                        <span>•</span>
+                        <span>Mode: <strong class="text-slate-700">{{ item.doc_mode || selectedOrder.doc_mode }}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <span
+                    :class="[
+                      'px-2.5 py-1 rounded-full text-[10px] font-bold border',
+                      isItemFullyDocumented(item)
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        : 'bg-amber-50 text-amber-800 border-amber-300'
+                    ]"
+                  >
+                    {{ isItemFullyDocumented(item) ? 'Selesai ✓' : 'Dalam Pengerjaan ⏳' }}
+                  </span>
+                </div>
+
+                <!-- 3 Columns for this Sub-Task -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <!-- Before Box -->
+                  <div class="border border-slate-200 rounded-xl p-2.5 bg-white space-y-1.5">
+                    <div class="flex items-center justify-between text-[10px]">
+                      <span class="font-bold text-amber-800">BEFORE</span>
+                      <span class="text-slate-400 font-mono">{{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto</span>
+                    </div>
+                    <div v-if="getPhotosForItemStage(item.id, 'BEFORE').length > 0" class="h-32 rounded-lg overflow-hidden bg-slate-900 relative cursor-pointer" @click="openLightbox(getPhotosForItemStage(item.id, 'BEFORE')[0])">
+                      <img :src="getFileUrl(getPhotosForItemStage(item.id, 'BEFORE')[0].file_path)" class="w-full h-full object-cover" />
+                    </div>
+                    <div v-else class="h-28 rounded-lg border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-[10px]">
+                      Belum ada foto
+                    </div>
+                  </div>
+
+                  <!-- Process Box -->
+                  <div class="border border-slate-200 rounded-xl p-2.5 bg-white space-y-1.5">
+                    <div class="flex items-center justify-between text-[10px]">
+                      <span class="font-bold text-blue-800">PROCESS</span>
+                      <span class="text-slate-400 font-mono">{{ getPhotosForItemStage(item.id, 'PROCESS').length }} Foto</span>
+                    </div>
+                    <div v-if="getPhotosForItemStage(item.id, 'PROCESS').length > 0" class="h-32 rounded-lg overflow-hidden bg-slate-900 relative cursor-pointer" @click="openLightbox(getPhotosForItemStage(item.id, 'PROCESS')[0])">
+                      <img :src="getFileUrl(getPhotosForItemStage(item.id, 'PROCESS')[0].file_path)" class="w-full h-full object-cover" />
+                    </div>
+                    <div v-else class="h-28 rounded-lg border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-[10px]">
+                      Belum ada foto
+                    </div>
+                  </div>
+
+                  <!-- After Box -->
+                  <div class="border border-slate-200 rounded-xl p-2.5 bg-white space-y-1.5">
+                    <div class="flex items-center justify-between text-[10px]">
+                      <span class="font-bold text-emerald-800">AFTER</span>
+                      <span class="text-emerald-700 font-bold font-mono">{{ getPhotosForItemStage(item.id, 'AFTER').length > 0 ? '✓' : '-' }}</span>
+                    </div>
+                    <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="h-32 rounded-lg overflow-hidden bg-slate-900 relative cursor-pointer" @click="openLightbox(getPhotosForItemStage(item.id, 'AFTER')[0])">
+                      <img :src="getFileUrl(getPhotosForItemStage(item.id, 'AFTER')[0].file_path)" class="w-full h-full object-cover" />
+                    </div>
+                    <div v-else class="h-28 rounded-lg border border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-[10px]">
+                      Belum ada foto
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <!-- Field Issues Log Card if any -->
@@ -574,6 +720,8 @@ const workOrders = ref([]);
 const selectedOrder = ref(null);
 const loading = ref(true);
 const showShareModal = ref(false);
+const activeItemIndex = ref(0);
+const viewMode = ref('tabbed');
 
 const searchQuery = ref('');
 const selectedStatus = ref('ALL');
