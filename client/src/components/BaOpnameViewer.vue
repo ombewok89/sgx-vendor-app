@@ -35,22 +35,13 @@
         </div>
       </div>
 
-      <!-- Printable Document Body with Background Watermark Support -->
+      <!-- Printable Document Body -->
       <div
         id="ba-printable-document"
         class="p-8 sm:p-12 overflow-y-auto bg-white text-slate-900 space-y-6 text-xs custom-scrollbar relative flex-1"
       >
-        <!-- Transparent Watermark Layer in Background -->
-        <div class="watermark-layer absolute inset-0 pointer-events-none z-0 overflow-hidden flex items-center justify-center">
-          <img
-            :src="watermarkBgUrl"
-            alt="Watermark SGX"
-            class="w-full h-full object-fill opacity-[0.14] select-none"
-          />
-        </div>
-
         <!-- Official Header -->
-        <div class="relative z-10 border-b-2 border-slate-900 pb-4 flex items-center justify-between">
+        <div class="border-b-2 border-slate-900 pb-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="w-14 h-14 rounded-xl border bg-white p-1 shadow-xs flex items-center justify-center">
               <img src="/sgx_icon.png" alt="Logo" class="w-full h-full object-contain" />
@@ -301,11 +292,6 @@ const signatoriesList = computed(() => {
   ];
 });
 
-const watermarkBgUrl = computed(() => {
-  const rawBg = template.value?.background_image_url || props.baData?.background_image_url || '/ba_letterhead_bg.jpg';
-  return rawBg.startsWith('/') || rawBg.startsWith('http') ? rawBg : getFileUrl(rawBg);
-});
-
 function handlePrint() {
   window.print();
 }
@@ -344,26 +330,6 @@ function handlePrint() {
     padding: 20mm 18mm !important;
     background: white !important;
     color: black !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .watermark-layer {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    z-index: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: hidden !important;
-    pointer-events: none !important;
-  }
-  .watermark-layer img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: fill !important;
-    opacity: 0.14 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
