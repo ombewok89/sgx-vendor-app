@@ -544,12 +544,15 @@ async function renderWatermarkCanvas() {
 }
 
 /**
- * FULL-WIDTH BOTTOM WATERMARK BAR (RASIO LEBAR 70:30)
- * - Baris 1: Jam Digital (100px) + Garis Emas + Hari & Tanggal
- * - Baris 2: Alamat Lengkap Google Maps (50px)
- * - Baris 3: Titik Koordinat GPS Asli (45px)
- * - Mini Map Satelit Google di Area Kanan (30% Lebar)
- * - Footer Strip Putih: Kiri = Sinar Grafika (082388885251) | Kanan = Tag Keterangan Pekerjaan (Tanpa Logo)
+ * FULL-WIDTH BOTTOM WATERMARK BAR (TINGGI 700PX - TRANSPARAN TANPA BACKGROUND GELAP)
+ * - Bar Penuh di BAWAH Foto (Lebar 100% Foto)
+ * - Tinggi Bar: 700px (Scaled)
+ * - Background: 100% Transparan (Tanpa Background Gelap)
+ * - Pembagian Lebar: 70% Tulisan | 30% Google Satellite Mini-Map
+ * - Baris 1: Jam Digital (100px) + Garis Emas + Hari & Tanggal + Tag Keterangan Pekerjaan
+ * - Baris 2: Alamat Lengkap Asli Google Maps (40px)
+ * - Baris 3: Titik Koordinat GPS Asli (20px)
+ * - Footer Strip Putih di Dasar Foto
  */
 function renderBottomBarWatermark(ctx, w, h, s, meta) {
   // 1. Draw Top-Left SGX Diamond Logo on photo
@@ -561,24 +564,13 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 20 * s);
   }
 
-  // 2. Bar Dimensions at Bottom of Photo
-  const footerBarH = Math.round(80 * s);  // White branding footer strip (80px)
-  const mainBarH = Math.round(300 * s);   // Dark information bar (300px)
-  const totalBarH = mainBarH + footerBarH;
+  // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 700px)
+  const totalBarH = Math.round(700 * s); // Total Tinggi Bar 700px
+  const footerBarH = Math.round(95 * s);  // White branding footer strip (95px)
+  const mainBarH = totalBarH - footerBarH; // Main content area (605px)
   const barY = h - totalBarH;
 
-  // Background Gradient Overlay for Main Bar (Full-Width Dark Glass)
-  ctx.save();
-  const barGrad = ctx.createLinearGradient(0, barY, 0, barY + mainBarH);
-  barGrad.addColorStop(0, 'rgba(15, 23, 42, 0.90)');
-  barGrad.addColorStop(1, 'rgba(2, 6, 23, 0.98)');
-  ctx.fillStyle = barGrad;
-  ctx.fillRect(0, barY, w, mainBarH);
-
-  // Top Accent Border Line (Gold)
-  ctx.fillStyle = '#EAB308';
-  ctx.fillRect(0, barY, w, Math.round(4.5 * s));
-  ctx.restore();
+  // CATATAN: Background gelap dihilangkan (100% Transparan) sesuai instruksi user
 
   // 3. Pembagian Kolom Lebar 70% : 30% (70% Tulisan : 30% Google Map)
   const leftColW = w * 0.70;  // 70% Lebar untuk Tulisan
@@ -586,19 +578,19 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
 
   // A. Mini Map Satellite di Sisi Kanan (Area 30%)
   const mapPadX = Math.round(18 * s);
-  const mapPadY = Math.round(16 * s);
-  const mapX = leftColW + mapPadX;
-  const mapY = barY + mapPadY;
+  const mapH = Math.min(Math.round(280 * s), mainBarH - Math.round(40 * s));
   const mapW = rightColW - (mapPadX * 2);
-  const mapH = mainBarH - (mapPadY * 2);
+  const mapX = leftColW + mapPadX;
+  const mapY = barY + mainBarH - mapH - Math.round(20 * s);
 
   // B. Area Tulisan di Sisi Kiri (Area 70%)
   const textMarginL = Math.round(30 * s);
-  const maxTextW = leftColW - textMarginL - Math.round(18 * s);
+  const maxTextW = leftColW - textMarginL - Math.round(20 * s);
 
-  let curY = barY + Math.round(85 * s);
+  // Posisi Y awal untuk Baris 1 (Ditempatkan proporsional di dalam area 605px)
+  let curY = barY + Math.round(180 * s);
 
-  // 4. Baris 1: Jam Digital Besar (100px) + Garis Emas + Hari & Tanggal
+  // 4. Baris 1: Jam Digital Besar (100px) + Garis Emas + Hari & Tanggal + Tag Keterangan Pekerjaan
   ctx.save();
   const clockFontS = Math.round(100 * s);
   ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
@@ -614,67 +606,83 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
 
   // Vertical Gold Separator (Membentang Sepanjang Jam)
   const sepX = textMarginL + timeW + Math.round(18 * s);
-  const sepH = Math.round(75 * s);
-  const sepTopY = curY - Math.round(72 * s);
+  const sepH = Math.round(85 * s);
+  const sepTopY = curY - Math.round(80 * s);
   ctx.fillStyle = '#EAB308';
-  ctx.fillRect(sepX, sepTopY, Math.round(5.5 * s), sepH);
+  ctx.fillRect(sepX, sepTopY, Math.round(6 * s), sepH);
 
-  // Hari & Tanggal (Diperbesar Proporsional)
-  ctx.font = `800 ${Math.round(30 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  // Hari & Tanggal (Baris 1)
+  const dateTextX = sepX + Math.round(18 * s);
+  ctx.font = `800 ${Math.round(32 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
   ctx.shadowBlur = 12 * s;
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
   ctx.lineWidth = 5 * s;
-  ctx.strokeText(meta.dateStr, sepX + Math.round(16 * s), sepTopY + Math.round(28 * s));
+  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(30 * s));
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.dateStr, sepX + Math.round(16 * s), sepTopY + Math.round(28 * s));
+  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(30 * s));
 
-  ctx.font = `800 ${Math.round(32 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.strokeText(meta.dayName, sepX + Math.round(16 * s), sepTopY + Math.round(68 * s));
+  ctx.font = `800 ${Math.round(34 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(72 * s));
   ctx.fillStyle = '#FDE047';
-  ctx.fillText(meta.dayName, sepX + Math.round(16 * s), sepTopY + Math.round(68 * s));
+  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(72 * s));
+
+  // Tag Keterangan Pekerjaan di Baris 1
+  if (meta.jobDescription) {
+    const jobTextY = sepTopY + Math.round(116 * s);
+    ctx.font = `800 ${Math.round(28 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+    ctx.shadowBlur = 12 * s;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
+    ctx.lineWidth = 6 * s;
+    const cleanJob = truncateText(ctx, `📌 ${meta.jobDescription}`, maxTextW);
+    ctx.strokeText(cleanJob, textMarginL, jobTextY);
+    ctx.fillStyle = '#38BDF8'; // Bright cyan text
+    ctx.fillText(cleanJob, textMarginL, jobTextY);
+    curY = jobTextY + Math.round(20 * s);
+  }
   ctx.restore();
 
-  // 5. Baris 2: Alamat Lengkap Asli Google Maps (Ukuran 50px)
-  curY += Math.round(72 * s);
+  // 5. Baris 2: Alamat Lengkap Asli Google Maps (Ukuran 40px)
+  curY += Math.round(55 * s);
   ctx.save();
-  const addressFontS = Math.round(50 * s);
+  const addressFontS = Math.round(40 * s);
   ctx.font = `800 ${addressFontS}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 18 * s;
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 8 * s;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
+  ctx.shadowBlur = 16 * s;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.98)';
+  ctx.lineWidth = 7 * s;
 
   const addressLines = wrapTextLines(ctx, meta.address, maxTextW, 2);
   addressLines.forEach((line) => {
     ctx.strokeText(line, textMarginL, curY);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(line, textMarginL, curY);
-    curY += Math.round(56 * s);
+    curY += Math.round(48 * s);
   });
   ctx.restore();
 
-  // 6. Baris 3: Titik Koordinat GPS Asli (Ukuran 45px)
+  // 6. Baris 3: Titik Koordinat GPS Asli (Ukuran 20px)
   curY += Math.round(10 * s);
-  const coordText = `📍 Koordinat: ${meta.lat}, ${meta.lng}`;
-  const coordFontS = Math.round(45 * s);
+  const coordText = `📍 Koordinat Asli: ${meta.lat}, ${meta.lng} (Akurasi: ±${meta.acc}m)`;
+  const coordFontS = Math.round(20 * s);
   ctx.save();
   ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
   const coordTextW = ctx.measureText(coordText).width;
-  const badgePadX = Math.round(16 * s);
-  const badgeH = Math.round(56 * s);
-  const badgeY = curY - Math.round(44 * s);
+  const badgePadX = Math.round(12 * s);
+  const badgeH = Math.round(32 * s);
+  const badgeY = curY - Math.round(22 * s);
 
-  // Semi-transparent dark rounded badge
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.70)';
+  // Semi-transparent dark rounded badge untuk memastikan keterbacaan
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
   ctx.beginPath();
-  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(10 * s));
+  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(6 * s));
   ctx.fill();
 
   ctx.fillStyle = '#FEF08A'; // Soft Gold untuk kontras tinggi
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 12 * s;
-  ctx.fillText(coordText, textMarginL + badgePadX, curY);
+  ctx.shadowBlur = 8 * s;
+  ctx.fillText(coordText, textMarginL + badgePadX, curY + Math.round(1 * s));
   ctx.restore();
 
   // 7. Draw Right Google Mini-Map Satellite (Area 30%)
@@ -691,39 +699,39 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   ctx.fillRect(0, footerY, w, 2.5 * s);
 
   // Sisi Kiri Footer: Logo SGX + Nama Sinar Grafika + WhatsApp Contact
-  const footerLogoSize = Math.round(58 * s);
+  const footerLogoSize = Math.round(65 * s);
   const footerLogoY = footerY + Math.round((footerBarH - footerLogoSize) / 2);
   if (meta.logoImg) {
     ctx.drawImage(meta.logoImg, textMarginL, footerLogoY, footerLogoSize, footerLogoSize);
   }
 
-  const textX = textMarginL + footerLogoSize + Math.round(14 * s);
+  const textX = textMarginL + footerLogoSize + Math.round(16 * s);
   ctx.fillStyle = '#0F172A';
-  ctx.font = `900 ${Math.round(24 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + Math.round(32 * s));
+  ctx.font = `900 ${Math.round(26 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + Math.round(36 * s));
 
   ctx.fillStyle = '#334155';
-  ctx.font = `700 ${Math.round(18 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + Math.round(60 * s));
+  ctx.font = `700 ${Math.round(20 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + Math.round(68 * s));
 
   // Diagonal dividing slash di tengah
   const midX = leftColW;
   ctx.strokeStyle = '#CBD5E1';
   ctx.lineWidth = 2.5 * s;
   ctx.beginPath();
-  ctx.moveTo(midX + Math.round(16 * s), footerY + Math.round(10 * s));
-  ctx.lineTo(midX - Math.round(16 * s), footerY + footerBarH - Math.round(10 * s));
+  ctx.moveTo(midX + Math.round(20 * s), footerY + Math.round(12 * s));
+  ctx.lineTo(midX - Math.round(20 * s), footerY + footerBarH - Math.round(12 * s));
   ctx.stroke();
 
-  // Sisi Kanan Footer: Tag Keterangan Pekerjaan (Tanpa Logo di Kanan)
+  // Sisi Kanan Footer: Tag Keterangan Pekerjaan / Legal Text
   if (meta.jobDescription) {
     const rightMarginR = Math.round(30 * s);
-    const maxJobTextW = rightColW + (leftColW - midX) - Math.round(40 * s);
+    const maxJobTextW = rightColW + (leftColW - midX) - Math.round(50 * s);
     ctx.fillStyle = '#0369A1'; // Deep sky blue
     ctx.font = `800 ${Math.round(22 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
     ctx.textAlign = 'right';
-    const jobText = truncateText(ctx, `📌 ${meta.jobDescription}`, maxJobTextW);
-    ctx.fillText(jobText, w - rightMarginR, footerY + Math.round(48 * s));
+    const jobText = truncateText(ctx, `Dokumentasi: ${meta.jobDescription}`, maxJobTextW);
+    ctx.fillText(jobText, w - rightMarginR, footerY + Math.round(54 * s));
     ctx.textAlign = 'left'; // Reset alignment
   }
   ctx.restore();
