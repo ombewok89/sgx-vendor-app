@@ -9,20 +9,22 @@
     <!-- Top Header Bar (Logo Resmi Perusahaan & Status) -->
     <header class="flex items-center justify-between z-10 shrink-0 w-full max-w-7xl mx-auto">
       <div class="flex items-center gap-3">
-        <!-- Logo Resmi Perusahaan -->
-        <div class="h-10 sm:h-12 flex items-center">
+        <!-- Logo Resmi Perusahaan (Gold Emblem) -->
+        <div class="flex items-center">
           <img
-            src="/sgx_banner_logo.png"
-            alt="Sinar Grafika Official Logo"
-            class="h-9 sm:h-11 w-auto object-contain drop-shadow-md"
-            onerror="this.onerror=null; this.src='/sgx_logo.png';"
+            src="/sgx_logo.png"
+            alt="PT Sinar Kreasindo Bencoolen Logo"
+            class="h-10 sm:h-12 w-10 sm:w-12 object-contain rounded-2xl shadow-lg shadow-amber-500/20 border border-[#EDC80A]/40"
           />
         </div>
-        <div class="hidden xs:flex flex-col">
-          <span class="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-[#EDC80A] font-mono">
-            Vendor Portal
+        <div class="flex flex-col">
+          <span class="text-xs sm:text-sm font-black tracking-tight text-white flex items-center gap-1.5">
+            <span>PT Sinar Kreasindo Bencoolen</span>
+            <span class="text-[9px] font-extrabold uppercase tracking-widest text-[#EDC80A] font-mono bg-[#333231] px-1.5 py-0.2 rounded border border-[#EDC80A]/30">
+              SGX
+            </span>
           </span>
-          <span class="text-[9px] text-slate-400 font-medium">Digital Evidence & Field Reporting</span>
+          <span class="text-[9px] sm:text-[10px] text-slate-400 font-medium">Digital Evidence & Field Reporting Portal</span>
         </div>
       </div>
 

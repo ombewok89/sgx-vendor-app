@@ -9,21 +9,20 @@
         <Menu className="w-5 h-5" />
       </button>
       <div class="flex items-center gap-3">
-        <!-- Logo Resmi Perusahaan -->
-        <div class="h-9 sm:h-10 flex items-center">
+        <!-- Logo Resmi Perusahaan (Gold Emblem) -->
+        <div class="flex items-center">
           <img
-            src="/sgx_banner_logo.png"
-            alt="Sinar Grafika Official Logo"
-            class="h-8 sm:h-9 w-auto object-contain drop-shadow-xs"
-            onerror="this.onerror=null; this.src='/sgx_logo.png';"
+            src="/sgx_logo.png"
+            alt="PT Sinar Kreasindo Bencoolen Logo"
+            class="h-9 sm:h-10 w-9 sm:w-10 object-contain rounded-xl shadow-xs hover:scale-105 transition-transform"
           />
         </div>
-        <div class="hidden md:flex flex-col">
+        <div class="hidden sm:flex flex-col">
           <h1 class="font-black text-slate-900 text-xs sm:text-sm leading-none flex items-center gap-2">
-            <span>SGX Enterprise Portal</span>
-            <span class="inline-flex items-center px-2 py-0.5 text-[9px] font-bold bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
-              PROD v2.4
+            <span>PT Sinar Kreasindo Bencoolen</span>
+            <span class="inline-flex items-center px-2 py-0.5 text-[9px] font-bold bg-amber-50 text-amber-800 rounded-full border border-amber-300">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1 animate-pulse"></span>
+              SGX Portal
             </span>
           </h1>
           <p class="text-[10px] text-slate-500 mt-0.5 font-medium">Digital Evidence & Operational Reporting System</p>

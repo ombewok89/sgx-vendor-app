@@ -5,12 +5,11 @@
     <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3 shadow-md">
       <div class="max-w-5xl mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="h-9 sm:h-10 flex items-center">
+          <div class="flex items-center">
             <img
-              src="/sgx_banner_logo.png"
-              alt="Sinar Grafika Official Logo"
-              class="h-8 sm:h-9 w-auto object-contain drop-shadow-xs"
-              onerror="this.onerror=null; this.src='/sgx_logo.png';"
+              src="/sgx_logo.png"
+              alt="PT Sinar Kreasindo Bencoolen Logo"
+              class="h-9 sm:h-10 w-9 sm:w-10 object-contain rounded-xl shadow-xs"
             />
           </div>
           <div>
