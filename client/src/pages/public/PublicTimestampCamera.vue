@@ -538,19 +538,19 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   const mapX = leftColW + mapPadX;
   const mapY = barY + mapPadY;
 
-  // B. Area Tulisan di Sisi Kiri (Area 70%)
-  const textMarginL = Math.round(28 * s);
-  const maxTextW = leftColW - textMarginL - Math.round(16 * s);
+  // B. Area Tulisan di Sisi Kiri (100% Lebar dari Kolom 70%)
+  const textMarginL = Math.round(20 * s);
+  const maxTextW = leftColW - textMarginL - Math.round(10 * s); // 100% lebar dari kolom kiri 70%
 
-  // 4. BARIS 1: Jam Digital Besar + Garis Emas + Hari & Tanggal (Berjarak Lega ke Baris 2)
-  let curY = barY + Math.round(62 * s);
+  // 4. BARIS 1: Jam Digital Besar + Garis Emas + Hari & Tanggal (100% Lebar Kolom Kiri)
+  let curY = barY + Math.round(66 * s);
   ctx.save();
-  const clockFontS = Math.round(68 * s);
+  const clockFontS = Math.round(78 * s);
   ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 14 * s;
+  ctx.shadowBlur = 15 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 6 * s;
+  ctx.lineWidth = 6.5 * s;
   ctx.strokeText(meta.timeStr, textMarginL, curY);
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(meta.timeStr, textMarginL, curY);
@@ -559,88 +559,88 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
 
   // Vertical Gold Separator (Membentang Sepanjang Jam)
   const sepX = textMarginL + timeW + Math.round(14 * s);
-  const sepH = Math.round(54 * s);
-  const sepTopY = curY - Math.round(52 * s);
+  const sepH = Math.round(60 * s);
+  const sepTopY = curY - Math.round(58 * s);
   ctx.fillStyle = '#EAB308';
-  ctx.fillRect(sepX, sepTopY, Math.round(4.5 * s), sepH);
+  ctx.fillRect(sepX, sepTopY, Math.round(5 * s), sepH);
 
   // Hari & Tanggal (Baris 1)
   const dateTextX = sepX + Math.round(14 * s);
-  ctx.font = `800 ${Math.round(24 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.font = `800 ${Math.round(26 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
   ctx.shadowBlur = 10 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 4.5 * s;
-  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(22 * s));
+  ctx.lineWidth = 5 * s;
+  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(24 * s));
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(22 * s));
+  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(24 * s));
 
-  ctx.font = `800 ${Math.round(26 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(48 * s));
+  ctx.font = `800 ${Math.round(28 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(54 * s));
   ctx.fillStyle = '#FDE047';
-  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(48 * s));
+  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(54 * s));
   ctx.restore();
 
-  // 5. BARIS 2: Nama Jalan & Alamat Lengkap Google Maps (Lebar Fleksibel 70%, Berjarak dari Baris 1)
-  curY += Math.round(48 * s);
+  // 5. BARIS 2: Nama Jalan & Alamat Lengkap Google Maps (100% Lebar Kolom Kiri 70%)
+  curY += Math.round(50 * s);
   ctx.save();
-  const addressFontS = Math.round(28 * s);
+  const addressFontS = Math.round(32 * s);
   ctx.font = `800 ${addressFontS}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
-  ctx.shadowBlur = 14 * s;
+  ctx.shadowBlur = 15 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.98)';
-  ctx.lineWidth = 6 * s;
+  ctx.lineWidth = 6.5 * s;
 
   const addressLines = wrapTextLines(ctx, meta.address, maxTextW, 2);
   addressLines.forEach((line) => {
     ctx.strokeText(line, textMarginL, curY);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(line, textMarginL, curY);
-    curY += Math.round(35 * s);
+    curY += Math.round(38 * s);
   });
   ctx.restore();
 
-  // 6. BARIS 3: Titik Koordinat GPS Fleksibel (📍 Lat, Lng)
-  curY += Math.round(10 * s);
+  // 6. BARIS 3: Titik Koordinat GPS Fleksibel (100% Lebar Kolom Kiri)
+  curY += Math.round(12 * s);
   const coordText = `📍 ${meta.lat}, ${meta.lng}`;
-  const coordFontS = Math.round(24 * s);
+  const coordFontS = Math.round(28 * s);
   ctx.save();
   ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
   const coordTextW = ctx.measureText(coordText).width;
-  const badgePadX = Math.round(12 * s);
-  const badgeH = Math.round(35 * s);
-  const badgeY = curY - Math.round(26 * s);
+  const badgePadX = Math.round(14 * s);
+  const badgeH = Math.round(40 * s);
+  const badgeY = curY - Math.round(30 * s);
 
   // Dynamic semi-transparent dark rounded badge
   ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
   ctx.beginPath();
-  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(7 * s));
+  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(8 * s));
   ctx.fill();
 
   ctx.fillStyle = '#FEF08A'; // Soft Gold untuk kontras tinggi
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 8 * s;
+  ctx.shadowBlur = 9 * s;
   ctx.fillText(coordText, textMarginL + badgePadX, curY);
   ctx.restore();
 
-  // 7. BARIS 4: Tag Keterangan Pekerjaan Fleksibel (📌 Job Description)
+  // 7. BARIS 4: Tag Keterangan Pekerjaan Fleksibel (100% Lebar Kolom Kiri)
   if (meta.jobDescription) {
-    curY += Math.round(40 * s);
+    curY += Math.round(44 * s);
     ctx.save();
-    const jobFontS = Math.round(24 * s);
+    const jobFontS = Math.round(26 * s);
     ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
 
     const jobLines = wrapTextLines(ctx, `📌 ${meta.jobDescription}`, maxTextW, 2);
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-    ctx.shadowBlur = 10 * s;
+    ctx.shadowBlur = 11 * s;
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-    ctx.lineWidth = 5 * s;
+    ctx.lineWidth = 5.5 * s;
 
     jobLines.forEach((line) => {
       ctx.strokeText(line, textMarginL, curY);
       ctx.fillStyle = '#38BDF8'; // Bright cyan text
       ctx.fillText(line, textMarginL, curY);
-      curY += Math.round(28 * s);
+      curY += Math.round(32 * s);
     });
     ctx.restore();
   }
