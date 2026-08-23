@@ -35,32 +35,37 @@
         </div>
       </div>
 
-      <!-- Printable Document Body with Background Paper Support -->
+      <!-- Printable Document Body with Background Watermark Support -->
       <div
         id="ba-printable-document"
         class="p-8 sm:p-12 overflow-y-auto bg-white text-slate-900 space-y-6 text-xs custom-scrollbar relative flex-1"
-        :style="bgStyle"
       >
-        <!-- Header Kop Surat (Shown when no full background template is uploaded) -->
-        <div v-if="!hasBackgroundTemplate" class="border-b-2 border-slate-900 pb-4 flex items-center justify-between">
+        <!-- Transparent Watermark Layer in Background -->
+        <div class="watermark-layer absolute inset-0 pointer-events-none z-0 overflow-hidden flex items-center justify-center">
+          <img
+            :src="watermarkBgUrl"
+            alt="Watermark SGX"
+            class="w-full h-full object-fill opacity-[0.14] select-none"
+          />
+        </div>
+
+        <!-- Official Header -->
+        <div class="relative z-10 border-b-2 border-slate-900 pb-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div v-if="logoUrl" class="w-14 h-14 rounded-lg border bg-white p-1 shadow-xs">
-              <img :src="getFileUrl(logoUrl)" alt="Logo" class="w-full h-full object-contain" />
+            <div class="w-14 h-14 rounded-xl border bg-white p-1 shadow-xs flex items-center justify-center">
+              <img src="/sgx_icon.png" alt="Logo" class="w-full h-full object-contain" />
             </div>
             <div>
-              <h2 class="text-lg font-black text-slate-900 tracking-wide">PT SINAR GRAHA KONSTRUKSI (SGX)</h2>
+              <h2 class="text-lg font-black text-slate-900 tracking-wide">PT SINAR KREASINDO BENCOOLEN - SGX</h2>
               <p class="text-[11px] text-slate-600 font-medium">Digital Vendor Management & Infrastructure Quality Assurance</p>
-              <p class="text-[10px] text-slate-500">Gedung Graha SGX Lt. 5, Jl. Bisnis Utama No. 88, Jakarta Selatan | Telp: (021) 789-0123</p>
+              <p class="text-[10px] text-slate-500">Anggut Bawah - Ratu Agung, Bengkulu - Indonesia 38222 | Telp: +62 23 8888 5251</p>
             </div>
           </div>
           <div class="text-right">
-            <span class="inline-block px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold rounded-lg text-[11px] tracking-wider shadow-xs">
+            <span class="inline-block px-3 py-1 bg-amber-50 text-amber-900 border border-amber-300 font-bold rounded-lg text-[11px] tracking-wider shadow-xs">
               EVIDENCE CERTIFIED ✓
             </span>
           </div>
-        </div>
-        <div v-else class="h-16">
-          <!-- Spacer for letterhead background header -->
         </div>
 
         <!-- Title -->
@@ -296,19 +301,9 @@ const signatoriesList = computed(() => {
   ];
 });
 
-const bgStyle = computed(() => {
+const watermarkBgUrl = computed(() => {
   const rawBg = template.value?.background_image_url || props.baData?.background_image_url || '/ba_letterhead_bg.jpg';
-  const bgUrl = rawBg.startsWith('/') || rawBg.startsWith('http') ? rawBg : getFileUrl(rawBg);
-  return {
-    backgroundImage: `url(${bgUrl})`,
-    backgroundSize: '100% 100%',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
-    paddingTop: '36mm',
-    paddingBottom: '32mm',
-    paddingLeft: '20mm',
-    paddingRight: '20mm'
-  };
+  return rawBg.startsWith('/') || rawBg.startsWith('http') ? rawBg : getFileUrl(rawBg);
 });
 
 function handlePrint() {
@@ -346,12 +341,29 @@ function handlePrint() {
     width: 100%;
     min-height: 100vh;
     margin: 0;
-    padding: 36mm 20mm 32mm 20mm !important;
-    background-image: url('/ba_letterhead_bg.jpg') !important;
-    background-size: 100% 100% !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
+    padding: 20mm 18mm !important;
+    background: white !important;
     color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .watermark-layer {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+  .watermark-layer img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: fill !important;
+    opacity: 0.14 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
