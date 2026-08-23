@@ -276,7 +276,7 @@
 
     <!-- Footer Copyright (Clean & Compact) -->
     <footer class="p-2 text-center text-[10px] text-slate-400 border-t border-slate-800/80 z-10 font-mono shrink-0 w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1">
-      <span>© 2026 PT Sinar Grafika (SGX). Hak Cipta Dilindungi Undang-Undang.</span>
+      <span>© 2026 PT Sinar Kreasindo Bencoolen - SGX. Hak Cipta Dilindungi Undang-Undang.</span>
       <span class="text-slate-500">vendor.sinargrafika.my.id</span>
     </footer>
 

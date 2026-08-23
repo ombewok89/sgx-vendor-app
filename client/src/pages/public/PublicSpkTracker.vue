@@ -5,18 +5,23 @@
     <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3 shadow-md">
       <div class="max-w-5xl mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-800 via-indigo-700 to-emerald-500 flex items-center justify-center text-white font-black text-sm shadow-md shadow-purple-900/30">
-            SGX
+          <div class="h-9 sm:h-10 flex items-center">
+            <img
+              src="/sgx_banner_logo.png"
+              alt="Sinar Grafika Official Logo"
+              class="h-8 sm:h-9 w-auto object-contain drop-shadow-xs"
+              onerror="this.onerror=null; this.src='/sgx_logo.png';"
+            />
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="font-extrabold text-sm text-white tracking-wide">LIVE WORK TRACKER</h1>
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <h1 class="font-black text-xs sm:text-sm text-white tracking-wide">LIVE WORK TRACKER</h1>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
                 REALTIME
               </span>
             </div>
-            <p class="text-[11px] text-slate-400">PT Sinar Graha Kreatif — Sistem Pemantauan Progres Cabang</p>
+            <p class="text-[10px] text-slate-400">PT Sinar Kreasindo Bencoolen — Sistem Pemantauan Progres Cabang</p>
           </div>
         </div>
 
