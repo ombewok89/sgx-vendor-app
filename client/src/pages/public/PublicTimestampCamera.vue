@@ -1,25 +1,34 @@
 <template>
-  <div class="h-screen max-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-purple-500 selection:text-white flex flex-col overflow-hidden">
+  <div class="h-screen max-h-screen bg-[#1E1E1D] text-slate-100 font-sans selection:bg-[#EDC80A] selection:text-[#333231] flex flex-col overflow-hidden relative">
     
-    <!-- Top Header Bar with Integrated Verified Location -->
-    <header class="border-b border-slate-800 bg-slate-900/95 backdrop-blur-md shrink-0 px-3 sm:px-4 py-2.5 shadow-md z-40">
+    <!-- Ambient Radial Glow Accents (Hitam #333231, Kuning #EDC80A & Oranye #F97316) -->
+    <div class="fixed top-0 left-1/4 w-80 h-80 bg-[#EDC80A]/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2"></div>
+    <div class="fixed bottom-0 right-1/4 w-80 h-80 bg-[#F97316]/10 rounded-full blur-3xl pointer-events-none translate-y-1/2"></div>
+
+    <!-- Top Header Bar with Official Company Banner Logo & GPS Status -->
+    <header class="border-b border-[#EDC80A]/20 bg-[#333231]/95 backdrop-blur-md shrink-0 px-3 sm:px-4 py-2 shadow-md z-40">
       <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
         <!-- Logo & Title -->
         <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-purple-700 to-indigo-800 flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-md shadow-amber-500/20 shrink-0">
-            SGX
+          <div class="h-8 sm:h-9 flex items-center shrink-0">
+            <img
+              src="/sgx_banner_logo.png"
+              alt="Sinar Grafika Official Logo"
+              class="h-7 sm:h-8 w-auto object-contain drop-shadow-md"
+              onerror="this.onerror=null; this.src='/sgx_logo.png';"
+            />
           </div>
           <div class="min-w-0">
             <div class="flex items-center gap-1.5">
               <h1 class="font-extrabold text-xs sm:text-sm text-white tracking-wide truncate">TIMESLIP CAMERA</h1>
-              <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+              <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-[#1E1E1D] text-[#EDC80A] border border-[#EDC80A]/30 shrink-0">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>
-                GPS
+                AUTONOMOUS GPS
               </span>
             </div>
             <!-- Integrated Verified Location Subtitle in Header -->
-            <p class="text-[10px] text-emerald-400 font-medium truncate flex items-center gap-1" :title="detectedAddress">
-              <MapPin class="w-3 h-3 text-emerald-400 shrink-0" />
+            <p class="text-[10px] text-[#EDC80A] font-medium truncate flex items-center gap-1" :title="detectedAddress">
+              <MapPin class="w-3 h-3 text-[#EDC80A] shrink-0" />
               <span>{{ detectedAddress || 'Mendeteksi alamat satelit...' }}</span>
             </p>
           </div>
@@ -30,17 +39,17 @@
           <button
             type="button"
             @click="refreshGps"
-            class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all border border-slate-700 cursor-pointer active:scale-95"
+            class="p-2 rounded-xl bg-[#1E1E1D] hover:bg-[#2a2a28] text-[#EDC80A] hover:text-white transition-all border border-[#EDC80A]/30 cursor-pointer active:scale-95 shadow-sm"
             title="Segarkan GPS"
           >
-            <RefreshCw class="w-3.5 h-3.5 text-amber-400" :class="{ 'animate-spin': fetchingGps }" />
+            <RefreshCw class="w-3.5 h-3.5 text-[#EDC80A]" :class="{ 'animate-spin': fetchingGps }" />
           </button>
           <button
             type="button"
             @click="goBackHome"
-            class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all border border-slate-700 flex items-center gap-1 cursor-pointer active:scale-95"
+            class="px-3 py-1.5 rounded-xl bg-[#1E1E1D] hover:bg-[#2a2a28] text-slate-200 hover:text-white text-xs font-bold transition-all border border-[#EDC80A]/30 flex items-center gap-1 cursor-pointer active:scale-95 shadow-sm"
           >
-            <Home class="w-3.5 h-3.5" />
+            <Home class="w-3.5 h-3.5 text-[#EDC80A]" />
             <span class="hidden sm:inline">Beranda</span>
           </button>
         </div>
@@ -48,7 +57,7 @@
     </header>
 
     <!-- Main Content Area (No-Scroll Viewport Layout) -->
-    <main class="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-4 flex flex-col min-h-0">
+    <main class="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-4 flex flex-col min-h-0 z-10">
       
       <!-- STATE 1: CAMERA & UPLOAD VIEWFINDER (Belum Ambil Foto) -->
       <div v-if="!capturedImage" class="flex-1 flex flex-col min-h-0 space-y-2.5">
@@ -57,19 +66,19 @@
         <div class="shrink-0 relative">
           <div class="relative flex items-center">
             <div class="absolute left-3 text-slate-400 pointer-events-none">
-              <FileText class="w-3.5 h-3.5 text-purple-400" />
+              <FileText class="w-3.5 h-3.5 text-[#EDC80A]" />
             </div>
             <input
               type="text"
               v-model="stampForm.jobDescription"
               placeholder="Ketik Keterangan Pekerjaan (Opsional)"
-              class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl focus:border-purple-500 focus:outline-none text-white text-xs font-medium placeholder-slate-500 shadow-inner"
+              class="w-full pl-9 pr-3 py-2 bg-[#333231]/90 border border-slate-700 rounded-xl focus:border-[#EDC80A] focus:ring-2 focus:ring-[#EDC80A]/20 focus:outline-none text-white text-xs font-medium placeholder-slate-400 shadow-inner transition-all"
             />
           </div>
         </div>
 
         <!-- Focus Viewfinder Box (Fills Remaining Screen Height without Scrolling) -->
-        <div class="flex-1 relative bg-black rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex items-center justify-center min-h-0">
+        <div class="flex-1 relative bg-black rounded-2xl border border-slate-700 overflow-hidden shadow-2xl flex items-center justify-center min-h-0">
           
           <!-- Live Video Stream -->
           <video
@@ -83,24 +92,24 @@
 
           <!-- Camera Inactive Placeholder -->
           <div v-if="!isCameraActive" class="p-6 text-center space-y-3 max-w-sm">
-            <div class="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-700 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
-              <Camera class="w-7 h-7 text-purple-400" />
+            <div class="w-14 h-14 rounded-2xl bg-[#333231] border border-[#EDC80A]/30 text-[#EDC80A] flex items-center justify-center mx-auto shadow-inner">
+              <Camera class="w-7 h-7 text-[#EDC80A]" />
             </div>
             <div>
               <h3 class="text-sm font-bold text-white">Kamera Siap Digunakan</h3>
-              <p class="text-[11px] text-slate-400 mt-0.5">Buka kamera langsung atau pilih foto dari galeri. Lokasi & waktu otomatis tercetak di bawah foto.</p>
+              <p class="text-[11px] text-slate-300 mt-0.5">Buka kamera langsung atau pilih foto dari galeri. Lokasi & waktu otomatis tercetak di bawah foto.</p>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-2.5 pt-1">
               <button
                 type="button"
                 @click="startCamera"
-                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-900/30 active:scale-95 transition-all cursor-pointer"
+                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EDC80A] via-amber-500 to-[#F97316] hover:from-[#f5d012] hover:to-[#ea580c] text-[#1E1E1D] text-xs font-black flex items-center gap-2 shadow-lg shadow-amber-500/25 active:scale-95 transition-all cursor-pointer"
               >
-                <Camera class="w-4 h-4" />
+                <Camera class="w-4 h-4 text-[#1E1E1D]" />
                 <span>Buka Kamera</span>
               </button>
-              <label class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 border border-slate-700 active:scale-95 transition-all cursor-pointer">
-                <Upload class="w-4 h-4 text-emerald-400" />
+              <label class="px-5 py-2.5 rounded-xl bg-[#333231] hover:bg-[#282826] text-slate-200 text-xs font-bold flex items-center gap-2 border border-[#EDC80A]/30 active:scale-95 transition-all cursor-pointer shadow-sm">
+                <Upload class="w-4 h-4 text-[#EDC80A]" />
                 <span>Pilih Galeri</span>
                 <input type="file" accept="image/*" class="hidden" @change="handleFileSelected" />
               </label>
@@ -110,8 +119,8 @@
           <!-- Camera Live Controls Overlay (Ketika Kamera Aktif) -->
           <div v-if="isCameraActive" class="absolute top-3 inset-x-3 flex items-center justify-between z-20">
             <!-- GPS Status Pill -->
-            <div class="px-2.5 py-1 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700 text-[10px] font-mono flex items-center gap-1.5 shadow-md text-white">
-              <MapPin class="w-3 h-3" :class="gpsLocation ? 'text-emerald-400' : 'text-amber-400 animate-pulse'" />
+            <div class="px-2.5 py-1 rounded-full bg-[#333231]/90 backdrop-blur-md border border-[#EDC80A]/40 text-[10px] font-mono flex items-center gap-1.5 shadow-md text-[#EDC80A]">
+              <MapPin class="w-3 h-3 text-[#EDC80A]" />
               <span>{{ gpsLocation ? `${gpsLocation.lat.toFixed(5)}, ${gpsLocation.lng.toFixed(5)}` : 'Mencari GPS...' }}</span>
             </div>
 
@@ -120,15 +129,15 @@
               <button
                 type="button"
                 @click="toggleCameraFacing"
-                class="p-2 rounded-full bg-slate-900/85 hover:bg-slate-800 text-white backdrop-blur-md border border-slate-700 shadow-md active:scale-90 transition-all cursor-pointer"
+                class="p-2 rounded-full bg-[#333231]/90 hover:bg-[#282826] text-white backdrop-blur-md border border-[#EDC80A]/30 shadow-md active:scale-90 transition-all cursor-pointer"
                 title="Ganti Kamera Depan/Belakang"
               >
-                <SwitchCamera class="w-3.5 h-3.5" />
+                <SwitchCamera class="w-3.5 h-3.5 text-[#EDC80A]" />
               </button>
               <button
                 type="button"
                 @click="stopCamera"
-                class="p-2 rounded-full bg-rose-600/80 hover:bg-rose-700 text-white backdrop-blur-md border border-white/20 shadow-md active:scale-90 transition-all cursor-pointer"
+                class="p-2 rounded-full bg-rose-600/85 hover:bg-rose-700 text-white backdrop-blur-md border border-white/20 shadow-md active:scale-90 transition-all cursor-pointer"
                 title="Tutup Kamera"
               >
                 <X class="w-3.5 h-3.5" />
@@ -138,18 +147,18 @@
 
           <!-- Capture Shutter Button (Bottom Center Overlay) -->
           <div v-if="isCameraActive" class="absolute bottom-5 inset-x-0 flex items-center justify-center gap-5 z-20">
-            <label class="p-3 rounded-full bg-slate-900/85 hover:bg-slate-800 text-slate-300 backdrop-blur-md border border-slate-700 shadow-lg cursor-pointer active:scale-90 transition-all" title="Upload dari File">
-              <Upload class="w-4 h-4 text-emerald-400" />
+            <label class="p-3 rounded-full bg-[#333231]/90 hover:bg-[#282826] text-[#EDC80A] backdrop-blur-md border border-[#EDC80A]/30 shadow-lg cursor-pointer active:scale-90 transition-all" title="Upload dari File">
+              <Upload class="w-4 h-4 text-[#EDC80A]" />
               <input type="file" accept="image/*" class="hidden" @change="handleFileSelected" />
             </label>
 
-            <!-- Big Shutter Button -->
+            <!-- Big Shutter Button with Golden Amber Glow -->
             <button
               type="button"
               @click="captureSnapshot"
-              class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white p-1 shadow-2xl shadow-purple-500/40 border-4 border-purple-600 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+              class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white p-1 shadow-2xl shadow-amber-500/50 border-4 border-[#EDC80A] hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
             >
-              <div class="w-full h-full rounded-full bg-gradient-to-tr from-purple-700 to-indigo-600 flex items-center justify-center text-white">
+              <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#EDC80A] via-amber-500 to-[#F97316] flex items-center justify-center text-[#1E1E1D]">
                 <Camera class="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
             </button>
@@ -157,10 +166,10 @@
             <button
               type="button"
               @click="refreshGps"
-              class="p-3 rounded-full bg-slate-900/85 hover:bg-slate-800 text-slate-300 backdrop-blur-md border border-slate-700 shadow-lg cursor-pointer active:scale-90 transition-all"
+              class="p-3 rounded-full bg-[#333231]/90 hover:bg-[#282826] text-[#EDC80A] backdrop-blur-md border border-[#EDC80A]/30 shadow-lg cursor-pointer active:scale-90 transition-all"
               title="Perbarui GPS"
             >
-              <RefreshCw class="w-4 h-4 text-amber-400" :class="{ 'animate-spin': fetchingGps }" />
+              <RefreshCw class="w-4 h-4 text-[#EDC80A]" :class="{ 'animate-spin': fetchingGps }" />
             </button>
           </div>
         </div>
@@ -171,7 +180,7 @@
       <div v-else class="flex-1 flex flex-col min-h-0 space-y-3 animate-scale-up">
         
         <!-- Processed Watermarked Image Preview -->
-        <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-2xl flex flex-col items-center justify-center min-h-0 overflow-hidden">
+        <div class="flex-1 bg-[#333231]/90 border border-[#EDC80A]/30 rounded-2xl p-3 shadow-2xl flex flex-col items-center justify-center min-h-0 overflow-hidden">
           <div class="w-full h-full rounded-xl overflow-hidden shadow-2xl border border-slate-700 bg-black relative flex items-center justify-center">
             <img
               :src="watermarkedImage"
@@ -179,8 +188,8 @@
               class="w-full h-full object-contain mx-auto"
             />
             
-            <div v-if="processingWatermark" class="absolute inset-0 bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 text-xs text-white">
-              <Loader2 class="w-8 h-8 animate-spin text-purple-500" />
+            <div v-if="processingWatermark" class="absolute inset-0 bg-[#1E1E1D]/85 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 text-xs text-white">
+              <Loader2 class="w-8 h-8 animate-spin text-[#EDC80A]" />
               <p class="font-bold">Menerapkan Stempel Sinar Grafika...</p>
             </div>
           </div>
@@ -191,9 +200,9 @@
           <button
             type="button"
             @click="downloadResult"
-            class="flex-1 min-w-[180px] px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 active:scale-95 transition-all cursor-pointer"
+            class="flex-1 min-w-[180px] px-5 py-3 rounded-xl bg-gradient-to-r from-[#EDC80A] via-amber-500 to-[#F97316] hover:from-[#f5d012] hover:to-[#ea580c] text-[#1E1E1D] text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 active:scale-95 transition-all cursor-pointer"
           >
-            <Download class="w-4 h-4" />
+            <Download class="w-4 h-4 text-[#1E1E1D]" />
             <span>Simpan ke Galeri / Unduh</span>
           </button>
 
@@ -201,16 +210,16 @@
             v-if="canShare"
             type="button"
             @click="shareResult"
-            class="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 active:scale-95 transition-all cursor-pointer"
+            class="px-4 py-3 rounded-xl bg-[#333231] hover:bg-[#282826] border border-[#EDC80A]/40 text-[#EDC80A] text-xs font-bold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all cursor-pointer"
           >
-            <Share2 class="w-4 h-4" />
+            <Share2 class="w-4 h-4 text-[#EDC80A]" />
             <span>Bagikan</span>
           </button>
 
           <button
             type="button"
             @click="resetCapture"
-            class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center gap-2 border border-slate-700 active:scale-95 transition-all cursor-pointer"
+            class="px-4 py-3 rounded-xl bg-[#1E1E1D] hover:bg-[#282826] text-slate-300 hover:text-white text-xs font-bold flex items-center justify-center gap-2 border border-slate-700 active:scale-95 transition-all cursor-pointer"
           >
             <RotateCcw class="w-4 h-4" />
             <span>Ambil Ulang</span>
