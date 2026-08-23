@@ -639,10 +639,10 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     ctx.restore();
   }
 
-  // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 440px untuk Jarak Baris Lega)
-  const totalBarH = Math.round(440 * s); // Total Tinggi Bar 440px
+  // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 470px untuk Jam 120px & Spasi Lega)
+  const totalBarH = Math.round(470 * s); // Total Tinggi Bar 470px
   const footerBarH = Math.round(85 * s);  // White branding footer strip (85px)
-  const mainBarH = totalBarH - footerBarH; // Main content area (355px)
+  const mainBarH = totalBarH - footerBarH; // Main content area (385px)
   const barY = h - totalBarH;
 
   // Background 100% Transparan (Tanpa Background Gelap)
@@ -664,15 +664,15 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   const textMarginL = Math.round(20 * s);
   const maxTextW = leftColW - textMarginL - Math.round(10 * s); // 100% lebar dari kolom kiri 70%
 
-  // 4. BARIS 1: Jam Digital (100px) + Garis Emas Fleksibel + Tanggal (40px) & Hari (28px)
-  let curY = barY + Math.round(80 * s);
+  // 4. BARIS 1: Jam Digital (120px) + Garis Emas Fleksibel + Tanggal (40px) & Hari (30px)
+  let curY = barY + Math.round(96 * s);
   ctx.save();
-  const clockFontS = Math.round(100 * s);
+  const clockFontS = Math.round(120 * s); // 120px
   ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
   ctx.shadowBlur = 18 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 8 * s;
+  ctx.lineWidth = 8.5 * s;
   ctx.strokeText(meta.timeStr, textMarginL, curY);
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(meta.timeStr, textMarginL, curY);
@@ -680,33 +680,33 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   const timeW = ctx.measureText(meta.timeStr).width;
 
   // Vertical Gold Separator (Membentang Sepanjang Jam secara Fleksibel)
-  const sepX = textMarginL + timeW + Math.round(16 * s);
-  const sepH = Math.round(76 * s);
-  const sepTopY = curY - Math.round(72 * s);
+  const sepX = textMarginL + timeW + Math.round(18 * s);
+  const sepH = Math.round(92 * s);
+  const sepTopY = curY - Math.round(88 * s);
   ctx.fillStyle = '#EAB308';
-  ctx.fillRect(sepX, sepTopY, Math.round(5.5 * s), sepH);
+  ctx.fillRect(sepX, sepTopY, Math.round(6 * s), sepH);
 
-  // Tanggal (40px Putih) & Hari (28px Emas #FDE047)
-  const dateTextX = sepX + Math.round(16 * s);
+  // Tanggal (40px Putih) & Hari (30px Emas #FDE047)
+  const dateTextX = sepX + Math.round(18 * s);
   ctx.font = `800 ${Math.round(40 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
   ctx.shadowBlur = 14 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
   ctx.lineWidth = 6 * s;
-  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(36 * s));
+  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(38 * s));
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(36 * s));
+  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(38 * s));
 
-  ctx.font = `800 ${Math.round(28 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(72 * s));
+  ctx.font = `800 ${Math.round(30 * s)}px "Inter", "Montserrat", Arial, sans-serif`; // 30px
+  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(78 * s));
   ctx.fillStyle = '#FDE047';
-  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(72 * s));
+  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(78 * s));
   ctx.restore();
 
-  // 5. BARIS 2: Nama Jalan & Alamat Lengkap Google Maps (Berjarak Lega dari Baris 1)
-  curY += Math.round(58 * s);
+  // 5. BARIS 2: Nama Jalan & Alamat Lengkap Google Maps (32px, Berjarak Lega dari Baris 1)
+  curY += Math.round(62 * s);
   ctx.save();
-  const addressFontS = Math.round(32 * s);
+  const addressFontS = Math.round(32 * s); // 32px
   ctx.font = `800 ${addressFontS}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
   ctx.shadowBlur = 15 * s;
@@ -726,8 +726,8 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   const mapBottomY = mapY + mapH; // Titik dasar bagian bawah kotak map
 
   if (meta.jobDescription) {
-    // A. BARIS 4: Tag Keterangan Pekerjaan (Sejajar Bagian Bawah Map)
-    const jobFontS = Math.round(28 * s);
+    // A. BARIS 4: Tag Keterangan Pekerjaan (28px Cyan Cerah Sejajar Bagian Bawah Map)
+    const jobFontS = Math.round(28 * s); // 28px
     ctx.save();
     ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
     const jobLines = wrapTextLines(ctx, `📌 ${meta.jobDescription}`, maxTextW, 2);
@@ -737,20 +737,20 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     const lastLineY = mapBottomY - Math.round(4 * s);
     const firstLineY = lastLineY - ((jobLines.length - 1) * lineStep);
 
-    // B. BARIS 3: Titik Koordinat GPS (Ditempatkan di atas Baris 4 dengan Jeda Rapi)
-    const coordFontS = Math.round(30 * s);
+    // B. BARIS 3: Titik Koordinat GPS 35px (Diberikan Jeda Spasi Jelas di Atas Baris 4)
+    const coordFontS = Math.round(35 * s); // 35px
     const coordText = `📍 ${meta.lat}, ${meta.lng}`;
     ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
     const coordTextW = ctx.measureText(coordText).width;
-    const badgePadX = Math.round(16 * s);
-    const badgeH = Math.round(44 * s);
-    const coordY = firstLineY - Math.round(38 * s);
-    const badgeY = coordY - Math.round(33 * s);
+    const badgePadX = Math.round(18 * s);
+    const badgeH = Math.round(50 * s);
+    const coordY = firstLineY - Math.round(46 * s); // Jeda spasi yang lega dari baris ke-4
+    const badgeY = coordY - Math.round(37 * s);
 
-    // Draw Baris 3 (Koordinat)
+    // Draw Baris 3 (Badge Pill Gelap Dinamis)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
     ctx.beginPath();
-    ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(10 * s));
+    ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(12 * s));
     ctx.fill();
 
     ctx.fillStyle = '#FEF08A'; // Soft Gold
@@ -758,7 +758,7 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     ctx.shadowBlur = 9 * s;
     ctx.fillText(coordText, textMarginL + badgePadX, coordY);
 
-    // Draw Baris 4 (Tag Keterangan Pekerjaan Sejajar Bawah Map)
+    // Draw Baris 4 (Tag Keterangan Pekerjaan 28px Sejajar Bawah Map)
     ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
     ctx.shadowBlur = 12 * s;
@@ -773,20 +773,20 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     });
     ctx.restore();
   } else {
-    // Jika tanpa keterangan kerja, Baris 3 (Koordinat) berada di dasar sejajar bawah map
-    const coordFontS = Math.round(30 * s);
+    // Jika tanpa keterangan kerja, Baris 3 (Koordinat 35px) berada di dasar sejajar bawah map
+    const coordFontS = Math.round(35 * s); // 35px
     const coordText = `📍 ${meta.lat}, ${meta.lng}`;
     ctx.save();
     ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
     const coordTextW = ctx.measureText(coordText).width;
-    const badgePadX = Math.round(16 * s);
-    const badgeH = Math.round(44 * s);
-    const coordY = mapBottomY - Math.round(10 * s);
-    const badgeY = coordY - Math.round(33 * s);
+    const badgePadX = Math.round(18 * s);
+    const badgeH = Math.round(50 * s);
+    const coordY = mapBottomY - Math.round(12 * s);
+    const badgeY = coordY - Math.round(37 * s);
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
     ctx.beginPath();
-    ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(10 * s));
+    ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(12 * s));
     ctx.fill();
 
     ctx.fillStyle = '#FEF08A';
