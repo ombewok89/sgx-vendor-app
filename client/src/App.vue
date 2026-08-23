@@ -112,6 +112,15 @@
       :baCount="clientBaCount"
       @open-profile="showProfileModal = true"
     />
+
+    <!-- Mobile Bottom Navigation Bar (Superuser & Admin Dedicated) -->
+    <SuperuserBottomNav
+      v-if="auth.state.user?.role === 'SUPERUSER' || auth.state.user?.role === 'ADMIN'"
+      v-model:activeTab="activeTab"
+      :reviewCount="adminReviewCount"
+      @open-create-spk="showCreateModal = true"
+      @open-profile="showProfileModal = true"
+    />
   </div>
 </template>
 
@@ -132,6 +141,7 @@ import BaOpnameViewer from './components/BaOpnameViewer.vue';
 import UserProfileModal from './components/UserProfileModal.vue';
 import FieldBottomNav from './components/FieldBottomNav.vue';
 import ClientBottomNav from './components/ClientBottomNav.vue';
+import SuperuserBottomNav from './components/SuperuserBottomNav.vue';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard.vue';
@@ -245,6 +255,21 @@ async function fetchClientBadgeCounts() {
   }
 }
 
+const adminReviewCount = ref(0);
+
+async function fetchAdminReviewCount() {
+  if (['SUPERUSER', 'ADMIN', 'SUPERVISOR'].includes(auth.state.user?.role)) {
+    try {
+      const res = await api.getWorkOrders();
+      if (res.data) {
+        adminReviewCount.value = res.data.filter(w => ['SUBMITTED', 'UNDER_REVIEW', 'REVISION'].includes(w.status)).length;
+      }
+    } catch (e) {
+      // Background load error suppressed
+    }
+  }
+}
+
 // Sync initial active tab when user role changes
 watch(() => auth.state.user?.role, (newRole) => {
   if (newRole === 'FIELD_TEAM') {
@@ -255,14 +280,17 @@ watch(() => auth.state.user?.role, (newRole) => {
     fetchClientBadgeCounts();
   } else if (newRole === 'SUPERUSER') {
     activeTab.value = 'super_dashboard';
+    fetchAdminReviewCount();
   } else {
     activeTab.value = 'admin_dashboard';
+    fetchAdminReviewCount();
   }
 }, { immediate: true });
 
 onMounted(() => {
   fetchFieldTaskCount();
   fetchClientBadgeCounts();
+  fetchAdminReviewCount();
 });
 
 const currentView = computed(() => {
