@@ -651,14 +651,17 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   const leftColW = w * 0.70;  // 70% Lebar untuk Tulisan
   const rightColW = w * 0.30; // 30% Lebar untuk Google Map
 
-  // A. Mini Map Satellite di Sisi Kanan (Dengan Jarak Jelas ke Bagian Footer)
-  const mapPadX = Math.round(14 * s);
+  // A. Mini Map Satellite di Sisi Kanan (Ukuran Persegi 1:1 Presisi dengan Jarak ke Footer)
   const mapPadTop = Math.round(14 * s);
-  const mapPadBottom = Math.round(20 * s); // Jarak lega antara map dan footer strip
-  const mapH = mainBarH - mapPadTop - mapPadBottom;
-  const mapW = rightColW - (mapPadX * 2);
-  const mapX = leftColW + mapPadX;
-  const mapY = barY + mapPadTop;
+  const mapPadBottom = Math.round(20 * s); // Jarak lega ke bagian footer strip
+  const availMapH = mainBarH - mapPadTop - mapPadBottom;
+  const availMapW = rightColW - Math.round(28 * s);
+  const mapSide = Math.min(availMapH, availMapW); // Ukuran Persegi 1:1
+
+  const mapW = mapSide;
+  const mapH = mapSide;
+  const mapX = leftColW + Math.round((rightColW - mapSide) / 2); // Center di kolom kanan
+  const mapY = barY + mapPadTop + Math.round((availMapH - mapSide) / 2);
 
   // B. Area Tulisan di Sisi Kiri (100% Lebar dari Kolom 70%)
   const textMarginL = Math.round(20 * s);
@@ -722,32 +725,38 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   });
   ctx.restore();
 
-  // 6. BARIS 3 & 4 ALIGNMENT (SEJAJAR PERSIS DENGAN BAGIAN BAWAH MINI MAP)
-  const mapBottomY = mapY + mapH; // Titik dasar bagian bawah kotak map
+  // Rekam titik batas bawah alamat Baris 2
+  const lastAddressY = curY - Math.round(40 * s);
+
+  // 6. BARIS 3 & 4: BARIS 3 CENTER DI ANTARA BARIS 2 DAN BARIS 4 (TAG KERJA 32PX SEJAJAR BAWAH MAP)
+  const mapBottomY = mapY + mapH; // Titik dasar bagian bawah map persegi
 
   if (meta.jobDescription) {
-    // A. BARIS 4: Tag Keterangan Pekerjaan (28px Cyan Cerah Sejajar Bagian Bawah Map)
-    const jobFontS = Math.round(28 * s); // 28px
+    // A. BARIS 4: Tag Keterangan Pekerjaan (Ukuran 32px Cyan Cerah Sejajar Bagian Bawah Map)
+    const jobFontS = Math.round(32 * s); // 32px
     ctx.save();
     ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
     const jobLines = wrapTextLines(ctx, `📌 ${meta.jobDescription}`, maxTextW, 2);
-    const lineStep = Math.round(36 * s);
+    const lineStep = Math.round(40 * s);
 
     // Baseline baris terakhir pas sejajar dengan garis bawah map
     const lastLineY = mapBottomY - Math.round(4 * s);
-    const firstLineY = lastLineY - ((jobLines.length - 1) * lineStep);
+    const firstJobY = lastLineY - ((jobLines.length - 1) * lineStep);
 
-    // B. BARIS 3: Titik Koordinat GPS 35px (Diberikan Jeda Spasi Jelas di Atas Baris 4)
+    // B. BARIS 3: Titik Koordinat GPS (Center Sempurna di Antara Baris 2 dan Baris 4)
     const coordFontS = Math.round(35 * s); // 35px
     const coordText = `📍 ${meta.lat}, ${meta.lng}`;
     ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
     const coordTextW = ctx.measureText(coordText).width;
     const badgePadX = Math.round(18 * s);
     const badgeH = Math.round(50 * s);
-    const coordY = firstLineY - Math.round(46 * s); // Jeda spasi yang lega dari baris ke-4
+
+    // Hitung posisi center Y tepat di tengah jarak antara Baris 2 dan Baris 4
+    const midCenterY = Math.round((lastAddressY + firstJobY) / 2);
+    const coordY = midCenterY + Math.round(8 * s);
     const badgeY = coordY - Math.round(37 * s);
 
-    // Draw Baris 3 (Badge Pill Gelap Dinamis)
+    // Draw Baris 3 (Badge Pill Gelap Dinamis di Posisi Center)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
     ctx.beginPath();
     ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(12 * s));
@@ -758,7 +767,7 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     ctx.shadowBlur = 9 * s;
     ctx.fillText(coordText, textMarginL + badgePadX, coordY);
 
-    // Draw Baris 4 (Tag Keterangan Pekerjaan 28px Sejajar Bawah Map)
+    // Draw Baris 4 (Tag Keterangan Pekerjaan 32px Sejajar Bawah Map)
     ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
     ctx.shadowBlur = 12 * s;
@@ -766,14 +775,14 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     ctx.lineWidth = 6 * s;
 
     jobLines.forEach((line, idx) => {
-      const lineY = firstLineY + (idx * lineStep);
+      const lineY = firstJobY + (idx * lineStep);
       ctx.strokeText(line, textMarginL, lineY);
       ctx.fillStyle = '#38BDF8'; // Bright cyan text
       ctx.fillText(line, textMarginL, lineY);
     });
     ctx.restore();
   } else {
-    // Jika tanpa keterangan kerja, Baris 3 (Koordinat 35px) berada di dasar sejajar bawah map
+    // Jika tanpa keterangan kerja, Baris 3 (Koordinat 35px) Center antara Baris 2 dan Dasar Map
     const coordFontS = Math.round(35 * s); // 35px
     const coordText = `📍 ${meta.lat}, ${meta.lng}`;
     ctx.save();
@@ -781,7 +790,9 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     const coordTextW = ctx.measureText(coordText).width;
     const badgePadX = Math.round(18 * s);
     const badgeH = Math.round(50 * s);
-    const coordY = mapBottomY - Math.round(12 * s);
+
+    const midCenterY = Math.round((lastAddressY + mapBottomY) / 2);
+    const coordY = midCenterY + Math.round(8 * s);
     const badgeY = coordY - Math.round(37 * s);
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
