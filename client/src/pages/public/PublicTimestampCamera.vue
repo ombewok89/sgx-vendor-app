@@ -268,8 +268,10 @@ const stampForm = reactive({
   timeZone: 'WIB'
 });
 
-// Cache Logo SGX
+// Cache Logos
 let cachedLogoImg = null;
+let cachedBannerLogoImg = null;
+
 function loadLogoImage() {
   return new Promise((resolve) => {
     if (cachedLogoImg && cachedLogoImg.complete && cachedLogoImg.naturalWidth > 0) {
@@ -283,6 +285,22 @@ function loadLogoImage() {
     };
     img.onerror = () => resolve(null);
     img.src = '/sgx_logo.png';
+  });
+}
+
+function loadBannerLogoImage() {
+  return new Promise((resolve) => {
+    if (cachedBannerLogoImg && cachedBannerLogoImg.complete && cachedBannerLogoImg.naturalWidth > 0) {
+      return resolve(cachedBannerLogoImg);
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      cachedBannerLogoImg = img;
+      resolve(img);
+    };
+    img.onerror = () => resolve(null);
+    img.src = '/sgx_banner_logo.png';
   });
 }
 
@@ -532,6 +550,7 @@ async function renderWatermarkCanvas() {
   processingWatermark.value = true;
 
   const logoImg = await loadLogoImage();
+  const bannerLogoImg = await loadBannerLogoImage();
   const lat = gpsLocation.value ? Number(gpsLocation.value.lat) : -3.824921;
   const lng = gpsLocation.value ? Number(gpsLocation.value.lng) : 102.286299;
   const satelliteImg = await fetchRealSatelliteTile(lat, lng, 340, 260);
@@ -574,6 +593,7 @@ async function renderWatermarkCanvas() {
       address: detectedAddress.value || `Area Koordinat (${latFormatted}, ${lngFormatted})`,
       jobDescription: stampForm.jobDescription ? stampForm.jobDescription.trim() : '',
       logoImg,
+      bannerLogoImg,
       satelliteImg
     });
 
@@ -589,20 +609,34 @@ async function renderWatermarkCanvas() {
  * - Tinggi Bar: 400px (Scaled)
  * - Background: 100% Transparan
  * - Pembagian Lebar: 70% Tulisan (4 Baris Fleksibel) | 30% Google Satellite Mini-Map (Ukuran Fleksibel)
- * - Baris 1: Jam Digital + Garis Emas + Hari & Tanggal (Berjarak Lega ke Baris 2)
+ * - Baris 1: Jam Digital (100px) + Garis Emas + Tanggal (40px) & Hari (28px)
  * - Baris 2: Nama Jalan & Alamat Lengkap Google Maps (Lebar Fleksibel 70%)
  * - Baris 3: Titik Koordinat GPS Fleksibel (📍 Lat, Lng)
- * - Baris 4: Tag Keterangan Pekerjaan Fleksibel (📌 Job Description)
+ * - Baris 4: Tag Keterangan Pekerjaan Fleksibel 35px (📌 Job Description)
  * - Footer Strip Putih di Dasar Foto (vendor.sinargrafika.my.id)
  */
 function renderBottomBarWatermark(ctx, w, h, s, meta) {
-  // 1. Draw Top-Left SGX Diamond Logo on photo
-  const topLogoSize = Math.round(90 * s);
-  const topLogoX = Math.round(26 * s);
-  const topLogoY = Math.round(26 * s);
+  // 1. Draw Top-Left Transparan & Samar SINAR GRAFIKA Banner Logo
+  const topLogoX = Math.round(24 * s);
+  const topLogoY = Math.round(24 * s);
 
-  if (meta.logoImg) {
+  if (meta.bannerLogoImg) {
+    const bannerW = Math.round(270 * s);
+    const aspect = meta.bannerLogoImg.naturalHeight / (meta.bannerLogoImg.naturalWidth || 1);
+    const bannerH = Math.round(bannerW * (aspect || 0.26));
+
+    ctx.save();
+    ctx.globalAlpha = 0.52; // Samar & Transparan elegan
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+    ctx.shadowBlur = 8 * s;
+    ctx.drawImage(meta.bannerLogoImg, topLogoX, topLogoY, bannerW, bannerH);
+    ctx.restore();
+  } else if (meta.logoImg) {
+    const topLogoSize = Math.round(90 * s);
+    ctx.save();
+    ctx.globalAlpha = 0.52;
     drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 18 * s);
+    ctx.restore();
   }
 
   // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 400px)
