@@ -113,28 +113,34 @@ class WorkOrderController extends Controller
         ]);
 
         return DB::transaction(function () use ($user, $request) {
-            $spkNumber = WorkOrderService::generateSpkNumber();
+            $spkNumber = $request->filled('spk_number') ? trim($request->spk_number) : WorkOrderService::generateSpkNumber();
 
-            $workOrder = WorkOrder::create([
+            $insertData = [
                 'spk_number' => $spkNumber,
                 'title' => $request->title,
                 'vendor_id' => $request->vendor_id,
                 'area_id' => $request->area_id,
                 'job_type_id' => $request->job_type_id,
                 'location_name' => $request->location_name,
-                'target_lat' => $request->target_lat,
-                'target_lng' => $request->target_lng,
-                'pic_user_id' => $request->pic_user_id,
-                'start_date' => $request->start_date ?? now()->toDateString(),
+                'target_lat' => $request->filled('target_lat') ? $request->target_lat : null,
+                'target_lng' => $request->filled('target_lng') ? $request->target_lng : null,
+                'pic_user_id' => $request->filled('pic_user_id') ? $request->pic_user_id : null,
+                'start_date' => $request->filled('start_date') ? $request->start_date : now()->toDateString(),
                 'deadline' => $request->deadline,
                 'doc_mode' => $request->doc_mode ?? 'BEFORE_PROCESS_AFTER',
                 'require_checkin' => $request->boolean('require_checkin', true),
-                'use_timestamp' => $request->boolean('use_timestamp', true),
-                'status' => $request->pic_user_id ? 'ASSIGNED' : 'READY',
+                'status' => $request->filled('pic_user_id') ? 'ASSIGNED' : 'READY',
                 'progress_percent' => 0,
-                'notes' => $request->notes,
+                'notes' => $request->notes ?? null,
                 'created_by' => $user->id,
-            ]);
+            ];
+
+            // Safely assign use_timestamp if column exists in table
+            if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'use_timestamp')) {
+                $insertData['use_timestamp'] = $request->boolean('use_timestamp', true);
+            }
+
+            $workOrder = WorkOrder::create($insertData);
 
             // Save Items
             $itemCount = count($request->items);
@@ -167,11 +173,19 @@ class WorkOrderController extends Controller
                 $workOrder->assignments()->syncWithoutDetaching($syncMembers);
             }
 
-            AuditService::log($user, 'CREATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, $workOrder->toArray());
+            try {
+                AuditService::log($user, 'CREATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, $workOrder->toArray());
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Audit log skipped: ' . $e->getMessage());
+            }
 
-            // Automated WhatsApp Notification to Field Team
-            if ($workOrder->pic_user_id || ($request->has('member_ids') && count($request->member_ids) > 0)) {
-                \App\Services\WhatsAppNotificationDispatcher::onSpkAssigned($workOrder);
+            // Automated WhatsApp Notification to Field Team (Safe Dispatch)
+            try {
+                if ($workOrder->pic_user_id || ($request->has('member_ids') && count($request->member_ids) > 0)) {
+                    \App\Services\WhatsAppNotificationDispatcher::onSpkAssigned($workOrder);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('WhatsApp dispatch skipped: ' . $e->getMessage());
             }
 
             return response()->json([
