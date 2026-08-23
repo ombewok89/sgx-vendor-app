@@ -11,7 +11,7 @@
             <h3 class="font-black text-slate-900 text-base flex items-center gap-2">
               <span>Terbitkan SPK / Work Order Lokasi Cabang</span>
             </h3>
-            <p class="text-xs text-slate-500 mt-0.5">Formulir fleksibel untuk penerbitan SPK baru dengan lingkup sub-pekerjaan multi-item.</p>
+            <p class="text-xs text-slate-500 mt-0.5">Formulir cepat penerbitan SPK baru dengan lingkup sub-pekerjaan multi-item.</p>
           </div>
         </div>
 
@@ -35,7 +35,7 @@
         </button>
       </div>
 
-      <!-- Form Body with Flexible 2-Column Responsive Layout -->
+      <!-- Form Body with Flexible 2-Tab Layout -->
       <div class="p-6 space-y-5 text-xs">
         
         <!-- Step Tabs for Maximum Flexibility -->
@@ -77,26 +77,18 @@
 
         <!-- TAB 1: INFORMASI POKOK & CABANG TOKO -->
         <div v-show="activeTab === 'info'" class="space-y-4 animate-fade-in">
-          <!-- Row 1: SPK Number & Title -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Nomor SPK (Opsional)</label>
-              <input
-                type="text"
-                placeholder="Auto-generate otomatis jika kosong"
-                v-model="formData.spk_number"
-                class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all font-mono"
-              />
-            </div>
-            <div class="sm:col-span-2">
-              <label class="block font-bold text-slate-800 mb-1">Judul / Nama Proyek Cabang <span class="text-rose-500">*</span></label>
-              <input
-                type="text"
-                placeholder="Contoh: Pemasangan Signage & Kanopi KCP Sukajadi"
-                v-model="formData.title"
-                class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all font-bold text-slate-900"
-              />
-            </div>
+          
+          <!-- Row 1: Judul Proyek Cabang (Primary Focus) -->
+          <div>
+            <label class="block font-bold text-slate-800 mb-1 text-xs">
+              Judul / Nama Proyek Cabang <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Contoh: Pemasangan Signage & Kanopi Indomaret Adam Malik"
+              v-model="formData.title"
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all font-bold text-slate-900 text-sm"
+            />
           </div>
 
           <!-- Row 2: Client & Area -->
@@ -121,40 +113,7 @@
             </div>
           </div>
 
-          <!-- Row 3: Primary Job Type & Contract Valuation -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Kategori Utama Jenis Pekerjaan <span class="text-rose-500">*</span></label>
-              <select
-                v-model="formData.job_type_id"
-                @change="handleJobTypeChange"
-                class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all font-medium"
-              >
-                <option v-for="j in jobTypes" :key="j.id" :value="j.id">
-                  {{ j.name }} (Tarif Standar: Rp {{ Number(j.standard_price || 0).toLocaleString('id-ID') }})
-                </option>
-              </select>
-            </div>
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <label class="block font-bold text-slate-700">Nilai Kontrak / Pekerjaan (Rp) <span class="text-rose-500">*</span></label>
-                <span class="text-[9px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.2 rounded-md border border-emerald-200">
-                  Auto-fill Standar
-                </span>
-              </div>
-              <input
-                type="number"
-                v-model="formData.contract_value"
-                placeholder="Contoh: 15000000"
-                class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all font-mono font-bold text-slate-900"
-              />
-              <div v-if="formData.contract_value" class="text-[11px] font-mono font-bold text-emerald-700 mt-1">
-                Rp {{ Number(formData.contract_value).toLocaleString('id-ID') }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Row 4: Location Name -->
+          <!-- Row 3: Location Name & Full Address -->
           <div>
             <label class="block font-bold text-slate-800 mb-1">Nama Cabang & Alamat Lokasi Lengkap <span class="text-rose-500">*</span></label>
             <input
@@ -165,7 +124,7 @@
             />
           </div>
 
-          <!-- Row 5: PIC & Dates -->
+          <!-- Row 4: PIC & Dates -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             <div>
               <label class="block font-bold text-slate-700 mb-1">PIC Teknisi Lapangan</label>
@@ -194,6 +153,73 @@
               />
             </div>
           </div>
+
+          <!-- ACCORDION: Opsi Finansial & Kategori Lanjutan (Default: Collapsed / Tertutup) -->
+          <div class="pt-2">
+            <div class="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/50 transition-all">
+              <button
+                type="button"
+                @click="showFinancialOptions = !showFinancialOptions"
+                class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-100/80 transition-all cursor-pointer select-none"
+              >
+                <div class="flex items-center gap-2">
+                  <BadgeDollarSign class="w-4 h-4 text-slate-500" />
+                  <span class="font-bold text-xs text-slate-700">Informasi Finansial & Kategori Khusus (Opsional)</span>
+                  <span v-if="formData.contract_value > 0" class="px-2 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold font-mono">
+                    Rp {{ Number(formData.contract_value).toLocaleString('id-ID') }}
+                  </span>
+                </div>
+                <div class="flex items-center gap-1.5 text-slate-400">
+                  <span class="text-[10px] font-medium">{{ showFinancialOptions ? 'Sembunyikan' : 'Buka Opsi' }}</span>
+                  <ChevronDown :class="['w-4 h-4 transition-transform duration-200', showFinancialOptions ? 'rotate-180' : '']" />
+                </div>
+              </button>
+
+              <div v-show="showFinancialOptions" class="p-4 border-t border-slate-200 space-y-3.5 bg-white animate-fade-in">
+                <!-- Row: Kategori & Nilai Kontrak -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Kategori Jenis Pekerjaan</label>
+                    <select
+                      v-model="formData.job_type_id"
+                      @change="handleJobTypeChange"
+                      class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all font-medium"
+                    >
+                      <option value="">Pilih Kategori (Opsional)</option>
+                      <option v-for="j in jobTypes" :key="j.id" :value="j.id">
+                        {{ j.name }} (Tarif Standar: Rp {{ Number(j.standard_price || 0).toLocaleString('id-ID') }})
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Nilai Kontrak / Pekerjaan (Rp)</label>
+                    <input
+                      type="number"
+                      v-model="formData.contract_value"
+                      placeholder="Contoh: 15000000"
+                      class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all font-mono text-slate-900"
+                    />
+                    <div v-if="formData.contract_value" class="text-[11px] font-mono font-bold text-emerald-700 mt-1">
+                      Rp {{ Number(formData.contract_value).toLocaleString('id-ID') }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Custom SPK Number -->
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Nomor SPK Kustom (Opsional)</label>
+                  <input
+                    type="text"
+                    placeholder="Biarkan kosong untuk auto-generate nomor SPK resmi"
+                    v-model="formData.spk_number"
+                    class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all font-mono text-slate-800 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- TAB 2: LINGKUP SUB-PEKERJAAN & PENGATURAN GPS / TIMESTAMP -->
@@ -443,12 +469,16 @@ import {
   Navigation,
   Camera,
   FileCheck2,
-  Loader2
+  Loader2,
+  BadgeDollarSign,
+  ChevronDown
 } from 'lucide-vue-next';
 
 const emit = defineEmits(['close', 'success']);
 
 const activeTab = ref('info');
+const showFinancialOptions = ref(false);
+
 const vendors = ref([]);
 const areas = ref([]);
 const jobTypes = ref([]);
@@ -556,10 +586,6 @@ onMounted(async () => {
 
     if (vendors.value.length > 0) formData.vendor_id = vendors.value[0].id;
     if (areas.value.length > 0) formData.area_id = areas.value[0].id;
-    if (jobTypes.value.length > 0) {
-      formData.job_type_id = jobTypes.value[0].id;
-      formData.contract_value = jobTypes.value[0].standard_price || 15000000;
-    }
   } catch (err) {
     console.error('Failed to load form options:', err);
   }
@@ -569,7 +595,7 @@ async function handleSubmit() {
   // Clear any previous error
   error.value = null;
 
-  // Validate required fields
+  // Validate required fields (Only Essential Data)
   if (!formData.title || formData.title.trim().length === 0) {
     error.value = 'Judul / Nama Proyek Cabang wajib diisi.';
     activeTab.value = 'info';
@@ -584,12 +610,6 @@ async function handleSubmit() {
 
   if (!formData.area_id) {
     error.value = 'Silakan pilih Area Operasional.';
-    activeTab.value = 'info';
-    return;
-  }
-
-  if (!formData.job_type_id) {
-    error.value = 'Silakan pilih Kategori Utama Jenis Pekerjaan.';
     activeTab.value = 'info';
     return;
   }
@@ -624,11 +644,11 @@ async function handleSubmit() {
   loading.value = true;
   try {
     const payload = {
-      spk_number: formData.spk_number || undefined,
+      spk_number: formData.spk_number ? formData.spk_number.trim() : undefined,
       title: formData.title.trim(),
       vendor_id: formData.vendor_id,
       area_id: formData.area_id,
-      job_type_id: formData.job_type_id,
+      job_type_id: formData.job_type_id ? formData.job_type_id : null,
       contract_value: formData.contract_value ? Number(formData.contract_value) : 0,
       location_name: formData.location_name.trim(),
       target_lat: formData.target_lat ? Number(formData.target_lat) : null,
