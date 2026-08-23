@@ -627,24 +627,32 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   ctx.fillStyle = '#FDE047';
   ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(72 * s));
 
-  // Tag Keterangan Pekerjaan di Baris 1
+  // Tag Keterangan Pekerjaan Fleksibel (Baris 1 / Samping-Bawah Waktu)
   if (meta.jobDescription) {
     const jobTextY = sepTopY + Math.round(116 * s);
-    ctx.font = `800 ${Math.round(28 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+    const jobFontS = Math.round(26 * s);
+    ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
+    
+    const jobLines = wrapTextLines(ctx, `📌 ${meta.jobDescription}`, maxTextW, 2);
+    let jobCurY = jobTextY;
+    
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
     ctx.shadowBlur = 12 * s;
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
     ctx.lineWidth = 6 * s;
-    const cleanJob = truncateText(ctx, `📌 ${meta.jobDescription}`, maxTextW);
-    ctx.strokeText(cleanJob, textMarginL, jobTextY);
-    ctx.fillStyle = '#38BDF8'; // Bright cyan text
-    ctx.fillText(cleanJob, textMarginL, jobTextY);
-    curY = jobTextY + Math.round(20 * s);
+
+    jobLines.forEach((line) => {
+      ctx.strokeText(line, textMarginL, jobCurY);
+      ctx.fillStyle = '#38BDF8'; // Bright cyan text
+      ctx.fillText(line, textMarginL, jobCurY);
+      jobCurY += Math.round(32 * s);
+    });
+    curY = jobCurY + Math.round(10 * s);
   }
   ctx.restore();
 
   // 5. Baris 2: Alamat Lengkap Asli Google Maps (Ukuran 40px)
-  curY += Math.round(55 * s);
+  curY += Math.round(48 * s);
   ctx.save();
   const addressFontS = Math.round(40 * s);
   ctx.font = `800 ${addressFontS}px "Inter", "Montserrat", Arial, sans-serif`;
@@ -662,27 +670,27 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   });
   ctx.restore();
 
-  // 6. Baris 3: Titik Koordinat GPS Asli (Ukuran 20px)
-  curY += Math.round(10 * s);
-  const coordText = `📍 Koordinat Asli: ${meta.lat}, ${meta.lng} (Akurasi: ±${meta.acc}m)`;
-  const coordFontS = Math.round(20 * s);
+  // 6. Baris 3: Titik Koordinat GPS Fleksibel (Hanya Icon + Nilai Koordinat)
+  curY += Math.round(8 * s);
+  const coordText = `📍 ${meta.lat}, ${meta.lng}`;
+  const coordFontS = Math.round(24 * s);
   ctx.save();
   ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
   const coordTextW = ctx.measureText(coordText).width;
-  const badgePadX = Math.round(12 * s);
-  const badgeH = Math.round(32 * s);
-  const badgeY = curY - Math.round(22 * s);
+  const badgePadX = Math.round(14 * s);
+  const badgeH = Math.round(36 * s);
+  const badgeY = curY - Math.round(26 * s);
 
-  // Semi-transparent dark rounded badge untuk memastikan keterbacaan
+  // Dynamic semi-transparent dark rounded badge
   ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
   ctx.beginPath();
-  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(6 * s));
+  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(8 * s));
   ctx.fill();
 
   ctx.fillStyle = '#FEF08A'; // Soft Gold untuk kontras tinggi
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
   ctx.shadowBlur = 8 * s;
-  ctx.fillText(coordText, textMarginL + badgePadX, curY + Math.round(1 * s));
+  ctx.fillText(coordText, textMarginL + badgePadX, curY);
   ctx.restore();
 
   // 7. Draw Right Google Mini-Map Satellite (Area 30%)
@@ -723,17 +731,13 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   ctx.lineTo(midX - Math.round(20 * s), footerY + footerBarH - Math.round(12 * s));
   ctx.stroke();
 
-  // Sisi Kanan Footer: Tag Keterangan Pekerjaan / Legal Text
-  if (meta.jobDescription) {
-    const rightMarginR = Math.round(30 * s);
-    const maxJobTextW = rightColW + (leftColW - midX) - Math.round(50 * s);
-    ctx.fillStyle = '#0369A1'; // Deep sky blue
-    ctx.font = `800 ${Math.round(22 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-    ctx.textAlign = 'right';
-    const jobText = truncateText(ctx, `Dokumentasi: ${meta.jobDescription}`, maxJobTextW);
-    ctx.fillText(jobText, w - rightMarginR, footerY + Math.round(54 * s));
-    ctx.textAlign = 'left'; // Reset alignment
-  }
+  // Sisi Kanan Footer: Branding Website Resmi vendor.sinargrafika.my.id
+  const rightMarginR = Math.round(32 * s);
+  ctx.fillStyle = '#0369A1'; // Deep sky blue
+  ctx.font = `800 ${Math.round(22 * s)}px "Inter", "Montserrat", monospace, Arial, sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('vendor.sinargrafika.my.id', w - rightMarginR, footerY + Math.round(54 * s));
+  ctx.textAlign = 'left'; // Reset alignment
   ctx.restore();
 }
 
