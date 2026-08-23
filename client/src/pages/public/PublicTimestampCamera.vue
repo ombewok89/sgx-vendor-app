@@ -722,48 +722,77 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   });
   ctx.restore();
 
-  // 6. BARIS 3: Titik Koordinat GPS Fleksibel (Ukuran 30px dengan Badge Pill Gelap Dinamis)
-  curY += Math.round(22 * s);
-  const coordText = `📍 ${meta.lat}, ${meta.lng}`;
-  const coordFontS = Math.round(30 * s); // 30px
-  ctx.save();
-  ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
-  const coordTextW = ctx.measureText(coordText).width;
-  const badgePadX = Math.round(16 * s);
-  const badgeH = Math.round(44 * s);
-  const badgeY = curY - Math.round(33 * s);
+  // 6. BARIS 3 & 4 ALIGNMENT (SEJAJAR PERSIS DENGAN BAGIAN BAWAH MINI MAP)
+  const mapBottomY = mapY + mapH; // Titik dasar bagian bawah kotak map
 
-  // Dynamic semi-transparent dark rounded badge pill
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
-  ctx.beginPath();
-  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(10 * s));
-  ctx.fill();
-
-  ctx.fillStyle = '#FEF08A'; // Soft Gold untuk kontras tinggi
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 9 * s;
-  ctx.fillText(coordText, textMarginL + badgePadX, curY);
-  ctx.restore();
-
-  // 7. BARIS 4: Tag Keterangan Pekerjaan Fleksibel (Ukuran 28px, Berjarak Lega dari Baris 3)
   if (meta.jobDescription) {
-    curY += Math.round(48 * s);
+    // A. BARIS 4: Tag Keterangan Pekerjaan (Sejajar Bagian Bawah Map)
+    const jobFontS = Math.round(28 * s);
     ctx.save();
-    const jobFontS = Math.round(28 * s); // 28px
     ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
-
     const jobLines = wrapTextLines(ctx, `📌 ${meta.jobDescription}`, maxTextW, 2);
+    const lineStep = Math.round(36 * s);
+
+    // Baseline baris terakhir pas sejajar dengan garis bawah map
+    const lastLineY = mapBottomY - Math.round(4 * s);
+    const firstLineY = lastLineY - ((jobLines.length - 1) * lineStep);
+
+    // B. BARIS 3: Titik Koordinat GPS (Ditempatkan di atas Baris 4 dengan Jeda Rapi)
+    const coordFontS = Math.round(30 * s);
+    const coordText = `📍 ${meta.lat}, ${meta.lng}`;
+    ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
+    const coordTextW = ctx.measureText(coordText).width;
+    const badgePadX = Math.round(16 * s);
+    const badgeH = Math.round(44 * s);
+    const coordY = firstLineY - Math.round(38 * s);
+    const badgeY = coordY - Math.round(33 * s);
+
+    // Draw Baris 3 (Koordinat)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+    ctx.beginPath();
+    ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(10 * s));
+    ctx.fill();
+
+    ctx.fillStyle = '#FEF08A'; // Soft Gold
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+    ctx.shadowBlur = 9 * s;
+    ctx.fillText(coordText, textMarginL + badgePadX, coordY);
+
+    // Draw Baris 4 (Tag Keterangan Pekerjaan Sejajar Bawah Map)
+    ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
     ctx.shadowBlur = 12 * s;
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
     ctx.lineWidth = 6 * s;
 
-    jobLines.forEach((line) => {
-      ctx.strokeText(line, textMarginL, curY);
+    jobLines.forEach((line, idx) => {
+      const lineY = firstLineY + (idx * lineStep);
+      ctx.strokeText(line, textMarginL, lineY);
       ctx.fillStyle = '#38BDF8'; // Bright cyan text
-      ctx.fillText(line, textMarginL, curY);
-      curY += Math.round(34 * s);
+      ctx.fillText(line, textMarginL, lineY);
     });
+    ctx.restore();
+  } else {
+    // Jika tanpa keterangan kerja, Baris 3 (Koordinat) berada di dasar sejajar bawah map
+    const coordFontS = Math.round(30 * s);
+    const coordText = `📍 ${meta.lat}, ${meta.lng}`;
+    ctx.save();
+    ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
+    const coordTextW = ctx.measureText(coordText).width;
+    const badgePadX = Math.round(16 * s);
+    const badgeH = Math.round(44 * s);
+    const coordY = mapBottomY - Math.round(10 * s);
+    const badgeY = coordY - Math.round(33 * s);
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+    ctx.beginPath();
+    ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(10 * s));
+    ctx.fill();
+
+    ctx.fillStyle = '#FEF08A';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+    ctx.shadowBlur = 9 * s;
+    ctx.fillText(coordText, textMarginL + badgePadX, coordY);
     ctx.restore();
   }
 
