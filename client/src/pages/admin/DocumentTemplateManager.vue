@@ -312,58 +312,68 @@
             </div>
           </div>
 
-          <!-- TAB 2: Content & Clauses (Visual Rich Text Editor & Presets) -->
+          <!-- TAB 2: Content & Clauses (Enhanced Visual Rich Text Editor & Presets) -->
           <div v-show="modalTab === 'content'" class="space-y-4">
             <!-- Preset Clause Selector Bar -->
-            <div class="p-3.5 bg-gradient-to-r from-purple-50 via-indigo-50 to-slate-50 border border-purple-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="p-4 bg-gradient-to-r from-purple-50 via-indigo-50 to-amber-50/60 border border-purple-200/80 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
               <div>
                 <span class="font-bold text-purple-900 text-xs flex items-center gap-1.5">
-                  <Sparkles class="w-4 h-4 text-purple-700" />
-                  <span>Pustaka Template Klausul Siap Pakai:</span>
+                  <Sparkles class="w-4 h-4 text-amber-600" />
+                  <span>Pustaka Template Klausul & Format Isi Siap Pakai:</span>
                 </span>
-                <p class="text-[10px] text-slate-500">Pilih format teks dan pasal resmi serah terima yang sudah terstandarisasi.</p>
+                <p class="text-[11px] text-slate-600 mt-0.5">Pilih format kalimat resmi dan pasal garansi yang terstandarisasi untuk mempercepat pembuatan dokumen.</p>
               </div>
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-2 shrink-0">
                 <select
                   v-model="selectedPresetKey"
-                  class="px-3 py-1.5 bg-white border border-purple-300 rounded-xl text-xs font-semibold text-slate-800 cursor-pointer"
+                  class="px-3 py-2 bg-white border border-purple-300 rounded-xl text-xs font-bold text-slate-800 cursor-pointer shadow-xs focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 >
-                  <option value="standard">🌟 Standar Serah Terima (Garansi 90 Hari)</option>
+                  <option value="standard">🌟 Standar Serah Terima SGX (Garansi 90 Hari)</option>
                   <option value="facade">🌟 Branding Fasade & Signboard (Garansi 180 Hari)</option>
                   <option value="maintenance">🌟 Maintenance Panel Listrik (Garansi 60 Hari)</option>
-                  <option value="partial">🌟 Serah Terima Bertahap / Parsial (Opname Progress)</option>
+                  <option value="partial">🌟 Serah Terima Bertahap / Opname Progress</option>
+                  <option value="sticker">🌟 Penggantian Sticker & Acrylic NBL (Garansi 30 Hari)</option>
+                  <option value="addendum">🌟 Berita Acara Addendum / Pekerjaan Tambahan</option>
                 </select>
                 <button
                   type="button"
                   @click="applyPresetClause"
-                  class="px-3 py-1.5 bg-purple-900 hover:bg-purple-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                  class="px-4 py-2 bg-gradient-to-r from-purple-900 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
                 >
-                  Terapkan
+                  <span>Terapkan</span>
                 </button>
               </div>
             </div>
 
             <!-- 1. Teks Pembuka Dokumen -->
-            <div class="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
-              <div class="flex items-center justify-between">
-                <label class="block font-bold text-slate-900 text-xs">
-                  1. Teks Pembuka Dokumen Berita Acara:
-                </label>
-                <!-- Formatting Toolbar -->
-                <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-                  <button type="button" @click="wrapText('header_html', '<strong>', '</strong>')" title="Tebal (Bold)" class="px-2 py-0.5 font-bold hover:bg-white rounded text-xs cursor-pointer">B</button>
-                  <button type="button" @click="wrapText('header_html', '<em>', '</em>')" title="Miring (Italic)" class="px-2 py-0.5 italic hover:bg-white rounded text-xs cursor-pointer">I</button>
-                  <button type="button" @click="wrapText('header_html', '<u>', '</u>')" title="Garis Bawah (Underline)" class="px-2 py-0.5 underline hover:bg-white rounded text-xs cursor-pointer">U</button>
+            <div class="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-xs">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-purple-900 text-white font-bold text-[10px] flex items-center justify-center">1</span>
+                  <label class="font-bold text-slate-900 text-xs">Teks Pembuka Dokumen Berita Acara</label>
+                </div>
+                
+                <!-- Rich Formatting Toolbar -->
+                <div class="flex flex-wrap items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200">
+                  <button type="button" @click="smartWrapText('header_html', '<strong>', '</strong>', 'Teks Tebal', headerTextarea)" title="Tebal (Bold)" class="px-2 py-0.5 font-bold hover:bg-white rounded-lg text-xs cursor-pointer active:scale-95 transition-all">B</button>
+                  <button type="button" @click="smartWrapText('header_html', '<em>', '</em>', 'Teks Miring', headerTextarea)" title="Miring (Italic)" class="px-2 py-0.5 italic hover:bg-white rounded-lg text-xs cursor-pointer active:scale-95 transition-all">I</button>
+                  <button type="button" @click="smartWrapText('header_html', '<u>', '</u>', 'Garis Bawah', headerTextarea)" title="Garis Bawah (Underline)" class="px-2 py-0.5 underline hover:bg-white rounded-lg text-xs cursor-pointer active:scale-95 transition-all">U</button>
+                  <button type="button" @click="smartWrapText('header_html', '<mark class=\'bg-amber-200 px-1 rounded\'>', '</mark>', 'Sorotan Stabilo', headerTextarea)" title="Highlight Stabilo" class="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-lg text-xs cursor-pointer active:scale-95 transition-all">Highlight</button>
+                  <span class="w-px h-3.5 bg-slate-300 mx-0.5"></span>
+                  <button type="button" @click="resetToDefaultField('header_html')" title="Kembalikan ke Teks Standar" class="px-2 py-0.5 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg text-[10px] cursor-pointer">Reset</button>
                 </div>
               </div>
 
-              <!-- Variable Insert Buttons -->
-              <div class="flex flex-wrap items-center gap-1 py-1 text-[10px]">
-                <span class="text-slate-400 font-medium mr-1">Sisip Variabel:</span>
-                <button type="button" @click="insertVariable('header_html', '{{ba_date}}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 font-mono rounded-md border border-purple-200 cursor-pointer">+ Tanggal BA</button>
-                <button type="button" @click="insertVariable('header_html', '{{title}}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 font-mono rounded-md border border-purple-200 cursor-pointer">+ Nama Proyek</button>
-                <button type="button" @click="insertVariable('header_html', '{{location_name}}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 font-mono rounded-md border border-purple-200 cursor-pointer">+ Lokasi Cabang</button>
-                <button type="button" @click="insertVariable('header_html', '{{vendor_name}}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 font-mono rounded-md border border-purple-200 cursor-pointer">+ Nama Client</button>
+              <!-- Categorized Variable Insert Chips -->
+              <div class="space-y-1.5 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Sisipkan Variabel Otomatis (Klik untuk memasukkan):</span>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <button type="button" @click="insertVariableAtCursor('header_html', '{{ba_date}}', headerTextarea)" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-900 font-bold text-[10px] rounded-lg border border-purple-200 active:scale-95 transition-all cursor-pointer">📅 Tanggal BA</button>
+                  <button type="button" @click="insertVariableAtCursor('header_html', '{{title}}', headerTextarea)" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-900 font-bold text-[10px] rounded-lg border border-purple-200 active:scale-95 transition-all cursor-pointer">🏷️ Nama Proyek</button>
+                  <button type="button" @click="insertVariableAtCursor('header_html', '{{location_name}}', headerTextarea)" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-900 font-bold text-[10px] rounded-lg border border-blue-200 active:scale-95 transition-all cursor-pointer">📍 Lokasi Cabang</button>
+                  <button type="button" @click="insertVariableAtCursor('header_html', '{{vendor_name}}', headerTextarea)" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-[10px] rounded-lg border border-emerald-200 active:scale-95 transition-all cursor-pointer">🏢 Nama Client</button>
+                  <button type="button" @click="insertVariableAtCursor('header_html', '{{spk_number}}', headerTextarea)" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 font-mono font-bold text-[10px] rounded-lg border border-amber-200 active:scale-95 transition-all cursor-pointer">📋 No. SPK</button>
+                </div>
               </div>
 
               <textarea
@@ -371,52 +381,73 @@
                 rows="3"
                 v-model="formData.header_html"
                 placeholder="Pada hari ini {{ba_date}}, telah dilakukan pemeriksaan dan verifikasi lapangan atas pelaksanaan seluruh item pekerjaan untuk {{title}} di lokasi {{location_name}}..."
-                class="w-full px-3 py-2 bg-slate-50/50 border border-slate-200 rounded-xl leading-relaxed text-xs font-sans focus:bg-white transition-colors"
+                class="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl leading-relaxed text-xs font-sans focus:bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all shadow-inner"
               />
 
               <!-- Live Formatted Preview Strip -->
-              <div class="p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[11px] text-slate-700 leading-relaxed">
-                <span class="font-bold text-[9px] uppercase tracking-wider text-slate-400 block mb-0.5">Pratinjau Tampilan Cetak Pembuka:</span>
-                <div v-html="renderClauseWithSampleData(formData.header_html)"></div>
+              <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-slate-800 leading-relaxed shadow-xs">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-bold text-[10px] uppercase tracking-wider text-purple-900 flex items-center gap-1">
+                    <CheckCircle2 class="w-3 h-3 text-emerald-600" />
+                    <span>Pratinjau Tampilan Cetak Pembuka (Data Sampel):</span>
+                  </span>
+                </div>
+                <div class="p-2.5 bg-white rounded-lg border border-slate-200 text-slate-900" v-html="renderClauseWithSampleData(formData.header_html)"></div>
               </div>
             </div>
 
             <!-- 2. Klausul Pernyataan Selesai & Garansi Mutu -->
-            <div class="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
-              <div class="flex items-center justify-between">
-                <label class="block font-bold text-slate-900 text-xs">
-                  2. Klausul Pernyataan Selesai & Garansi Mutu:
-                </label>
-                <!-- Formatting Toolbar -->
-                <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-                  <button type="button" @click="wrapText('body_template', '<strong>', '</strong>')" title="Tebal (Bold)" class="px-2 py-0.5 font-bold hover:bg-white rounded text-xs cursor-pointer">B</button>
-                  <button type="button" @click="wrapText('body_template', '<em>', '</em>')" title="Miring (Italic)" class="px-2 py-0.5 italic hover:bg-white rounded text-xs cursor-pointer">I</button>
-                  <button type="button" @click="wrapText('body_template', '<u>', '</u>')" title="Garis Bawah (Underline)" class="px-2 py-0.5 underline hover:bg-white rounded text-xs cursor-pointer">U</button>
-                  <button type="button" @click="insertBulletPoint" title="Poin Bullet" class="px-2 py-0.5 hover:bg-white rounded text-xs cursor-pointer font-bold">• List</button>
+            <div class="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-xs">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-purple-900 text-white font-bold text-[10px] flex items-center justify-center">2</span>
+                  <label class="font-bold text-slate-900 text-xs">Klausul Pernyataan Selesai & Garansi Mutu</label>
+                </div>
+                
+                <!-- Rich Formatting Toolbar -->
+                <div class="flex flex-wrap items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200">
+                  <button type="button" @click="smartWrapText('body_template', '<strong>', '</strong>', 'Teks Tebal', bodyTextarea)" title="Tebal (Bold)" class="px-2 py-0.5 font-bold hover:bg-white rounded-lg text-xs cursor-pointer active:scale-95 transition-all">B</button>
+                  <button type="button" @click="smartWrapText('body_template', '<em>', '</em>', 'Teks Miring', bodyTextarea)" title="Miring (Italic)" class="px-2 py-0.5 italic hover:bg-white rounded-lg text-xs cursor-pointer active:scale-95 transition-all">I</button>
+                  <button type="button" @click="smartWrapText('body_template', '<u>', '</u>', 'Garis Bawah', bodyTextarea)" title="Garis Bawah (Underline)" class="px-2 py-0.5 underline hover:bg-white rounded-lg text-xs cursor-pointer active:scale-95 transition-all">U</button>
+                  <button type="button" @click="smartWrapText('body_template', '<mark class=\'bg-amber-200 px-1 rounded font-bold\'>', '</mark>', 'Sorotan Penting', bodyTextarea)" title="Highlight Stabilo" class="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-lg text-xs cursor-pointer active:scale-95 transition-all">Highlight</button>
+                  <span class="w-px h-3.5 bg-slate-300 mx-0.5"></span>
+                  <button type="button" @click="insertBulletPointCustom(bodyTextarea)" title="Poin Bullet" class="px-2 py-0.5 hover:bg-white rounded-lg text-xs cursor-pointer font-bold">• List</button>
+                  <button type="button" @click="insertNumberedPointCustom(bodyTextarea)" title="Poin Penomoran" class="px-2 py-0.5 hover:bg-white rounded-lg text-xs cursor-pointer font-bold">1. List</button>
+                  <button type="button" @click="insertParagraphBreak(bodyTextarea)" title="Paragraf Baru" class="px-2 py-0.5 hover:bg-white rounded-lg text-xs cursor-pointer text-slate-600">¶ Paragraf</button>
+                  <span class="w-px h-3.5 bg-slate-300 mx-0.5"></span>
+                  <button type="button" @click="resetToDefaultField('body_template')" title="Kembalikan ke Teks Standar" class="px-2 py-0.5 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg text-[10px] cursor-pointer">Reset</button>
                 </div>
               </div>
 
-              <!-- Variable Insert Buttons -->
-              <div class="flex flex-wrap items-center gap-1 py-1 text-[10px]">
-                <span class="text-slate-400 font-medium mr-1">Sisip Variabel:</span>
-                <button type="button" @click="insertVariable('body_template', '{{vendor_name}}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 font-mono rounded-md border border-purple-200 cursor-pointer">+ Nama Client</button>
-                <button type="button" @click="insertVariable('body_template', '{{contract_value}}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 font-mono rounded-md border border-purple-200 cursor-pointer">+ Nilai Kontrak</button>
-                <button type="button" @click="insertVariable('body_template', '{{spk_number}}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 font-mono rounded-md border border-purple-200 cursor-pointer">+ No. SPK</button>
-                <button type="button" @click="insertVariable('body_template', '{{checkin_gps}}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-800 font-mono rounded-md border border-purple-200 cursor-pointer">+ GPS Check-in</button>
+              <!-- Categorized Variable Insert Chips -->
+              <div class="space-y-1.5 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Sisipkan Variabel Otomatis:</span>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <button type="button" @click="insertVariableAtCursor('body_template', '{{vendor_name}}', bodyTextarea)" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-[10px] rounded-lg border border-emerald-200 active:scale-95 transition-all cursor-pointer">🏢 Nama Client</button>
+                  <button type="button" @click="insertVariableAtCursor('body_template', '{{contract_value}}', bodyTextarea)" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-[10px] rounded-lg border border-emerald-200 active:scale-95 transition-all cursor-pointer">💰 Nilai Kontrak</button>
+                  <button type="button" @click="insertVariableAtCursor('body_template', '{{spk_number}}', bodyTextarea)" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 font-mono font-bold text-[10px] rounded-lg border border-amber-200 active:scale-95 transition-all cursor-pointer">📋 No. SPK</button>
+                  <button type="button" @click="insertVariableAtCursor('body_template', '{{checkin_gps}}', bodyTextarea)" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-900 font-mono text-[10px] rounded-lg border border-purple-200 active:scale-95 transition-all cursor-pointer">🛰️ GPS Check-in</button>
+                  <button type="button" @click="insertVariableAtCursor('body_template', '{{ba_date}}', bodyTextarea)" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-900 font-bold text-[10px] rounded-lg border border-blue-200 active:scale-95 transition-all cursor-pointer">📅 Tanggal BA</button>
+                </div>
               </div>
 
               <textarea
                 ref="bodyTextarea"
-                rows="4"
+                rows="5"
                 v-model="formData.body_template"
                 placeholder="Berdasarkan pemeriksaan bukti foto digital Before, Process, After dan hasil verifikasi lapangan, kedua belah pihak menyatakan bahwa seluruh item pekerjaan telah SELESAI 100% SECARA BAIK..."
-                class="w-full px-3 py-2 bg-slate-50/50 border border-slate-200 rounded-xl leading-relaxed text-xs font-sans focus:bg-white transition-colors"
+                class="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl leading-relaxed text-xs font-sans focus:bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all shadow-inner"
               />
 
               <!-- Live Formatted Preview Strip -->
-              <div class="p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[11px] text-slate-700 leading-relaxed">
-                <span class="font-bold text-[9px] uppercase tracking-wider text-slate-400 block mb-0.5">Pratinjau Tampilan Cetak Klausul:</span>
-                <div v-html="renderClauseWithSampleData(formData.body_template)"></div>
+              <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-slate-800 leading-relaxed shadow-xs">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-bold text-[10px] uppercase tracking-wider text-purple-900 flex items-center gap-1">
+                    <CheckCircle2 class="w-3 h-3 text-emerald-600" />
+                    <span>Pratinjau Tampilan Cetak Klausul (Data Sampel):</span>
+                  </span>
+                </div>
+                <div class="p-2.5 bg-white rounded-lg border border-slate-200 text-slate-900 leading-relaxed space-y-1" v-html="renderClauseWithSampleData(formData.body_template)"></div>
               </div>
             </div>
           </div>
@@ -741,6 +772,16 @@ const clausePresets = {
     name: 'Serah Terima Bertahap / Parsial (Progress Opname)',
     header: 'Pada hari ini <strong>{{ba_date}}</strong>, telah dilakukan opname pengukuran kemajuan fisik pekerjaan lapangan untuk SPK <strong>{{spk_number}}</strong>:',
     body: 'Berdasarkan dokumentasi evidensi GPS dan pemeriksaan bersama, progres pekerjaan yang telah diselesaikan mencapai bobot persentase yang disepakati dan dinyatakan <strong>DAPAT DITERIMA UNTUK PROSES TERMIN PEMBAYARAN BERJALAN</strong>.'
+  },
+  sticker: {
+    name: 'Penggantian Sticker & Acrylic NBL (Garansi 30 Hari)',
+    header: 'Pada hari ini <strong>{{ba_date}}</strong>, telah dilaksanakan pekerjaan penggantian dan pemasangan stiker/acrylic visual toko untuk <strong>{{title}}</strong> pada lokasi <strong>{{location_name}}</strong>:',
+    body: 'Pemasangan visual stiker dan display acrylic telah selesai rapi, bebas gelembung udara, presisi sesuai panduan brand guideline, dan dinyatakan <strong>SELESAI 100%</strong> dengan garansi rekatan selama <strong>30 (tiga puluh) hari kalender</strong>.'
+  },
+  addendum: {
+    name: 'Berita Acara Addendum / Pekerjaan Tambahan',
+    header: 'Pada hari ini <strong>{{ba_date}}</strong>, sehubungan dengan adanya penyesuaian lapangan pada SPK <strong>{{spk_number}}</strong>, telah dilakukan serah terima pekerjaan tambahan (addendum) untuk lokasi <strong>{{location_name}}</strong>:',
+    body: 'Seluruh item sub-pekerjaan tambahan telah diverifikasi melalui dokumentasi foto satelit dan disetujui bersama oleh kedua belah pihak sebagai <strong>BAGIAN YANG TIDAK TERPISAHKAN DARI KONTRAK UTAMA</strong>.'
   }
 };
 
@@ -751,19 +792,109 @@ function applyPresetClause() {
   formData.value.body_template = preset.body;
 }
 
-function wrapText(field, openTag, closeTag) {
+function smartWrapText(field, openTag, closeTag, fallbackText, textareaRef) {
+  const textarea = textareaRef?.value || textareaRef;
   const currentVal = formData.value[field] || '';
-  formData.value[field] = `${currentVal} ${openTag}Teks Tebal${closeTag} `;
+  
+  if (textarea && typeof textarea.selectionStart === 'number') {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = currentVal.substring(start, end);
+    const textToWrap = selectedText.length > 0 ? selectedText : fallbackText;
+    
+    const newVal = currentVal.substring(0, start) + `${openTag}${textToWrap}${closeTag}` + currentVal.substring(end);
+    formData.value[field] = newVal;
+    
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + openTag.length + textToWrap.length + closeTag.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 10);
+  } else {
+    formData.value[field] = `${currentVal} ${openTag}${fallbackText}${closeTag} `;
+  }
 }
 
-function insertVariable(field, varTag) {
+function insertVariableAtCursor(field, varTag, textareaRef) {
+  const textarea = textareaRef?.value || textareaRef;
   const currentVal = formData.value[field] || '';
-  formData.value[field] = `${currentVal} ${varTag} `;
+  
+  if (textarea && typeof textarea.selectionStart === 'number') {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newVal = currentVal.substring(0, start) + ` ${varTag} ` + currentVal.substring(end);
+    formData.value[field] = newVal;
+    
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + varTag.length + 2;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 10);
+  } else {
+    formData.value[field] = `${currentVal} ${varTag} `;
+  }
 }
 
-function insertBulletPoint() {
+function insertBulletPointCustom(textareaRef) {
+  const textarea = textareaRef?.value || textareaRef;
   const currentVal = formData.value.body_template || '';
-  formData.value.body_template = `${currentVal}\n• Poin Kesepakatan: `;
+  const bulletText = '\n• Poin Kesepakatan: ';
+  
+  if (textarea && typeof textarea.selectionStart === 'number') {
+    const start = textarea.selectionStart;
+    const newVal = currentVal.substring(0, start) + bulletText + currentVal.substring(start);
+    formData.value.body_template = newVal;
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + bulletText.length, start + bulletText.length);
+    }, 10);
+  } else {
+    formData.value.body_template = `${currentVal}${bulletText}`;
+  }
+}
+
+function insertNumberedPointCustom(textareaRef) {
+  const textarea = textareaRef?.value || textareaRef;
+  const currentVal = formData.value.body_template || '';
+  const numText = '\n1. Butir Ketentuan: ';
+  
+  if (textarea && typeof textarea.selectionStart === 'number') {
+    const start = textarea.selectionStart;
+    const newVal = currentVal.substring(0, start) + numText + currentVal.substring(start);
+    formData.value.body_template = newVal;
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + numText.length, start + numText.length);
+    }, 10);
+  } else {
+    formData.value.body_template = `${currentVal}${numText}`;
+  }
+}
+
+function insertParagraphBreak(textareaRef) {
+  const textarea = textareaRef?.value || textareaRef;
+  const currentVal = formData.value.body_template || '';
+  const breakText = '<br><br>';
+  
+  if (textarea && typeof textarea.selectionStart === 'number') {
+    const start = textarea.selectionStart;
+    const newVal = currentVal.substring(0, start) + breakText + currentVal.substring(start);
+    formData.value.body_template = newVal;
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + breakText.length, start + breakText.length);
+    }, 10);
+  } else {
+    formData.value.body_template = `${currentVal}${breakText}`;
+  }
+}
+
+function resetToDefaultField(field) {
+  if (field === 'header_html') {
+    formData.value.header_html = clausePresets.standard.header;
+  } else if (field === 'body_template') {
+    formData.value.body_template = clausePresets.standard.body;
+  }
 }
 
 function stripHtml(html) {
