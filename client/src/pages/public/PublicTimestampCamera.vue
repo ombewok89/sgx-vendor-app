@@ -544,60 +544,60 @@ async function renderWatermarkCanvas() {
 }
 
 /**
- * FULL-WIDTH BOTTOM WATERMARK BAR (TINGGI 500PX - TRANSPARAN TANPA BACKGROUND GELAP)
+ * FULL-WIDTH BOTTOM WATERMARK BAR (TINGGI 400PX - TRANSPARAN TANPA BACKGROUND GELAP)
  * - Bar Penuh di BAWAH Foto (Lebar 100% Foto)
- * - Tinggi Bar: 500px (Scaled)
+ * - Tinggi Bar: 400px (Scaled)
  * - Background: 100% Transparan
- * - Pembagian Lebar: 70% Tulisan (4 Baris Fleksibel) | 30% Google Satellite Mini-Map
- * - Baris 1: Jam Digital + Garis Emas + Hari & Tanggal (Berjarak Lega ke Baris 2)
+ * - Pembagian Lebar: 70% Tulisan (4 Baris Fleksibel) | 30% Google Satellite Mini-Map (Ukuran Fleksibel)
+ * - Baris 1: Jam Digital + Garis Emas + Hari & Tanggal
  * - Baris 2: Nama Jalan & Alamat Lengkap Google Maps (Lebar Fleksibel 70%)
- * - Baris 3: Titik Koordinat GPS Fleksibel & Diperbesar (📍 Lat, Lng)
+ * - Baris 3: Titik Koordinat GPS Fleksibel (📍 Lat, Lng)
  * - Baris 4: Tag Keterangan Pekerjaan Fleksibel (📌 Job Description)
  * - Footer Strip Putih di Dasar Foto (vendor.sinargrafika.my.id)
  */
 function renderBottomBarWatermark(ctx, w, h, s, meta) {
   // 1. Draw Top-Left SGX Diamond Logo on photo
-  const topLogoSize = Math.round(95 * s);
-  const topLogoX = Math.round(28 * s);
-  const topLogoY = Math.round(28 * s);
+  const topLogoSize = Math.round(90 * s);
+  const topLogoX = Math.round(26 * s);
+  const topLogoY = Math.round(26 * s);
 
   if (meta.logoImg) {
-    drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 20 * s);
+    drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 18 * s);
   }
 
-  // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 500px)
-  const totalBarH = Math.round(500 * s); // Total Tinggi Bar 500px
-  const footerBarH = Math.round(80 * s);  // White branding footer strip (80px)
-  const mainBarH = totalBarH - footerBarH; // Main content area (420px)
+  // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 400px)
+  const totalBarH = Math.round(400 * s); // Total Tinggi Bar 400px
+  const footerBarH = Math.round(70 * s);  // White branding footer strip (70px)
+  const mainBarH = totalBarH - footerBarH; // Main content area (330px)
   const barY = h - totalBarH;
 
   // Background 100% Transparan (Tanpa Background Gelap)
 
-  // 3. Pembagian Kolom Lebar 70% : 30% (70% Tulisan : 30% Google Map)
+  // 3. Pembagian Kolom Lebar 70% : 30% (70% Tulisan : 30% Google Map Fleksibel)
   const leftColW = w * 0.70;  // 70% Lebar untuk Tulisan
   const rightColW = w * 0.30; // 30% Lebar untuk Google Map
 
-  // A. Mini Map Satellite di Sisi Kanan (Area 30%)
-  const mapPadX = Math.round(16 * s);
-  const mapPadY = Math.round(16 * s);
+  // A. Mini Map Satellite di Sisi Kanan (Ukuran Fleksibel Mengikuti Area 30% x Tinggi Main Bar)
+  const mapPadX = Math.round(14 * s);
+  const mapPadY = Math.round(12 * s);
   const mapH = mainBarH - (mapPadY * 2);
   const mapW = rightColW - (mapPadX * 2);
   const mapX = leftColW + mapPadX;
   const mapY = barY + mapPadY;
 
   // B. Area Tulisan di Sisi Kiri (Area 70%)
-  const textMarginL = Math.round(30 * s);
-  const maxTextW = leftColW - textMarginL - Math.round(18 * s);
+  const textMarginL = Math.round(28 * s);
+  const maxTextW = leftColW - textMarginL - Math.round(16 * s);
 
   // 4. BARIS 1: Jam Digital Besar + Garis Emas + Hari & Tanggal
-  let curY = barY + Math.round(78 * s);
+  let curY = barY + Math.round(62 * s);
   ctx.save();
-  const clockFontS = Math.round(84 * s);
+  const clockFontS = Math.round(68 * s);
   ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 16 * s;
+  ctx.shadowBlur = 14 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 7 * s;
+  ctx.lineWidth = 6 * s;
   ctx.strokeText(meta.timeStr, textMarginL, curY);
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(meta.timeStr, textMarginL, curY);
@@ -605,94 +605,94 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   const timeW = ctx.measureText(meta.timeStr).width;
 
   // Vertical Gold Separator (Membentang Sepanjang Jam)
-  const sepX = textMarginL + timeW + Math.round(16 * s);
-  const sepH = Math.round(68 * s);
-  const sepTopY = curY - Math.round(65 * s);
+  const sepX = textMarginL + timeW + Math.round(14 * s);
+  const sepH = Math.round(54 * s);
+  const sepTopY = curY - Math.round(52 * s);
   ctx.fillStyle = '#EAB308';
-  ctx.fillRect(sepX, sepTopY, Math.round(5 * s), sepH);
+  ctx.fillRect(sepX, sepTopY, Math.round(4.5 * s), sepH);
 
   // Hari & Tanggal (Baris 1)
-  const dateTextX = sepX + Math.round(16 * s);
-  ctx.font = `800 ${Math.round(28 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  const dateTextX = sepX + Math.round(14 * s);
+  ctx.font = `800 ${Math.round(24 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 12 * s;
+  ctx.shadowBlur = 10 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-  ctx.lineWidth = 5 * s;
-  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(26 * s));
+  ctx.lineWidth = 4.5 * s;
+  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(22 * s));
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(26 * s));
+  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(22 * s));
 
-  ctx.font = `800 ${Math.round(30 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(60 * s));
+  ctx.font = `800 ${Math.round(26 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(48 * s));
   ctx.fillStyle = '#FDE047';
-  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(60 * s));
+  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(48 * s));
   ctx.restore();
 
   // 5. BARIS 2: Nama Jalan & Alamat Lengkap Google Maps (Lebar Fleksibel 70%, Berjarak dari Baris 1)
-  curY += Math.round(62 * s);
+  curY += Math.round(48 * s);
   ctx.save();
-  const addressFontS = Math.round(36 * s);
+  const addressFontS = Math.round(28 * s);
   ctx.font = `800 ${addressFontS}px "Inter", "Montserrat", Arial, sans-serif`;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
-  ctx.shadowBlur = 16 * s;
+  ctx.shadowBlur = 14 * s;
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.98)';
-  ctx.lineWidth = 7 * s;
+  ctx.lineWidth = 6 * s;
 
   const addressLines = wrapTextLines(ctx, meta.address, maxTextW, 2);
   addressLines.forEach((line) => {
     ctx.strokeText(line, textMarginL, curY);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(line, textMarginL, curY);
-    curY += Math.round(44 * s);
+    curY += Math.round(35 * s);
   });
   ctx.restore();
 
-  // 6. BARIS 3: Titik Koordinat GPS Fleksibel & Diperbesar (📍 Lat, Lng)
-  curY += Math.round(14 * s);
+  // 6. BARIS 3: Titik Koordinat GPS Fleksibel (📍 Lat, Lng)
+  curY += Math.round(10 * s);
   const coordText = `📍 ${meta.lat}, ${meta.lng}`;
-  const coordFontS = Math.round(32 * s);
+  const coordFontS = Math.round(24 * s);
   ctx.save();
   ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
   const coordTextW = ctx.measureText(coordText).width;
-  const badgePadX = Math.round(14 * s);
-  const badgeH = Math.round(44 * s);
-  const badgeY = curY - Math.round(33 * s);
+  const badgePadX = Math.round(12 * s);
+  const badgeH = Math.round(35 * s);
+  const badgeY = curY - Math.round(26 * s);
 
   // Dynamic semi-transparent dark rounded badge
   ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
   ctx.beginPath();
-  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(8 * s));
+  ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(7 * s));
   ctx.fill();
 
   ctx.fillStyle = '#FEF08A'; // Soft Gold untuk kontras tinggi
   ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 10 * s;
+  ctx.shadowBlur = 8 * s;
   ctx.fillText(coordText, textMarginL + badgePadX, curY);
   ctx.restore();
 
   // 7. BARIS 4: Tag Keterangan Pekerjaan Fleksibel (📌 Job Description)
   if (meta.jobDescription) {
-    curY += Math.round(50 * s);
+    curY += Math.round(40 * s);
     ctx.save();
-    const jobFontS = Math.round(28 * s);
+    const jobFontS = Math.round(24 * s);
     ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
 
     const jobLines = wrapTextLines(ctx, `📌 ${meta.jobDescription}`, maxTextW, 2);
     ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-    ctx.shadowBlur = 12 * s;
+    ctx.shadowBlur = 10 * s;
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
-    ctx.lineWidth = 6 * s;
+    ctx.lineWidth = 5 * s;
 
     jobLines.forEach((line) => {
       ctx.strokeText(line, textMarginL, curY);
       ctx.fillStyle = '#38BDF8'; // Bright cyan text
       ctx.fillText(line, textMarginL, curY);
-      curY += Math.round(34 * s);
+      curY += Math.round(28 * s);
     });
     ctx.restore();
   }
 
-  // 8. Draw Right Google Mini-Map Satellite (Area 30%)
+  // 8. Draw Right Google Mini-Map Satellite (Ukuran Fleksibel)
   drawGoogleSatelliteMiniMap(ctx, mapX, mapY, mapW, mapH, s, meta.satelliteImg);
 
   // 9. Draw Bottom Solid White Footer Bar
@@ -703,39 +703,39 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
 
   // Top dividing line
   ctx.fillStyle = '#CBD5E1';
-  ctx.fillRect(0, footerY, w, 2.5 * s);
+  ctx.fillRect(0, footerY, w, 2 * s);
 
   // Sisi Kiri Footer: Logo SGX + Nama Sinar Grafika + WhatsApp Contact
-  const footerLogoSize = Math.round(58 * s);
+  const footerLogoSize = Math.round(52 * s);
   const footerLogoY = footerY + Math.round((footerBarH - footerLogoSize) / 2);
   if (meta.logoImg) {
     ctx.drawImage(meta.logoImg, textMarginL, footerLogoY, footerLogoSize, footerLogoSize);
   }
 
-  const textX = textMarginL + footerLogoSize + Math.round(14 * s);
+  const textX = textMarginL + footerLogoSize + Math.round(12 * s);
   ctx.fillStyle = '#0F172A';
-  ctx.font = `900 ${Math.round(24 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + Math.round(32 * s));
+  ctx.font = `900 ${Math.round(22 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + Math.round(28 * s));
 
   ctx.fillStyle = '#334155';
-  ctx.font = `700 ${Math.round(18 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + Math.round(60 * s));
+  ctx.font = `700 ${Math.round(16 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + Math.round(52 * s));
 
   // Diagonal dividing slash di tengah
   const midX = leftColW;
   ctx.strokeStyle = '#CBD5E1';
-  ctx.lineWidth = 2.5 * s;
+  ctx.lineWidth = 2 * s;
   ctx.beginPath();
-  ctx.moveTo(midX + Math.round(20 * s), footerY + Math.round(10 * s));
-  ctx.lineTo(midX - Math.round(20 * s), footerY + footerBarH - Math.round(10 * s));
+  ctx.moveTo(midX + Math.round(16 * s), footerY + Math.round(8 * s));
+  ctx.lineTo(midX - Math.round(16 * s), footerY + footerBarH - Math.round(8 * s));
   ctx.stroke();
 
   // Sisi Kanan Footer: Branding Website Resmi vendor.sinargrafika.my.id
-  const rightMarginR = Math.round(30 * s);
+  const rightMarginR = Math.round(28 * s);
   ctx.fillStyle = '#0369A1'; // Deep sky blue
-  ctx.font = `800 ${Math.round(22 * s)}px "Inter", "Montserrat", monospace, Arial, sans-serif`;
+  ctx.font = `800 ${Math.round(20 * s)}px "Inter", "Montserrat", monospace, Arial, sans-serif`;
   ctx.textAlign = 'right';
-  ctx.fillText('vendor.sinargrafika.my.id', w - rightMarginR, footerY + Math.round(50 * s));
+  ctx.fillText('vendor.sinargrafika.my.id', w - rightMarginR, footerY + Math.round(44 * s));
   ctx.textAlign = 'left'; // Reset alignment
   ctx.restore();
 }
