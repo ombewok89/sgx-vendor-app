@@ -1,105 +1,75 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-purple-500 selection:text-white flex flex-col">
+  <div class="h-screen max-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-purple-500 selection:text-white flex flex-col overflow-hidden">
     
-    <!-- Top Header Bar -->
-    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3 shadow-md">
-      <div class="max-w-5xl mx-auto flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-purple-700 to-indigo-800 flex items-center justify-center text-white font-black text-sm shadow-md shadow-amber-500/20">
+    <!-- Top Header Bar with Integrated Verified Location -->
+    <header class="border-b border-slate-800 bg-slate-900/95 backdrop-blur-md shrink-0 px-3 sm:px-4 py-2.5 shadow-md z-40">
+      <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-purple-700 to-indigo-800 flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-md shadow-amber-500/20 shrink-0">
             SGX
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="font-extrabold text-sm text-white tracking-wide">TIMESLIP CAMERA</h1>
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-                AUTONOMOUS GPS
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h1 class="font-extrabold text-xs sm:text-sm text-white tracking-wide truncate">TIMESLIP CAMERA</h1>
+              <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>
+                GPS
               </span>
             </div>
-            <p class="text-[11px] text-slate-400">Kamera GPS Otomatis Sinar Grafika — Lokasi Asli Google Maps & Keterangan Kerja</p>
+            <!-- Integrated Verified Location Subtitle in Header -->
+            <p class="text-[10px] text-emerald-400 font-medium truncate flex items-center gap-1" :title="detectedAddress">
+              <MapPin class="w-3 h-3 text-emerald-400 shrink-0" />
+              <span>{{ detectedAddress || 'Mendeteksi alamat satelit...' }}</span>
+            </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          @click="goBackHome"
-          class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all border border-slate-700 flex items-center gap-1.5 cursor-pointer active:scale-95"
-        >
-          <Home class="w-3.5 h-3.5" />
-          <span>Beranda</span>
-        </button>
+        <!-- Header Actions -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            @click="refreshGps"
+            class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all border border-slate-700 cursor-pointer active:scale-95"
+            title="Segarkan GPS"
+          >
+            <RefreshCw class="w-3.5 h-3.5 text-amber-400" :class="{ 'animate-spin': fetchingGps }" />
+          </button>
+          <button
+            type="button"
+            @click="goBackHome"
+            class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all border border-slate-700 flex items-center gap-1 cursor-pointer active:scale-95"
+          >
+            <Home class="w-3.5 h-3.5" />
+            <span class="hidden sm:inline">Beranda</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6">
+    <!-- Main Content Area (No-Scroll Viewport Layout) -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-4 flex flex-col min-h-0">
       
-      <!-- Live Real-Time Location & Status Bar -->
-      <div class="p-3.5 sm:p-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-lg">
-        <div class="flex items-start gap-3">
-          <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0 border border-emerald-500/20">
-            <MapPin class="w-4 h-4" />
-          </div>
-          <div class="space-y-0.5">
-            <div class="flex items-center gap-2 font-bold text-slate-200">
-              <span>Lokasi Terverifikasi Otomatis (Google Maps):</span>
-              <span v-if="fetchingGps" class="inline-flex items-center text-[10px] text-amber-400">
-                <Loader2 class="w-3 h-3 animate-spin mr-1" />
-                Mencari satelit...
-              </span>
-            </div>
-            <p class="text-[11px] text-emerald-400 font-medium leading-relaxed">
-              {{ detectedAddress || 'Mendeteksi alamat akurat dari satelit GPS...' }}
-            </p>
-            <p class="text-[10px] text-slate-400 font-mono">
-              Koordinat Asli: {{ gpsLocation ? `${gpsLocation.lat.toFixed(6)}, ${gpsLocation.lng.toFixed(6)} (Akurasi: ±${gpsLocation.accuracy}m)` : 'Menghubungkan ke sensor perangkat...' }}
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          @click="refreshGps"
-          class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 border border-slate-700 cursor-pointer active:scale-95 transition-all"
-        >
-          <RefreshCw class="w-3.5 h-3.5 text-amber-400" :class="{ 'animate-spin': fetchingGps }" />
-          <span>Segarkan Lokasi</span>
-        </button>
-      </div>
-
-      <!-- Keterangan Pekerjaan Input Box (Bisa Diedit Bebas) -->
-      <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg space-y-2">
-        <label class="block font-bold text-xs text-slate-300 flex items-center gap-2">
-          <FileText class="w-4 h-4 text-purple-400" />
-          <span>Keterangan Pekerjaan / Catatan Lapangan:</span>
-        </label>
-        <div class="flex flex-col sm:flex-row items-center gap-3">
-          <input
-            type="text"
-            v-model="stampForm.jobDescription"
-            @input="debouncedRender"
-            placeholder="Contoh: Pemasangan Signage / Survey Lokasi / Maintenance"
-            class="flex-1 w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-purple-500 focus:outline-none text-white text-xs font-semibold shadow-inner"
-          />
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <select
-              v-model="stampForm.timeZone"
-              @change="renderWatermarkCanvas"
-              class="px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold text-xs focus:border-purple-500 focus:outline-none cursor-pointer"
-            >
-              <option value="WIB">WIB (UTC+7)</option>
-              <option value="WITA">WITA (UTC+8)</option>
-              <option value="WIT">WIT (UTC+9)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
       <!-- STATE 1: CAMERA & UPLOAD VIEWFINDER (Belum Ambil Foto) -->
-      <div v-if="!capturedImage" class="space-y-6 animate-fade-in">
+      <div v-if="!capturedImage" class="flex-1 flex flex-col min-h-0 space-y-2.5">
         
-        <!-- Viewfinder Box -->
-        <div class="relative bg-black rounded-3xl border border-slate-800 overflow-hidden shadow-2xl flex flex-col items-center justify-center min-h-[380px] sm:min-h-[480px]">
+        <!-- Compact Input Keterangan Pekerjaan (Default Kosong) -->
+        <div class="shrink-0 relative">
+          <div class="relative flex items-center">
+            <div class="absolute left-3 text-slate-400 pointer-events-none">
+              <FileText class="w-3.5 h-3.5 text-purple-400" />
+            </div>
+            <input
+              type="text"
+              v-model="stampForm.jobDescription"
+              placeholder="Ketik Keterangan Pekerjaan (Opsional)"
+              class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl focus:border-purple-500 focus:outline-none text-white text-xs font-medium placeholder-slate-500 shadow-inner"
+            />
+          </div>
+        </div>
+
+        <!-- Focus Viewfinder Box (Fills Remaining Screen Height without Scrolling) -->
+        <div class="flex-1 relative bg-black rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex items-center justify-center min-h-0">
           
           <!-- Live Video Stream -->
           <video
@@ -108,68 +78,68 @@
             autoplay
             playsinline
             muted
-            class="w-full h-full object-cover max-h-[560px]"
+            class="w-full h-full object-cover"
           ></video>
 
           <!-- Camera Inactive Placeholder -->
-          <div v-if="!isCameraActive" class="p-8 text-center space-y-4 max-w-md">
-            <div class="w-16 h-16 rounded-3xl bg-slate-900 border border-slate-700 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
-              <Camera class="w-8 h-8 text-purple-400" />
+          <div v-if="!isCameraActive" class="p-6 text-center space-y-3 max-w-sm">
+            <div class="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-700 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
+              <Camera class="w-7 h-7 text-purple-400" />
             </div>
             <div>
-              <h3 class="text-base font-bold text-white">Kamera Siap Digunakan</h3>
-              <p class="text-xs text-slate-400 mt-1">Buka kamera langsung atau pilih foto dari galeri. Stempel waktu, lokasi Google Maps, dan keterangan kerja akan otomatis tertempel di bawah foto.</p>
+              <h3 class="text-sm font-bold text-white">Kamera Siap Digunakan</h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">Buka kamera langsung atau pilih foto dari galeri. Lokasi & waktu otomatis tercetak di bawah foto.</p>
             </div>
-            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <div class="flex flex-wrap items-center justify-center gap-2.5 pt-1">
               <button
                 type="button"
                 @click="startCamera"
-                class="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-900/30 active:scale-95 transition-all cursor-pointer"
+                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-900/30 active:scale-95 transition-all cursor-pointer"
               >
                 <Camera class="w-4 h-4" />
-                <span>Buka Kamera Sekarang</span>
+                <span>Buka Kamera</span>
               </button>
-              <label class="px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 border border-slate-700 active:scale-95 transition-all cursor-pointer">
+              <label class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 border border-slate-700 active:scale-95 transition-all cursor-pointer">
                 <Upload class="w-4 h-4 text-emerald-400" />
-                <span>Pilih dari Galeri</span>
+                <span>Pilih Galeri</span>
                 <input type="file" accept="image/*" class="hidden" @change="handleFileSelected" />
               </label>
             </div>
           </div>
 
           <!-- Camera Live Controls Overlay (Ketika Kamera Aktif) -->
-          <div v-if="isCameraActive" class="absolute top-4 inset-x-4 flex items-center justify-between z-20">
+          <div v-if="isCameraActive" class="absolute top-3 inset-x-3 flex items-center justify-between z-20">
             <!-- GPS Status Pill -->
-            <div class="px-3 py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700 text-[11px] font-mono flex items-center gap-1.5 shadow-md text-white">
-              <MapPin class="w-3.5 h-3.5" :class="gpsLocation ? 'text-emerald-400' : 'text-amber-400 animate-pulse'" />
+            <div class="px-2.5 py-1 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700 text-[10px] font-mono flex items-center gap-1.5 shadow-md text-white">
+              <MapPin class="w-3 h-3" :class="gpsLocation ? 'text-emerald-400' : 'text-amber-400 animate-pulse'" />
               <span>{{ gpsLocation ? `${gpsLocation.lat.toFixed(5)}, ${gpsLocation.lng.toFixed(5)}` : 'Mencari GPS...' }}</span>
             </div>
 
-            <!-- Switch Camera Toggle (Mobile Front/Back) -->
-            <div class="flex items-center gap-2">
+            <!-- Switch Camera Toggle & Close Button -->
+            <div class="flex items-center gap-1.5">
               <button
                 type="button"
                 @click="toggleCameraFacing"
-                class="p-2.5 rounded-full bg-slate-900/85 hover:bg-slate-800 text-white backdrop-blur-md border border-slate-700 shadow-md active:scale-90 transition-all cursor-pointer"
+                class="p-2 rounded-full bg-slate-900/85 hover:bg-slate-800 text-white backdrop-blur-md border border-slate-700 shadow-md active:scale-90 transition-all cursor-pointer"
                 title="Ganti Kamera Depan/Belakang"
               >
-                <SwitchCamera class="w-4 h-4" />
+                <SwitchCamera class="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 @click="stopCamera"
-                class="p-2.5 rounded-full bg-rose-600/80 hover:bg-rose-700 text-white backdrop-blur-md border border-white/20 shadow-md active:scale-90 transition-all cursor-pointer"
+                class="p-2 rounded-full bg-rose-600/80 hover:bg-rose-700 text-white backdrop-blur-md border border-white/20 shadow-md active:scale-90 transition-all cursor-pointer"
                 title="Tutup Kamera"
               >
-                <X class="w-4 h-4" />
+                <X class="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          <!-- Capture Shutter Button (Bottom Overlay) -->
-          <div v-if="isCameraActive" class="absolute bottom-6 inset-x-0 flex items-center justify-center gap-6 z-20">
-            <label class="p-3.5 rounded-full bg-slate-900/85 hover:bg-slate-800 text-slate-300 backdrop-blur-md border border-slate-700 shadow-lg cursor-pointer active:scale-90 transition-all" title="Upload dari File">
-              <Upload class="w-5 h-5 text-emerald-400" />
+          <!-- Capture Shutter Button (Bottom Center Overlay) -->
+          <div v-if="isCameraActive" class="absolute bottom-5 inset-x-0 flex items-center justify-center gap-5 z-20">
+            <label class="p-3 rounded-full bg-slate-900/85 hover:bg-slate-800 text-slate-300 backdrop-blur-md border border-slate-700 shadow-lg cursor-pointer active:scale-90 transition-all" title="Upload dari File">
+              <Upload class="w-4 h-4 text-emerald-400" />
               <input type="file" accept="image/*" class="hidden" @change="handleFileSelected" />
             </label>
 
@@ -177,20 +147,20 @@
             <button
               type="button"
               @click="captureSnapshot"
-              class="w-20 h-20 rounded-full bg-white p-1.5 shadow-2xl shadow-purple-500/40 border-4 border-purple-600 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+              class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white p-1 shadow-2xl shadow-purple-500/40 border-4 border-purple-600 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
             >
               <div class="w-full h-full rounded-full bg-gradient-to-tr from-purple-700 to-indigo-600 flex items-center justify-center text-white">
-                <Camera class="w-7 h-7" />
+                <Camera class="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
             </button>
 
             <button
               type="button"
               @click="refreshGps"
-              class="p-3.5 rounded-full bg-slate-900/85 hover:bg-slate-800 text-slate-300 backdrop-blur-md border border-slate-700 shadow-lg cursor-pointer active:scale-90 transition-all"
+              class="p-3 rounded-full bg-slate-900/85 hover:bg-slate-800 text-slate-300 backdrop-blur-md border border-slate-700 shadow-lg cursor-pointer active:scale-90 transition-all"
               title="Perbarui GPS"
             >
-              <RefreshCw class="w-5 h-5 text-amber-400" :class="{ 'animate-spin': fetchingGps }" />
+              <RefreshCw class="w-4 h-4 text-amber-400" :class="{ 'animate-spin': fetchingGps }" />
             </button>
           </div>
         </div>
@@ -198,15 +168,15 @@
       </div>
 
       <!-- STATE 2: PREVIEW & RESULT STAGE (Setelah Ambil/Pilih Foto) -->
-      <div v-else class="space-y-6 animate-scale-up">
+      <div v-else class="flex-1 flex flex-col min-h-0 space-y-3 animate-scale-up">
         
         <!-- Processed Watermarked Image Preview -->
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col items-center space-y-4">
-          <div class="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl border border-slate-700 bg-black relative">
+        <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-2xl flex flex-col items-center justify-center min-h-0 overflow-hidden">
+          <div class="w-full h-full rounded-xl overflow-hidden shadow-2xl border border-slate-700 bg-black relative flex items-center justify-center">
             <img
               :src="watermarkedImage"
               alt="Hasil Watermark Timestamp"
-              class="w-full h-auto object-contain max-h-[600px] mx-auto"
+              class="w-full h-full object-contain mx-auto"
             />
             
             <div v-if="processingWatermark" class="absolute inset-0 bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 text-xs text-white">
@@ -214,37 +184,37 @@
               <p class="font-bold">Menerapkan Stempel Sinar Grafika...</p>
             </div>
           </div>
+        </div>
 
-          <!-- Quick Actions Bar -->
-          <div class="flex flex-wrap items-center justify-center gap-3 w-full max-w-2xl pt-2">
-            <button
-              type="button"
-              @click="downloadResult"
-              class="flex-1 min-w-[200px] px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 active:scale-95 transition-all cursor-pointer"
-            >
-              <Download class="w-4 h-4" />
-              <span>Simpan ke Galeri / Unduh</span>
-            </button>
+        <!-- Quick Actions Bar -->
+        <div class="shrink-0 flex flex-wrap items-center justify-center gap-2.5 w-full">
+          <button
+            type="button"
+            @click="downloadResult"
+            class="flex-1 min-w-[180px] px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 active:scale-95 transition-all cursor-pointer"
+          >
+            <Download class="w-4 h-4" />
+            <span>Simpan ke Galeri / Unduh</span>
+          </button>
 
-            <button
-              v-if="canShare"
-              type="button"
-              @click="shareResult"
-              class="px-5 py-3.5 rounded-2xl bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 active:scale-95 transition-all cursor-pointer"
-            >
-              <Share2 class="w-4 h-4" />
-              <span>Bagikan</span>
-            </button>
+          <button
+            v-if="canShare"
+            type="button"
+            @click="shareResult"
+            class="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 active:scale-95 transition-all cursor-pointer"
+          >
+            <Share2 class="w-4 h-4" />
+            <span>Bagikan</span>
+          </button>
 
-            <button
-              type="button"
-              @click="resetCapture"
-              class="px-5 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center gap-2 border border-slate-700 active:scale-95 transition-all cursor-pointer"
-            >
-              <RotateCcw class="w-4 h-4" />
-              <span>Ambil Foto Baru</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            @click="resetCapture"
+            class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center gap-2 border border-slate-700 active:scale-95 transition-all cursor-pointer"
+          >
+            <RotateCcw class="w-4 h-4" />
+            <span>Ambil Ulang</span>
+          </button>
         </div>
 
       </div>
@@ -253,12 +223,6 @@
 
     <!-- Hidden Rendering Canvas -->
     <canvas ref="canvasRef" class="hidden"></canvas>
-
-    <!-- Footer -->
-    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500 bg-slate-950">
-      <p class="font-semibold text-slate-400">PT Sinar Graha Kreatif</p>
-      <p class="text-[11px] mt-0.5">Standalone Public Timestamp Camera — Lokasi & Waktu Asli Google Maps</p>
-    </footer>
 
   </div>
 </template>
@@ -300,7 +264,7 @@ const canShare = typeof navigator !== 'undefined' && !!navigator.share;
 const stampForm = reactive({
   companyName: 'Sinar Grafika',
   companyPhone: '082388885251',
-  jobDescription: 'Pemasangan Signage / Dokumentasi Lapangan',
+  jobDescription: '', // Default Kosong sesuai permintaan user
   timeZone: 'WIB'
 });
 
@@ -322,7 +286,7 @@ function loadLogoImage() {
   });
 }
 
-// Fetch 100% Real Satellite Imagery Tile from Esri World Imagery (No API Key Required)
+// Fetch 100% Real Satellite Imagery Tile from Esri World Imagery
 function fetchRealSatelliteTile(lat, lng, width, height) {
   return new Promise((resolve) => {
     if (lat == null || lng == null) return resolve(null);
@@ -475,16 +439,7 @@ function handleFileSelected(event) {
   reader.readAsDataURL(file);
 }
 
-// 5. Debounce Rendering
-let debounceTimer = null;
-function debouncedRender() {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    renderWatermarkCanvas();
-  }, 300);
-}
-
-// 6. HTML5 Canvas Watermark Rendering Engine (Full-Width Bottom Bar)
+// 5. HTML5 Canvas Watermark Rendering Engine (Bottom Bar 400px & Flexible Map)
 async function renderWatermarkCanvas() {
   if (!capturedImage.value) return;
   processingWatermark.value = true;
@@ -492,7 +447,7 @@ async function renderWatermarkCanvas() {
   const logoImg = await loadLogoImage();
   const lat = gpsLocation.value ? Number(gpsLocation.value.lat) : -3.824921;
   const lng = gpsLocation.value ? Number(gpsLocation.value.lng) : 102.286299;
-  const satelliteImg = await fetchRealSatelliteTile(lat, lng, 320, 240);
+  const satelliteImg = await fetchRealSatelliteTile(lat, lng, 340, 260);
 
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -517,22 +472,20 @@ async function renderWatermarkCanvas() {
 
     const latFormatted = lat.toFixed(6);
     const lngFormatted = lng.toFixed(6);
-    const acc = gpsLocation.value?.accuracy || 5;
 
     const w = canvas.width;
     const h = canvas.height;
     const s = Math.max(1.0, w / 1000);
 
-    // 3. Render Bottom Full-Width Watermark Bar
+    // 3. Render Bottom Full-Width Watermark Bar (400px Scaled)
     renderBottomBarWatermark(ctx, w, h, s, {
       timeStr,
       dayName,
       dateStr,
       lat: latFormatted,
       lng: lngFormatted,
-      acc,
       address: detectedAddress.value || 'Ratu Agung, Sumatera, Gading Cempaka',
-      jobDescription: stampForm.jobDescription || 'Dokumentasi Lapangan',
+      jobDescription: stampForm.jobDescription ? stampForm.jobDescription.trim() : '',
       logoImg,
       satelliteImg
     });
@@ -544,92 +497,98 @@ async function renderWatermarkCanvas() {
 }
 
 /**
- * FULL-WIDTH BOTTOM WATERMARK BAR (KOMPAK DI BAWAH FOTO - SEPERTI TIMESTAMP CAMERA)
- * - Bar Penuh di BAWAH Foto (Full-Width)
- * - Jam Digital Besar + Tanggal & Hari
- * - Keterangan Pekerjaan / Catatan
- * - Nama Lokasi & Alamat Asli Google Maps (Ukuran Font Besar)
- * - Titik Koordinat GPS (Ukuran Font Besar)
- * - Mini Map Google Satelit (Kanan Bawah)
- * - Footer Strip Branding Sinar Grafika
+ * FULL-WIDTH BOTTOM WATERMARK BAR (TINGGI 400PX - TRANSPARAN TANPA BACKGROUND GELAP)
+ * - Bar Penuh di BAWAH Foto (Lebar 100% Foto)
+ * - Tinggi Bar: 400px (Scaled)
+ * - Background: 100% Transparan
+ * - Pembagian Lebar: 70% Tulisan (4 Baris Fleksibel) | 30% Google Satellite Mini-Map (Ukuran Fleksibel)
+ * - Baris 1: Jam Digital + Garis Emas + Hari & Tanggal (Berjarak Lega ke Baris 2)
+ * - Baris 2: Nama Jalan & Alamat Lengkap Google Maps (Lebar Fleksibel 70%)
+ * - Baris 3: Titik Koordinat GPS Fleksibel (📍 Lat, Lng)
+ * - Baris 4: Tag Keterangan Pekerjaan Fleksibel (📌 Job Description)
+ * - Footer Strip Putih di Dasar Foto (vendor.sinargrafika.my.id)
  */
 function renderBottomBarWatermark(ctx, w, h, s, meta) {
   // 1. Draw Top-Left SGX Diamond Logo on photo
-  const topLogoSize = Math.round(95 * s);
-  const topLogoX = Math.round(28 * s);
-  const topLogoY = Math.round(28 * s);
+  const topLogoSize = Math.round(90 * s);
+  const topLogoX = Math.round(26 * s);
+  const topLogoY = Math.round(26 * s);
 
   if (meta.logoImg) {
-    drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 20 * s);
+    drawRoundedImage(ctx, meta.logoImg, topLogoX, topLogoY, topLogoSize, topLogoSize, 18 * s);
   }
 
-  // 2. Bar Dimensions at Bottom of Photo (Full-Width Bar)
-  const footerBarH = Math.round(75 * s); // Solid White footer strip
-  const mainBarH = Math.round(200 * s);   // Dark information bar height
-  const totalBarH = mainBarH + footerBarH;
+  // 2. Bar Dimensions at Bottom of Photo (Total Tinggi 400px)
+  const totalBarH = Math.round(400 * s); // Total Tinggi Bar 400px
+  const footerBarH = Math.round(70 * s);  // White branding footer strip (70px)
+  const mainBarH = totalBarH - footerBarH; // Main content area (330px)
   const barY = h - totalBarH;
 
-  // Background Gradient Overlay for Main Bar (Full-Width Dark Glass)
-  ctx.save();
-  const barGrad = ctx.createLinearGradient(0, barY, 0, barY + mainBarH);
-  barGrad.addColorStop(0, 'rgba(15, 23, 42, 0.85)');
-  barGrad.addColorStop(1, 'rgba(2, 6, 23, 0.95)');
-  ctx.fillStyle = barGrad;
-  ctx.fillRect(0, barY, w, mainBarH);
+  // Background 100% Transparan (Tanpa Background Gelap)
 
-  // Top Accent Border Line
-  ctx.fillStyle = '#EAB308';
-  ctx.fillRect(0, barY, w, Math.round(3.5 * s));
-  ctx.restore();
+  // 3. Pembagian Kolom Lebar 70% : 30% (70% Tulisan : 30% Google Map Fleksibel)
+  const leftColW = w * 0.70;  // 70% Lebar untuk Tulisan
+  const rightColW = w * 0.30; // 30% Lebar untuk Google Map
 
-  // 3. Mini Map Satellite on the Right Side of Bar
-  const mapMarginR = Math.round(24 * s);
-  const mapH = Math.round(mainBarH - (24 * s));
-  const mapW = Math.round(mapH * 1.08);
-  const mapX = w - mapW - mapMarginR;
-  const mapY = barY + Math.round(12 * s);
+  // A. Mini Map Satellite di Sisi Kanan (Ukuran Fleksibel Mengisi Area 30% x Tinggi Main Bar)
+  const mapPadX = Math.round(14 * s);
+  const mapPadY = Math.round(12 * s);
+  const mapH = mainBarH - (mapPadY * 2);
+  const mapW = rightColW - (mapPadX * 2);
+  const mapX = leftColW + mapPadX;
+  const mapY = barY + mapPadY;
 
-  // 4. Left Content Column
+  // B. Area Tulisan di Sisi Kiri (Area 70%)
   const textMarginL = Math.round(28 * s);
-  const maxTextW = mapX - textMarginL - (20 * s);
+  const maxTextW = leftColW - textMarginL - Math.round(16 * s);
 
-  let curY = barY + (48 * s);
-
-  // A. DIGITAL CLOCK & DATE ROW (Bold & Large)
+  // 4. BARIS 1: Jam Digital Besar + Garis Emas + Hari & Tanggal (Berjarak Lega ke Baris 2)
+  let curY = barY + Math.round(62 * s);
   ctx.save();
-  const clockFontS = Math.round(52 * s);
+  const clockFontS = Math.round(68 * s);
   ctx.font = `900 ${clockFontS}px "Inter", "Montserrat", "Segoe UI", Arial, sans-serif`;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+  ctx.shadowBlur = 14 * s;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
+  ctx.lineWidth = 6 * s;
+  ctx.strokeText(meta.timeStr, textMarginL, curY);
   ctx.fillStyle = '#FFFFFF';
   ctx.fillText(meta.timeStr, textMarginL, curY);
 
   const timeW = ctx.measureText(meta.timeStr).width;
 
-  // Vertical Gold Separator
-  const sepX = textMarginL + timeW + (14 * s);
+  // Vertical Gold Separator (Membentang Sepanjang Jam)
+  const sepX = textMarginL + timeW + Math.round(14 * s);
+  const sepH = Math.round(54 * s);
+  const sepTopY = curY - Math.round(52 * s);
   ctx.fillStyle = '#EAB308';
-  ctx.fillRect(sepX, barY + (14 * s), Math.round(4 * s), Math.round(38 * s));
+  ctx.fillRect(sepX, sepTopY, Math.round(4.5 * s), sepH);
 
-  // Date & Day Text
-  ctx.font = `800 ${Math.round(22 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  // Hari & Tanggal (Baris 1)
+  const dateTextX = sepX + Math.round(14 * s);
+  ctx.font = `800 ${Math.round(24 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+  ctx.shadowBlur = 10 * s;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
+  ctx.lineWidth = 4.5 * s;
+  ctx.strokeText(meta.dateStr, dateTextX, sepTopY + Math.round(22 * s));
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(meta.dateStr, dateTextX, sepTopY + Math.round(22 * s));
+
+  ctx.font = `800 ${Math.round(26 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.strokeText(meta.dayName, dateTextX, sepTopY + Math.round(48 * s));
   ctx.fillStyle = '#FDE047';
-  ctx.fillText(`${meta.dayName}, ${meta.dateStr}`, sepX + (14 * s), curY - (18 * s));
-
-  // Job Description Tag
-  if (meta.jobDescription) {
-    ctx.font = `700 ${Math.round(18 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-    ctx.fillStyle = '#38BDF8';
-    const cleanJob = truncateText(ctx, `📌 ${meta.jobDescription}`, maxTextW - (sepX + 14 * s - textMarginL));
-    ctx.fillText(cleanJob, sepX + (14 * s), curY + (6 * s));
-  }
+  ctx.fillText(meta.dayName, dateTextX, sepTopY + Math.round(48 * s));
   ctx.restore();
 
-  // B. NAMA LOKASI & ALAMAT ASLI GOOGLE MAPS (UKURAN FONT LEBIH BESAR & TEGAS)
-  curY += (40 * s);
+  // 5. BARIS 2: Nama Jalan & Alamat Lengkap Google Maps (Lebar Fleksibel 70%, Berjarak dari Baris 1)
+  curY += Math.round(48 * s);
   ctx.save();
-  ctx.font = `800 ${Math.round(30 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+  const addressFontS = Math.round(28 * s);
+  ctx.font = `800 ${addressFontS}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.98)';
   ctx.shadowBlur = 14 * s;
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.98)';
   ctx.lineWidth = 6 * s;
 
   const addressLines = wrapTextLines(ctx, meta.address, maxTextW, 2);
@@ -637,36 +596,59 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
     ctx.strokeText(line, textMarginL, curY);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(line, textMarginL, curY);
-    curY += (34 * s);
+    curY += Math.round(35 * s);
   });
   ctx.restore();
 
-  // C. TITIK KOORDINAT GPS (UKURAN FONT LEBIH BESAR & TEGAS)
-  curY += (4 * s);
-  const coordText = `📍 Koordinat: ${meta.lat}, ${meta.lng} (±${meta.acc}m)`;
+  // 6. BARIS 3: Titik Koordinat GPS Fleksibel (📍 Lat, Lng)
+  curY += Math.round(10 * s);
+  const coordText = `📍 ${meta.lat}, ${meta.lng}`;
+  const coordFontS = Math.round(24 * s);
   ctx.save();
-  ctx.font = `800 ${Math.round(24 * s)}px "Inter", "Segoe UI", monospace, Arial`;
+  ctx.font = `800 ${coordFontS}px "Inter", "Segoe UI", monospace, Arial`;
   const coordTextW = ctx.measureText(coordText).width;
-  const badgePadX = Math.round(14 * s);
-  const badgeH = Math.round(34 * s);
-  const badgeY = curY - (22 * s);
+  const badgePadX = Math.round(12 * s);
+  const badgeH = Math.round(35 * s);
+  const badgeY = curY - Math.round(26 * s);
 
-  // Semi-transparent dark rounded badge
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+  // Dynamic semi-transparent dark rounded badge
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
   ctx.beginPath();
   ctx.roundRect(textMarginL, badgeY, coordTextW + (badgePadX * 2), badgeH, Math.round(7 * s));
   ctx.fill();
 
-  ctx.fillStyle = '#FEF08A'; // Bright soft gold for high contrast
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.fillStyle = '#FEF08A'; // Soft Gold untuk kontras tinggi
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
   ctx.shadowBlur = 8 * s;
-  ctx.fillText(coordText, textMarginL + badgePadX, curY + (2 * s));
+  ctx.fillText(coordText, textMarginL + badgePadX, curY);
   ctx.restore();
 
-  // 5. Draw Right Google Mini-Map Satellite
+  // 7. BARIS 4: Tag Keterangan Pekerjaan Fleksibel (📌 Job Description)
+  if (meta.jobDescription) {
+    curY += Math.round(40 * s);
+    ctx.save();
+    const jobFontS = Math.round(24 * s);
+    ctx.font = `800 ${jobFontS}px "Inter", "Montserrat", Arial, sans-serif`;
+
+    const jobLines = wrapTextLines(ctx, `📌 ${meta.jobDescription}`, maxTextW, 2);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+    ctx.shadowBlur = 10 * s;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
+    ctx.lineWidth = 5 * s;
+
+    jobLines.forEach((line) => {
+      ctx.strokeText(line, textMarginL, curY);
+      ctx.fillStyle = '#38BDF8'; // Bright cyan text
+      ctx.fillText(line, textMarginL, curY);
+      curY += Math.round(28 * s);
+    });
+    ctx.restore();
+  }
+
+  // 8. Draw Right Google Mini-Map Satellite (Ukuran Fleksibel)
   drawGoogleSatelliteMiniMap(ctx, mapX, mapY, mapW, mapH, s, meta.satelliteImg);
 
-  // 6. Draw Bottom Solid White Footer Bar
+  // 9. Draw Bottom Solid White Footer Bar
   const footerY = h - footerBarH;
   ctx.save();
   ctx.fillStyle = '#FFFFFF';
@@ -676,37 +658,38 @@ function renderBottomBarWatermark(ctx, w, h, s, meta) {
   ctx.fillStyle = '#CBD5E1';
   ctx.fillRect(0, footerY, w, 2 * s);
 
-  // Left SGX Logo in footer
-  const footerLogoSize = Math.round(55 * s);
+  // Sisi Kiri Footer: Logo SGX + Nama Sinar Grafika + WhatsApp Contact
+  const footerLogoSize = Math.round(52 * s);
   const footerLogoY = footerY + Math.round((footerBarH - footerLogoSize) / 2);
   if (meta.logoImg) {
     ctx.drawImage(meta.logoImg, textMarginL, footerLogoY, footerLogoSize, footerLogoSize);
   }
 
-  // Sinar Grafika + WhatsApp Contact
-  const textX = textMarginL + footerLogoSize + (14 * s);
+  const textX = textMarginL + footerLogoSize + Math.round(12 * s);
   ctx.fillStyle = '#0F172A';
-  ctx.font = `900 ${22 * s}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + (32 * s));
+  ctx.font = `900 ${Math.round(22 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyName || 'Sinar Grafika', textX, footerY + Math.round(28 * s));
 
   ctx.fillStyle = '#334155';
-  ctx.font = `700 ${17 * s}px "Inter", "Montserrat", Arial, sans-serif`;
-  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + (58 * s));
+  ctx.font = `700 ${Math.round(16 * s)}px "Inter", "Montserrat", Arial, sans-serif`;
+  ctx.fillText(stampForm.companyPhone || '082388885251', textX, footerY + Math.round(52 * s));
 
-  // Diagonal dividing slash in center
-  const midX = w * 0.72;
+  // Diagonal dividing slash di tengah
+  const midX = leftColW;
   ctx.strokeStyle = '#CBD5E1';
   ctx.lineWidth = 2 * s;
   ctx.beginPath();
-  ctx.moveTo(midX + (16 * s), footerY + (10 * s));
-  ctx.lineTo(midX - (16 * s), footerY + footerBarH - (10 * s));
+  ctx.moveTo(midX + Math.round(16 * s), footerY + Math.round(8 * s));
+  ctx.lineTo(midX - Math.round(16 * s), footerY + footerBarH - Math.round(8 * s));
   ctx.stroke();
 
-  // Right SGX Emblem in Footer
-  if (meta.logoImg) {
-    const rightLogoX = w - footerLogoSize - (35 * s);
-    ctx.drawImage(meta.logoImg, rightLogoX, footerLogoY, footerLogoSize, footerLogoSize);
-  }
+  // Sisi Kanan Footer: Branding Website Resmi vendor.sinargrafika.my.id
+  const rightMarginR = Math.round(28 * s);
+  ctx.fillStyle = '#0369A1'; // Deep sky blue
+  ctx.font = `800 ${Math.round(20 * s)}px "Inter", "Montserrat", monospace, Arial, sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('vendor.sinargrafika.my.id', w - rightMarginR, footerY + Math.round(44 * s));
+  ctx.textAlign = 'left'; // Reset alignment
   ctx.restore();
 }
 
@@ -834,7 +817,7 @@ function wrapTextLines(ctx, text, maxWidth, maxLines = 2) {
   return lines.slice(0, maxLines);
 }
 
-// 7. Download & Share Actions
+// 6. Download & Share Actions
 function downloadResult() {
   if (!watermarkedImage.value) return;
 
