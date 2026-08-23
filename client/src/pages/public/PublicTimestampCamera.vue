@@ -313,24 +313,26 @@ function loadBannerLogoImage() {
   });
 }
 
-// Fetch 100% Real Satellite Imagery Tile from Esri World Imagery
-function fetchRealSatelliteTile(lat, lng, width, height) {
+// Direct Tile XYZ Calculation (Zoom 17 - Super Detail)
+function latLngToTile(lat, lng, zoom = 17) {
+  const n = Math.pow(2, zoom);
+  const radLat = (Number(lat) * Math.PI) / 180;
+  const x = Math.floor(((Number(lng) + 180) / 360) * n);
+  const y = Math.floor((1 - Math.log(Math.tan(radLat) + (1 / Math.cos(radLat))) / Math.PI) / 2 * n);
+  return { x, y, z: zoom };
+}
+
+// Memory Cache for Instant Tile Retrieval (0 ms)
+let cachedSatelliteImg = null;
+let cachedSatelliteKey = '';
+let isPrefetchingSatellite = false;
+
+// 1. High-Speed Multi-CDN Satellite Tile Loader (< 50 ms CDN delivery)
+function loadTileFromUrl(url, timeoutMs = 2000) {
   return new Promise((resolve) => {
-    if (lat == null || lng == null) return resolve(null);
-    const delta = 0.0012;
-    const minLng = (Number(lng) - delta).toFixed(6);
-    const maxLng = (Number(lng) + delta).toFixed(6);
-    const minLat = (Number(lat) - (delta * 0.75)).toFixed(6);
-    const maxLat = (Number(lat) + (delta * 0.75)).toFixed(6);
-    const tileW = Math.min(500, Math.max(260, Math.round(width)));
-    const tileH = Math.min(420, Math.max(200, Math.round(height)));
-
-    const url = `https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&size=${tileW},${tileH}&f=image`;
-
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    const timer = setTimeout(() => resolve(null), 2500);
-
+    const timer = setTimeout(() => resolve(null), timeoutMs);
     img.onload = () => {
       clearTimeout(timer);
       resolve(img);
@@ -343,13 +345,74 @@ function fetchRealSatelliteTile(lat, lng, width, height) {
   });
 }
 
+// 2. High-Speed Satellite Engine with Background Pre-Fetch
+async function getFastSatelliteTile(lat, lng) {
+  if (lat == null || lng == null) return null;
+  const tile = latLngToTile(lat, lng, 17);
+  const tileKey = `${tile.z}_${tile.x}_${tile.y}`;
+
+  // If already in memory cache from background prefetch, return instantly (0 ms)
+  if (cachedSatelliteImg && cachedSatelliteKey === tileKey && cachedSatelliteImg.complete && cachedSatelliteImg.naturalWidth > 0) {
+    return cachedSatelliteImg;
+  }
+
+  // Priority 1: Google Satellite Slippy Tile CDN (Ultra-low latency CDN)
+  const gTileUrl = `https://mt1.google.com/vt/lyrs=s&x=${tile.x}&y=${tile.y}&z=${tile.z}`;
+  let img = await loadTileFromUrl(gTileUrl, 1500);
+
+  // Priority 2: Esri World Imagery Direct Tile CDN
+  if (!img) {
+    const esriTileUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${tile.z}/${tile.y}/${tile.x}`;
+    img = await loadTileFromUrl(esriTileUrl, 1500);
+  }
+
+  // Priority 3: ArcGIS Export BBOX Fallback
+  if (!img) {
+    const delta = 0.0012;
+    const minLng = (Number(lng) - delta).toFixed(6);
+    const maxLng = (Number(lng) + delta).toFixed(6);
+    const minLat = (Number(lat) - (delta * 0.75)).toFixed(6);
+    const maxLat = (Number(lat) + (delta * 0.75)).toFixed(6);
+    const arcUrl = `https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=${minLng},${minLat},${maxLng},${maxLat}&bboxSR=4326&size=300,300&f=image`;
+    img = await loadTileFromUrl(arcUrl, 2000);
+  }
+
+  if (img) {
+    cachedSatelliteImg = img;
+    cachedSatelliteKey = tileKey;
+  }
+
+  return img;
+}
+
+// 3. Live Background Pre-Fetching (Runs proactively before user takes photo)
+async function prefetchSatelliteTile(lat, lng) {
+  if (lat == null || lng == null || isPrefetchingSatellite) return;
+  const tile = latLngToTile(lat, lng, 17);
+  const tileKey = `${tile.z}_${tile.x}_${tile.y}`;
+  if (cachedSatelliteKey === tileKey && cachedSatelliteImg) return;
+
+  isPrefetchingSatellite = true;
+  try {
+    const img = await getFastSatelliteTile(lat, lng);
+    if (img) {
+      cachedSatelliteImg = img;
+      cachedSatelliteKey = tileKey;
+    }
+  } catch (e) {
+    console.warn('Satellite prefetch error:', e);
+  } finally {
+    isPrefetchingSatellite = false;
+  }
+}
+
 function goBackHome() {
   window.location.href = '/';
 }
 
 let gpsWatchId = null;
 
-// 1. Geolocation Handling: Two-Pass Fast-Lock & Continuous Watcher
+// 1. Geolocation Handling: Two-Pass Fast-Lock & Continuous Watcher with Background Satellite Pre-Fetch
 async function initFastGpsLock() {
   // Pass 0: Instant Cache from Local Storage (0 ms)
   try {
@@ -357,6 +420,8 @@ async function initFastGpsLock() {
     const cachedAddr = localStorage.getItem('sgx_last_address');
     if (cachedGps && !gpsLocation.value) {
       gpsLocation.value = JSON.parse(cachedGps);
+      // Immediately prefetch satellite tile in background
+      prefetchSatelliteTile(gpsLocation.value.lat, gpsLocation.value.lng);
     }
     if (cachedAddr && !detectedAddress.value) {
       detectedAddress.value = cachedAddr;
@@ -366,6 +431,7 @@ async function initFastGpsLock() {
   if (!navigator.geolocation) {
     if (!gpsLocation.value) {
       gpsLocation.value = { lat: -3.824921, lng: 102.286299, accuracy: 5 };
+      prefetchSatelliteTile(gpsLocation.value.lat, gpsLocation.value.lng);
       await updateAddressFromGps();
     }
     return;
@@ -382,6 +448,7 @@ async function initFastGpsLock() {
         accuracy: Math.round(pos.coords.accuracy || 5)
       };
       saveGpsCache();
+      prefetchSatelliteTile(gpsLocation.value.lat, gpsLocation.value.lng);
       await updateAddressFromGps();
       fetchingGps.value = false;
     },
@@ -412,6 +479,9 @@ function startContinuousGpsWatcher() {
       gpsLocation.value = { lat: newLat, lng: newLng, accuracy: newAcc };
       saveGpsCache();
       fetchingGps.value = false;
+
+      // Proactively prefetch satellite tile in background
+      prefetchSatelliteTile(newLat, newLng);
 
       // If moved > 15 meters or no address yet, re-geocode
       if (!prev || Math.abs(prev.lat - newLat) > 0.00015 || Math.abs(prev.lng - newLng) > 0.00015 || !detectedAddress.value) {
@@ -452,6 +522,7 @@ async function refreshGps() {
         accuracy: Math.round(pos.coords.accuracy || 5)
       };
       saveGpsCache();
+      prefetchSatelliteTile(gpsLocation.value.lat, gpsLocation.value.lng);
       await updateAddressFromGps();
       fetchingGps.value = false;
     },
@@ -553,7 +624,7 @@ function handleFileSelected(event) {
   reader.readAsDataURL(file);
 }
 
-// 5. HTML5 Canvas Watermark Rendering Engine (Bottom Bar 400px & Flexible Map)
+// 5. HTML5 Canvas Watermark Rendering Engine (Bottom Bar & Flexible Map)
 async function renderWatermarkCanvas() {
   if (!capturedImage.value) return;
   processingWatermark.value = true;
@@ -562,7 +633,7 @@ async function renderWatermarkCanvas() {
   const bannerLogoImg = await loadBannerLogoImage();
   const lat = gpsLocation.value ? Number(gpsLocation.value.lat) : -3.824921;
   const lng = gpsLocation.value ? Number(gpsLocation.value.lng) : 102.286299;
-  const satelliteImg = await fetchRealSatelliteTile(lat, lng, 340, 260);
+  const satelliteImg = await getFastSatelliteTile(lat, lng);
 
   const img = new Image();
   img.crossOrigin = 'anonymous';
