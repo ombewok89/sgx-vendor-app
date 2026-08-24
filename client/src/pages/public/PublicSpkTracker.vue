@@ -1,60 +1,83 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-purple-500 selection:text-white flex flex-col">
+  <div class="min-h-screen bg-[#0B0F19] text-slate-100 font-sans selection:bg-[#EDC80A] selection:text-[#1E1E1D] flex flex-col relative overflow-x-hidden">
     
-    <!-- Top Brand Header Bar -->
-    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3 shadow-md">
-      <div class="max-w-5xl mx-auto flex items-center justify-between">
+    <!-- Ambient Radial Glow Accents (Hitam Obsidian, Emas #EDC80A & Oranye #F59E0B) -->
+    <div class="fixed top-0 left-1/4 w-96 h-96 bg-[#EDC80A]/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2"></div>
+    <div class="fixed bottom-0 right-1/4 w-[30rem] h-[30rem] bg-[#F59E0B]/10 rounded-full blur-3xl pointer-events-none translate-y-1/2"></div>
+    <div class="fixed top-1/2 right-5 w-80 h-80 bg-purple-600/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2"></div>
+
+    <!-- Top Brand Header Bar (Luxury Enterprise Glass) -->
+    <header class="border-b border-amber-500/20 bg-[#111827]/90 backdrop-blur-2xl sticky top-0 z-40 px-4 py-3 sm:py-3.5 shadow-xl shadow-black/40">
+      <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
+          <!-- Logo Resmi Perusahaan (Gold Emblem) -->
           <div class="flex items-center">
             <img
               src="/sgx_logo.png"
               alt="PT Sinar Kreasindo Bencoolen Logo"
-              class="h-9 sm:h-10 w-9 sm:w-10 object-contain rounded-xl shadow-xs"
+              class="h-9 sm:h-11 w-9 sm:w-11 object-contain rounded-2xl shadow-lg shadow-amber-500/20 border border-[#EDC80A]/40"
             />
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="font-black text-xs sm:text-sm text-white tracking-wide">LIVE WORK TRACKER</h1>
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          <div class="flex flex-col">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <h1 class="font-black text-xs sm:text-sm text-white tracking-tight flex items-center gap-1.5">
+                <span>PT Sinar Kreasindo Bencoolen</span>
+                <span class="text-[9px] font-extrabold uppercase tracking-widest text-[#EDC80A] font-mono bg-[#1E1E1D] px-1.5 py-0.2 rounded border border-[#EDC80A]/30">
+                  SGX
+                </span>
+              </h1>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#1E1E1D] text-[#EDC80A] border border-[#EDC80A]/30 shadow-xs">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-                REALTIME
+                LIVE TRACKER
               </span>
             </div>
-            <p class="text-[10px] text-slate-400">PT Sinar Kreasindo Bencoolen — Sistem Pemantauan Progres Cabang</p>
+            <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium">Real-Time Field Evidence & Project Verification Portal</p>
           </div>
         </div>
 
-        <button
-          @click="fetchTrackingData"
-          :disabled="loading"
-          class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all border border-slate-700 shadow-xs cursor-pointer active:scale-95"
-          title="Segarkan Data"
-        >
-          <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin text-purple-400' : '']" />
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            @click="handleShare"
+            class="px-3 py-1.5 rounded-xl bg-[#1E1E1D] hover:bg-[#282826] border border-[#EDC80A]/30 hover:border-[#EDC80A] text-[#EDC80A] text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
+            title="Bagikan Tautan Pemantauan"
+          >
+            <Share2 class="w-3.5 h-3.5" />
+            <span class="hidden sm:inline">Bagikan</span>
+          </button>
+
+          <button
+            @click="fetchTrackingData"
+            :disabled="loading"
+            class="p-2 rounded-xl bg-[#1E1E1D] hover:bg-[#282826] text-slate-300 hover:text-white transition-all border border-slate-700 shadow-xs cursor-pointer active:scale-95"
+            title="Segarkan Data Real-Time"
+          >
+            <RefreshCw :class="['w-4 h-4', loading ? 'animate-spin text-[#EDC80A]' : '']" />
+          </button>
+        </div>
       </div>
     </header>
 
     <!-- Main Content Stage -->
-    <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-6">
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-6 relative z-10">
       
       <!-- Loading State -->
       <div v-if="loading && !wo" class="py-24 flex flex-col items-center justify-center space-y-3">
-        <Loader2 class="w-10 h-10 animate-spin text-purple-500" />
-        <p class="text-xs font-mono text-slate-400 tracking-wider">Memuat data pelacakan SPK...</p>
+        <Loader2 class="w-10 h-10 animate-spin text-[#EDC80A]" />
+        <p class="text-xs font-mono text-slate-400 tracking-wider">Menghubungkan ke satelit pelacakan SPK...</p>
       </div>
 
       <!-- Error / Inactive State -->
       <div v-else-if="errorMessage" class="py-20 text-center space-y-4 max-w-md mx-auto">
-        <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto">
+        <div class="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto shadow-lg">
           <ShieldAlert class="w-8 h-8" />
         </div>
-        <h2 class="text-lg font-bold text-white">Akses Pemantauan Tidak Tersedia</h2>
+        <h2 class="text-lg font-bold text-white">Akses Pemantauan Tidak Ditemukan</h2>
         <p class="text-xs text-slate-400 leading-relaxed">{{ errorMessage }}</p>
         <div class="pt-2">
           <a
             href="/"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-900 hover:bg-purple-800 text-white text-xs font-bold transition-all shadow-md"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#EDC80A] to-[#F59E0B] text-[#1E1E1D] text-xs font-black transition-all shadow-lg hover:shadow-amber-500/20 active:scale-95"
           >
             <Home class="w-4 h-4" />
             <span>Kembali ke Beranda</span>
@@ -65,147 +88,192 @@
       <!-- Loaded Work Order Tracking View -->
       <div v-else-if="wo" class="space-y-6 animate-fade-in">
         
-        <!-- Work Order Hero Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl relative overflow-hidden">
+        <!-- Work Order Hero Card (Luxury Dark Glassmorphic) -->
+        <div class="bg-[#111827]/90 border border-amber-500/20 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-2xl relative overflow-hidden space-y-5">
           <!-- Background Glow Accent -->
-          <div class="absolute -top-24 -right-24 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="absolute -top-24 -right-24 w-72 h-72 bg-[#EDC80A]/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-[#F59E0B]/10 rounded-full blur-3xl pointer-events-none"></div>
 
+          <!-- Header Section -->
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
-            <div class="space-y-1">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-mono font-bold text-purple-400 bg-purple-950/80 px-2.5 py-0.5 rounded-lg border border-purple-800/50">
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-mono font-black text-[#EDC80A] bg-[#1E1E1D] px-3 py-1 rounded-xl border border-[#EDC80A]/30 shadow-xs">
                   {{ wo.spk_number }}
                 </span>
-                <span class="text-xs font-medium text-slate-400">• {{ wo.area_name || '-' }}</span>
+                <span class="text-xs font-bold text-slate-300 bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-slate-700">
+                  📍 Area: {{ wo.area_name || '-' }}
+                </span>
+                <span v-if="wo.doc_mode" class="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                  Mode: {{ wo.doc_mode }}
+                </span>
               </div>
-              <h2 class="text-xl sm:text-2xl font-black text-white leading-tight">{{ wo.location_name }}</h2>
-              <p class="text-xs text-slate-300">{{ wo.title }}</p>
+              <h2 class="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">{{ wo.location_name }}</h2>
+              <p class="text-xs sm:text-sm text-slate-300 font-medium">{{ wo.title }}</p>
             </div>
 
             <!-- Dynamic Status Badge -->
             <div class="shrink-0 flex items-center gap-2">
               <div
                 :class="[
-                  'px-3.5 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-xs',
+                  'px-4 py-2 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-2.5 shadow-lg',
                   getStatusBadgeClass(wo.status)
                 ]"
               >
-                <span class="w-2 h-2 rounded-full animate-ping" :class="getStatusDotClass(wo.status)"></span>
+                <span class="w-2.5 h-2.5 rounded-full animate-ping" :class="getStatusDotClass(wo.status)"></span>
                 <span>{{ getStatusLabel(wo.status) }}</span>
               </div>
             </div>
           </div>
 
           <!-- Quick Metadata Grid -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-5 text-xs">
-            <div>
-              <span class="text-slate-500 block text-[11px] mb-0.5">Perusahaan Klien:</span>
-              <strong class="text-slate-200 font-semibold flex items-center gap-1.5">
-                <Building2 class="w-3.5 h-3.5 text-purple-400 shrink-0" />
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div class="p-3 bg-[#0B0F19]/60 rounded-2xl border border-slate-800/80 space-y-1">
+              <span class="text-slate-500 block text-[11px]">Perusahaan Klien:</span>
+              <strong class="text-white font-bold flex items-center gap-1.5">
+                <Building2 class="w-3.5 h-3.5 text-[#EDC80A] shrink-0" />
                 <span class="truncate">{{ wo.vendor?.name || 'Client SGX' }}</span>
               </strong>
             </div>
-            <div>
-              <span class="text-slate-500 block text-[11px] mb-0.5">Teknisi / Tim Lapangan:</span>
-              <strong class="text-slate-200 font-semibold flex items-center gap-1.5">
+            <div class="p-3 bg-[#0B0F19]/60 rounded-2xl border border-slate-800/80 space-y-1">
+              <span class="text-slate-500 block text-[11px]">PIC Teknisi Lapangan:</span>
+              <strong class="text-white font-bold flex items-center gap-1.5">
                 <User class="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span class="truncate">{{ wo.pic?.name || 'Tim SGX' }}</span>
+                <span class="truncate">{{ wo.pic?.name || 'Tim Lapangan SGX' }}</span>
               </strong>
             </div>
-            <div>
-              <span class="text-slate-500 block text-[11px] mb-0.5">Target Penyelesaian (SLA):</span>
-              <strong class="text-slate-200 font-semibold flex items-center gap-1.5 font-mono">
+            <div class="p-3 bg-[#0B0F19]/60 rounded-2xl border border-slate-800/80 space-y-1">
+              <span class="text-slate-500 block text-[11px]">Batas Waktu (SLA):</span>
+              <strong class="text-white font-bold flex items-center gap-1.5 font-mono">
                 <Calendar class="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>{{ wo.deadline || '-' }}</span>
+                <span>{{ wo.deadline ? formatDate(wo.deadline) : '-' }}</span>
               </strong>
             </div>
-            <div>
-              <span class="text-slate-500 block text-[11px] mb-0.5">Presensi GPS Cabang:</span>
-              <strong class="font-semibold flex items-center gap-1.5" :class="wo.check_in ? 'text-emerald-400' : 'text-amber-400'">
+            <div class="p-3 bg-[#0B0F19]/60 rounded-2xl border border-slate-800/80 space-y-1">
+              <span class="text-slate-500 block text-[11px]">Presensi GPS Cabang:</span>
+              <strong class="font-bold flex items-center gap-1.5" :class="wo.check_in ? 'text-emerald-400' : 'text-amber-400'">
                 <MapPin class="w-3.5 h-3.5 shrink-0" />
-                <span>{{ wo.check_in ? 'Terverifikasi di Lokasi' : 'Menunggu Check-In' }}</span>
+                <span>{{ wo.check_in ? 'Hadir di Lokasi ✓' : 'Menunggu Tiba' }}</span>
               </strong>
             </div>
           </div>
 
-          <!-- Progress Bar if in progress -->
-          <div class="mt-6 pt-4 border-t border-slate-800/80">
-            <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-              <span class="text-slate-400">Total Progres Fisik:</span>
-              <span class="font-mono text-purple-400">{{ wo.progress_percent }}%</span>
+          <!-- SPK Notes & Special Instructions from Admin -->
+          <div
+            v-if="wo.notes"
+            class="p-4 bg-gradient-to-r from-amber-500/10 via-[#EDC80A]/5 to-transparent border border-amber-500/20 rounded-2xl space-y-1 text-xs"
+          >
+            <div class="flex items-center gap-2 text-[#EDC80A] font-bold text-[11px] uppercase tracking-wider">
+              <FileText class="w-4 h-4 text-[#EDC80A] shrink-0" />
+              <span>Catatan & Instruksi Khusus Proyek:</span>
             </div>
-            <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5">
+            <p class="text-slate-300 font-medium whitespace-pre-line pl-6 leading-relaxed">
+              {{ wo.notes }}
+            </p>
+          </div>
+
+          <!-- Quality Assurance Revision Banner -->
+          <div
+            v-if="wo.status === 'REVISION'"
+            class="p-4 bg-gradient-to-r from-rose-500/15 via-amber-500/10 to-transparent border-2 border-rose-500/40 rounded-2xl space-y-2 text-xs animate-fade-in"
+          >
+            <div class="flex items-center justify-between">
+              <div class="font-black text-rose-300 flex items-center gap-2 tracking-wide">
+                <RotateCcw class="w-4 h-4 text-rose-400 animate-spin-slow" />
+                <span>KONTROL MUTU & PENYESUAIAN TEKNIS LAPANGAN (QUALITY ASSURANCE)</span>
+              </div>
+              <span class="px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase bg-rose-500/30 text-rose-200 border border-rose-400/40">
+                Dalam Penyempurnaan
+              </span>
+            </div>
+            <div class="bg-[#0B0F19]/80 p-3 rounded-xl border border-rose-500/20 text-slate-200 font-medium">
+              <p class="italic text-rose-100">
+                "{{ latestRevisionReason || 'Pekerjaan sedang disempurnakan oleh teknisi agar memenuhi standar mutu terbaik sebelum disahkan.' }}"
+              </p>
+            </div>
+          </div>
+
+          <!-- Total Real Progress Bar -->
+          <div class="pt-2">
+            <div class="flex items-center justify-between text-xs font-bold mb-2">
+              <span class="text-slate-400 flex items-center gap-1.5">
+                <Activity class="w-3.5 h-3.5 text-[#EDC80A]" />
+                <span>Akumulasi Kemajuan Fisik Lapangan:</span>
+              </span>
+              <span class="font-mono text-sm font-black text-[#EDC80A]">{{ wo.progress_percent }}% Selesai</span>
+            </div>
+            <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
               <div
-                class="h-full rounded-full bg-gradient-to-r from-purple-600 via-indigo-500 to-emerald-500 transition-all duration-700"
+                class="h-full rounded-full bg-gradient-to-r from-[#EDC80A] via-amber-500 to-emerald-400 transition-all duration-700 shadow-md shadow-amber-500/20"
                 :style="{ width: `${Math.min(100, Math.max(5, wo.progress_percent))}%` }"
               ></div>
             </div>
           </div>
         </div>
 
-        <!-- Real-Time Milestone Stepper -->
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
-          <h3 class="font-black text-sm uppercase text-slate-300 tracking-wider flex items-center gap-2">
-            <Activity class="w-4 h-4 text-purple-400" />
-            <span>Tahapan Pengerjaan Real-Time</span>
+        <!-- Real-Time Milestone Stepper (Bento Luxury 4 Steps) -->
+        <div class="bg-[#111827]/90 border border-amber-500/20 rounded-3xl p-5 sm:p-6 shadow-2xl backdrop-blur-2xl space-y-4">
+          <h3 class="font-black text-xs uppercase text-[#EDC80A] tracking-wider flex items-center gap-2">
+            <Sparkles class="w-4 h-4 text-[#EDC80A]" />
+            <span>4 Tahapan Pengerjaan Real-Time Terverifikasi</span>
           </h3>
 
-          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
             <!-- Step 1: Penugasan -->
-            <div class="p-3.5 rounded-2xl border bg-slate-950/60 border-slate-800 space-y-1">
+            <div class="p-3.5 rounded-2xl border bg-[#0B0F19]/70 border-emerald-500/30 space-y-1 shadow-xs">
               <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xs font-bold">
+                <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xs font-black">
                   ✓
                 </div>
-                <span class="font-bold text-xs text-white">1. Penunjukan</span>
+                <span class="font-bold text-xs text-white">1. Penunjukan SPK</span>
               </div>
               <p class="text-[11px] text-slate-400 pl-8">SPK resmi diterbitkan untuk tim teknisi.</p>
             </div>
 
-            <!-- Step 2: Check-In -->
+            <!-- Step 2: Check-In GPS -->
             <div
               :class="[
-                'p-3.5 rounded-2xl border space-y-1',
+                'p-3.5 rounded-2xl border space-y-1 shadow-xs transition-all',
                 wo.check_in 
-                  ? 'bg-slate-950/60 border-emerald-500/40 text-emerald-300' 
-                  : 'bg-slate-950/30 border-slate-800/80 text-slate-500'
+                  ? 'bg-[#0B0F19]/70 border-emerald-500/40 text-emerald-300' 
+                  : 'bg-[#0B0F19]/30 border-slate-800 text-slate-500'
               ]"
             >
               <div class="flex items-center gap-2">
                 <div
                   :class="[
-                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border',
-                    wo.check_in ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-500 border-slate-700'
+                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-black border',
+                    wo.check_in ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-slate-800 text-slate-500 border-slate-700'
                   ]"
                 >
                   {{ wo.check_in ? '✓' : '2' }}
                 </div>
-                <span class="font-bold text-xs" :class="wo.check_in ? 'text-white' : 'text-slate-400'">2. Check-In GPS</span>
+                <span class="font-bold text-xs" :class="wo.check_in ? 'text-white' : 'text-slate-400'">2. Presensi GPS</span>
               </div>
               <p class="text-[11px] text-slate-400 pl-8">
-                {{ wo.check_in ? `Hadir di radius toko (${wo.check_in.check_in_time})` : 'Teknisi menuju lokasi toko.' }}
+                {{ wo.check_in ? `Hadir di radius toko (${wo.check_in.check_in_time || 'Tervalidasi'})` : 'Teknisi menuju lokasi toko.' }}
               </p>
             </div>
 
             <!-- Step 3: Evidensi Foto -->
             <div
               :class="[
-                'p-3.5 rounded-2xl border space-y-1',
+                'p-3.5 rounded-2xl border space-y-1 shadow-xs transition-all',
                 wo.photos?.length > 0 
-                  ? 'bg-slate-950/60 border-purple-500/40' 
-                  : 'bg-slate-950/30 border-slate-800/80'
+                  ? 'bg-[#0B0F19]/70 border-[#EDC80A]/40' 
+                  : 'bg-[#0B0F19]/30 border-slate-800'
               ]"
             >
               <div class="flex items-center gap-2">
                 <div
                   :class="[
-                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border',
-                    wo.photos?.length > 0 ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'bg-slate-800 text-slate-500 border-slate-700'
+                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-black border',
+                    wo.photos?.length > 0 ? 'bg-amber-500/20 text-[#EDC80A] border-amber-500/40' : 'bg-slate-800 text-slate-500 border-slate-700'
                   ]"
                 >
                   {{ wo.photos?.length > 0 ? '✓' : '3' }}
                 </div>
-                <span class="font-bold text-xs" :class="wo.photos?.length > 0 ? 'text-white' : 'text-slate-400'">3. Dokumentasi</span>
+                <span class="font-bold text-xs" :class="wo.photos?.length > 0 ? 'text-white' : 'text-slate-400'">3. Dokumentasi Foto</span>
               </div>
               <p class="text-[11px] text-slate-400 pl-8">
                 {{ wo.photos?.length > 0 ? `${wo.photos.length} foto bukti terverifikasi.` : 'Menunggu unggahan foto.' }}
@@ -215,22 +283,22 @@
             <!-- Step 4: Selesai / BA -->
             <div
               :class="[
-                'p-3.5 rounded-2xl border space-y-1',
+                'p-3.5 rounded-2xl border space-y-1 shadow-xs transition-all',
                 ['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status) 
-                  ? 'bg-slate-950/60 border-emerald-500/40' 
-                  : 'bg-slate-950/30 border-slate-800/80'
+                  ? 'bg-[#0B0F19]/70 border-emerald-500/40' 
+                  : 'bg-[#0B0F19]/30 border-slate-800'
               ]"
             >
               <div class="flex items-center gap-2">
                 <div
                   :class="[
-                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border',
-                    ['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status) ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-500 border-slate-700'
+                    'w-6 h-6 rounded-full flex items-center justify-center text-xs font-black border',
+                    ['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status) ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-slate-800 text-slate-500 border-slate-700'
                   ]"
                 >
                   {{ ['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status) ? '✓' : '4' }}
                 </div>
-                <span class="font-bold text-xs" :class="['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status) ? 'text-white' : 'text-slate-400'">4. Pengesahan</span>
+                <span class="font-bold text-xs" :class="['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status) ? 'text-white' : 'text-slate-400'">4. Pengesahan BA</span>
               </div>
               <p class="text-[11px] text-slate-400 pl-8">
                 {{ wo.ba_document ? `BA No. ${wo.ba_document.ba_number}` : 'Pekerjaan selesai & BA terbit.' }}
@@ -239,26 +307,71 @@
           </div>
         </div>
 
+        <!-- Official Berita Acara (BA) Opname Certificate Showcase Card (Visible on Completion) -->
+        <div
+          v-if="wo.ba_document || ['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status)"
+          class="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-amber-500/15 via-[#111827] to-emerald-500/10 border-2 border-[#EDC80A]/40 shadow-2xl backdrop-blur-2xl space-y-4 animate-fade-in"
+        >
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-start gap-3.5">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EDC80A] to-amber-600 text-[#1E1E1D] flex items-center justify-center font-black shadow-lg shadow-amber-500/25 shrink-0">
+                <FileCheck2 class="w-6 h-6" />
+              </div>
+              <div>
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#EDC80A]/20 text-[#EDC80A] text-[10px] font-black border border-[#EDC80A]/40 uppercase tracking-wider mb-1">
+                  <span>Dokumen Sah & Tersertifikasi</span>
+                </div>
+                <h4 class="text-base sm:text-lg font-black text-white tracking-tight">
+                  Berita Acara (BA) Opname Fisik Telah Diterbitkan
+                </h4>
+                <p class="text-xs text-slate-300 font-mono mt-0.5">
+                  Nomor BA: <strong class="text-[#EDC80A]">{{ wo.ba_document?.ba_number || `BA-SGX-${wo.spk_number}` }}</strong>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <a
+                v-if="wo.ba_document?.id"
+                :href="`/api/ba-documents/${wo.ba_document.id}/pdf`"
+                target="_blank"
+                class="px-5 py-2.5 bg-gradient-to-r from-[#EDC80A] via-amber-500 to-[#F59E0B] hover:from-[#f5d012] hover:to-[#ea580c] text-[#1E1E1D] font-black text-xs rounded-xl shadow-lg shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Download class="w-4 h-4" />
+                <span>Unduh Dokumen BA (PDF)</span>
+              </a>
+              <button
+                v-else
+                @click="alertBaReady"
+                class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black text-xs rounded-xl shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <CheckSquare class="w-4 h-4" />
+                <span>Pekerjaan Telah Disahkan ✓</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Section: Structured Sub-Tasks & Photo Evidence -->
         <div class="space-y-5">
           <!-- Section Header & Flexible View Controls -->
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 p-4 sm:p-5 rounded-3xl shadow-xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-[#111827]/90 border border-amber-500/20 p-4 sm:p-5 rounded-3xl shadow-xl backdrop-blur-2xl">
             <div>
-              <h3 class="font-black text-sm uppercase text-slate-200 tracking-wider flex items-center gap-2">
-                <Camera class="w-4 h-4 text-purple-400" />
+              <h3 class="font-black text-sm uppercase text-slate-100 tracking-wider flex items-center gap-2">
+                <Camera class="w-4 h-4 text-[#EDC80A]" />
                 <span>Lingkup Sub-Pekerjaan & Evidensi Fisik ({{ displayItems.length }} Item)</span>
               </h3>
               <p class="text-[11px] text-slate-400 mt-0.5">Dokumentasi hasil pengerjaan fisik terverifikasi GPS per sub-lingkup cabang.</p>
             </div>
 
             <!-- View Mode Switcher Toolbar -->
-            <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs font-bold self-start md:self-auto shadow-inner">
+            <div class="flex items-center gap-1 bg-[#0B0F19] p-1 rounded-2xl border border-slate-800 text-xs font-bold self-start md:self-auto shadow-inner">
               <button
                 type="button"
                 @click="activeViewMode = 'FOCUSED_TAB'"
                 :class="[
                   'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px]',
-                  activeViewMode === 'FOCUSED_TAB' ? 'bg-gradient-to-r from-purple-900 to-indigo-800 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                  activeViewMode === 'FOCUSED_TAB' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md' : 'text-slate-400 hover:text-white'
                 ]"
               >
                 <Layers class="w-3.5 h-3.5" />
@@ -269,7 +382,7 @@
                 @click="activeViewMode = 'ACCORDION'"
                 :class="[
                   'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px]',
-                  activeViewMode === 'ACCORDION' ? 'bg-gradient-to-r from-purple-900 to-indigo-800 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                  activeViewMode === 'ACCORDION' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md' : 'text-slate-400 hover:text-white'
                 ]"
               >
                 <ListFilter class="w-3.5 h-3.5" />
@@ -280,7 +393,7 @@
                 @click="activeViewMode = 'ALL_PHOTOS'"
                 :class="[
                   'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px]',
-                  activeViewMode === 'ALL_PHOTOS' ? 'bg-gradient-to-r from-purple-900 to-indigo-800 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                  activeViewMode === 'ALL_PHOTOS' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md' : 'text-slate-400 hover:text-white'
                 ]"
               >
                 <LayoutGrid class="w-3.5 h-3.5" />
@@ -303,14 +416,14 @@
                 :class="[
                   'px-4 py-2.5 rounded-2xl border text-left shrink-0 transition-all cursor-pointer flex items-center gap-2.5 shadow-sm',
                   selectedItemId === (item.id ?? 'default')
-                    ? 'bg-purple-950/80 border-purple-500/60 text-white ring-1 ring-purple-500/30'
-                    : 'bg-slate-900/80 border-slate-800/80 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                    ? 'bg-[#1E1E1D] border-[#EDC80A]/60 text-white ring-2 ring-[#EDC80A]/20'
+                    : 'bg-[#111827]/80 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
                 ]"
               >
                 <span
                   :class="[
                     'w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center shrink-0',
-                    selectedItemId === (item.id ?? 'default') ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400'
+                    selectedItemId === (item.id ?? 'default') ? 'bg-[#EDC80A] text-[#1E1E1D]' : 'bg-slate-800 text-slate-400'
                   ]"
                 >
                   {{ itmIdx + 1 }}
@@ -318,7 +431,7 @@
                 <div>
                   <div class="font-bold text-xs flex items-center gap-1.5">
                     <span class="truncate max-w-[150px] sm:max-w-[200px]">{{ item.item_name }}</span>
-                    <span v-if="item.is_addendum" class="px-1.5 py-0.2 rounded text-[8px] font-black uppercase bg-amber-500 text-slate-950">
+                    <span v-if="item.is_addendum" class="px-1.5 py-0.2 rounded text-[8px] font-black uppercase bg-amber-500 text-[#1E1E1D]">
                       Addendum
                     </span>
                   </div>
@@ -336,12 +449,12 @@
             <!-- Active Selected Sub-Item Card Container -->
             <div
               v-if="currentSelectedItem"
-              class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-6"
+              class="bg-[#111827]/90 border border-amber-500/20 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-2xl space-y-6"
             >
               <!-- Item Details Header -->
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
                 <div class="flex items-center gap-3">
-                  <span class="w-9 h-9 rounded-2xl bg-gradient-to-br from-purple-900 to-indigo-800 text-white font-black text-sm flex items-center justify-center shadow-md">
+                  <span class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#EDC80A] to-amber-600 text-[#1E1E1D] font-black text-sm flex items-center justify-center shadow-md shadow-amber-500/20">
                     #{{ getCurrentItemIndex(currentSelectedItem.id) + 1 }}
                   </span>
                   <div>
@@ -351,18 +464,18 @@
                       </h4>
                       <span
                         v-if="currentSelectedItem.is_addendum"
-                        class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 shadow-sm"
+                        class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-[#1E1E1D] shadow-sm"
                       >
                         + ADDENDUM
                       </span>
                     </div>
                     <p v-if="currentSelectedItem.notes" class="text-xs text-slate-400 mt-0.5">{{ currentSelectedItem.notes }}</p>
-                    <span class="text-[10px] font-mono text-slate-500">Bobot Pekerjaan: {{ currentSelectedItem.weight_percent || 100 }}%</span>
+                    <span class="text-[10px] font-mono text-slate-500">Bobot Sub-Pekerjaan: {{ currentSelectedItem.weight_percent || 100 }}%</span>
                   </div>
                 </div>
 
                 <!-- Stage Tab Filters inside Sub-Item for Mobile (Segmented Stage Pills) -->
-                <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs font-bold overflow-x-auto no-scrollbar scroll-smooth">
+                <div class="flex items-center gap-1 bg-[#0B0F19] p-1 rounded-2xl border border-slate-800 text-xs font-bold overflow-x-auto no-scrollbar scroll-smooth">
                   <!-- 1. AFTER PILL (Hasil Akhir) -->
                   <button
                     type="button"
@@ -370,7 +483,7 @@
                     :class="[
                       'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px] whitespace-nowrap',
                       mobileSubStage === 'AFTER'
-                        ? 'bg-gradient-to-r from-emerald-700 to-teal-600 text-white shadow-md shadow-emerald-900/30'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-900/30'
                         : 'text-slate-400 hover:text-emerald-300'
                     ]"
                   >
@@ -400,7 +513,7 @@
                     :class="[
                       'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px] whitespace-nowrap',
                       mobileSubStage === 'PROCESS'
-                        ? 'bg-gradient-to-r from-amber-700 to-orange-600 text-white shadow-md shadow-amber-900/30'
+                        ? 'bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-md shadow-amber-900/30'
                         : 'text-slate-400 hover:text-amber-300'
                     ]"
                   >
@@ -415,8 +528,8 @@
                     :class="[
                       'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px] whitespace-nowrap',
                       mobileSubStage === 'COMPARE'
-                        ? 'bg-gradient-to-r from-purple-800 to-indigo-700 text-white shadow-md shadow-purple-900/30'
-                        : 'text-slate-400 hover:text-purple-300'
+                        ? 'bg-gradient-to-r from-[#EDC80A] to-amber-500 text-[#1E1E1D] shadow-md shadow-amber-500/25 font-black'
+                        : 'text-slate-400 hover:text-[#EDC80A]'
                     ]"
                   >
                     <span>⚖️ Komparasi B/A</span>
@@ -446,7 +559,7 @@
                   <div class="flex items-center gap-2">
                     <span
                       :class="[
-                        'px-2.5 py-1 rounded-xl text-[11px] font-black uppercase tracking-wider border flex items-center gap-1.5',
+                        'px-3 py-1 rounded-xl text-[11px] font-black uppercase tracking-wider border flex items-center gap-1.5',
                         mobileSubStage === 'AFTER'
                           ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
                           : mobileSubStage === 'BEFORE'
@@ -474,7 +587,7 @@
                   <div
                     v-for="p in getPhotosForItemStage(currentSelectedItem.id, mobileSubStage)"
                     :key="p.id"
-                    class="h-52 sm:h-56 rounded-2xl overflow-hidden bg-slate-950 relative group cursor-pointer border border-slate-800 shadow-md hover:border-purple-500/60 transition-all"
+                    class="h-52 sm:h-56 rounded-2xl overflow-hidden bg-slate-950 relative group cursor-pointer border border-slate-800 shadow-md hover:border-amber-500/60 transition-all duration-300"
                     @click="openLightbox(p)"
                   >
                     <img
@@ -494,7 +607,7 @@
                         >
                           {{ mobileSubStage }}
                         </span>
-                        <span class="text-[10px] bg-black/60 px-2 py-0.5 rounded-md text-slate-300 font-mono">
+                        <span class="text-[10px] bg-black/70 px-2 py-0.5 rounded-md text-slate-200 font-mono">
                           🔍 Klik Zoom
                         </span>
                       </div>
@@ -515,7 +628,7 @@
                 <!-- Empty State for this stage -->
                 <div
                   v-else
-                  class="py-12 rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 flex flex-col items-center justify-center text-center p-5 space-y-2"
+                  class="py-12 rounded-2xl border border-dashed border-slate-800 bg-[#0B0F19]/40 flex flex-col items-center justify-center text-center p-5 space-y-2"
                 >
                   <Camera class="w-8 h-8 text-slate-600 mb-1" />
                   <div class="text-xs font-bold text-slate-300">Belum ada foto dokumentasi tahap {{ mobileSubStage }}.</div>
@@ -528,7 +641,7 @@
               <!-- ======================================================== -->
               <div v-else-if="mobileSubStage === 'COMPARE'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
                 <!-- Before Side -->
-                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-4 space-y-3">
                   <div class="flex items-center justify-between">
                     <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-blue-950 text-blue-300 border border-blue-500/40 flex items-center gap-1">
                       <Camera class="w-3 h-3" />
@@ -556,7 +669,7 @@
                 </div>
 
                 <!-- After Side -->
-                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-4 space-y-3">
                   <div class="flex items-center justify-between">
                     <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                       <Sparkles class="w-3 h-3" />
@@ -589,7 +702,7 @@
               <!-- ======================================================== -->
               <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in">
                 <!-- BEFORE -->
-                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                <div class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-blue-950 text-blue-300 border border-blue-500/40">
                       BEFORE
@@ -616,7 +729,7 @@
                 </div>
 
                 <!-- PROCESS -->
-                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                <div class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-amber-950 text-amber-300 border border-amber-500/40">
                       PROCESS
@@ -643,7 +756,7 @@
                 </div>
 
                 <!-- AFTER -->
-                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                <div class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40">
                       AFTER
@@ -679,12 +792,12 @@
             <div
               v-for="(item, itmIdx) in displayItems"
               :key="item.id || itmIdx"
-              class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4"
+              class="bg-[#111827]/90 border border-amber-500/20 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4 backdrop-blur-2xl"
             >
               <!-- Sub-Task Header -->
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                 <div class="flex items-center gap-2.5">
-                  <span class="w-7 h-7 rounded-xl bg-purple-900 text-white font-bold text-xs flex items-center justify-center shadow-md">
+                  <span class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#EDC80A] to-amber-600 text-[#1E1E1D] font-black text-xs flex items-center justify-center shadow-md">
                     {{ itmIdx + 1 }}
                   </span>
                   <div>
@@ -694,7 +807,7 @@
                       </h4>
                       <span
                         v-if="item.is_addendum"
-                        class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 shadow-md"
+                        class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-[#1E1E1D] shadow-md"
                       >
                         + ADDENDUM
                       </span>
@@ -718,7 +831,7 @@
               <!-- Grid Before / Process / After for this Sub-Task -->
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <!-- BEFORE -->
-                <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 space-y-2">
+                <div class="bg-[#0B0F19]/80 border border-slate-800/80 rounded-2xl p-3 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-950 text-blue-300 border border-blue-500/30">
                       BEFORE
@@ -744,7 +857,7 @@
                 </div>
 
                 <!-- PROCESS -->
-                <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 space-y-2">
+                <div class="bg-[#0B0F19]/80 border border-slate-800/80 rounded-2xl p-3 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-950 text-amber-300 border border-amber-500/30">
                       PROCESS
@@ -770,7 +883,7 @@
                 </div>
 
                 <!-- AFTER -->
-                <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 space-y-2">
+                <div class="bg-[#0B0F19]/80 border border-slate-800/80 rounded-2xl p-3 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/30">
                       AFTER
@@ -801,11 +914,11 @@
           <!-- ======================================================== -->
           <!-- MODE 3: ALL PHOTOS FLAT GALLERY                          -->
           <!-- ======================================================== -->
-          <div v-else-if="activeViewMode === 'ALL_PHOTOS'" class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+          <div v-else-if="activeViewMode === 'ALL_PHOTOS'" class="bg-[#111827]/90 border border-amber-500/20 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4 backdrop-blur-2xl">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-slate-300">Filter Tahapan:</span>
-                <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-[11px] font-bold">
+                <div class="inline-flex rounded-xl bg-[#0B0F19] p-1 border border-slate-800 text-[11px] font-bold">
                   <button
                     v-for="st in ['ALL', 'BEFORE', 'PROCESS', 'AFTER']"
                     :key="st"
@@ -813,7 +926,7 @@
                     @click="activeStage = st"
                     :class="[
                       'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                      activeStage === st ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                      activeStage === st ? 'bg-[#EDC80A] text-[#1E1E1D] font-black shadow-xs' : 'text-slate-400 hover:text-white'
                     ]"
                   >
                     {{ st }}
@@ -827,7 +940,7 @@
               <div
                 v-for="p in filteredPhotos"
                 :key="p.id"
-                class="rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 group cursor-pointer relative shadow-sm"
+                class="rounded-2xl overflow-hidden bg-[#0B0F19] border border-slate-800 group cursor-pointer relative shadow-sm hover:border-amber-500/60 transition-all"
                 @click="openLightbox(p)"
               >
                 <div class="h-36 sm:h-44 w-full bg-slate-900 relative overflow-hidden">
@@ -859,7 +972,7 @@
         <Teleport to="body">
           <div
             v-if="activeLightboxPhoto"
-            class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+            class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
             @click.self="activeLightboxPhoto = null"
           >
             <button
@@ -896,7 +1009,7 @@
                 :alt="`Bukti ${activeLightboxPhoto.stage}`"
                 class="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10 mb-3"
               />
-              <div class="text-center text-xs text-slate-300 space-y-1.5 bg-slate-900/90 border border-slate-800 px-5 py-3 rounded-2xl backdrop-blur-md">
+              <div class="text-center text-xs text-slate-300 space-y-1.5 bg-[#111827]/95 border border-amber-500/30 px-5 py-3 rounded-2xl backdrop-blur-2xl shadow-2xl">
                 <div class="flex items-center justify-center gap-2">
                   <span
                     :class="[
@@ -924,12 +1037,16 @@
       </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500 bg-slate-950">
-      <p class="font-semibold text-slate-400">PT Sinar Graha Kreatif</p>
-      <p class="text-[11px] mt-0.5">Enterprise Work Order & Real-Time Evidence Verification System</p>
+    <!-- Footer (Luxury Dark) -->
+    <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500 bg-[#0B0F19] relative z-10">
+      <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <p class="font-bold text-slate-300 flex items-center gap-1.5">
+          <span>PT Sinar Kreasindo Bencoolen</span>
+          <span class="text-[#EDC80A] font-mono text-[10px]">SGX</span>
+        </p>
+        <p class="text-[11px] text-slate-500">Enterprise Work Order & Real-Time Evidence Verification System</p>
+      </div>
     </footer>
-
   </div>
 </template>
 
@@ -938,7 +1055,8 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { 
   RefreshCw, Loader2, ShieldAlert, Home, Building2, User, Calendar, 
   MapPin, Activity, Camera, Maximize2, Clock, CheckSquare, X,
-  Layers, ListFilter, LayoutGrid, Sparkles
+  Layers, ListFilter, LayoutGrid, Sparkles, FileText, RotateCcw,
+  FileCheck2, Download, Share2
 } from 'lucide-vue-next';
 import { api, getFileUrl } from '../../services/api';
 
@@ -961,6 +1079,17 @@ const activeLightboxPhoto = ref(null);
 function isValidGps(val) {
   if (val == null || val === '' || isNaN(Number(val))) return false;
   return Math.abs(Number(val)) > 0.0001;
+}
+
+function formatDate(dStr) {
+  if (!dStr) return '-';
+  try {
+    const d = new Date(dStr);
+    if (isNaN(d.getTime())) return dStr;
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch (e) {
+    return dStr;
+  }
 }
 
 const displayItems = computed(() => {
@@ -1000,23 +1129,21 @@ function getPhotosForItemStage(itemId, stage) {
   const isFirstItem = items.length > 0 && items[0].id === itemId;
 
   return photos.filter(p => {
-    if (p.stage !== stage) return false;
-    
-    // Strict match if photo is tied to an item_id
-    if (p.item_id != null) {
+    const stageMatch = (p.stage === stage);
+    if (!stageMatch) return false;
+
+    if (p.item_id !== null && p.item_id !== undefined) {
       return Number(p.item_id) === Number(itemId);
     }
-    
-    // Legacy unassigned photo: attach ONLY to the first item (or if only 1 item exists)
-    return isFirstItem || !itemId;
+    return isFirstItem;
   });
 }
 
 function getTotalPhotosForItem(itemId) {
-  const before = getPhotosForItemStage(itemId, 'BEFORE').length;
-  const process = getPhotosForItemStage(itemId, 'PROCESS').length;
-  const after = getPhotosForItemStage(itemId, 'AFTER').length;
-  return before + process + after;
+  const beforeCount = getPhotosForItemStage(itemId, 'BEFORE').length;
+  const processCount = getPhotosForItemStage(itemId, 'PROCESS').length;
+  const afterCount = getPhotosForItemStage(itemId, 'AFTER').length;
+  return beforeCount + processCount + afterCount;
 }
 
 function isItemCompleted(item) {
@@ -1025,112 +1152,116 @@ function isItemCompleted(item) {
 }
 
 const filteredPhotos = computed(() => {
-  if (!wo.value?.photos) return [];
-  if (activeStage.value === 'ALL') return wo.value.photos;
-  return wo.value.photos.filter(p => p.stage === activeStage.value);
+  const photos = wo.value?.photos || [];
+  if (activeStage.value === 'ALL') return photos;
+  return photos.filter(p => p.stage === activeStage.value);
 });
 
-// Lightbox Navigation Functions
+const latestRevisionReason = computed(() => {
+  if (wo.value?.revisions && wo.value.revisions.length > 0) {
+    return wo.value.revisions[wo.value.revisions.length - 1].reason;
+  }
+  return null;
+});
+
+function getStatusLabel(status) {
+  const map = {
+    'READY': 'Siap Ditugaskan',
+    'ASSIGNED': 'Ditugaskan ke Lapangan',
+    'IN_PROGRESS': 'Sedang Dikerjakan (In Progress)',
+    'SUBMITTED': 'Pengajuan Selesai (Menunggu Review)',
+    'UNDER_REVIEW': 'Sedang Ditinjau Pengawas',
+    'REVIEW': 'Dalam Proses Review',
+    'REVISION': 'Dalam Penyempurnaan (Revisi)',
+    'APPROVED': 'Disetujui (100% Selesai)',
+    'COMPLETED': 'Pekerjaan Selesai & Berita Acara Terbit',
+    'BA_OPNAME': 'Berita Acara (BA) Sah',
+    'CANCELLED': 'Dibatalkan'
+  };
+  return map[status] || status;
+}
+
+function getStatusBadgeClass(status) {
+  if (['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(status)) {
+    return 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40 shadow-emerald-900/30';
+  }
+  if (status === 'REVISION') {
+    return 'bg-rose-950/90 text-rose-300 border-rose-500/40 shadow-rose-900/30 animate-pulse';
+  }
+  if (['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(status)) {
+    return 'bg-[#EDC80A]/20 text-[#EDC80A] border-[#EDC80A]/40 shadow-amber-900/20';
+  }
+  return 'bg-amber-950/90 text-amber-300 border-amber-500/40 shadow-amber-900/20';
+}
+
+function getStatusDotClass(status) {
+  if (['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(status)) return 'bg-emerald-400';
+  if (status === 'REVISION') return 'bg-rose-400';
+  if (['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(status)) return 'bg-[#EDC80A]';
+  return 'bg-amber-400';
+}
+
 function openLightbox(photo) {
   activeLightboxPhoto.value = photo;
 }
 
-function canNavigateLightbox(direction) {
-  const photos = wo.value?.photos || [];
-  if (!activeLightboxPhoto.value || photos.length <= 1) return false;
-  const idx = photos.findIndex(p => p.id === activeLightboxPhoto.value.id);
-  if (idx === -1) return false;
-  if (direction === 'prev') return idx > 0;
-  if (direction === 'next') return idx < photos.length - 1;
-  return true;
+function canNavigateLightbox(dir) {
+  if (!activeLightboxPhoto.value) return false;
+  const currentList = wo.value?.photos || [];
+  const idx = currentList.findIndex(p => p.id === activeLightboxPhoto.value.id);
+  if (dir === 'prev') return idx > 0;
+  if (dir === 'next') return idx < currentList.length - 1;
+  return false;
 }
 
 function navigateLightbox(step) {
-  const photos = wo.value?.photos || [];
-  if (!activeLightboxPhoto.value || photos.length === 0) return;
-  const idx = photos.findIndex(p => p.id === activeLightboxPhoto.value.id);
-  if (idx === -1) return;
-  const nextIdx = idx + step;
-  if (nextIdx >= 0 && nextIdx < photos.length) {
-    activeLightboxPhoto.value = photos[nextIdx];
+  if (!activeLightboxPhoto.value) return;
+  const currentList = wo.value?.photos || [];
+  const idx = currentList.findIndex(p => p.id === activeLightboxPhoto.value.id);
+  const newIdx = idx + step;
+  if (newIdx >= 0 && newIdx < currentList.length) {
+    activeLightboxPhoto.value = currentList[newIdx];
   }
 }
 
-function getStatusBadgeClass(status) {
-  switch (status) {
-    case 'APPROVED':
-    case 'BA_OPNAME':
-    case 'COMPLETED':
-      return 'bg-emerald-950 text-emerald-300 border-emerald-500/40';
-    case 'SUBMITTED':
-    case 'UNDER_REVIEW':
-    case 'REVIEW':
-      return 'bg-blue-950 text-blue-300 border-blue-500/40';
-    case 'IN_PROGRESS':
-    case 'CHECKED_IN':
-      return 'bg-purple-950 text-purple-300 border-purple-500/40';
-    case 'REVISION':
-      return 'bg-rose-950 text-rose-300 border-rose-500/40';
-    default:
-      return 'bg-slate-900 text-slate-300 border-slate-700';
+function handleShare() {
+  if (navigator.share) {
+    navigator.share({
+      title: `Live Work Tracker: ${wo.value?.spk_number || 'SPK SGX'}`,
+      text: `Pantau langsung progres pekerjaan cabang: ${wo.value?.location_name || ''}`,
+      url: window.location.href
+    }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(window.location.href);
+    alert('Tautan Live Tracking berhasil disalin ke clipboard!');
   }
 }
 
-function getStatusDotClass(status) {
-  switch (status) {
-    case 'APPROVED':
-    case 'BA_OPNAME':
-    case 'COMPLETED':
-      return 'bg-emerald-400';
-    case 'SUBMITTED':
-    case 'UNDER_REVIEW':
-    case 'REVIEW':
-      return 'bg-blue-400';
-    case 'IN_PROGRESS':
-    case 'CHECKED_IN':
-      return 'bg-purple-400';
-    case 'REVISION':
-      return 'bg-rose-400';
-    default:
-      return 'bg-slate-400';
-  }
-}
-
-function getStatusLabel(status) {
-  switch (status) {
-    case 'APPROVED':
-    case 'BA_OPNAME':
-    case 'COMPLETED':
-      return 'Disetujui 100%';
-    case 'SUBMITTED':
-    case 'UNDER_REVIEW':
-    case 'REVIEW':
-      return 'Sedang Direview';
-    case 'IN_PROGRESS':
-      return 'Dalam Pengerjaan';
-    case 'CHECKED_IN':
-      return 'Teknisi di Lokasi';
-    case 'REVISION':
-      return 'Perbaikan Revisi';
-    case 'ASSIGNED':
-      return 'Telah Ditugaskan';
-    default:
-      return status || 'Draft';
-  }
+function alertBaReady() {
+  alert('Pekerjaan telah 100% selesai dan disahkan oleh pengawas.');
 }
 
 async function fetchTrackingData() {
   loading.value = true;
   errorMessage.value = '';
   try {
-    const res = await api.getPublicTracking(props.token);
+    const res = await api.getPublicSpkTracking(props.token);
     if (res.success && res.data) {
       wo.value = res.data;
+      if (res.data.photos && res.data.photos.length > 0) {
+        const hasAfter = res.data.photos.some(p => p.stage === 'AFTER');
+        if (hasAfter) {
+          mobileSubStage.value = 'AFTER';
+        } else {
+          const hasProcess = res.data.photos.some(p => p.stage === 'PROCESS');
+          mobileSubStage.value = hasProcess ? 'PROCESS' : 'BEFORE';
+        }
+      }
     } else {
-      errorMessage.value = res.message || 'Data pemantauan tidak ditemukan.';
+      errorMessage.value = res.message || 'Data pelacakan SPK tidak ditemukan.';
     }
   } catch (err) {
-    errorMessage.value = err.message || 'Gagal memuat data pemantauan SPK. Pastikan tautan benar.';
+    errorMessage.value = err.message || 'Gagal memuat data pemantauan dari server.';
   } finally {
     loading.value = false;
   }
