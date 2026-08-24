@@ -55,7 +55,7 @@ class PublicTrackingController extends Controller
                         $q->orderBy('id', 'desc');
                     },
                     'evidencePhotos' => function ($q) {
-                        $q->orderBy('id', 'asc');
+                        $q->with('item:id,item_name')->orderBy('id', 'asc');
                     },
                     'items',
                     'baDocument:id,work_order_id,ba_number,status,created_at,pdf_path'
@@ -116,6 +116,8 @@ class PublicTrackingController extends Controller
                     'photos' => $workOrder->evidencePhotos->map(function ($p) {
                         return [
                             'id' => $p->id,
+                            'item_id' => $p->work_order_item_id ?? $p->item_id,
+                            'item_name' => $p->item?->item_name,
                             'stage' => $p->stage,
                             'file_path' => $p->file_path,
                             'notes' => $p->notes,
@@ -131,6 +133,7 @@ class PublicTrackingController extends Controller
                             'item_name' => $i->item_name,
                             'status' => $i->status,
                             'notes' => $i->notes,
+                            'weight_percent' => $i->weight_percent ?? 0,
                             'is_addendum' => (bool)$i->is_addendum,
                         ];
                     }),

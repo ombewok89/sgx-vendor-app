@@ -240,45 +240,303 @@
         </div>
 
         <!-- Section: Structured Sub-Tasks & Photo Evidence -->
-        <div class="space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="space-y-5">
+          <!-- Section Header & Flexible View Controls -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 p-4 sm:p-5 rounded-3xl shadow-xl">
             <div>
-              <h3 class="font-black text-sm uppercase text-slate-300 tracking-wider flex items-center gap-2">
+              <h3 class="font-black text-sm uppercase text-slate-200 tracking-wider flex items-center gap-2">
                 <Camera class="w-4 h-4 text-purple-400" />
                 <span>Lingkup Sub-Pekerjaan & Evidensi Fisik ({{ displayItems.length }} Item)</span>
               </h3>
-              <p class="text-[11px] text-slate-500">Dokumentasi hasil pengerjaan fisik disusun per sub-lingkup pekerjaan cabang.</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Dokumentasi hasil pengerjaan fisik terverifikasi GPS per sub-lingkup cabang.</p>
             </div>
 
-            <!-- Stage Filter -->
-            <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold self-start sm:self-auto">
+            <!-- View Mode Switcher Toolbar -->
+            <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs font-bold self-start md:self-auto shadow-inner">
               <button
-                @click="activeViewMode = 'BY_ITEM'"
+                type="button"
+                @click="activeViewMode = 'FOCUSED_TAB'"
                 :class="[
-                  'px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-                  activeViewMode === 'BY_ITEM' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px]',
+                  activeViewMode === 'FOCUSED_TAB' ? 'bg-gradient-to-r from-purple-900 to-indigo-800 text-white shadow-md' : 'text-slate-400 hover:text-white'
                 ]"
               >
-                Per Sub-Item
+                <Layers class="w-3.5 h-3.5" />
+                <span>Tab Sub-Item</span>
               </button>
               <button
-                @click="activeViewMode = 'ALL_PHOTOS'"
+                type="button"
+                @click="activeViewMode = 'ACCORDION'"
                 :class="[
-                  'px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-                  activeViewMode === 'ALL_PHOTOS' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px]',
+                  activeViewMode === 'ACCORDION' ? 'bg-gradient-to-r from-purple-900 to-indigo-800 text-white shadow-md' : 'text-slate-400 hover:text-white'
                 ]"
               >
-                Semua Foto ({{ wo.photos?.length || 0 }})
+                <ListFilter class="w-3.5 h-3.5" />
+                <span>Semua Item</span>
+              </button>
+              <button
+                type="button"
+                @click="activeViewMode = 'ALL_PHOTOS'"
+                :class="[
+                  'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px]',
+                  activeViewMode === 'ALL_PHOTOS' ? 'bg-gradient-to-r from-purple-900 to-indigo-800 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                ]"
+              >
+                <LayoutGrid class="w-3.5 h-3.5" />
+                <span>Galeri Foto ({{ wo.photos?.length || 0 }})</span>
               </button>
             </div>
           </div>
 
-          <!-- MODE 1: TRIPTYCH SUB-TASK CARDS -->
-          <div v-if="activeViewMode === 'BY_ITEM'" class="space-y-4">
+          <!-- ======================================================== -->
+          <!-- MODE 1: FOCUSED SUB-ITEM TAB VIEW (SUPER MOBILE FRIENDLY) -->
+          <!-- ======================================================== -->
+          <div v-if="activeViewMode === 'FOCUSED_TAB'" class="space-y-4">
+            <!-- Horizontal Scrollable Sub-Item Pills Navigation Bar -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+              <button
+                v-for="(item, itmIdx) in displayItems"
+                :key="item.id || itmIdx"
+                type="button"
+                @click="selectedItemId = item.id ?? 'default'"
+                :class="[
+                  'px-4 py-2.5 rounded-2xl border text-left shrink-0 transition-all cursor-pointer flex items-center gap-2.5 shadow-sm',
+                  selectedItemId === (item.id ?? 'default')
+                    ? 'bg-purple-950/80 border-purple-500/60 text-white ring-1 ring-purple-500/30'
+                    : 'bg-slate-900/80 border-slate-800/80 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                ]"
+              >
+                <span
+                  :class="[
+                    'w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center shrink-0',
+                    selectedItemId === (item.id ?? 'default') ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400'
+                  ]"
+                >
+                  {{ itmIdx + 1 }}
+                </span>
+                <div>
+                  <div class="font-bold text-xs flex items-center gap-1.5">
+                    <span class="truncate max-w-[150px] sm:max-w-[200px]">{{ item.item_name }}</span>
+                    <span v-if="item.is_addendum" class="px-1.5 py-0.2 rounded text-[8px] font-black uppercase bg-amber-500 text-slate-950">
+                      Addendum
+                    </span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 font-mono flex items-center gap-1.5">
+                    <span>{{ getTotalPhotosForItem(item.id) }} Foto</span>
+                    <span>•</span>
+                    <span :class="isItemCompleted(item) ? 'text-emerald-400' : 'text-amber-400'">
+                      {{ isItemCompleted(item) ? 'Selesai ✓' : 'Proses' }}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <!-- Active Selected Sub-Item Card Container -->
+            <div
+              v-if="currentSelectedItem"
+              class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-6"
+            >
+              <!-- Item Details Header -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                  <span class="w-9 h-9 rounded-2xl bg-gradient-to-br from-purple-900 to-indigo-800 text-white font-black text-sm flex items-center justify-center shadow-md">
+                    #{{ getCurrentItemIndex(currentSelectedItem.id) + 1 }}
+                  </span>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 class="font-black text-slate-100 text-base sm:text-lg">
+                        {{ currentSelectedItem.item_name }}
+                      </h4>
+                      <span
+                        v-if="currentSelectedItem.is_addendum"
+                        class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 shadow-sm"
+                      >
+                        + ADDENDUM
+                      </span>
+                    </div>
+                    <p v-if="currentSelectedItem.notes" class="text-xs text-slate-400 mt-0.5">{{ currentSelectedItem.notes }}</p>
+                    <span class="text-[10px] font-mono text-slate-500">Bobot Pekerjaan: {{ currentSelectedItem.weight_percent || 100 }}%</span>
+                  </div>
+                </div>
+
+                <!-- Stage Tab Filters inside Sub-Item for Mobile -->
+                <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+                  <button
+                    type="button"
+                    @click="mobileSubStage = 'ALL'"
+                    :class="[
+                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px]',
+                      mobileSubStage === 'ALL' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                    ]"
+                  >
+                    Semua ({{ getTotalPhotosForItem(currentSelectedItem.id) }})
+                  </button>
+                  <button
+                    type="button"
+                    @click="mobileSubStage = 'COMPARE'"
+                    :class="[
+                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px]',
+                      mobileSubStage === 'COMPARE' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                    ]"
+                  >
+                    Before vs After
+                  </button>
+                </div>
+              </div>
+
+              <!-- Side-by-Side Comparison Mode -->
+              <div v-if="mobileSubStage === 'COMPARE'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Before Side -->
+                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-blue-950 text-blue-300 border border-blue-500/40">
+                      BEFORE (KONDISI AWAL)
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-400">{{ getPhotosForItemStage(currentSelectedItem.id, 'BEFORE').length }} Foto</span>
+                  </div>
+                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'BEFORE').length > 0" class="grid grid-cols-1 gap-2">
+                    <div
+                      v-for="p in getPhotosForItemStage(currentSelectedItem.id, 'BEFORE')"
+                      :key="p.id"
+                      class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800"
+                      @click="openLightbox(p)"
+                    >
+                      <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[10px] text-white font-mono flex items-center justify-between">
+                        <span class="text-blue-300 font-bold">BEFORE</span>
+                        <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="h-36 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-xs">
+                    Belum ada foto Before
+                  </div>
+                </div>
+
+                <!-- After Side -->
+                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40">
+                      AFTER (HASIL SELESAI)
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-400">{{ getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length }} Foto</span>
+                  </div>
+                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length > 0" class="grid grid-cols-1 gap-2">
+                    <div
+                      v-for="p in getPhotosForItemStage(currentSelectedItem.id, 'AFTER')"
+                      :key="p.id"
+                      class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800"
+                      @click="openLightbox(p)"
+                    >
+                      <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[10px] text-white font-mono flex items-center justify-between">
+                        <span class="text-emerald-300 font-bold">AFTER</span>
+                        <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="h-36 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-xs">
+                    Belum ada foto After
+                  </div>
+                </div>
+              </div>
+
+              <!-- Standard 3-Column View for Active Sub-Item -->
+              <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- BEFORE -->
+                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-blue-950 text-blue-300 border border-blue-500/40">
+                      BEFORE
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-400">{{ getPhotosForItemStage(currentSelectedItem.id, 'BEFORE').length }} Foto</span>
+                  </div>
+                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'BEFORE').length > 0" class="space-y-2">
+                    <div
+                      v-for="p in getPhotosForItemStage(currentSelectedItem.id, 'BEFORE')"
+                      :key="p.id"
+                      class="h-36 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800/80"
+                      @click="openLightbox(p)"
+                    >
+                      <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono flex items-center justify-between">
+                        <span class="text-blue-300 font-bold">BEFORE</span>
+                        <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="h-28 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-xs">
+                    Belum ada foto
+                  </div>
+                </div>
+
+                <!-- PROCESS -->
+                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-amber-950 text-amber-300 border border-amber-500/40">
+                      PROCESS
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-400">{{ getPhotosForItemStage(currentSelectedItem.id, 'PROCESS').length }} Foto</span>
+                  </div>
+                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'PROCESS').length > 0" class="space-y-2">
+                    <div
+                      v-for="p in getPhotosForItemStage(currentSelectedItem.id, 'PROCESS')"
+                      :key="p.id"
+                      class="h-36 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800/80"
+                      @click="openLightbox(p)"
+                    >
+                      <img :src="getFileUrl(p.file_path)" alt="Process" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono flex items-center justify-between">
+                        <span class="text-amber-300 font-bold">PROCESS</span>
+                        <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="h-28 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-xs">
+                    Belum ada foto
+                  </div>
+                </div>
+
+                <!-- AFTER -->
+                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40">
+                      AFTER
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-400">{{ getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length }} Foto</span>
+                  </div>
+                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length > 0" class="space-y-2">
+                    <div
+                      v-for="p in getPhotosForItemStage(currentSelectedItem.id, 'AFTER')"
+                      :key="p.id"
+                      class="h-36 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800/80"
+                      @click="openLightbox(p)"
+                    >
+                      <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono flex items-center justify-between">
+                        <span class="text-emerald-300 font-bold">AFTER</span>
+                        <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="h-28 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-xs">
+                    Belum ada foto
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======================================================== -->
+          <!-- MODE 2: ACCORDION LIST (ALL SUB-ITEMS EXTENDED)          -->
+          <!-- ======================================================== -->
+          <div v-else-if="activeViewMode === 'ACCORDION'" class="space-y-4">
             <div
               v-for="(item, itmIdx) in displayItems"
               :key="item.id || itmIdx"
-              class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4"
+              class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4"
             >
               <!-- Sub-Task Header -->
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
@@ -293,9 +551,9 @@
                       </h4>
                       <span
                         v-if="item.is_addendum"
-                        class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 shadow-md animate-pulse"
+                        class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 shadow-md"
                       >
-                        + ADDENDUM / TAMBAHAN
+                        + ADDENDUM
                       </span>
                     </div>
                     <span class="text-[10px] font-mono text-slate-400">Bobot: {{ item.weight_percent || 100 }}%</span>
@@ -319,7 +577,7 @@
                 <!-- BEFORE -->
                 <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 space-y-2">
                   <div class="flex items-center justify-between">
-                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-950 text-amber-300 border border-amber-500/30">
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-950 text-blue-300 border border-blue-500/30">
                       BEFORE
                     </span>
                     <span class="text-[9px] font-mono text-slate-500">{{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto</span>
@@ -329,11 +587,11 @@
                       v-for="p in getPhotosForItemStage(item.id, 'BEFORE')"
                       :key="p.id"
                       class="h-32 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
-                      @click="activeLightboxPhoto = p"
+                      @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
                       <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono">
-                        <span class="text-purple-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                        <span class="text-blue-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
                     </div>
                   </div>
@@ -345,7 +603,7 @@
                 <!-- PROCESS -->
                 <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 space-y-2">
                   <div class="flex items-center justify-between">
-                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-950 text-blue-300 border border-blue-500/30">
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-950 text-amber-300 border border-amber-500/30">
                       PROCESS
                     </span>
                     <span class="text-[9px] font-mono text-slate-500">{{ getPhotosForItemStage(item.id, 'PROCESS').length }} Foto</span>
@@ -355,11 +613,11 @@
                       v-for="p in getPhotosForItemStage(item.id, 'PROCESS')"
                       :key="p.id"
                       class="h-32 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
-                      @click="activeLightboxPhoto = p"
+                      @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="Process" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
                       <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono">
-                        <span class="text-purple-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                        <span class="text-amber-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
                     </div>
                   </div>
@@ -381,11 +639,11 @@
                       v-for="p in getPhotosForItemStage(item.id, 'AFTER')"
                       :key="p.id"
                       class="h-32 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
-                      @click="activeLightboxPhoto = p"
+                      @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
                       <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono">
-                        <span class="text-purple-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
+                        <span class="text-emerald-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
                     </div>
                   </div>
@@ -397,113 +655,131 @@
             </div>
           </div>
 
-          <!-- MODE 2: FLAT PHOTO GRID -->
-          <div v-else class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
-            <div v-if="filteredPhotos.length === 0" class="py-12 text-center text-xs text-slate-500">
-              <Camera class="w-8 h-8 mx-auto mb-2 text-slate-700" />
-              <p>Belum ada foto dokumentasi untuk tahap yang dipilih.</p>
+          <!-- ======================================================== -->
+          <!-- MODE 3: ALL PHOTOS FLAT GALLERY                          -->
+          <!-- ======================================================== -->
+          <div v-else-if="activeViewMode === 'ALL_PHOTOS'" class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-300">Filter Tahapan:</span>
+                <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-[11px] font-bold">
+                  <button
+                    v-for="st in ['ALL', 'BEFORE', 'PROCESS', 'AFTER']"
+                    :key="st"
+                    type="button"
+                    @click="activeStage = st"
+                    :class="[
+                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
+                      activeStage === st ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                    ]"
+                  >
+                    {{ st }}
+                  </button>
+                </div>
+              </div>
+              <span class="text-xs font-mono text-slate-400">{{ filteredPhotos.length }} Foto Ditampilkan</span>
             </div>
 
-            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div v-if="filteredPhotos.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               <div
-                v-for="photo in filteredPhotos"
-                :key="photo.id"
-                class="group relative bg-slate-950 border border-slate-800 hover:border-purple-500/50 rounded-2xl overflow-hidden transition-all duration-300 shadow-md flex flex-col"
+                v-for="p in filteredPhotos"
+                :key="p.id"
+                class="rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 group cursor-pointer relative shadow-sm"
+                @click="openLightbox(p)"
               >
-                <!-- Photo Image -->
-                <div class="relative aspect-4/3 overflow-hidden bg-slate-900 cursor-pointer" @click="activeLightboxPhoto = photo">
-                  <img
-                    :src="getFileUrl(photo.file_path)"
-                    :alt="`Dokumentasi ${photo.stage}`"
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                    @error="$event.target.src = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500&auto=format&fit=crop&q=60'"
-                  />
-
-                  <!-- Stage Badge -->
-                  <div class="absolute top-2 left-2">
-                    <span
-                      :class="[
-                        'px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-md',
-                        photo.stage === 'BEFORE' ? 'bg-amber-950/90 text-amber-300 border-amber-500/40' :
-                        photo.stage === 'PROCESS' ? 'bg-blue-950/90 text-blue-300 border-blue-500/40' :
-                        'bg-emerald-950/90 text-emerald-300 border-emerald-500/40'
-                      ]"
-                    >
-                      {{ photo.stage }}
-                    </span>
-                  </div>
-
-                  <!-- Hover Overlay Icon -->
-                  <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                    <Maximize2 class="w-6 h-6 drop-shadow-md" />
-                  </div>
+                <div class="h-36 sm:h-44 w-full bg-slate-900 relative overflow-hidden">
+                  <img :src="getFileUrl(p.file_path)" :alt="p.stage" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                  <span
+                    :class="[
+                      'absolute top-2 left-2 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm border',
+                      p.stage === 'BEFORE' ? 'bg-blue-600 text-white border-blue-400' :
+                      p.stage === 'PROCESS' ? 'bg-amber-500 text-slate-950 border-amber-300' :
+                      'bg-emerald-600 text-white border-emerald-400'
+                    ]"
+                  >
+                    {{ p.stage }}
+                  </span>
                 </div>
+                <div class="p-2.5 space-y-1 text-[10px]">
+                  <p class="font-bold text-slate-200 truncate">{{ p.item_name || 'Sub-Item' }}</p>
+                  <p class="text-slate-400 font-mono text-[9px] truncate">🕒 {{ p.captured_at || '-' }}</p>
+                </div>
+              </div>
+            </div>
+            <div v-else class="py-12 text-center text-slate-500 text-xs">
+              Tidak ada foto untuk tahapan {{ activeStage }}.
+            </div>
+          </div>
+        </div>
 
-                <!-- Photo Metadata Card -->
-                <div class="p-3 bg-slate-900/90 border-t border-slate-800 text-[11px] space-y-1.5 flex-1 flex flex-col justify-between">
-                  <div class="space-y-0.5">
-                    <div class="flex items-center justify-between text-slate-400 font-mono text-[10px]">
-                      <span class="flex items-center gap-1">
-                        <Clock class="w-3 h-3 text-slate-500" />
-                        {{ photo.captured_at || '-' }}
-                      </span>
-                      <span v-if="isValidGps(photo.latitude)" class="text-purple-300 font-bold flex items-center gap-1">
-                        <MapPin class="w-3 h-3 text-purple-400" />
-                        <span>{{ Number(photo.latitude).toFixed(4) }}, {{ Number(photo.longitude).toFixed(4) }}</span>
-                      </span>
-                      <span v-else class="text-purple-400">
-                        GPS ✓
-                      </span>
-                    </div>
-                    <p v-if="photo.notes" class="text-slate-300 line-clamp-2 text-xs pt-1">{{ photo.notes }}</p>
-                  </div>
+        <!-- Lightbox Modal Fullscreen with Next & Previous Navigation -->
+        <Teleport to="body">
+          <div
+            v-if="activeLightboxPhoto"
+            class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+            @click.self="activeLightboxPhoto = null"
+          >
+            <button
+              type="button"
+              @click="activeLightboxPhoto = null"
+              class="absolute top-4 right-4 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-10"
+            >
+              <X class="w-6 h-6" />
+            </button>
 
-                  <div v-if="photo.file_hash" class="pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[9px] font-mono text-slate-500">
-                    <span class="truncate">Hash: {{ photo.file_hash.substring(0, 14) }}...</span>
-                    <span class="text-emerald-400 shrink-0 font-bold">Terverifikasi</span>
-                  </div>
+            <!-- Previous Button -->
+            <button
+              v-if="canNavigateLightbox('prev')"
+              type="button"
+              @click.stop="navigateLightbox(-1)"
+              class="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer z-10 hidden sm:flex items-center justify-center"
+            >
+              ❮
+            </button>
+
+            <!-- Next Button -->
+            <button
+              v-if="canNavigateLightbox('next')"
+              type="button"
+              @click.stop="navigateLightbox(1)"
+              class="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer z-10 hidden sm:flex items-center justify-center"
+            >
+              ❯
+            </button>
+
+            <div class="max-w-4xl max-h-[90vh] flex flex-col items-center select-none">
+              <img
+                :src="getFileUrl(activeLightboxPhoto.file_path)"
+                :alt="`Bukti ${activeLightboxPhoto.stage}`"
+                class="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10 mb-3"
+              />
+              <div class="text-center text-xs text-slate-300 space-y-1.5 bg-slate-900/90 border border-slate-800 px-5 py-3 rounded-2xl backdrop-blur-md">
+                <div class="flex items-center justify-center gap-2">
+                  <span
+                    :class="[
+                      'px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase',
+                      activeLightboxPhoto.stage === 'BEFORE' ? 'bg-blue-600 text-white' :
+                      activeLightboxPhoto.stage === 'PROCESS' ? 'bg-amber-500 text-slate-950' :
+                      'bg-emerald-600 text-white'
+                    ]"
+                  >
+                    {{ activeLightboxPhoto.stage }}
+                  </span>
+                  <span class="font-bold text-sm text-white">{{ activeLightboxPhoto.item_name || 'Dokumentasi Evidensi' }}</span>
+                </div>
+                <p v-if="activeLightboxPhoto.notes" class="text-slate-300">{{ activeLightboxPhoto.notes }}</p>
+                <div class="font-mono text-[11px] text-slate-400 flex flex-wrap items-center justify-center gap-3">
+                  <span>🕒 {{ activeLightboxPhoto.captured_at || '-' }}</span>
+                  <span>📍 GPS: {{ isValidGps(activeLightboxPhoto.latitude) ? `${Number(activeLightboxPhoto.latitude).toFixed(5)}, ${Number(activeLightboxPhoto.longitude).toFixed(5)}` : 'Terverifikasi Lokasi' }}</span>
+                  <span v-if="activeLightboxPhoto.file_hash" class="text-[10px] text-slate-500">🔒 SHA: {{ activeLightboxPhoto.file_hash.substring(0, 16) }}...</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Teleport>
 
       </div>
     </main>
-
-    <!-- Photo Lightbox Modal -->
-    <Teleport to="body">
-      <div
-        v-if="activeLightboxPhoto"
-        class="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4 animate-fade-in"
-        @click.self="activeLightboxPhoto = null"
-      >
-        <button
-          @click="activeLightboxPhoto = null"
-          class="absolute top-4 right-4 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-        >
-          <X class="w-6 h-6" />
-        </button>
-
-        <div class="max-w-4xl max-h-[85vh] flex flex-col items-center">
-          <img
-            :src="getFileUrl(activeLightboxPhoto.file_path)"
-            :alt="`Bukti ${activeLightboxPhoto.stage}`"
-            class="max-w-full max-h-[75vh] object-contain rounded-xl shadow-2xl border border-white/10 mb-3"
-          />
-          <div class="text-center text-xs text-slate-300 space-y-1">
-            <div class="font-bold text-sm text-white">
-              Tahap: <span class="text-purple-400 uppercase font-black">{{ activeLightboxPhoto.stage }}</span>
-            </div>
-            <p v-if="activeLightboxPhoto.notes">{{ activeLightboxPhoto.notes }}</p>
-            <p class="font-mono text-[11px] text-slate-400">
-              Waktu: {{ activeLightboxPhoto.captured_at || '-' }} | GPS: {{ isValidGps(activeLightboxPhoto.latitude) ? `${Number(activeLightboxPhoto.latitude).toFixed(5)}, ${Number(activeLightboxPhoto.longitude).toFixed(5)}` : 'Terverifikasi Lokasi Cabang' }}
-            </p>
-          </div>
-        </div>
-      </div>
-    </Teleport>
 
     <!-- Footer -->
     <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500 bg-slate-950">
@@ -515,8 +791,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { RefreshCw, Loader2, ShieldAlert, Home, Building2, User, Calendar, MapPin, Activity, Camera, Maximize2, Clock, CheckSquare, X } from 'lucide-vue-next';
+import { ref, computed, onMounted, watch } from 'vue';
+import { 
+  RefreshCw, Loader2, ShieldAlert, Home, Building2, User, Calendar, 
+  MapPin, Activity, Camera, Maximize2, Clock, CheckSquare, X,
+  Layers, ListFilter, LayoutGrid
+} from 'lucide-vue-next';
 import { api, getFileUrl } from '../../services/api';
 
 const props = defineProps({
@@ -530,7 +810,9 @@ const loading = ref(true);
 const errorMessage = ref('');
 const wo = ref(null);
 const activeStage = ref('ALL');
-const activeViewMode = ref('BY_ITEM'); // 'BY_ITEM' | 'ALL_PHOTOS'
+const activeViewMode = ref('FOCUSED_TAB'); // 'FOCUSED_TAB' | 'ACCORDION' | 'ALL_PHOTOS'
+const selectedItemId = ref('default');
+const mobileSubStage = ref('ALL'); // 'ALL' | 'COMPARE'
 const activeLightboxPhoto = ref(null);
 
 function isValidGps(val) {
@@ -549,16 +831,49 @@ const displayItems = computed(() => {
   }];
 });
 
+// Automatically set selected item when data arrives
+watch(displayItems, (newItems) => {
+  if (newItems && newItems.length > 0 && selectedItemId.value === 'default') {
+    selectedItemId.value = newItems[0].id ?? 'default';
+  }
+}, { immediate: true });
+
+const currentSelectedItem = computed(() => {
+  const items = displayItems.value;
+  if (!items || items.length === 0) return null;
+  if (selectedItemId.value === 'default') return items[0];
+  return items.find(i => (i.id ?? 'default') === selectedItemId.value) || items[0];
+});
+
+function getCurrentItemIndex(itemId) {
+  const items = displayItems.value;
+  return items.findIndex(i => i.id === itemId);
+}
+
+// Strict Photo Filtering per Sub-Task Stage
 function getPhotosForItemStage(itemId, stage) {
   const photos = wo.value?.photos || [];
+  const items = displayItems.value;
+  const isFirstItem = items.length > 0 && items[0].id === itemId;
+
   return photos.filter(p => {
-    const stageMatch = p.stage === stage;
-    if (!stageMatch) return false;
-    if (itemId) {
-      return p.item_id === itemId || !p.item_id;
+    if (p.stage !== stage) return false;
+    
+    // Strict match if photo is tied to an item_id
+    if (p.item_id != null) {
+      return Number(p.item_id) === Number(itemId);
     }
-    return true;
+    
+    // Legacy unassigned photo: attach ONLY to the first item (or if only 1 item exists)
+    return isFirstItem || !itemId;
   });
+}
+
+function getTotalPhotosForItem(itemId) {
+  const before = getPhotosForItemStage(itemId, 'BEFORE').length;
+  const process = getPhotosForItemStage(itemId, 'PROCESS').length;
+  const after = getPhotosForItemStage(itemId, 'AFTER').length;
+  return before + process + after;
 }
 
 function isItemCompleted(item) {
@@ -571,6 +886,32 @@ const filteredPhotos = computed(() => {
   if (activeStage.value === 'ALL') return wo.value.photos;
   return wo.value.photos.filter(p => p.stage === activeStage.value);
 });
+
+// Lightbox Navigation Functions
+function openLightbox(photo) {
+  activeLightboxPhoto.value = photo;
+}
+
+function canNavigateLightbox(direction) {
+  const photos = wo.value?.photos || [];
+  if (!activeLightboxPhoto.value || photos.length <= 1) return false;
+  const idx = photos.findIndex(p => p.id === activeLightboxPhoto.value.id);
+  if (idx === -1) return false;
+  if (direction === 'prev') return idx > 0;
+  if (direction === 'next') return idx < photos.length - 1;
+  return true;
+}
+
+function navigateLightbox(step) {
+  const photos = wo.value?.photos || [];
+  if (!activeLightboxPhoto.value || photos.length === 0) return;
+  const idx = photos.findIndex(p => p.id === activeLightboxPhoto.value.id);
+  if (idx === -1) return;
+  const nextIdx = idx + step;
+  if (nextIdx >= 0 && nextIdx < photos.length) {
+    activeLightboxPhoto.value = photos[nextIdx];
+  }
+}
 
 function getStatusBadgeClass(status) {
   switch (status) {
