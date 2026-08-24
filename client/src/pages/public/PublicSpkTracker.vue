@@ -10,7 +10,7 @@
     <header class="border-b border-amber-500/20 bg-[#111827]/90 backdrop-blur-2xl sticky top-0 z-40 px-4 py-3 sm:py-3.5 shadow-xl shadow-black/40">
       <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <!-- Logo Resmi Perusahaan (Gold Emblem) -->
+          <!-- Logo Resmi SGX (Kontraktor Pelaksana) -->
           <div class="flex items-center">
             <img
               src="/sgx_logo.png"
@@ -18,6 +18,25 @@
               class="h-9 sm:h-11 w-9 sm:w-11 object-contain rounded-2xl shadow-lg shadow-amber-500/20 border border-[#EDC80A]/40"
             />
           </div>
+
+          <!-- Co-Branding Partner: Logo Perusahaan Klien jika ada -->
+          <template v-if="wo?.vendor?.logo_url">
+            <div class="hidden sm:flex items-center text-[#EDC80A]/50 font-mono text-sm px-1">✕</div>
+            <div class="hidden sm:flex items-center gap-2.5 pl-1 border-l border-slate-700/60">
+              <div class="h-9 sm:h-10 w-9 sm:w-10 rounded-xl bg-white/95 p-1 border border-white/60 shadow-md flex items-center justify-center overflow-hidden shrink-0">
+                <img
+                  :src="getFileUrl(wo.vendor.logo_url)"
+                  :alt="wo.vendor?.name"
+                  class="w-full h-full object-contain"
+                />
+              </div>
+              <div class="flex flex-col">
+                <span class="text-[9px] font-bold text-[#EDC80A] uppercase tracking-wider">Pemberi Tugas</span>
+                <span class="text-xs font-bold text-slate-100 truncate max-w-[160px]">{{ wo.vendor.name }}</span>
+              </div>
+            </div>
+          </template>
+
           <div class="flex flex-col">
             <div class="flex items-center gap-1.5 flex-wrap">
               <h1 class="font-black text-xs sm:text-sm text-white tracking-tight flex items-center gap-1.5">
@@ -88,13 +107,53 @@
       <!-- Loaded Work Order Tracking View -->
       <div v-else-if="wo" class="space-y-6 animate-fade-in">
         
-        <!-- Work Order Hero Card (Luxury Dark Glassmorphic) -->
+        <!-- Work Order Hero Card (Luxury Dark Glassmorphic with Client Branding) -->
         <div class="bg-[#111827]/90 border border-amber-500/20 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-2xl relative overflow-hidden space-y-5">
           <!-- Background Glow Accent -->
           <div class="absolute -top-24 -right-24 w-72 h-72 bg-[#EDC80A]/10 rounded-full blur-3xl pointer-events-none"></div>
           <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-[#F59E0B]/10 rounded-full blur-3xl pointer-events-none"></div>
 
-          <!-- Header Section -->
+          <!-- Client Corporate Banner Header (Co-Branding Showcase) -->
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-[#0B0F19]/90 via-[#1E1E1D]/60 to-transparent border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner">
+            <div class="flex items-center gap-3.5">
+              <!-- Frame Logo Perusahaan Klien -->
+              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white p-1.5 border border-white/80 shadow-md flex items-center justify-center overflow-hidden shrink-0">
+                <img
+                  v-if="wo.vendor?.logo_url"
+                  :src="getFileUrl(wo.vendor.logo_url)"
+                  :alt="wo.vendor?.name"
+                  class="w-full h-full object-contain"
+                />
+                <Building2 v-else class="w-6 h-6 text-slate-700" />
+              </div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-[#EDC80A] text-[#1E1E1D]">
+                    PEMBERI TUGAS / CLIENT
+                  </span>
+                  <span v-if="wo.vendor?.code" class="text-[10px] font-mono text-slate-400">
+                    ID: {{ wo.vendor.code }}
+                  </span>
+                </div>
+                <h3 class="text-sm sm:text-base font-black text-white tracking-tight">
+                  {{ wo.vendor?.name || 'Klien Mitra Resmi SGX' }}
+                </h3>
+                <p v-if="wo.vendor?.address" class="text-[10px] text-slate-400 truncate max-w-md">
+                  📍 {{ wo.vendor.address }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Kontraktor Badge Pelaksana -->
+            <div class="flex items-center gap-2 self-start sm:self-auto text-[11px] font-medium text-slate-400">
+              <span>Pelaksana Resmi:</span>
+              <span class="font-bold text-[#EDC80A] bg-[#0B0F19] px-2.5 py-1 rounded-lg border border-[#EDC80A]/30">
+                PT Sinar Kreasindo Bencoolen
+              </span>
+            </div>
+          </div>
+
+          <!-- Header Section: SPK Number & Store Title -->
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
             <div class="space-y-1.5">
               <div class="flex items-center gap-2 flex-wrap">
@@ -320,12 +379,25 @@
         >
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex items-start gap-3.5">
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EDC80A] to-amber-600 text-[#1E1E1D] flex items-center justify-center font-black shadow-lg shadow-amber-500/25 shrink-0">
-                <FileCheck2 class="w-6 h-6" />
+              <!-- Dual Seal: SGX Emblem + Client Logo -->
+              <div class="flex items-center -space-x-2 shrink-0">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#EDC80A] to-amber-600 text-[#1E1E1D] flex items-center justify-center font-black shadow-lg shadow-amber-500/25 z-10">
+                  <FileCheck2 class="w-6 h-6" />
+                </div>
+                <div
+                  v-if="wo.vendor?.logo_url"
+                  class="w-12 h-12 rounded-2xl bg-white p-1.5 border-2 border-[#EDC80A] shadow-lg flex items-center justify-center overflow-hidden z-20"
+                >
+                  <img
+                    :src="getFileUrl(wo.vendor.logo_url)"
+                    :alt="wo.vendor?.name"
+                    class="w-full h-full object-contain"
+                  />
+                </div>
               </div>
               <div>
                 <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#EDC80A]/20 text-[#EDC80A] text-[10px] font-black border border-[#EDC80A]/40 uppercase tracking-wider mb-1">
-                  <span>Dokumen Sah & Tersertifikasi</span>
+                  <span>Dokumen Sah Dua Pihak: {{ wo.vendor?.name || 'Client' }} × SGX</span>
                 </div>
                 <h4 class="text-base sm:text-lg font-black text-white tracking-tight">
                   Berita Acara (BA) Opname Fisik Telah Diterbitkan

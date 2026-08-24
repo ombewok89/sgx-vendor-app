@@ -47,7 +47,7 @@ class PublicTrackingController extends Controller
                 ->orWhere('spk_number', $cleanSpk)
                 ->orWhere('id', is_numeric($normalizedToken) ? (int)$normalizedToken : 0)
                 ->with([
-                    'vendor:id,name,code,address',
+                    'vendor:id,name,code,address,logo_url,banner_url,npwp,website',
                     'area:id,name',
                     'jobType:id,name,code',
                     'pic:id,name',
@@ -100,6 +100,10 @@ class PublicTrackingController extends Controller
                         'name' => $workOrder->vendor?->name ?? 'Client',
                         'code' => $workOrder->vendor?->code,
                         'address' => $workOrder->vendor?->address,
+                        'logo_url' => $workOrder->vendor?->logo_url,
+                        'banner_url' => $workOrder->vendor?->banner_url,
+                        'npwp' => $workOrder->vendor?->npwp,
+                        'website' => $workOrder->vendor?->website,
                     ],
                     'pic' => [
                         'name' => $workOrder->pic?->name ?? 'Tim Lapangan',
