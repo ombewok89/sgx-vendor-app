@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendWhatsAppNotificationJob;
 use App\Models\NotificationFeed;
 use App\Models\User;
 use App\Models\WorkOrder;
@@ -40,6 +41,36 @@ class WhatsAppNotificationDispatcher
     }
 
     /**
+     * Helper to queue messages with human-like randomized spacing and spintax.
+     */
+    private static function queueWhatsAppBatch(array $recipients, string $spintaxTemplate, string $eventType, ?int $workOrderId = null): void
+    {
+        $recipients = array_unique(array_filter($recipients));
+        if (empty($recipients)) {
+            return;
+        }
+
+        $cumulativeDelay = 0;
+        foreach ($recipients as $phone) {
+            // 1. Render dynamic Spintax for this specific recipient
+            $renderedText = FonnteService::renderSpintax($spintaxTemplate);
+
+            // 2. Dispatch to Laravel Queue with staggered delay (5-12 seconds interval)
+            SendWhatsAppNotificationJob::dispatch(
+                $phone,
+                $renderedText,
+                $eventType,
+                ['work_order_id' => $workOrderId],
+                $workOrderId,
+                rand(1, 4) // Jitter
+            )->delay(now()->addSeconds($cumulativeDelay));
+
+            // Increment delay for the next recipient to prevent concurrent burst floods
+            $cumulativeDelay += rand(5, 12);
+        }
+    }
+
+    /**
      * 1. Trigger when a Work Order is Assigned to Field Team
      */
     public static function onSpkAssigned(WorkOrder $workOrder): void
@@ -58,7 +89,7 @@ class WhatsAppNotificationDispatcher
                 'message' => "Surat Perintah Kerja {$workOrder->spk_number} ({$workOrder->location_name}) telah ditugaskan ke {$workOrder->pic?->name}.",
             ]);
 
-            // 2. Dispatch WhatsApp Notification
+            // 2. Prepare WhatsApp Recipients
             $recipients = [];
             if ($workOrder->pic?->phone) {
                 $recipients[] = $workOrder->pic->phone;
@@ -68,30 +99,24 @@ class WhatsAppNotificationDispatcher
                     $recipients[] = $assignee->phone;
                 }
             }
-            $recipients = array_unique(array_filter($recipients));
-
-            if (empty($recipients)) {
-                return;
-            }
 
             $picName = $workOrder->pic?->name ?? 'Tim Lapangan';
             $clientName = $workOrder->vendor?->name ?? 'Client';
             $areaName = $workOrder->area?->name ?? '-';
             $deadline = $workOrder->deadline ? date('d/m/Y', strtotime($workOrder->deadline)) : '-';
+            $greeting = FonnteService::getTimeGreeting($picName);
 
-            $msg = "📋 *PENUGASAN SPK BARU — PT SINAR GRAHA KREATIF*\n\n"
-                 . "Halo *{$picName}*, Anda telah ditugaskan untuk pengerjaan:\n"
-                 . "• *No. SPK:* {$workOrder->spk_number}\n"
-                 . "• *Judul:* {$workOrder->title}\n"
-                 . "• *Lokasi:* {$workOrder->location_name} ({$areaName})\n"
-                 . "• *Klien:* {$clientName}\n"
-                 . "• *Batas Waktu (SLA):* {$deadline}\n\n"
-                 . "Mohon segera lakukan Check-In GPS di lokasi cabang dan unggah foto dokumentasi (Before/Process/After).\n"
-                 . "🔗 *Aplikasi:* https://vendor.sinargrafika.my.id/";
+            $spintax = "{📋 *PENUGASAN SPK BARU*|📌 *ORDER KERJA BARU*|📝 *INFORMASI PENUGASAN SPK*} — *PT SINAR KREASINDO BENCOOLEN*\n\n"
+                     . "{$greeting}, Anda telah ditugaskan untuk pengerjaan:\n"
+                     . "• *No. SPK:* {$workOrder->spk_number}\n"
+                     . "• *Judul:* {$workOrder->title}\n"
+                     . "• *Lokasi:* {$workOrder->location_name} ({$areaName})\n"
+                     . "• *Klien:* {$clientName}\n"
+                     . "• *Target SLA:* {$deadline}\n\n"
+                     . "{Mohon segera lakukan Check-In GPS di lokasi cabang dan unggah foto dokumentasi (Before/Process/After).|Harap menuju lokasi cabang, lakukan Presensi Check-In GPS dan ambil foto evidensi fisik.|Silakan lakukan verifikasi lokasi via Check-In GPS serta upload dokumentasi pengerjaan.}\n"
+                     . "🔗 *Aplikasi:* https://vendor.sinargrafika.my.id/";
 
-            foreach ($recipients as $phone) {
-                FonnteService::sendMessage($phone, $msg, 'SPK_ASSIGNED');
-            }
+            self::queueWhatsAppBatch($recipients, $spintax, 'SPK_ASSIGNED', $workOrder->id);
         } catch (\Throwable $e) {
             Log::error('WA onSpkAssigned failed: ' . $e->getMessage());
         }
@@ -122,21 +147,18 @@ class WhatsAppNotificationDispatcher
 
             // 2. Dispatch WhatsApp Notification
             $adminPhones = self::getAdminSupervisorPhones();
-            if (empty($adminPhones)) {
-                return;
-            }
+            $greeting = FonnteService::getTimeGreeting();
 
-            $msg = "📍 *PRESENSI GPS CHECK-IN LAPANGAN*\n\n"
-                 . "• *No. SPK:* {$workOrder->spk_number}\n"
-                 . "• *Lokasi Toko:* {$workOrder->location_name}\n"
-                 . "• *Teknisi:* {$userName}{$userPhone}\n"
-                 . "• *Waktu:* {$waktu} WIB\n"
-                 . "• *Koordinat:* {$lat}, {$lng} (Akurasi: ±{$accuracy}m)\n\n"
-                 . "Teknisi telah terkonfirmasi berada di radius lokasi cabang pekerjaan.";
+            $spintax = "{📍 *PRESENSI GPS CHECK-IN LAPANGAN*|📌 *KONFIRMASI KEHADIRAN CABANG*|🛰️ *LOG PRESENSI GPS TEKNISI*}\n\n"
+                     . "{$greeting}, berikut update kehadiran teknisi di lokasi:\n"
+                     . "• *No. SPK:* {$workOrder->spk_number}\n"
+                     . "• *Lokasi Toko:* {$workOrder->location_name}\n"
+                     . "• *Teknisi:* {$userName}{$userPhone}\n"
+                     . "• *Waktu:* {$waktu} WIB\n"
+                     . "• *Koordinat:* {$lat}, {$lng} (Akurasi: ±{$accuracy}m)\n\n"
+                     . "{Teknisi telah terkonfirmasi berada di radius lokasi cabang pekerjaan.|Presensi lokasi telah tervalidasi via satelit GPS.|Tim lapangan telah tiba di lokasi dan siap memulai pengerjaan.}";
 
-            foreach ($adminPhones as $phone) {
-                FonnteService::sendMessage($phone, $msg, 'GPS_CHECKIN');
-            }
+            self::queueWhatsAppBatch($adminPhones, $spintax, 'GPS_CHECKIN', $workOrder->id);
         } catch (\Throwable $e) {
             Log::error('WA onGpsCheckIn failed: ' . $e->getMessage());
         }
@@ -174,21 +196,18 @@ class WhatsAppNotificationDispatcher
             \Illuminate\Support\Facades\Cache::put($throttleKey, true, now()->addMinutes(15));
 
             $adminPhones = self::getAdminSupervisorPhones();
-            if (empty($adminPhones)) {
-                return;
-            }
+            $greeting = FonnteService::getTimeGreeting();
 
-            $msg = "📷 *PROGRES DOKUMENTASI FOTO LAPANGAN*\n\n"
-                 . "• *No. SPK:* {$workOrder->spk_number}\n"
-                 . "• *Lokasi Toko:* {$workOrder->location_name}\n"
-                 . "• *Tahap Terkini:* {$stage}\n"
-                 . "• *Teknisi:* {$userName}\n"
-                 . "• *Waktu:* {$waktu} WIB\n\n"
-                 . "Tim lapangan sedang aktif mendokumentasikan progres foto di lokasi pekerjaan.";
+            $spintax = "{📷 *PROGRES DOKUMENTASI FOTO LAPANGAN*|📸 *UPDATE EVIDENSI FISIK TOKO*|🖼️ *LOG UPLOAD FOTO PROYEK*}\n\n"
+                     . "{$greeting}, terdapat pembaruan foto bukti pekerjaan:\n"
+                     . "• *No. SPK:* {$workOrder->spk_number}\n"
+                     . "• *Lokasi Toko:* {$workOrder->location_name}\n"
+                     . "• *Tahap Terkini:* {$stage}\n"
+                     . "• *Teknisi:* {$userName}\n"
+                     . "• *Waktu:* {$waktu} WIB\n\n"
+                     . "{Tim lapangan sedang aktif mendokumentasikan progres foto di lokasi pekerjaan.|Evidensi visual baru telah masuk dan tersimpan pada sistem.|Dokumentasi fisik telah diperbarui oleh tim teknisi.}";
 
-            foreach ($adminPhones as $phone) {
-                FonnteService::sendMessage($phone, $msg, 'EVIDENCE_UPLOAD');
-            }
+            self::queueWhatsAppBatch($adminPhones, $spintax, 'EVIDENCE_UPLOAD', $workOrder->id);
         } catch (\Throwable $e) {
             Log::error('WA onEvidenceUpload failed: ' . $e->getMessage());
         }
@@ -217,22 +236,19 @@ class WhatsAppNotificationDispatcher
 
             // 2. Dispatch WhatsApp Notification
             $adminPhones = self::getAdminSupervisorPhones();
-            if (empty($adminPhones)) {
-                return;
-            }
+            $greeting = FonnteService::getTimeGreeting();
 
-            $msg = "⚠️ *LAPORAN KENDALA LAPANGAN (URGENT)*\n\n"
-                 . "• *No. SPK:* {$workOrder->spk_number}\n"
-                 . "• *Lokasi Toko:* {$workOrder->location_name}\n"
-                 . "• *Kategori Kendala:* {$category}\n"
-                 . "• *Pelapor:* {$userName}\n"
-                 . "• *Waktu:* {$waktu} WIB\n"
-                 . "• *Rincian Kendala:* {$desc}\n\n"
-                 . "Mohon tindak lanjut dan koordinasi segera dengan tim lapangan terkait.";
+            $spintax = "{⚠️ *LAPORAN KENDALA LAPANGAN (URGENT)*|🚨 *PEMBERITAHUAN KENDALA TEKNIS*|⚡ *LAPORAN MASALAH LAPANGAN*}\n\n"
+                     . "{$greeting}, tim lapangan melaporkan adanya kendala kerja:\n"
+                     . "• *No. SPK:* {$workOrder->spk_number}\n"
+                     . "• *Lokasi Toko:* {$workOrder->location_name}\n"
+                     . "• *Kategori Kendala:* {$category}\n"
+                     . "• *Pelapor:* {$userName}\n"
+                     . "• *Waktu:* {$waktu} WIB\n"
+                     . "• *Rincian Kendala:* {$desc}\n\n"
+                     . "{Mohon tindak lanjut dan koordinasi segera dengan tim lapangan terkait.|Harap segera dilakukan evaluasi dan tindak lanjut penanganan.|Pemberitahuan ini membutuhkan perhatian tim pengawas/admin.}";
 
-            foreach ($adminPhones as $phone) {
-                FonnteService::sendMessage($phone, $msg, 'ISSUE_REPORTED');
-            }
+            self::queueWhatsAppBatch($adminPhones, $spintax, 'ISSUE_REPORTED', $workOrder->id);
         } catch (\Throwable $e) {
             Log::error('WA onIssueReported failed: ' . $e->getMessage());
         }
@@ -261,31 +277,71 @@ class WhatsAppNotificationDispatcher
 
             // 2. Dispatch WhatsApp Notification
             $adminPhones = self::getAdminSupervisorPhones();
-            if (empty($adminPhones)) {
-                return;
-            }
+            $greeting = FonnteService::getTimeGreeting();
 
-            $msg = "✅ *PENGAJUAN REVIEW HASIL PEKERJAAN*\n\n"
-                 . "• *No. SPK:* {$workOrder->spk_number}\n"
-                 . "• *Judul:* {$workOrder->title}\n"
-                 . "• *Lokasi:* {$workOrder->location_name}\n"
-                 . "• *Klien:* {$clientName}\n"
-                 . "• *Diajukan Oleh:* {$userName}\n"
-                 . "• *Total Foto Bukti:* {$totalPhotos} foto\n"
-                 . "• *Waktu:* {$waktu} WIB\n\n"
-                 . "Tim lapangan telah menyelesaikan seluruh pekerjaan fisik dan mengajukan SPK untuk direview.\n"
-                 . "🔗 *Buka Review:* https://vendor.sinargrafika.my.id/";
+            $spintax = "{✅ *PENGAJUAN REVIEW HASIL PEKERJAAN*|🏁 *PEKERJAAN LAPANGAN SELESAI (SIAP REVIEW)*|📋 *PENGAJUAN APPROVAL SPK*}\n\n"
+                     . "{$greeting}, tim lapangan telah menyelesaikan pekerjaan fisik:\n"
+                     . "• *No. SPK:* {$workOrder->spk_number}\n"
+                     . "• *Judul:* {$workOrder->title}\n"
+                     . "• *Lokasi:* {$workOrder->location_name}\n"
+                     . "• *Klien:* {$clientName}\n"
+                     . "• *Diajukan Oleh:* {$userName}\n"
+                     . "• *Total Foto Bukti:* {$totalPhotos} foto\n"
+                     . "• *Waktu:* {$waktu} WIB\n\n"
+                     . "{Tim lapangan telah menyelesaikan seluruh pekerjaan fisik dan mengajukan SPK untuk direview.|Seluruh evidensi telah lengkap dan menunggu approval pengawas.|Silakan lakukan peninjauan hasil kerja untuk penerbitan Berita Acara.}\n"
+                     . "🔗 *Buka Review:* https://vendor.sinargrafika.my.id/";
 
-            foreach ($adminPhones as $phone) {
-                FonnteService::sendMessage($phone, $msg, 'SPK_SUBMITTED');
-            }
+            self::queueWhatsAppBatch($adminPhones, $spintax, 'SPK_SUBMITTED', $workOrder->id);
         } catch (\Throwable $e) {
             Log::error('WA onSpkSubmitted failed: ' . $e->getMessage());
         }
     }
 
     /**
-     * 6. Trigger when Berita Acara (BA) Opname is approved / issued
+     * 6. Trigger when Work Order is requested for revision by supervisor
+     */
+    public static function onRevisionRequested(WorkOrder $workOrder, string $reason, string $targetStage = 'ALL'): void
+    {
+        try {
+            $workOrder->loadMissing(['pic', 'vendor']);
+
+            // 1. Dispatch In-App Notification Feed
+            NotificationFeed::create([
+                'work_order_id' => $workOrder->id,
+                'client_id' => $workOrder->vendor_id,
+                'target_user_id' => $workOrder->pic_user_id,
+                'target_role' => 'ALL',
+                'category' => 'REVISION_REQUESTED',
+                'title' => "Permintaan Revisi: {$workOrder->spk_number}",
+                'message' => "Pekerjaan {$workOrder->location_name} memerlukan revisi/penyempurnaan mutu: {$reason}",
+            ]);
+
+            // 2. Dispatch WhatsApp to Field PIC
+            $recipients = [];
+            if ($workOrder->pic?->phone) {
+                $recipients[] = $workOrder->pic->phone;
+            }
+
+            $picName = $workOrder->pic?->name ?? 'Tim Lapangan';
+            $greeting = FonnteService::getTimeGreeting($picName);
+
+            $spintax = "{🔄 *PERMINTAAN REVISI / PENYEMPURNAAN MUTU*|⚠️ *CATATAN KONTROL MUTU PEKERJAAN*|🛠️ *PENYESUAIAN TEKNIS SPK*}\n\n"
+                     . "{$greeting}, hasil pengerjaan SPK berikut memerlukan penyempurnaan:\n"
+                     . "• *No. SPK:* {$workOrder->spk_number}\n"
+                     . "• *Lokasi:* {$workOrder->location_name}\n"
+                     . "• *Tahap Target:* {$targetStage}\n"
+                     . "• *Catatan Pengawas:* {$reason}\n\n"
+                     . "{Mohon segera lakukan perbaikan fisik di lokasi dan unggah foto dokumentasi terbaru.|Harap lengkapi evidensi sesuai arahan pengawas di atas.|Silakan perbaiki kekurangan pekerjaan dan submit ulang untuk diverifikasi.}\n"
+                     . "🔗 *Aplikasi:* https://vendor.sinargrafika.my.id/";
+
+            self::queueWhatsAppBatch($recipients, $spintax, 'REVISION_REQUESTED', $workOrder->id);
+        } catch (\Throwable $e) {
+            Log::error('WA onRevisionRequested failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 7. Trigger when Berita Acara (BA) Opname is approved / issued
      */
     public static function onBaIssued(WorkOrder $workOrder, $baDocument): void
     {
@@ -314,32 +370,28 @@ class WhatsAppNotificationDispatcher
             if ($workOrder->vendor?->phone) {
                 $recipients[] = $workOrder->vendor->phone;
             }
-            $recipients = array_unique(array_filter($recipients));
 
-            if (empty($recipients)) {
-                return;
-            }
+            $greeting = FonnteService::getTimeGreeting();
 
-            $msg = "📄 *BERITA ACARA (BA) OPNAME RESMI TERBIT*\n\n"
-                 . "• *No. BA:* {$baNumber}\n"
-                 . "• *No. SPK:* {$workOrder->spk_number}\n"
-                 . "• *Pekerjaan:* {$workOrder->title}\n"
-                 . "• *Lokasi Cabang:* {$workOrder->location_name}\n"
-                 . "• *Klien:* {$clientName}\n"
-                 . "• *Waktu Terbit:* {$waktu} WIB\n\n"
-                 . "Pekerjaan telah disetujui 100% dan Berita Acara (BA) digital resmi telah diterbitkan.\n"
-                 . "🔗 *Lihat Dokumen BA:* https://vendor.sinargrafika.my.id/";
+            $spintax = "{📄 *BERITA ACARA (BA) OPNAME RESMI TERBIT*|🏆 *PENGESAHAN DOKUMEN BERITA ACARA*|📜 *BA OPNAME SELESAI & SAH*}\n\n"
+                     . "{$greeting}, Berita Acara digital telah diterbitkan resmi:\n"
+                     . "• *No. BA:* {$baNumber}\n"
+                     . "• *No. SPK:* {$workOrder->spk_number}\n"
+                     . "• *Pekerjaan:* {$workOrder->title}\n"
+                     . "• *Lokasi Cabang:* {$workOrder->location_name}\n"
+                     . "• *Klien:* {$clientName}\n"
+                     . "• *Waktu Terbit:* {$waktu} WIB\n\n"
+                     . "{Pekerjaan telah disetujui 100% dan Berita Acara (BA) digital resmi telah diterbitkan.|Seluruh hasil kerja fisik telah tervalidasi dan sah secara administratif.|Dokumen BA resmi ber-QR Code siap diunduh untuk kelancaran penagihan.}\n"
+                     . "🔗 *Lihat Dokumen BA:* https://vendor.sinargrafika.my.id/";
 
-            foreach ($recipients as $phone) {
-                FonnteService::sendMessage($phone, $msg, 'BA_ISSUED');
-            }
+            self::queueWhatsAppBatch($recipients, $spintax, 'BA_ISSUED', $workOrder->id);
         } catch (\Throwable $e) {
             Log::error('WA onBaIssued failed: ' . $e->getMessage());
         }
     }
 
     /**
-     * 7. Trigger custom alert / Addendum Notification
+     * 8. Trigger custom alert / Addendum Notification
      */
     public static function onCustomAlert(WorkOrder $workOrder, string $message): void
     {
@@ -365,13 +417,7 @@ class WhatsAppNotificationDispatcher
             $adminPhones = self::getAdminSupervisorPhones();
             $recipients = array_unique(array_filter(array_merge($recipients, $adminPhones)));
 
-            if (empty($recipients)) {
-                return;
-            }
-
-            foreach ($recipients as $phone) {
-                FonnteService::sendMessage($phone, $message, 'CUSTOM_ALERT');
-            }
+            self::queueWhatsAppBatch($recipients, $message, 'CUSTOM_ALERT', $workOrder->id);
         } catch (\Throwable $e) {
             Log::error('WA onCustomAlert failed: ' . $e->getMessage());
         }

@@ -81,6 +81,56 @@ class FonnteService
     }
 
     /**
+     * Renders Spintax syntax {Option 1|Option 2|Option 3} into randomized human-like variations.
+     */
+    public static function renderSpintax(string $text): string
+    {
+        return preg_replace_callback('/\{([^{}]+)\}/', function ($matches) {
+            $options = explode('|', $matches[1]);
+            return trim($options[array_rand($options)]);
+        }, $text);
+    }
+
+    /**
+     * Generates a dynamic greeting based on current server time in WIB (Western Indonesian Time).
+     */
+    public static function getTimeGreeting(string $personName = ''): string
+    {
+        $hour = (int)date('H');
+        if ($hour >= 4 && $hour < 11) {
+            $greetings = ['Selamat Pagi', 'Pagi', 'Salam Pagi', 'Semangat Pagi'];
+        } elseif ($hour >= 11 && $hour < 15) {
+            $greetings = ['Selamat Siang', 'Siang', 'Salam Siang'];
+        } elseif ($hour >= 15 && $hour < 18) {
+            $greetings = ['Selamat Sore', 'Sore', 'Salam Sore'];
+        } else {
+            $greetings = ['Selamat Malam', 'Malam', 'Salam'];
+        }
+
+        $greeting = $greetings[array_rand($greetings)];
+        if (!empty(trim($personName))) {
+            return "{$greeting}, *{$personName}*";
+        }
+        return $greeting;
+    }
+
+    /**
+     * Appends an invisible-to-low-profile unique timestamp & reference signature to prevent spam hash duplicates.
+     */
+    public static function appendAntiSpamSignature(string $text, ?string $referenceId = null): string
+    {
+        // Don't append if already has a reference signature
+        if (str_contains($text, '_Ref: SGX-')) {
+            return $text;
+        }
+
+        $ref = !empty($referenceId) ? $referenceId : strtoupper(substr(md5(uniqid('', true)), 0, 6));
+        $timestamp = date('d/m/Y H:i:s') . ' WIB';
+        
+        return rtrim($text) . "\n\n_Ref: SGX-#{$ref} • {$timestamp}_";
+    }
+
+    /**
      * Checks if a specific notification event is enabled in system settings.
      */
     public static function isEventEnabled(string $messageType): bool
