@@ -361,56 +361,196 @@
                   </div>
                 </div>
 
-                <!-- Stage Tab Filters inside Sub-Item for Mobile -->
-                <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+                <!-- Stage Tab Filters inside Sub-Item for Mobile (Segmented Stage Pills) -->
+                <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs font-bold overflow-x-auto no-scrollbar scroll-smooth">
+                  <!-- 1. AFTER PILL (Hasil Akhir) -->
                   <button
                     type="button"
-                    @click="mobileSubStage = 'ALL'"
+                    @click="mobileSubStage = 'AFTER'"
                     :class="[
-                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px]',
-                      mobileSubStage === 'ALL' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                      'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px] whitespace-nowrap',
+                      mobileSubStage === 'AFTER'
+                        ? 'bg-gradient-to-r from-emerald-700 to-teal-600 text-white shadow-md shadow-emerald-900/30'
+                        : 'text-slate-400 hover:text-emerald-300'
                     ]"
                   >
-                    Semua ({{ getTotalPhotosForItem(currentSelectedItem.id) }})
+                    <Sparkles class="w-3.5 h-3.5" />
+                    <span>Sesudah ({{ getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length }})</span>
                   </button>
+
+                  <!-- 2. BEFORE PILL (Kondisi Awal) -->
+                  <button
+                    type="button"
+                    @click="mobileSubStage = 'BEFORE'"
+                    :class="[
+                      'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px] whitespace-nowrap',
+                      mobileSubStage === 'BEFORE'
+                        ? 'bg-gradient-to-r from-blue-700 to-indigo-600 text-white shadow-md shadow-blue-900/30'
+                        : 'text-slate-400 hover:text-blue-300'
+                    ]"
+                  >
+                    <Camera class="w-3.5 h-3.5" />
+                    <span>Sebelum ({{ getPhotosForItemStage(currentSelectedItem.id, 'BEFORE').length }})</span>
+                  </button>
+
+                  <!-- 3. PROCESS PILL (Pengerjaan) -->
+                  <button
+                    type="button"
+                    @click="mobileSubStage = 'PROCESS'"
+                    :class="[
+                      'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px] whitespace-nowrap',
+                      mobileSubStage === 'PROCESS'
+                        ? 'bg-gradient-to-r from-amber-700 to-orange-600 text-white shadow-md shadow-amber-900/30'
+                        : 'text-slate-400 hover:text-amber-300'
+                    ]"
+                  >
+                    <Layers class="w-3.5 h-3.5" />
+                    <span>Proses ({{ getPhotosForItemStage(currentSelectedItem.id, 'PROCESS').length }})</span>
+                  </button>
+
+                  <!-- 4. COMPARE PILL (Before vs After) -->
                   <button
                     type="button"
                     @click="mobileSubStage = 'COMPARE'"
                     :class="[
-                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer text-[11px]',
-                      mobileSubStage === 'COMPARE' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                      'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px] whitespace-nowrap',
+                      mobileSubStage === 'COMPARE'
+                        ? 'bg-gradient-to-r from-purple-800 to-indigo-700 text-white shadow-md shadow-purple-900/30'
+                        : 'text-slate-400 hover:text-purple-300'
                     ]"
                   >
-                    Before vs After
+                    <span>⚖️ Komparasi B/A</span>
+                  </button>
+
+                  <!-- 5. ALL PILL -->
+                  <button
+                    type="button"
+                    @click="mobileSubStage = 'ALL'"
+                    :class="[
+                      'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[11px] whitespace-nowrap',
+                      mobileSubStage === 'ALL'
+                        ? 'bg-slate-800 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-white'
+                    ]"
+                  >
+                    <span>Semua ({{ getTotalPhotosForItem(currentSelectedItem.id) }})</span>
                   </button>
                 </div>
               </div>
 
-              <!-- Side-by-Side Comparison Mode -->
-              <div v-if="mobileSubStage === 'COMPARE'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- ======================================================== -->
+              <!-- STAGE VIEW 1: SINGLE STAGE FOCUSED GRID (BEFORE / PROCESS / AFTER) -->
+              <!-- ======================================================== -->
+              <div v-if="['AFTER', 'BEFORE', 'PROCESS'].includes(mobileSubStage)" class="space-y-3 animate-fade-in">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span
+                      :class="[
+                        'px-2.5 py-1 rounded-xl text-[11px] font-black uppercase tracking-wider border flex items-center gap-1.5',
+                        mobileSubStage === 'AFTER'
+                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40'
+                          : mobileSubStage === 'BEFORE'
+                          ? 'bg-blue-950/80 text-blue-300 border-blue-500/40'
+                          : 'bg-amber-950/80 text-amber-300 border-amber-500/40'
+                      ]"
+                    >
+                      <Sparkles v-if="mobileSubStage === 'AFTER'" class="w-3.5 h-3.5" />
+                      <Camera v-else-if="mobileSubStage === 'BEFORE'" class="w-3.5 h-3.5" />
+                      <Layers v-else class="w-3.5 h-3.5" />
+                      <span>TAHAP: {{ mobileSubStage === 'AFTER' ? 'SESUDAH (AFTER) — HASIL SELESAI' : mobileSubStage === 'BEFORE' ? 'SEBELUM (BEFORE) — KONDISI AWAL' : 'PROSES (PROCESS) — PENGERJAAN FISIK' }}</span>
+                    </span>
+                  </div>
+
+                  <span class="text-xs font-mono text-slate-400">
+                    {{ getPhotosForItemStage(currentSelectedItem.id, mobileSubStage).length }} Foto Bukti
+                  </span>
+                </div>
+
+                <!-- Photos Grid: 2 Columns on Mobile, 3-4 Columns on Desktop -->
+                <div
+                  v-if="getPhotosForItemStage(currentSelectedItem.id, mobileSubStage).length > 0"
+                  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5"
+                >
+                  <div
+                    v-for="p in getPhotosForItemStage(currentSelectedItem.id, mobileSubStage)"
+                    :key="p.id"
+                    class="h-52 sm:h-56 rounded-2xl overflow-hidden bg-slate-950 relative group cursor-pointer border border-slate-800 shadow-md hover:border-purple-500/60 transition-all"
+                    @click="openLightbox(p)"
+                  >
+                    <img
+                      :src="getFileUrl(p.file_path)"
+                      :alt="mobileSubStage"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                    />
+                    
+                    <!-- Overlay Badge & GPS Metadata -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent flex flex-col justify-between p-3 pointer-events-none">
+                      <div class="flex items-center justify-between">
+                        <span
+                          :class="[
+                            'px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider',
+                            mobileSubStage === 'AFTER' ? 'bg-emerald-600 text-white' : mobileSubStage === 'BEFORE' ? 'bg-blue-600 text-white' : 'bg-amber-600 text-white'
+                          ]"
+                        >
+                          {{ mobileSubStage }}
+                        </span>
+                        <span class="text-[10px] bg-black/60 px-2 py-0.5 rounded-md text-slate-300 font-mono">
+                          🔍 Klik Zoom
+                        </span>
+                      </div>
+
+                      <div class="space-y-0.5 text-white font-mono text-[10px]">
+                        <div class="text-emerald-300 font-bold flex items-center gap-1">
+                          <MapPin class="w-3 h-3 shrink-0" />
+                          <span class="truncate">{{ p.latitude ? `${Number(p.latitude).toFixed(5)}, ${Number(p.longitude).toFixed(5)}` : 'GPS Lokasi Valid' }}</span>
+                        </div>
+                        <div class="text-slate-400 text-[9px]">
+                          {{ new Date(p.created_at || Date.now()).toLocaleString('id-ID') }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Empty State for this stage -->
+                <div
+                  v-else
+                  class="py-12 rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 flex flex-col items-center justify-center text-center p-5 space-y-2"
+                >
+                  <Camera class="w-8 h-8 text-slate-600 mb-1" />
+                  <div class="text-xs font-bold text-slate-300">Belum ada foto dokumentasi tahap {{ mobileSubStage }}.</div>
+                  <p class="text-[11px] text-slate-500 max-w-sm">Teknisi lapangan akan mengunggah bukti foto tahap ini saat pengerjaan berlangsung di lokasi.</p>
+                </div>
+              </div>
+
+              <!-- ======================================================== -->
+              <!-- STAGE VIEW 2: SIDE-BY-SIDE BEFORE VS AFTER COMPARISON   -->
+              <!-- ======================================================== -->
+              <div v-else-if="mobileSubStage === 'COMPARE'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
                 <!-- Before Side -->
                 <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
                   <div class="flex items-center justify-between">
-                    <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-blue-950 text-blue-300 border border-blue-500/40">
-                      BEFORE (KONDISI AWAL)
+                    <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-blue-950 text-blue-300 border border-blue-500/40 flex items-center gap-1">
+                      <Camera class="w-3 h-3" />
+                      <span>BEFORE (KONDISI AWAL)</span>
                     </span>
                     <span class="text-[10px] font-mono text-slate-400">{{ getPhotosForItemStage(currentSelectedItem.id, 'BEFORE').length }} Foto</span>
                   </div>
-                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'BEFORE').length > 0" class="grid grid-cols-1 gap-2">
+                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'BEFORE').length > 0" class="grid grid-cols-1 gap-2.5">
                     <div
                       v-for="p in getPhotosForItemStage(currentSelectedItem.id, 'BEFORE')"
                       :key="p.id"
-                      class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800"
+                      class="h-48 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800"
                       @click="openLightbox(p)"
                     >
-                      <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[10px] text-white font-mono flex items-center justify-between">
+                      <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2.5 text-[10px] text-white font-mono flex items-center justify-between">
                         <span class="text-blue-300 font-bold">BEFORE</span>
                         <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
                     </div>
                   </div>
-                  <div v-else class="h-36 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-xs">
+                  <div v-else class="h-40 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-xs">
                     Belum ada foto Before
                   </div>
                 </div>
@@ -418,33 +558,36 @@
                 <!-- After Side -->
                 <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-3">
                   <div class="flex items-center justify-between">
-                    <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40">
-                      AFTER (HASIL SELESAI)
+                    <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                      <Sparkles class="w-3 h-3" />
+                      <span>AFTER (HASIL SELESAI)</span>
                     </span>
                     <span class="text-[10px] font-mono text-slate-400">{{ getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length }} Foto</span>
                   </div>
-                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length > 0" class="grid grid-cols-1 gap-2">
+                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length > 0" class="grid grid-cols-1 gap-2.5">
                     <div
                       v-for="p in getPhotosForItemStage(currentSelectedItem.id, 'AFTER')"
                       :key="p.id"
-                      class="h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800"
+                      class="h-48 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800"
                       @click="openLightbox(p)"
                     >
-                      <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[10px] text-white font-mono flex items-center justify-between">
+                      <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2.5 text-[10px] text-white font-mono flex items-center justify-between">
                         <span class="text-emerald-300 font-bold">AFTER</span>
                         <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
                     </div>
                   </div>
-                  <div v-else class="h-36 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-xs">
+                  <div v-else class="h-40 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-slate-500 text-xs">
                     Belum ada foto After
                   </div>
                 </div>
               </div>
 
-              <!-- Standard 3-Column View for Active Sub-Item -->
-              <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- ======================================================== -->
+              <!-- STAGE VIEW 3: STANDARD 3-COLUMN OVERVIEW (ALL STAGES)    -->
+              <!-- ======================================================== -->
+              <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in">
                 <!-- BEFORE -->
                 <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
                   <div class="flex items-center justify-between">
@@ -795,7 +938,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { 
   RefreshCw, Loader2, ShieldAlert, Home, Building2, User, Calendar, 
   MapPin, Activity, Camera, Maximize2, Clock, CheckSquare, X,
-  Layers, ListFilter, LayoutGrid
+  Layers, ListFilter, LayoutGrid, Sparkles
 } from 'lucide-vue-next';
 import { api, getFileUrl } from '../../services/api';
 
@@ -812,7 +955,7 @@ const wo = ref(null);
 const activeStage = ref('ALL');
 const activeViewMode = ref('FOCUSED_TAB'); // 'FOCUSED_TAB' | 'ACCORDION' | 'ALL_PHOTOS'
 const selectedItemId = ref('default');
-const mobileSubStage = ref('ALL'); // 'ALL' | 'COMPARE'
+const mobileSubStage = ref('AFTER'); // 'AFTER' | 'BEFORE' | 'PROCESS' | 'COMPARE' | 'ALL'
 const activeLightboxPhoto = ref(null);
 
 function isValidGps(val) {
