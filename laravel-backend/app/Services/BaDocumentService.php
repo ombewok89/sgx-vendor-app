@@ -37,6 +37,10 @@ class BaDocumentService
 
         $baNumber = self::generateBaNumber();
 
+        $fallbackAdmin = \App\Models\User::role('SUPERUSER')->first() ?? \App\Models\User::first();
+        $adminName = $user?->name ?? $fallbackAdmin?->name ?? 'Dian Anggraini';
+        $adminId = $user?->id ?? $fallbackAdmin?->id ?? 1;
+
         $contentJson = [
             'work_order' => [
                 'id' => $workOrder->id,
@@ -76,7 +80,7 @@ class BaDocumentService
                 [
                     'party_title' => 'Pihak Kedua (SGX Management)',
                     'company_name' => 'PT SINAR GRAHA KONSTRUKSI',
-                    'name' => $user->name,
+                    'name' => $adminName,
                     'role' => 'Quality Assurance & Operations',
                 ]
             ]
@@ -88,16 +92,18 @@ class BaDocumentService
                 'ba_number' => $baNumber,
                 'ba_date' => now()->toDateString(),
                 'template_id' => $template?->id,
-                'generated_by' => $user->id,
+                'generated_by' => $adminId,
                 'content_json' => $contentJson,
                 'status' => 'FINAL',
             ]
         );
 
-        AuditService::log($user, 'GENERATE_BA_OPNAME', 'BA_DOCUMENT', $ba->id, null, [
-            'ba_number' => $baNumber,
-            'work_order_id' => $workOrder->id,
-        ]);
+        if ($user) {
+            AuditService::log($user, 'GENERATE_BA_OPNAME', 'BA_DOCUMENT', $ba->id, null, [
+                'ba_number' => $baNumber,
+                'work_order_id' => $workOrder->id,
+            ]);
+        }
 
         return $ba->load(['workOrder', 'template', 'generator']);
     }

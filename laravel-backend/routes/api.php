@@ -201,7 +201,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ba/generate/{workOrderId}', [BaDocumentController::class, 'generate']);
     Route::get('/ba', [BaDocumentController::class, 'index']);
     Route::get('/ba/{identifier}', [BaDocumentController::class, 'show']);
-    Route::get('/ba/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);
 
     // Master Data CRUD
     Route::get('/master/vendors', [MasterDataController::class, 'vendors']);
