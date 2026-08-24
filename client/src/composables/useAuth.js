@@ -26,9 +26,18 @@ async function initialize() {
 
   if (state.token) {
     try {
-      const res = await api.getMe();
-      state.user = res.user;
-      await fetchPermissions();
+      // Parallel loading: fetch user profile and permissions concurrently
+      const [userRes, permRes] = await Promise.all([
+        api.getMe(),
+        api.getMyPermissions().catch(() => ({ data: {} }))
+      ]);
+
+      if (userRes?.user) {
+        state.user = userRes.user;
+        state.permissions = permRes.data || {};
+      } else {
+        throw new Error('User not returned');
+      }
     } catch (err) {
       console.error('Session expired or invalid:', err);
       logout();
@@ -44,7 +53,12 @@ async function login(email, password) {
     localStorage.setItem('sgx_token', res.token);
     state.token = res.token;
     state.user = res.user;
-    await fetchPermissions();
+
+    // Parallel fetch permissions immediately after login
+    api.getMyPermissions()
+      .then(permRes => { state.permissions = permRes.data || {}; })
+      .catch(() => { state.permissions = {}; });
+
     return res.user;
   } finally {
     state.loading = false;

@@ -9,31 +9,12 @@ use Illuminate\Support\Str;
 
 class PublicTrackingController extends Controller
 {
-    private function ensureShareColumnsExist()
-    {
-        try {
-            if (!\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'share_token')) {
-                \Illuminate\Support\Facades\Schema::table('work_orders', function ($table) {
-                    $table->string('share_token', 64)->nullable()->unique()->after('notes');
-                });
-            }
-            if (!\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'is_shareable')) {
-                \Illuminate\Support\Facades\Schema::table('work_orders', function ($table) {
-                    $table->boolean('is_shareable')->default(true)->after('share_token');
-                });
-            }
-        } catch (\Exception $e) {
-            \Log::warning('Auto-migration for share_token columns: ' . $e->getMessage());
-        }
-    }
-
     /**
      * Public Guest Endpoint to view live tracking data of a Work Order.
      * No authentication required. Financial data is strictly excluded.
      */
     public function track(string $token)
     {
-        $this->ensureShareColumnsExist();
 
         try {
             $normalizedToken = trim($token);
@@ -163,8 +144,6 @@ class PublicTrackingController extends Controller
      */
     public function getOrCreateShareToken(Request $request, $id)
     {
-        $this->ensureShareColumnsExist();
-
         try {
             $workOrder = is_numeric($id) ? WorkOrder::find((int)$id) : null;
             if (!$workOrder) {
@@ -200,8 +179,6 @@ class PublicTrackingController extends Controller
      */
     public function toggleShareable(Request $request, $id)
     {
-        $this->ensureShareColumnsExist();
-
         try {
             $workOrder = is_numeric($id) ? WorkOrder::find((int)$id) : null;
             if (!$workOrder) {
