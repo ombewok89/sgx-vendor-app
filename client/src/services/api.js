@@ -180,6 +180,7 @@ export const api = {
 
   // Public Live Tracking & Work Order Share Links
   getPublicTracking: (token) => request(`/public/track/${token}`),
+  getPublicSpkTracking: (token) => request(`/public/track/${token}`),
   getWorkOrderShareToken: (workOrderId) => request(`/work-orders/${workOrderId}/share-token`, { method: 'POST' }),
   toggleWorkOrderShare: (workOrderId) => request(`/work-orders/${workOrderId}/toggle-share`, { method: 'POST' })
 };

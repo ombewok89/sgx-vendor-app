@@ -1245,7 +1245,7 @@ async function fetchTrackingData() {
   loading.value = true;
   errorMessage.value = '';
   try {
-    const res = await api.getPublicSpkTracking(props.token);
+    const res = await (api.getPublicTracking ? api.getPublicTracking(props.token) : api.getPublicSpkTracking(props.token));
     if (res.success && res.data) {
       wo.value = res.data;
       if (res.data.photos && res.data.photos.length > 0) {
