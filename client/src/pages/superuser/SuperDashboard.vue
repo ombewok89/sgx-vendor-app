@@ -219,12 +219,32 @@
               <p class="text-[11px] text-slate-500">Integrasi pengiriman pesan notifikasi otomatis untuk SPK, Check-In, dan Berita Acara.</p>
             </div>
           </div>
-          <div class="flex items-center gap-2 self-start sm:self-auto">
+          <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <!-- Master Power Switch Toggle Button -->
+            <button
+              type="button"
+              @click="toggleWaGatewayPower"
+              :disabled="savingSetting"
+              :class="[
+                'px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 border',
+                waGatewayEnabled === '1'
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700'
+                  : 'bg-rose-600 hover:bg-rose-700 text-white border-rose-700 shadow-rose-500/20 animate-pulse'
+              ]"
+              :title="waGatewayEnabled === '1' ? 'Klik untuk mematikan WA Gateway' : 'Klik untuk menghidupkan WA Gateway'"
+            >
+              <Power v-if="waGatewayEnabled === '1'" class="w-3.5 h-3.5" />
+              <PowerOff v-else class="w-3.5 h-3.5" />
+              <span>{{ waGatewayEnabled === '1' ? 'GATEWAY: ON' : 'GATEWAY: OFF' }}</span>
+            </button>
+
             <span
               :class="[
                 'px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1.5',
                 gatewayInfo.state === 'ACTIVE'
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : gatewayInfo.state === 'DISABLED'
+                  ? 'bg-rose-50 text-rose-800 border-rose-200'
                   : gatewayInfo.state === 'MOCK'
                   ? 'bg-amber-50 text-amber-800 border-amber-200'
                   : 'bg-rose-50 text-rose-800 border-rose-200'
@@ -235,13 +255,15 @@
                   'w-2 h-2 rounded-full',
                   gatewayInfo.state === 'ACTIVE'
                     ? 'bg-emerald-500 animate-pulse'
+                    : gatewayInfo.state === 'DISABLED'
+                    ? 'bg-rose-600'
                     : gatewayInfo.state === 'MOCK'
                     ? 'bg-amber-500'
                     : 'bg-rose-500'
                 ]"
               ></span>
               <span>
-                {{ gatewayInfo.state === 'ACTIVE' ? 'Gateway Fonnte Aktif' : gatewayInfo.state === 'MOCK' ? 'Mode Mock (Testing)' : 'Belum Dikonfigurasi (Offline)' }}
+                {{ gatewayInfo.state === 'ACTIVE' ? 'Gateway Fonnte Aktif' : gatewayInfo.state === 'DISABLED' ? 'Gateway Dimatikan (OFF)' : gatewayInfo.state === 'MOCK' ? 'Mode Mock (Testing)' : 'Belum Dikonfigurasi (Offline)' }}
               </span>
             </span>
 
@@ -257,9 +279,38 @@
           </div>
         </div>
 
+        <!-- Banner 0: Gateway Dimatikan (OFF) -->
+        <div
+          v-if="waGatewayEnabled === '0' || gatewayInfo.state === 'DISABLED'"
+          class="p-4 bg-gradient-to-r from-rose-50 via-red-50 to-amber-50 border-2 border-rose-400 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-rose-950 text-xs font-medium shadow-sm animate-fade-in"
+        >
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+              <PowerOff class="w-4 h-4" />
+            </div>
+            <div>
+              <div class="font-black text-sm text-rose-900 flex items-center gap-2">
+                <span>WHATSAPP GATEWAY SAAT INI DIMATIKAN (OFF)</span>
+              </div>
+              <p class="text-[11px] text-rose-800 mt-0.5">
+                Pengiriman notifikasi otomatis SPK, check-in, dan Berita Acara ke seluruh nomor WhatsApp dijeda. Klik tombol di samping untuk mengaktifkan kembali.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="toggleWaGatewayPower"
+            :disabled="savingSetting"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap self-start sm:self-auto"
+          >
+            <Power class="w-3.5 h-3.5" />
+            <span>Nyalakan Gateway (ON)</span>
+          </button>
+        </div>
+
         <!-- Banner 1: Gateway Online / Aktif (Hijau) -->
         <div
-          v-if="gatewayInfo.state === 'ACTIVE'"
+          v-else-if="gatewayInfo.state === 'ACTIVE'"
           class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-950 text-xs font-medium shadow-xs"
         >
           <ShieldCheck class="w-5 h-5 text-emerald-600 shrink-0" />
@@ -905,7 +956,9 @@ import {
   Briefcase,
   Camera,
   CheckCircle2,
-  FileCheck
+  FileCheck,
+  Power,
+  PowerOff
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -932,6 +985,7 @@ const savingSetting = ref(false);
 
 // WhatsApp Testing States
 const fonnteApiKey = ref('');
+const waGatewayEnabled = ref('1');
 const testWaPhone = ref('');
 const testWaMessage = ref('🔔 SGX System Test: Uji coba gateway WhatsApp Fonnte terkoneksi dengan sukses.');
 const testingWa = ref(false);
@@ -1017,6 +1071,7 @@ function parseSettings() {
     return item ? item.value : fallback;
   };
   fonnteApiKey.value = getVal('fonnte_api_key', '');
+  waGatewayEnabled.value = String(getVal('wa_gateway_enabled', '1'));
   geofenceRadius.value = getVal('geofence_default_radius_meters', '200');
   strictGps.value = String(getVal('require_strict_gps', '1'));
   shaLock.value = String(getVal('sha256_integrity_lock', '1'));
@@ -1099,6 +1154,13 @@ async function saveFonnteApiKey() {
   } finally {
     savingSetting.value = false;
   }
+}
+
+async function toggleWaGatewayPower() {
+  const nextVal = waGatewayEnabled.value === '1' ? '0' : '1';
+  waGatewayEnabled.value = nextVal;
+  await saveSetting('wa_gateway_enabled', nextVal);
+  await refreshGatewayStatus();
 }
 
 async function toggleStrictGps() {

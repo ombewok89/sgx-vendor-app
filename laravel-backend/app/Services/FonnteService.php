@@ -64,6 +64,23 @@ class FonnteService
     }
 
     /**
+     * Checks if WhatsApp Gateway master power switch is enabled.
+     */
+    public static function isGatewayEnabled(): bool
+    {
+        try {
+            $val = SystemSetting::whereIn('key', ['wa_gateway_enabled', 'wa_enabled', 'WA_ENABLED', 'fonnte_enabled'])->value('value');
+            if ($val !== null) {
+                return (string)$val === '1' || strtolower((string)$val) === 'true';
+            }
+        } catch (\Throwable $e) {
+            // Fallback to true if DB error
+        }
+
+        return true;
+    }
+
+    /**
      * Checks if a specific notification event is enabled in system settings.
      */
     public static function isEventEnabled(string $messageType): bool
@@ -126,6 +143,27 @@ class FonnteService
             $err = 'Nomor telepon tujuan tidak valid.';
             self::recordLog($notificationFeedId, $phone, $messageType, $message, 'FAILED', null, $err, null);
             return ['success' => false, 'error' => $err, 'status' => 'FAILED'];
+        }
+
+        // 0. Check if Master Gateway Power is turned OFF by admin (Except for direct manual test button)
+        if (!self::isGatewayEnabled() && !in_array(strtoupper($messageType), ['TEST_MESSAGE', 'TEST'])) {
+            self::recordLog(
+                $notificationFeedId,
+                $normalizedPhone,
+                $messageType,
+                $message,
+                'SKIPPED',
+                null,
+                'WhatsApp Gateway dinonaktifkan oleh administrator (Power Switch: OFF)',
+                ['disabled' => true]
+            );
+
+            return [
+                'success' => true,
+                'skipped' => true,
+                'status' => 'SKIPPED',
+                'message' => 'Pengiriman WhatsApp dilewati karena WhatsApp Gateway sedang dinonaktifkan (OFF).'
+            ];
         }
 
         // Check if event notification is disabled by admin settings
@@ -348,9 +386,12 @@ class FonnteService
     {
         $token = self::getToken();
         $isMock = self::isMockEnabled();
+        $isEnabled = self::isGatewayEnabled();
 
         $state = 'UNCONFIGURED';
-        if ($isMock) {
+        if (!$isEnabled) {
+            $state = 'DISABLED';
+        } elseif ($isMock) {
             $state = 'MOCK';
         } elseif (!empty($token)) {
             $state = 'ACTIVE';
@@ -384,7 +425,8 @@ class FonnteService
         }
 
         return [
-            'state' => $state, // 'ACTIVE' | 'MOCK' | 'UNCONFIGURED'
+            'state' => $state, // 'ACTIVE' | 'DISABLED' | 'MOCK' | 'UNCONFIGURED'
+            'is_enabled' => $isEnabled,
             'token_configured' => !empty($token),
             'masked_token' => $maskedToken,
             'mock_enabled' => $isMock,
