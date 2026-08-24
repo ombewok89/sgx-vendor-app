@@ -12,6 +12,10 @@ class Vendor extends Model
         'contact_person',
         'phone',
         'email',
+        'logo_url',
+        'banner_url',
+        'npwp',
+        'website',
         'address',
         'is_active',
     ];

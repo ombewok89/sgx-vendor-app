@@ -94,6 +94,8 @@ export const api = {
   getVendors: () => request('/master/vendors'),
   createVendor: (data) => request('/master/vendors', { method: 'POST', body: JSON.stringify(data) }),
   updateVendor: (id, data) => request(`/master/vendors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  updateVendorBranding: (id, formData) => request(`/master/vendors/${id}/branding`, { method: 'POST', body: formData }),
+  updateClientBranding: (formData) => request('/client/branding', { method: 'POST', body: formData }),
   deleteVendor: (id) => request(`/master/vendors/${id}`, { method: 'DELETE' }),
 
   getAreas: () => request('/master/areas'),

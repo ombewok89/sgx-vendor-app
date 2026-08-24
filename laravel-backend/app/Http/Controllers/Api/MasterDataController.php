@@ -85,6 +85,88 @@ class MasterDataController extends Controller
         return response()->json(['success' => true, 'data' => $vendor]);
     }
 
+    public function updateBranding(Request $request, $id = null)
+    {
+        $user = $request->user()
+            ?: auth('sanctum')->user()
+            ?: (class_exists(\Laravel\Sanctum\PersonalAccessToken::class) && $request->bearerToken()
+                ? \Laravel\Sanctum\PersonalAccessToken::findToken($request->bearerToken())?->tokenable
+                : null);
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        // If client calls without ID, resolve to their own vendor_id
+        if (!$id && ($user->hasRole('CLIENT') || $user->hasRole('VENDOR'))) {
+            $id = $user->vendor_id;
+        }
+
+        if (!$id) {
+            return response()->json(['success' => false, 'message' => 'ID vendor/klien tidak valid.'], 400);
+        }
+
+        // Authorization check: Superuser, Supervisor, Admin, or the client themselves
+        $isPrivileged = $user->hasAnyRole(['SUPERUSER', 'SUPERVISOR', 'ADMIN']);
+        $isOwnerClient = ($user->hasRole('CLIENT') || $user->hasRole('VENDOR')) && (int)$user->vendor_id === (int)$id;
+
+        if (!$isPrivileged && !$isOwnerClient) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak: Anda tidak memiliki izin mengelola branding profil perusahaan ini.',
+            ], 403);
+        }
+
+        $vendor = Vendor::findOrFail($id);
+        $oldData = $vendor->toArray();
+
+        $request->validate([
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:4096',
+            'banner' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:8192',
+            'name' => 'nullable|string|max:255',
+            'contact_person' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string',
+            'npwp' => 'nullable|string|max:100',
+            'website' => 'nullable|string|max:255',
+        ]);
+
+        $updatePayload = [];
+
+        // 1. Process Logo Upload
+        if ($request->hasFile('logo')) {
+            $file = $request->file('logo');
+            $filename = 'logo_' . $vendor->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('branding', $filename, 'public');
+            $updatePayload['logo_url'] = '/storage/' . $path;
+        }
+
+        // 2. Process Banner Upload
+        if ($request->hasFile('banner')) {
+            $file = $request->file('banner');
+            $filename = 'banner_' . $vendor->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('branding', $filename, 'public');
+            $updatePayload['banner_url'] = '/storage/' . $path;
+        }
+
+        // 3. Process Text Profile Fields
+        foreach (['name', 'contact_person', 'phone', 'email', 'address', 'npwp', 'website'] as $field) {
+            if ($request->has($field)) {
+                $updatePayload[$field] = $request->input($field);
+            }
+        }
+
+        $vendor->update($updatePayload);
+        AuditService::log($user, 'UPDATE_VENDOR_BRANDING', 'VENDOR', $vendor->id, $oldData, $vendor->toArray());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Branding dan profil perusahaan berhasil diperbarui.',
+            'data' => $vendor->fresh(),
+        ]);
+    }
+
     public function deleteVendor(Request $request, $id)
     {
         if ($deny = $this->checkAdminAuth($request)) return $deny;

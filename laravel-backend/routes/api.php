@@ -199,6 +199,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/master/vendors', [MasterDataController::class, 'vendors']);
     Route::post('/master/vendors', [MasterDataController::class, 'storeVendor']);
     Route::put('/master/vendors/{id}', [MasterDataController::class, 'updateVendor']);
+    Route::post('/master/vendors/{id}', [MasterDataController::class, 'updateVendor']);
+    Route::match(['post', 'put'], '/master/vendors/{id}/branding', [MasterDataController::class, 'updateBranding'])->whereNumber('id');
+    Route::match(['post', 'put'], '/client/branding', [MasterDataController::class, 'updateBranding']);
     Route::delete('/master/vendors/{id}', [MasterDataController::class, 'deleteVendor']);
 
     Route::get('/master/areas', [MasterDataController::class, 'areas']);

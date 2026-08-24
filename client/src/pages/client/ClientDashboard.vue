@@ -1,33 +1,94 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
-    <div class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass bg-gradient-to-r from-purple-900/10 via-indigo-900/5 to-transparent relative overflow-hidden">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-        <div class="flex items-center gap-3.5">
-          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-900 to-indigo-700 flex items-center justify-center text-white font-black shadow-lg shadow-purple-900/30">
-            <Building2 class="w-6 h-6" />
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-200">
-                PORTAL KLIEN / PEMBERI TUGAS
-              </span>
-              <span class="text-[10px] font-mono text-slate-400">PEMANTAUAN PROYEK DIGITAL</span>
+    <!-- Corporate Hero Branding Banner -->
+    <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200/80 bg-slate-900 text-white">
+      <!-- Background Cover Banner -->
+      <div class="absolute inset-0 z-0">
+        <img
+          v-if="clientCompany?.banner_url"
+          :src="getFileUrl(clientCompany.banner_url)"
+          alt="Company Cover Banner"
+          class="w-full h-full object-cover"
+        />
+        <div v-else class="w-full h-full bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950"></div>
+        <!-- Frosted Dark Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40 backdrop-blur-[2px]"></div>
+      </div>
+
+      <!-- Hero Content -->
+      <div class="relative z-10 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          <!-- Corporate Logo Frame -->
+          <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-white/95 p-2 shadow-2xl border-2 border-white/80 flex items-center justify-center shrink-0 overflow-hidden backdrop-blur-md">
+            <img
+              v-if="clientCompany?.logo_url"
+              :src="getFileUrl(clientCompany.logo_url)"
+              :alt="clientCompany?.name || 'Client Logo'"
+              class="w-full h-full object-contain"
+            />
+            <div v-else class="w-full h-full rounded-2xl bg-purple-900 text-white flex flex-col items-center justify-center font-black">
+              <Building2 class="w-8 h-8 text-[#EDC80A]" />
+              <span class="text-[9px] mt-1 font-mono uppercase">LOGO</span>
             </div>
-            <h2 class="text-xl font-black text-slate-900 tracking-tight mt-0.5">
+          </div>
+
+          <!-- Corporate Info -->
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#EDC80A] text-[#1E1E1D] shadow-xs">
+                MITRA KORPORAT RESMI
+              </span>
+              <span v-if="clientCompany?.code" class="text-[10px] font-mono text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-700">
+                ID: {{ clientCompany.code }}
+              </span>
+              <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Portal Terverifikasi
+              </span>
+            </div>
+
+            <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">
               {{ clientCompany?.name || 'Klien / Principal Mitra SGX' }}
             </h2>
-            <p class="text-xs text-slate-500 font-medium mt-0.5">
-              Pantau progres pekerjaan toko/cabang, verifikasi foto evidensi Before-After ber-GPS, dan unduh Berita Acara (BA) resmi.
+
+            <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-300 font-medium">
+              <span v-if="clientCompany?.contact_person" class="flex items-center gap-1.5">
+                <User class="w-3.5 h-3.5 text-[#EDC80A]" />
+                <span>PIC: {{ clientCompany.contact_person }}</span>
+              </span>
+              <span v-if="clientCompany?.npwp" class="flex items-center gap-1.5 font-mono">
+                <span class="text-slate-400">NPWP:</span>
+                <span>{{ clientCompany.npwp }}</span>
+              </span>
+              <span v-if="clientCompany?.website" class="flex items-center gap-1.5">
+                <Globe class="w-3.5 h-3.5 text-blue-400" />
+                <a :href="clientCompany.website.startsWith('http') ? clientCompany.website : `https://${clientCompany.website}`" target="_blank" class="hover:underline text-blue-300">
+                  {{ clientCompany.website }}
+                </a>
+              </span>
+            </div>
+
+            <p v-if="clientCompany?.address" class="text-[11px] text-slate-400 flex items-center gap-1.5 max-w-xl">
+              <MapPin class="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span class="truncate">{{ clientCompany.address }}</span>
             </p>
           </div>
         </div>
 
-        <div class="flex items-center gap-2 self-start sm:self-auto">
+        <!-- Right Quick Action Buttons -->
+        <div class="flex items-center gap-2.5 self-start md:self-auto flex-wrap">
+          <button
+            @click="openBrandingModal"
+            class="px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-md transition-all active:scale-95 cursor-pointer"
+          >
+            <Sparkles class="w-4 h-4 text-[#EDC80A]" />
+            <span>Kelola Logo & Branding</span>
+          </button>
+
           <button
             @click="loadClientData"
-            class="p-2 bg-white hover:bg-slate-100 text-slate-600 rounded-xl border border-slate-200 shadow-xs transition-all cursor-pointer"
-            title="Muat Ulang Data"
+            class="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl border border-white/20 shadow-xs transition-all cursor-pointer"
+            title="Muat Ulang Data Proyek"
           >
             <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loading }" />
           </button>
@@ -102,101 +163,95 @@
       </div>
     </div>
 
-    <!-- Main Grid: Branch Overview & Recent Evidence Stream -->
+    <!-- Main Section: Store Tasks & Evidence Feed -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Left Column: Active Branches Progress List -->
-      <div class="lg:col-span-2 glass-card rounded-3xl p-5 border border-white/80 shadow-glass space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <MapPin class="w-4 h-4 text-purple-700" />
-              <span>Status Pengerjaan Cabang / Toko Terkini</span>
-            </h3>
-            <p class="text-[11px] text-slate-500">Daftar toko yang sedang dalam penanganan tim teknisi SGX.</p>
+      <!-- Left 2 Cols: Active Work Orders List -->
+      <div class="lg:col-span-2 space-y-4">
+        <div class="glass-card rounded-3xl p-5 border border-white/80 shadow-glass space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 class="font-black text-sm text-slate-900 tracking-tight flex items-center gap-2">
+                <Store class="w-4 h-4 text-purple-900" />
+                <span>Daftar Proyek Cabang & Toko</span>
+              </h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">Pemantauan progres per lokasi toko secara real-time.</p>
+            </div>
+            <button
+              @click="$emit('switch-tab', 'client_tasks')"
+              class="text-xs font-bold text-purple-900 hover:text-purple-700 flex items-center gap-1 cursor-pointer"
+            >
+              <span>Lihat Semua SPK</span>
+              <ChevronRight class="w-3.5 h-3.5" />
+            </button>
           </div>
-          <button
-            @click="$emit('switch-tab', 'client_tasks')"
-            class="text-xs font-bold text-purple-900 hover:text-purple-700 flex items-center gap-1 cursor-pointer"
-          >
-            <span>Lihat Semua Toko</span>
-            <ChevronRight class="w-4 h-4" />
-          </button>
-        </div>
 
-        <div v-if="loading" class="text-center py-12 text-slate-400 text-xs">
-          Memuat data cabang...
-        </div>
-
-        <div v-else-if="workOrders.length === 0" class="text-center py-12 text-slate-400 text-xs">
-          Belum ada data pekerjaan cabang untuk akun ini.
-        </div>
-
-        <div v-else class="space-y-3">
-          <div
-            v-for="wo in workOrders.slice(0, 5)"
-            :key="wo.id"
-            class="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-purple-300 transition-all group"
-          >
-            <div class="space-y-1">
-              <div class="flex items-center gap-2">
-                <span class="font-mono font-bold text-[10px] text-purple-900 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                  {{ wo.spk_number }}
-                </span>
-                <span class="text-[10px] text-slate-400 font-mono">{{ wo.area_name || 'Area Jawa Barat' }}</span>
+          <!-- Work Order Rows -->
+          <div v-if="workOrders.length > 0" class="space-y-2.5">
+            <div
+              v-for="wo in workOrders.slice(0, 5)"
+              :key="wo.id"
+              class="p-3.5 rounded-2xl bg-white border border-slate-100 hover:border-purple-200 transition-all flex items-center justify-between gap-3 shadow-xs"
+            >
+              <div class="min-w-0 space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700">
+                    {{ wo.spk_number }}
+                  </span>
+                  <span class="text-xs font-bold text-slate-900 truncate">{{ wo.location_name }}</span>
+                </div>
+                <div class="text-[11px] text-slate-500 flex items-center gap-3">
+                  <span>{{ wo.title }}</span>
+                  <span>•</span>
+                  <span class="font-mono text-purple-900 font-bold">Progres: {{ wo.progress_percent || 0 }}%</span>
+                </div>
               </div>
-              <h4 class="font-black text-slate-900 text-xs group-hover:text-purple-900 transition-colors">
-                {{ wo.title }}
-              </h4>
-              <p class="text-[11px] text-slate-500 truncate flex items-center gap-1">
-                <MapPin class="w-3 h-3 text-slate-400 shrink-0" />
-                <span>{{ wo.location_name }}</span>
-              </p>
-            </div>
 
-            <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
-              <StatusBadge :status="wo.status" />
-              <div class="text-[10px] font-mono text-slate-500 flex items-center gap-1">
-                <span>Progress:</span>
-                <strong class="text-slate-900 font-bold">{{ wo.progress_percent || 0 }}%</strong>
+              <div class="flex items-center gap-2 shrink-0">
+                <StatusBadge :status="wo.status" />
+                <button
+                  @click="$emit('switch-tab', 'client_tasks')"
+                  class="p-1.5 rounded-lg bg-slate-50 hover:bg-purple-100 text-slate-500 hover:text-purple-900 transition-colors cursor-pointer"
+                  title="Buka Detail SPK"
+                >
+                  <Eye class="w-4 h-4" />
+                </button>
               </div>
             </div>
+          </div>
+          <div v-else class="py-8 text-center text-slate-400 text-xs font-medium">
+            Belum ada SPK yang terdaftar untuk perusahaan Anda.
           </div>
         </div>
       </div>
 
-      <!-- Right Column: Evidence Photo Highlights & Quick Links -->
-      <div class="space-y-5">
-        <!-- Recent Photo Stream -->
-        <div class="glass-card rounded-3xl p-5 border border-white/80 shadow-glass space-y-3.5">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <Camera class="w-4 h-4 text-purple-700" />
+      <!-- Right 1 Col: Recent Visual Evidence & BA Download -->
+      <div class="space-y-4">
+        <!-- Live Evidence Preview -->
+        <div class="glass-card rounded-3xl p-5 border border-white/80 shadow-glass space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <h3 class="font-black text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
+              <Camera class="w-4 h-4 text-purple-900" />
               <span>Evidensi Foto Terbaru</span>
             </h3>
-            <span class="text-[10px] font-mono text-emerald-700 font-bold">GPS VERIFIED ✓</span>
+            <span class="text-[10px] font-mono text-slate-400">GPS Satelit</span>
           </div>
 
-          <div v-if="recentPhotos.length > 0" class="grid grid-cols-2 gap-2.5">
+          <div v-if="recentPhotos.length > 0" class="grid grid-cols-2 gap-2">
             <div
-              v-for="(p, idx) in recentPhotos.slice(0, 4)"
-              :key="idx"
-              class="group relative rounded-xl overflow-hidden bg-slate-900 border border-slate-200 aspect-video shadow-xs"
+              v-for="p in recentPhotos.slice(0, 4)"
+              :key="p.id"
+              class="h-24 rounded-xl overflow-hidden bg-slate-100 relative group cursor-pointer border border-slate-200"
             >
-              <img
-                :src="getFileUrl(p.file_path)"
-                :alt="p.stage"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=300&auto=format&fit=crop&q=60'"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex flex-col justify-end p-2 text-white">
-                <span class="text-[9px] font-black uppercase tracking-wider">{{ p.stage }}</span>
-                <span class="text-[8px] font-mono text-slate-300 truncate">{{ p.work_order_title || 'Toko Cabang' }}</span>
+              <img :src="getFileUrl(p.file_path)" alt="Evidence" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 text-[8px] text-white font-mono flex items-center justify-between">
+                <span class="font-bold uppercase text-[#EDC80A]">{{ p.stage }}</span>
+                <span class="truncate max-w-[60px]">📍 Valid</span>
               </div>
             </div>
           </div>
-          <p v-else class="text-xs text-slate-400 italic text-center py-6">
-            Belum ada unggahan foto evidensi terbaru.
-          </p>
+          <div v-else class="py-6 text-center text-slate-400 text-xs">
+            Belum ada foto evidensi masuk.
+          </div>
 
           <button
             @click="$emit('switch-tab', 'client_tasks')"
@@ -226,6 +281,141 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Mandiri Klien: Kelola Profil & Branding Perusahaan -->
+    <div v-if="showBrandingModal" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="glass-modal rounded-3xl max-w-lg w-full shadow-2xl p-6 sm:p-7 space-y-5 text-xs border border-white/80 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-2xl bg-purple-100 text-purple-900 flex items-center justify-center font-bold">
+              <Sparkles class="w-5 h-5" />
+            </div>
+            <div>
+              <h3 class="font-black text-sm text-slate-900">
+                Profil & Branding Resmi Perusahaan
+              </h3>
+              <p class="text-[11px] text-slate-500">Kustomisasi identitas logo & cover banner portal Anda.</p>
+            </div>
+          </div>
+          <button @click="showBrandingModal = false" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
+        <form @submit.prevent="handleSaveClientBranding" class="space-y-4">
+          <!-- 1. Upload Logo Resmi Perusahaan -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-slate-900 block">Logo Perusahaan (PNG/WebP/SVG Transparan)</label>
+              <span class="text-[10px] text-slate-500 font-mono">Max 4MB</span>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-2xl bg-white border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                <img
+                  v-if="logoPreviewUrl"
+                  :src="logoPreviewUrl"
+                  alt="Logo Preview"
+                  class="w-full h-full object-contain p-1.5"
+                />
+                <Building2 v-else class="w-6 h-6 text-slate-400" />
+              </div>
+
+              <div class="space-y-1 flex-1">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  @change="handleLogoChange"
+                  class="text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-900 file:text-white hover:file:bg-purple-800 cursor-pointer"
+                />
+                <p class="text-[10px] text-slate-500">Logo akan tampil di Berita Acara (BA), Live Tracker, dan Dashboard Anda.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Upload Hero Cover / Banner Perusahaan -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="font-bold text-slate-900 block">Foto Cover / Banner Gedung Kantor (Panorama 16:9)</label>
+              <span class="text-[10px] text-slate-500 font-mono">Max 8MB</span>
+            </div>
+
+            <div class="space-y-2">
+              <div class="h-28 w-full rounded-2xl bg-white border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden shadow-xs relative">
+                <img
+                  v-if="bannerPreviewUrl"
+                  :src="bannerPreviewUrl"
+                  alt="Banner Preview"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="text-center text-slate-400 flex flex-col items-center gap-1">
+                  <ImageIcon class="w-6 h-6" />
+                  <span class="text-[10px]">Belum ada cover banner</span>
+                </div>
+              </div>
+
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                @change="handleBannerChange"
+                class="text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-900 file:text-white hover:file:bg-purple-800 cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <!-- 3. Legalitas & Kontak Tambahan -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold mb-1">Nomor NPWP Perusahaan</label>
+              <input
+                type="text"
+                placeholder="Contoh: 01.234.567.8-901.000"
+                v-model="brandingForm.npwp"
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 font-mono"
+              />
+            </div>
+            <div>
+              <label class="block font-bold mb-1">Website Resmi</label>
+              <input
+                type="text"
+                placeholder="https://company.co.id"
+                v-model="brandingForm.website"
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 font-mono"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold mb-1">Alamat Kantor Pusat</label>
+            <textarea
+              rows="2"
+              placeholder="Alamat kantor lengkap perusahaan"
+              v-model="brandingForm.address"
+              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              @click="showBrandingModal = false"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              :disabled="saving"
+              class="px-5 py-2 bg-gradient-to-r from-purple-900 to-indigo-800 text-white font-bold rounded-xl shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Save class="w-4 h-4" />
+              <span>{{ saving ? 'Menyimpan...' : 'Simpan Profil & Branding' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -246,7 +436,13 @@ import {
   FileSpreadsheet,
   RefreshCw,
   ChevronRight,
-  Eye
+  Eye,
+  Sparkles,
+  User,
+  Globe,
+  X,
+  Image as ImageIcon,
+  Save
 } from 'lucide-vue-next';
 
 defineEmits(['switch-tab']);
@@ -257,6 +453,14 @@ const recentPhotos = ref([]);
 const issuesList = ref([]);
 const clientCompany = ref(null);
 const loading = ref(true);
+const saving = ref(false);
+
+const showBrandingModal = ref(false);
+const brandingForm = ref({});
+const logoFile = ref(null);
+const bannerFile = ref(null);
+const logoPreviewUrl = ref('');
+const bannerPreviewUrl = ref('');
 
 async function loadClientData() {
   loading.value = true;
@@ -271,7 +475,7 @@ async function loadClientData() {
     recentPhotos.value = photoRes.data || [];
     issuesList.value = issRes.data || [];
 
-    // Identify client company name
+    // Identify client company
     if (auth.state.user?.vendor_id) {
       clientCompany.value = (vRes.data || []).find(v => v.id === auth.state.user.vendor_id);
     } else if (vRes.data && vRes.data.length > 0) {
@@ -281,6 +485,62 @@ async function loadClientData() {
     console.error('Failed to load client data:', err);
   } finally {
     loading.value = false;
+  }
+}
+
+function openBrandingModal() {
+  if (!clientCompany.value) return;
+  brandingForm.value = {
+    npwp: clientCompany.value.npwp || '',
+    website: clientCompany.value.website || '',
+    address: clientCompany.value.address || '',
+  };
+  logoFile.value = null;
+  bannerFile.value = null;
+  logoPreviewUrl.value = clientCompany.value.logo_url ? getFileUrl(clientCompany.value.logo_url) : '';
+  bannerPreviewUrl.value = clientCompany.value.banner_url ? getFileUrl(clientCompany.value.banner_url) : '';
+  showBrandingModal.value = true;
+}
+
+function handleLogoChange(e) {
+  const file = e.target.files[0];
+  if (file) {
+    logoFile.value = file;
+    logoPreviewUrl.value = URL.createObjectURL(file);
+  }
+}
+
+function handleBannerChange(e) {
+  const file = e.target.files[0];
+  if (file) {
+    bannerFile.value = file;
+    bannerPreviewUrl.value = URL.createObjectURL(file);
+  }
+}
+
+async function handleSaveClientBranding() {
+  if (!clientCompany.value) return;
+  saving.value = true;
+  try {
+    const fd = new FormData();
+    if (logoFile.value) fd.append('logo', logoFile.value);
+    if (bannerFile.value) fd.append('banner', bannerFile.value);
+    if (brandingForm.value.npwp !== undefined) fd.append('npwp', brandingForm.value.npwp);
+    if (brandingForm.value.website !== undefined) fd.append('website', brandingForm.value.website);
+    if (brandingForm.value.address !== undefined) fd.append('address', brandingForm.value.address);
+
+    const res = await api.updateVendorBranding(clientCompany.value.id, fd);
+    if (res.success) {
+      alert('Profil & branding perusahaan berhasil diperbarui!');
+      showBrandingModal.value = false;
+      await loadClientData();
+    } else {
+      alert(res.message || 'Gagal menyimpan branding perusahaan.');
+    }
+  } catch (err) {
+    alert(err.message || 'Terjadi kesalahan saat menyimpan branding.');
+  } finally {
+    saving.value = false;
   }
 }
 

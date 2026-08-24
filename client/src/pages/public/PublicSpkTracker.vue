@@ -131,7 +131,13 @@
             <div class="p-3 bg-[#0B0F19]/60 rounded-2xl border border-slate-800/80 space-y-1">
               <span class="text-slate-500 block text-[11px]">Perusahaan Klien:</span>
               <strong class="text-white font-bold flex items-center gap-1.5">
-                <Building2 class="w-3.5 h-3.5 text-[#EDC80A] shrink-0" />
+                <img
+                  v-if="wo.vendor?.logo_url"
+                  :src="getFileUrl(wo.vendor.logo_url)"
+                  :alt="wo.vendor?.name"
+                  class="w-4 h-4 object-contain rounded shrink-0"
+                />
+                <Building2 v-else class="w-3.5 h-3.5 text-[#EDC80A] shrink-0" />
                 <span class="truncate">{{ wo.vendor?.name || 'Client SGX' }}</span>
               </strong>
             </div>
