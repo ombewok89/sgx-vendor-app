@@ -140,14 +140,52 @@ class BaDocumentController extends Controller
 
     public function downloadPdf(Request $request, $identifier)
     {
-        $user = $request->user();
+        $user = $request->user()
+            ?: auth('sanctum')->user()
+            ?: (class_exists(\Laravel\Sanctum\PersonalAccessToken::class) && $request->bearerToken()
+                ? \Laravel\Sanctum\PersonalAccessToken::findToken($request->bearerToken())?->tokenable
+                : null);
+
+        // 1. Resolve BA Document by id, work_order_id, or ba_number
         $ba = BaDocument::with(['workOrder.vendor', 'template', 'generator'])
             ->where(function ($q) use ($identifier) {
-                $q->where('work_order_id', $identifier)->orWhere('id', $identifier);
+                $q->where('work_order_id', $identifier)
+                  ->orWhere('id', $identifier)
+                  ->orWhere('ba_number', $identifier);
             })
-            ->firstOrFail();
+            ->first();
 
-        // Multi-Tenant Isolation (H-01): Verify tenant scope for VENDOR and CLIENT roles
+        // 2. If not directly found in ba_documents, check if identifier matches WorkOrder
+        if (!$ba) {
+            $workOrder = WorkOrder::where('id', is_numeric($identifier) ? (int)$identifier : 0)
+                ->orWhere('share_token', $identifier)
+                ->orWhere('spk_number', $identifier)
+                ->first();
+
+            if ($workOrder) {
+                $ba = BaDocument::with(['workOrder.vendor', 'template', 'generator'])
+                    ->where('work_order_id', $workOrder->id)
+                    ->first();
+
+                // If still not generated, generate BA on-the-fly
+                if (!$ba) {
+                    try {
+                        $ba = BaDocumentService::generate($workOrder->id, $user);
+                    } catch (\Throwable $e) {
+                        // Fallback
+                    }
+                }
+            }
+        }
+
+        if (!$ba) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen Berita Acara (BA) belum diterbitkan atau tidak ditemukan untuk pekerjaan ini.',
+            ], 404);
+        }
+
+        // Multi-Tenant Isolation (H-01): Verify tenant scope for VENDOR and CLIENT roles if user is authenticated
         if ($user && $user->hasAnyRole(['VENDOR', 'CLIENT'])) {
             if (!$user->vendor_id || $ba->workOrder?->vendor_id !== $user->vendor_id) {
                 return response()->json([
@@ -165,7 +203,8 @@ class BaDocumentController extends Controller
         $html = view('pdf.ba_opname', $data)->render();
         $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
 
-        return $pdf->download("{$ba->ba_number}.pdf");
+        $cleanBaNumber = preg_replace('/[^A-Za-z0-9\-_]/', '_', (string)$ba->ba_number);
+        return $pdf->download("{$cleanBaNumber}.pdf");
     }
 
     // ==========================================

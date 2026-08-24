@@ -27,6 +27,12 @@ Route::get('/health', function () {
 Route::get('/public/track/{token}', [PublicTrackingController::class, 'track']);
 Route::get('/track/{token}', [PublicTrackingController::class, 'track']);
 
+// Public Berita Acara (BA) PDF Download (Dual Alias & Multi-Format ID/Number Support)
+Route::match(['get', 'options'], '/public/ba/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);
+Route::match(['get', 'options'], '/ba/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);
+Route::match(['get', 'options'], '/ba-documents/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);
+Route::match(['get', 'options'], '/ba/download/{identifier}', [BaDocumentController::class, 'downloadPdf']);
+
 // Public Authentication
 Route::match(['get', 'post'], '/auth/login', [AuthController::class, 'login'])->name('login');
 Route::match(['get', 'post'], '/login', [AuthController::class, 'login']);

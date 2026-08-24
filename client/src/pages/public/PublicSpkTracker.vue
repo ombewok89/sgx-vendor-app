@@ -410,22 +410,13 @@
 
             <div class="flex items-center gap-2 self-start sm:self-auto">
               <a
-                v-if="wo.ba_document?.id"
-                :href="`/api/ba-documents/${wo.ba_document.id}/pdf`"
+                :href="`/api/ba/${wo.ba_document?.id || wo.id}/pdf`"
                 target="_blank"
                 class="px-5 py-2.5 bg-gradient-to-r from-[#EDC80A] via-amber-500 to-[#F59E0B] hover:from-[#f5d012] hover:to-[#ea580c] text-[#1E1E1D] font-black text-xs rounded-xl shadow-lg shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Download class="w-4 h-4" />
                 <span>Unduh Dokumen BA (PDF)</span>
               </a>
-              <button
-                v-else
-                @click="alertBaReady"
-                class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black text-xs rounded-xl shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <CheckSquare class="w-4 h-4" />
-                <span>Pekerjaan Telah Disahkan ✓</span>
-              </button>
             </div>
           </div>
         </div>
