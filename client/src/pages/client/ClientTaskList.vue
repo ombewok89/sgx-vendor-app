@@ -267,6 +267,42 @@
                 </div>
               </div>
             </div>
+
+            <!-- SPK Notes & Special Instructions -->
+            <div
+              v-if="selectedOrder.notes"
+              class="p-4 bg-gradient-to-r from-purple-50/80 to-indigo-50/80 border border-purple-200/90 rounded-2xl space-y-1.5 shadow-xs text-xs"
+            >
+              <div class="flex items-center gap-2 text-purple-900 font-bold text-xs">
+                <FileText class="w-4 h-4 text-purple-700 shrink-0" />
+                <span>CATATAN & ARAHAN KHUSUS PROYEK:</span>
+              </div>
+              <p class="text-xs text-slate-800 font-medium whitespace-pre-line pl-6 leading-relaxed">
+                {{ selectedOrder.notes }}
+              </p>
+            </div>
+
+            <!-- Quality Control Revision Status Banner -->
+            <div
+              v-if="selectedOrder.status === 'REVISION'"
+              class="p-4 bg-gradient-to-r from-amber-50 to-rose-50 border-2 border-amber-300 rounded-2xl space-y-2 shadow-xs text-xs"
+            >
+              <div class="flex items-center justify-between">
+                <div class="font-bold text-xs text-amber-950 flex items-center gap-2">
+                  <RotateCcw class="w-4 h-4 text-amber-600 animate-spin-slow" />
+                  <span>KONTROL MUTU & PENYESUAIAN TEKNIS LAPANGAN (QUALITY ASSURANCE)</span>
+                </div>
+                <span class="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase bg-amber-200 text-amber-900 border border-amber-300">
+                  Dalam Penyempurnaan
+                </span>
+              </div>
+              <div class="bg-white/90 p-3 rounded-xl border border-amber-200 text-xs text-slate-800 font-medium space-y-1">
+                <span class="text-[10px] font-bold text-amber-800 uppercase block">Catatan Pengawas SGX:</span>
+                <p class="italic text-slate-900 font-semibold leading-relaxed">
+                  "{{ latestOrderRevision?.reason || selectedOrder.revisions?.[0]?.reason || 'Pekerjaan sedang disempurnakan oleh teknisi agar memenuhi standar mutu terbaik sebelum disahkan.' }}"
+                </p>
+              </div>
+            </div>
           </div>
 
           <!-- Sub-Tasks & Visual Evidence Per Sub-Item (Interactive Zero-Scroll Sub-Task Inspector) -->
@@ -707,11 +743,12 @@ import {
   FileCheck2,
   Eye,
   ImageIcon,
-  Download,
   RefreshCw,
   Loader2,
   Sparkles,
-  Share2
+  Share2,
+  FileText,
+  RotateCcw
 } from 'lucide-vue-next';
 
 defineEmits(['preview-ba']);
@@ -722,6 +759,11 @@ const loading = ref(true);
 const showShareModal = ref(false);
 const activeItemIndex = ref(0);
 const viewMode = ref('tabbed');
+
+const latestOrderRevision = computed(() => {
+  if (!selectedOrder.value?.revisions || selectedOrder.value.revisions.length === 0) return null;
+  return selectedOrder.value.revisions[selectedOrder.value.revisions.length - 1];
+});
 
 const searchQuery = ref('');
 const selectedStatus = ref('ALL');

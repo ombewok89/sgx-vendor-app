@@ -166,24 +166,51 @@
             </div>
           </div>
 
+          <!-- SPK Notes & Special Instructions from Admin -->
+          <div
+            v-if="selectedTask.notes"
+            class="p-4 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-blue-50/90 border border-indigo-200/90 rounded-2xl space-y-1.5 shadow-xs"
+          >
+            <div class="flex items-center gap-2 text-indigo-900 font-bold text-xs">
+              <FileText class="w-4 h-4 text-indigo-600 shrink-0" />
+              <span>CATATAN & INSTRUKSI KHUSUS PEKERJAAN (DARI ADMIN):</span>
+            </div>
+            <p class="text-xs text-indigo-950 font-medium whitespace-pre-line pl-6 leading-relaxed">
+              {{ selectedTask.notes }}
+            </p>
+          </div>
+
           <!-- Revision Alert if in REVISION state -->
           <div
-            v-if="selectedTask.status === 'REVISION' && selectedTask.revisions?.length > 0"
-            class="p-4 bg-rose-500/10 border border-rose-300 rounded-2xl space-y-2 backdrop-blur-md"
+            v-if="selectedTask.status === 'REVISION'"
+            class="p-5 bg-gradient-to-br from-rose-50 via-rose-100/60 to-red-50 border-2 border-rose-400/80 rounded-3xl space-y-3 shadow-md animate-fade-in"
           >
-            <div class="font-bold text-xs text-rose-900 flex items-center gap-2">
-              <RotateCcw class="w-4 h-4 text-rose-600 animate-spin-slow" />
-              <span>CATATAN PERMINTAAN REVISI DARI ADMIN:</span>
+            <div class="flex items-center justify-between">
+              <div class="font-black text-xs text-rose-950 flex items-center gap-2 tracking-wide">
+                <div class="w-7 h-7 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                  <RotateCcw class="w-4 h-4 animate-spin-slow" />
+                </div>
+                <span>PERMINTAAN REVISI / PERBAIKAN DARI ADMIN</span>
+              </div>
+              <span v-if="latestRevision?.target_stage" class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-rose-200 text-rose-950 border border-rose-300">
+                Target: {{ latestRevision.target_stage }}
+              </span>
             </div>
-            <p class="text-xs text-rose-900 font-bold">
-              Target Bagian: <span class="bg-rose-200 px-2 py-0.5 rounded">{{ selectedTask.revisions[0].target_stage }}</span>
-            </p>
-            <p class="text-xs text-rose-800 bg-white/80 p-3 rounded-xl border border-rose-200 font-medium">
-              "{{ selectedTask.revisions[0].reason }}"
-            </p>
-            <p class="text-[11px] text-rose-600 italic">
-              Silakan perbaiki bukti foto pada tahap yang diminta di bawah ini, lalu klik tombol ajukan ulang ke Admin.
-            </p>
+
+            <div class="bg-white/95 p-4 rounded-2xl border border-rose-200 shadow-inner space-y-1.5">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-rose-700">Alasan & Instruksi Perbaikan:</div>
+              <p class="text-xs text-slate-900 font-bold leading-relaxed whitespace-pre-line">
+                "{{ latestRevision?.reason || selectedTask.revisions?.[0]?.reason || 'Mohon lengkapi dan perbaiki bukti dokumentasi foto sesuai standar mutu.' }}"
+              </p>
+              <div v-if="latestRevision?.requested_at" class="text-[10px] font-mono text-slate-400 pt-1">
+                🕒 Diajukan pada: {{ new Date(latestRevision.requested_at).toLocaleString('id-ID') }}
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 text-[11px] text-rose-700 font-medium pl-1">
+              <AlertCircle class="w-4 h-4 shrink-0 text-rose-600" />
+              <span>Silakan perbaiki bukti foto pada sub-pekerjaan terkait, lalu klik tombol <strong>Ajukan Ulang ke Admin</strong> di bawah.</span>
+            </div>
           </div>
 
           <!-- Stepper Progress -->
@@ -589,7 +616,8 @@ import {
   RotateCcw,
   CheckSquare,
   RefreshCw,
-  Layers
+  Layers,
+  FileText
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -604,6 +632,11 @@ const selectedTask = ref(null);
 const loading = ref(true);
 const submitting = ref(false);
 const activeItemIndex = ref(0);
+
+const latestRevision = computed(() => {
+  if (!selectedTask.value?.revisions || selectedTask.value.revisions.length === 0) return null;
+  return selectedTask.value.revisions[selectedTask.value.revisions.length - 1];
+});
 
 // Check-In State
 const capturedGps = ref(null);
