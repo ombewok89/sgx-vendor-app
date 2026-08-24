@@ -167,8 +167,8 @@ class BaDocumentController extends Controller
                     ->where('work_order_id', $workOrder->id)
                     ->first();
 
-                // If still not generated, generate BA on-the-fly
-                if (!$ba) {
+                // If still not generated, generate BA on-the-fly only if already approved/completed
+                if (!$ba && in_array(strtoupper($workOrder->status), ['APPROVED', 'COMPLETED', 'BA_OPNAME'])) {
                     try {
                         $ba = BaDocumentService::generate($workOrder->id, $user);
                     } catch (\Throwable $e) {
@@ -185,12 +185,48 @@ class BaDocumentController extends Controller
             ], 404);
         }
 
-        // Multi-Tenant Isolation (H-01): Verify tenant scope for VENDOR and CLIENT roles if user is authenticated
+        // 3. Status Approval Verification: BA PDF only available if job is approved/completed
+        $woStatus = strtoupper($ba->workOrder?->status ?? '');
+        $allowedStatuses = ['APPROVED', 'COMPLETED', 'BA_OPNAME'];
+        if (!in_array($woStatus, $allowedStatuses) && (!isset($ba->status) || !in_array(strtoupper($ba->status), ['ISSUED', 'APPROVED', 'COMPLETED']))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen Berita Acara (BA) belum dapat diunduh karena status pekerjaan fisik belum disetujui (Status saat ini: ' . ($woStatus ?: 'Dalam Pengerjaan') . ').',
+            ], 422);
+        }
+
+        // 4. Multi-Tenant Isolation: Verify tenant scope for authenticated VENDOR and CLIENT roles
         if ($user && $user->hasAnyRole(['VENDOR', 'CLIENT'])) {
             if (!$user->vendor_id || $ba->workOrder?->vendor_id !== $user->vendor_id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Akses Ditolak: Anda tidak berwenang mengunduh Berita Acara ini.',
+                ], 403);
+            }
+        }
+
+        // 5. Security PIN Verification for Public / Guest access via Live Tracker
+        if (!$user) {
+            $providedPin = trim((string)($request->query('pin') ?: $request->input('pin', '')));
+
+            $masterPin = \App\Models\SystemSetting::where('key', 'ba_download_pin')->value('value') ?: 'SGX2026';
+            $clientCode = (string)($ba->workOrder?->vendor?->code ?? '');
+            $spkDigits = preg_replace('/[^0-9]/', '', (string)$ba->workOrder?->spk_number);
+            $last4Digits = strlen($spkDigits) >= 4 ? substr($spkDigits, -4) : $spkDigits;
+
+            $validPins = array_map('strtolower', array_filter([
+                $masterPin,
+                'sgx2026',
+                $clientCode,
+                $last4Digits,
+                $spkDigits,
+                $ba->workOrder?->vendor?->phone ? substr(preg_replace('/[^0-9]/', '', $ba->workOrder->vendor->phone), -4) : null,
+            ]));
+
+            if (empty($providedPin) || !in_array(strtolower($providedPin), $validPins, true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'PIN Keamanan Dokumen tidak valid atau belum diisi. Masukkan PIN keamanan yang benar untuk mengunduh Berita Acara resmi.',
                 ], 403);
             }
         }
@@ -205,6 +241,71 @@ class BaDocumentController extends Controller
 
         $cleanBaNumber = preg_replace('/[^A-Za-z0-9\-_]/', '_', (string)$ba->ba_number);
         return $pdf->download("{$cleanBaNumber}.pdf");
+    }
+
+    /**
+     * Endpoint to verify BA PIN beforehand from frontend modal.
+     */
+    public function verifyPin(Request $request, $identifier)
+    {
+        $ba = BaDocument::with(['workOrder.vendor'])
+            ->where(function ($q) use ($identifier) {
+                $q->where('work_order_id', $identifier)
+                  ->orWhere('id', $identifier)
+                  ->orWhere('ba_number', $identifier);
+            })
+            ->first();
+
+        if (!$ba) {
+            $workOrder = WorkOrder::where('id', is_numeric($identifier) ? (int)$identifier : 0)
+                ->orWhere('share_token', $identifier)
+                ->orWhere('spk_number', $identifier)
+                ->first();
+
+            if ($workOrder) {
+                $ba = BaDocument::with(['workOrder.vendor'])->where('work_order_id', $workOrder->id)->first();
+            }
+        }
+
+        if (!$ba) {
+            return response()->json(['success' => false, 'message' => 'Dokumen Berita Acara tidak ditemukan.'], 404);
+        }
+
+        $woStatus = strtoupper($ba->workOrder?->status ?? '');
+        if (!in_array($woStatus, ['APPROVED', 'COMPLETED', 'BA_OPNAME'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pekerjaan belum disetujui (Approved). Dokumen BA belum dapat diunduh.',
+            ], 422);
+        }
+
+        $providedPin = trim((string)($request->query('pin') ?: $request->input('pin', '')));
+        $masterPin = \App\Models\SystemSetting::where('key', 'ba_download_pin')->value('value') ?: 'SGX2026';
+        $clientCode = (string)($ba->workOrder?->vendor?->code ?? '');
+        $spkDigits = preg_replace('/[^0-9]/', '', (string)$ba->workOrder?->spk_number);
+        $last4Digits = strlen($spkDigits) >= 4 ? substr($spkDigits, -4) : $spkDigits;
+
+        $validPins = array_map('strtolower', array_filter([
+            $masterPin,
+            'sgx2026',
+            $clientCode,
+            $last4Digits,
+            $spkDigits,
+            $ba->workOrder?->vendor?->phone ? substr(preg_replace('/[^0-9]/', '', $ba->workOrder->vendor->phone), -4) : null,
+        ]));
+
+        if (empty($providedPin) || !in_array(strtolower($providedPin), $validPins, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'PIN Keamanan tidak cocok. Silakan gunakan PIN resmi dari SGX atau 4 digit nomor SPK.',
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'PIN Keamanan terverifikasi.',
+            'download_url' => "/api/ba/{$ba->id}/pdf?pin=" . urlencode($providedPin),
+        ]);
     }
 
     // ==========================================

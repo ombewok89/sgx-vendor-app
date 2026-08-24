@@ -372,9 +372,10 @@
           </div>
         </div>
 
-        <!-- Official Berita Acara (BA) Opname Certificate Showcase Card (Visible on Completion) -->
+        <!-- Official Berita Acara (BA) Opname Certificate Showcase Card -->
+        <!-- 1. Kondisi Sudah Selesai & Disetujui (Approved / Completed) -->
         <div
-          v-if="wo.ba_document || ['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(wo.status)"
+          v-if="isApprovedOrCompleted"
           class="p-5 sm:p-7 rounded-3xl bg-gradient-to-br from-amber-500/15 via-[#111827] to-emerald-500/10 border-2 border-[#EDC80A]/40 shadow-2xl backdrop-blur-2xl space-y-4 animate-fade-in"
         >
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -409,15 +410,43 @@
             </div>
 
             <div class="flex items-center gap-2 self-start sm:self-auto">
-              <a
-                :href="`/api/ba/${wo.ba_document?.id || wo.id}/pdf`"
-                target="_blank"
+              <!-- Tombol Unduh BA (Memicu Modal PIN Keamanan) -->
+              <button
+                type="button"
+                @click="openBaDownloadModal"
                 class="px-5 py-2.5 bg-gradient-to-r from-[#EDC80A] via-amber-500 to-[#F59E0B] hover:from-[#f5d012] hover:to-[#ea580c] text-[#1E1E1D] font-black text-xs rounded-xl shadow-lg shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
               >
-                <Download class="w-4 h-4" />
+                <Lock class="w-4 h-4" />
                 <span>Unduh Dokumen BA (PDF)</span>
-              </a>
+              </button>
             </div>
+          </div>
+        </div>
+
+        <!-- 2. Kondisi Belum Approval (Pekerjaan Masih Berjalan / Menunggu Review) -->
+        <div
+          v-else
+          class="p-4 sm:p-5 rounded-3xl bg-[#111827]/70 border border-slate-800 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-slate-800 text-slate-400 flex items-center justify-center font-bold shrink-0">
+              <FileCheck2 class="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <div class="font-bold text-slate-200 flex items-center gap-2">
+                <span>Berita Acara (BA) Opname Belum Diterbitkan</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                  Status: {{ getStatusLabel(wo.status) }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5">
+                Tombol unduh Berita Acara resmi akan muncul secara otomatis setelah seluruh pekerjaan fisik selesai dan disetujui (Approved) 100% oleh Pengawas Mutu.
+              </p>
+            </div>
+          </div>
+
+          <div class="px-3 py-1.5 rounded-xl bg-[#0B0F19] text-slate-400 border border-slate-800 font-mono text-[11px] self-start sm:self-auto shrink-0">
+            Progres: {{ wo.progress_percent || 0 }}%
           </div>
         </div>
 
@@ -1103,6 +1132,92 @@
           </div>
         </Teleport>
 
+        <!-- BA Security PIN Verification Modal Teleport -->
+        <Teleport to="body">
+          <div
+            v-if="showPinModal"
+            class="fixed inset-0 z-[210] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+            @click.self="showPinModal = false"
+          >
+            <div class="bg-[#111827] border border-amber-500/30 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 text-xs animate-scale-up relative">
+              <!-- Close Button -->
+              <button
+                type="button"
+                @click="showPinModal = false"
+                class="absolute top-4 right-4 p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X class="w-4 h-4" />
+              </button>
+
+              <div class="flex items-center gap-3 border-b border-slate-800/80 pb-3.5">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-[#EDC80A] flex items-center justify-center font-bold border border-amber-500/30 shadow-md">
+                  <Lock class="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 class="font-black text-sm text-white tracking-tight">
+                    Proteksi Keamanan Berita Acara (BA)
+                  </h3>
+                  <p class="text-[11px] text-slate-400">Verifikasi PIN akses untuk mengunduh dokumen resmi.</p>
+                </div>
+              </div>
+
+              <form @submit.prevent="handleVerifyAndDownloadBa" class="space-y-4">
+                <div class="p-3.5 rounded-2xl bg-[#0B0F19] border border-slate-800 space-y-1">
+                  <span class="text-[10px] text-slate-400 font-mono block">DOKUMEN TARGET:</span>
+                  <div class="font-black text-slate-100 text-xs">
+                    {{ wo.ba_document?.ba_number || `BA-SGX-${wo.spk_number}` }}
+                  </div>
+                  <div class="text-[10px] text-[#EDC80A]">Lokasi: {{ wo.location_name }}</div>
+                </div>
+
+                <div class="space-y-1.5">
+                  <label class="block font-bold text-slate-200">
+                    Masukkan PIN / Password Keamanan Dokumen *
+                  </label>
+                  <div class="relative">
+                    <input
+                      required
+                      type="password"
+                      placeholder="Masukkan PIN / 4 digit SPK"
+                      v-model="baPinInput"
+                      autofocus
+                      class="w-full pl-9 pr-4 py-2.5 bg-[#0B0F19] border border-slate-700 focus:border-[#EDC80A] rounded-xl text-white font-mono text-sm focus:ring-1 focus:ring-[#EDC80A] transition-all"
+                    />
+                    <KeyRound class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                  <p class="text-[10px] text-slate-400">
+                    💡 Gunakan PIN resmi dari SGX, Kode Klien (contoh: <span class="font-mono text-slate-300">{{ wo.vendor?.code || 'SGX' }}</span>), atau 4 digit nomor SPK.
+                  </p>
+                </div>
+
+                <div v-if="pinError" class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[11px] font-medium flex items-center gap-2">
+                  <ShieldAlert class="w-4 h-4 shrink-0" />
+                  <span>{{ pinError }}</span>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    @click="showPinModal = false"
+                    class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition-all cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    :disabled="pinLoading"
+                    class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#EDC80A] to-[#F59E0B] text-[#1E1E1D] font-black shadow-lg shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Loader2 v-if="pinLoading" class="w-4 h-4 animate-spin" />
+                    <Download v-else class="w-4 h-4" />
+                    <span>{{ pinLoading ? 'Memverifikasi...' : 'Verifikasi & Unduh PDF' }}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Teleport>
+
       </div>
     </main>
 
@@ -1125,7 +1240,7 @@ import {
   RefreshCw, Loader2, ShieldAlert, Home, Building2, User, Calendar, 
   MapPin, Activity, Camera, Maximize2, Clock, CheckSquare, X,
   Layers, ListFilter, LayoutGrid, Sparkles, FileText, RotateCcw,
-  FileCheck2, Download, Share2
+  FileCheck2, Download, Share2, Lock, KeyRound
 } from 'lucide-vue-next';
 import { api, getFileUrl } from '../../services/api';
 
@@ -1144,6 +1259,53 @@ const activeViewMode = ref('FOCUSED_TAB'); // 'FOCUSED_TAB' | 'ACCORDION' | 'ALL
 const selectedItemId = ref('default');
 const mobileSubStage = ref('AFTER'); // 'AFTER' | 'BEFORE' | 'PROCESS' | 'COMPARE' | 'ALL'
 const activeLightboxPhoto = ref(null);
+
+const showPinModal = ref(false);
+const baPinInput = ref('');
+const pinLoading = ref(false);
+const pinError = ref('');
+
+const isApprovedOrCompleted = computed(() => {
+  const status = String(wo.value?.status || '').toUpperCase();
+  return ['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(status) || 
+         (wo.value?.ba_document && ['ISSUED', 'APPROVED', 'COMPLETED'].includes(String(wo.value?.ba_document?.status || '').toUpperCase()));
+});
+
+function openBaDownloadModal() {
+  if (!isApprovedOrCompleted.value) {
+    alert('Dokumen Berita Acara (BA) belum dapat diunduh karena pekerjaan belum dalam status Approval.');
+    return;
+  }
+  baPinInput.value = '';
+  pinError.value = '';
+  showPinModal.value = true;
+}
+
+async function handleVerifyAndDownloadBa() {
+  if (!baPinInput.value.trim()) {
+    pinError.value = 'Silakan masukkan PIN keamanan dokumen.';
+    return;
+  }
+  pinLoading.value = true;
+  pinError.value = '';
+  try {
+    const baId = wo.value?.ba_document?.id || wo.value?.id;
+    const response = await fetch(`/api/ba/${baId}/verify-pin?pin=${encodeURIComponent(baPinInput.value.trim())}`);
+    const result = await response.json();
+    if (result.success && result.download_url) {
+      showPinModal.value = false;
+      window.open(result.download_url, '_blank');
+    } else {
+      pinError.value = result.message || 'PIN Keamanan salah atau belum valid.';
+    }
+  } catch (err) {
+    const baId = wo.value?.ba_document?.id || wo.value?.id;
+    window.open(`/api/ba/${baId}/pdf?pin=${encodeURIComponent(baPinInput.value.trim())}`, '_blank');
+    showPinModal.value = false;
+  } finally {
+    pinLoading.value = false;
+  }
+}
 
 function isValidGps(val) {
   if (val == null || val === '' || isNaN(Number(val))) return false;

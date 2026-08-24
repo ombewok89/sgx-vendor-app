@@ -28,6 +28,8 @@ Route::get('/public/track/{token}', [PublicTrackingController::class, 'track']);
 Route::get('/track/{token}', [PublicTrackingController::class, 'track']);
 
 // Public Berita Acara (BA) PDF Download (Dual Alias & Multi-Format ID/Number Support)
+Route::match(['post', 'get', 'options'], '/public/ba/{identifier}/verify-pin', [BaDocumentController::class, 'verifyPin']);
+Route::match(['post', 'get', 'options'], '/ba/{identifier}/verify-pin', [BaDocumentController::class, 'verifyPin']);
 Route::match(['get', 'options'], '/public/ba/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);
 Route::match(['get', 'options'], '/ba/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);
 Route::match(['get', 'options'], '/ba-documents/{identifier}/pdf', [BaDocumentController::class, 'downloadPdf']);
