@@ -586,11 +586,12 @@
                     ]"
                   >
                     <Sparkles class="w-3.5 h-3.5" />
-                    <span>Sesudah ({{ getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length }})</span>
+                    <span>{{ isAfterOnly(currentSelectedItem) ? 'Hasil Pekerjaan (After)' : 'Sesudah' }} ({{ getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length }})</span>
                   </button>
 
-                  <!-- 2. BEFORE PILL (Kondisi Awal) -->
+                  <!-- 2. BEFORE PILL (Kondisi Awal) - Disembunyikan jika AFTER_ONLY -->
                   <button
+                    v-if="!isAfterOnly(currentSelectedItem)"
                     type="button"
                     @click="mobileSubStage = 'BEFORE'"
                     :class="[
@@ -604,8 +605,9 @@
                     <span>Sebelum ({{ getPhotosForItemStage(currentSelectedItem.id, 'BEFORE').length }})</span>
                   </button>
 
-                  <!-- 3. PROCESS PILL (Pengerjaan) -->
+                  <!-- 3. PROCESS PILL (Pengerjaan) - Disembunyikan jika AFTER_ONLY atau TWO_STAGES -->
                   <button
+                    v-if="!isAfterOnly(currentSelectedItem) && !isTwoStages(currentSelectedItem)"
                     type="button"
                     @click="mobileSubStage = 'PROCESS'"
                     :class="[
@@ -619,8 +621,9 @@
                     <span>Proses ({{ getPhotosForItemStage(currentSelectedItem.id, 'PROCESS').length }})</span>
                   </button>
 
-                  <!-- 4. COMPARE PILL (Before vs After) -->
+                  <!-- 4. COMPARE PILL (Before vs After) - Disembunyikan jika AFTER_ONLY -->
                   <button
+                    v-if="!isAfterOnly(currentSelectedItem)"
                     type="button"
                     @click="mobileSubStage = 'COMPARE'"
                     :class="[
@@ -796,11 +799,21 @@
               </div>
 
               <!-- ======================================================== -->
-              <!-- STAGE VIEW 3: STANDARD 3-COLUMN OVERVIEW (ALL STAGES)    -->
+              <!-- STAGE VIEW 3: DYNAMIC OVERVIEW (ADAPTS TO DOC MODE)       -->
               <!-- ======================================================== -->
-              <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in">
-                <!-- BEFORE -->
-                <div class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+              <div
+                v-else
+                :class="[
+                  'animate-fade-in',
+                  isAfterOnly(currentSelectedItem)
+                    ? 'grid grid-cols-1 gap-4'
+                    : isTwoStages(currentSelectedItem)
+                    ? 'grid grid-cols-1 sm:grid-cols-2 gap-4'
+                    : 'grid grid-cols-1 sm:grid-cols-3 gap-4'
+                ]"
+              >
+                <!-- BEFORE (Sembunyi jika AFTER_ONLY) -->
+                <div v-if="!isAfterOnly(currentSelectedItem)" class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-blue-950 text-blue-300 border border-blue-500/40">
                       BEFORE
@@ -826,8 +839,8 @@
                   </div>
                 </div>
 
-                <!-- PROCESS -->
-                <div class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                <!-- PROCESS (Sembunyi jika AFTER_ONLY atau TWO_STAGES) -->
+                <div v-if="!isAfterOnly(currentSelectedItem) && !isTwoStages(currentSelectedItem)" class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-amber-950 text-amber-300 border border-amber-500/40">
                       PROCESS
@@ -853,19 +866,19 @@
                   </div>
                 </div>
 
-                <!-- AFTER -->
+                <!-- AFTER (Hasil Akhir) -->
                 <div class="bg-[#0B0F19]/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40">
-                      AFTER
+                      {{ isAfterOnly(currentSelectedItem) ? 'DOKUMENTASI HASIL PEKERJAAN (AFTER)' : 'AFTER' }}
                     </span>
                     <span class="text-[10px] font-mono text-slate-400">{{ getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length }} Foto</span>
                   </div>
-                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length > 0" class="space-y-2">
+                  <div v-if="getPhotosForItemStage(currentSelectedItem.id, 'AFTER').length > 0" :class="isAfterOnly(currentSelectedItem) ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3' : 'space-y-2'">
                     <div
                       v-for="p in getPhotosForItemStage(currentSelectedItem.id, 'AFTER')"
                       :key="p.id"
-                      class="h-36 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800/80"
+                      class="h-36 sm:h-44 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer border border-slate-800/80"
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
@@ -926,10 +939,18 @@
                 </span>
               </div>
 
-              <!-- Grid Before / Process / After for this Sub-Task -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <!-- BEFORE -->
-                <div class="bg-[#0B0F19]/80 border border-slate-800/80 rounded-2xl p-3 space-y-2">
+              <!-- Grid Before / Process / After for this Sub-Task (Adapts dynamically to doc_mode) -->
+              <div
+                :class="[
+                  isAfterOnly(item)
+                    ? 'grid grid-cols-1 gap-3'
+                    : isTwoStages(item)
+                    ? 'grid grid-cols-1 sm:grid-cols-2 gap-3'
+                    : 'grid grid-cols-1 sm:grid-cols-3 gap-3'
+                ]"
+              >
+                <!-- BEFORE (Disembunyikan jika AFTER_ONLY) -->
+                <div v-if="!isAfterOnly(item)" class="bg-[#0B0F19]/80 border border-slate-800/80 rounded-2xl p-3 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-950 text-blue-300 border border-blue-500/30">
                       BEFORE
@@ -954,8 +975,8 @@
                   </div>
                 </div>
 
-                <!-- PROCESS -->
-                <div class="bg-[#0B0F19]/80 border border-slate-800/80 rounded-2xl p-3 space-y-2">
+                <!-- PROCESS (Disembunyikan jika AFTER_ONLY atau TWO_STAGES) -->
+                <div v-if="!isAfterOnly(item) && !isTwoStages(item)" class="bg-[#0B0F19]/80 border border-slate-800/80 rounded-2xl p-3 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-950 text-amber-300 border border-amber-500/30">
                       PROCESS
@@ -980,19 +1001,19 @@
                   </div>
                 </div>
 
-                <!-- AFTER -->
+                <!-- AFTER (Hasil Akhir) -->
                 <div class="bg-[#0B0F19]/80 border border-slate-800/80 rounded-2xl p-3 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-500/30">
-                      AFTER
+                      {{ isAfterOnly(item) ? 'DOKUMENTASI HASIL PEKERJAAN (AFTER)' : 'AFTER' }}
                     </span>
                     <span class="text-[9px] font-mono text-slate-500">{{ getPhotosForItemStage(item.id, 'AFTER').length }} Foto</span>
                   </div>
-                  <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="space-y-2">
+                  <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" :class="isAfterOnly(item) ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3' : 'space-y-2'">
                     <div
                       v-for="p in getPhotosForItemStage(item.id, 'AFTER')"
                       :key="p.id"
-                      class="h-32 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
+                      class="h-32 sm:h-36 rounded-xl overflow-hidden bg-slate-900 relative group cursor-pointer"
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
@@ -1305,6 +1326,16 @@ async function handleVerifyAndDownloadBa() {
   } finally {
     pinLoading.value = false;
   }
+}
+
+function isAfterOnly(item) {
+  const mode = String(item?.doc_mode || wo.value?.doc_mode || '').toUpperCase();
+  return mode === 'AFTER_ONLY' || mode === 'ONE_STAGE' || mode === '1_STAGE' || mode === 'AFTER';
+}
+
+function isTwoStages(item) {
+  const mode = String(item?.doc_mode || wo.value?.doc_mode || '').toUpperCase();
+  return mode === 'TWO_STAGES' || mode === 'BEFORE_AFTER';
 }
 
 function isValidGps(val) {

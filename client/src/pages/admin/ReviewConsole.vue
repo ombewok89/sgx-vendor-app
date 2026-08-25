@@ -358,10 +358,18 @@
                   </span>
                 </div>
 
-                <!-- Triptych Review Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <!-- BEFORE -->
-                  <div class="p-2.5 bg-amber-50/40 rounded-xl border border-amber-200/60 space-y-2">
+                <!-- Dynamic Review Grid: Adapts to doc_mode (1-Stage, 2-Stage, 3-Stage) -->
+                <div
+                  :class="[
+                    isAfterOnly(item)
+                      ? 'grid grid-cols-1 gap-3'
+                      : isTwoStages(item)
+                      ? 'grid grid-cols-1 sm:grid-cols-2 gap-3'
+                      : 'grid grid-cols-1 sm:grid-cols-3 gap-3'
+                  ]"
+                >
+                  <!-- BEFORE (Disembunyikan jika AFTER_ONLY) -->
+                  <div v-if="!isAfterOnly(item)" class="p-2.5 bg-amber-50/40 rounded-xl border border-amber-200/60 space-y-2">
                     <div class="flex items-center justify-between">
                       <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500 text-white">BEFORE</span>
                       <span class="text-[9px] font-mono text-slate-400">{{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto</span>
@@ -384,8 +392,8 @@
                     </div>
                   </div>
 
-                  <!-- PROCESS -->
-                  <div class="p-2.5 bg-blue-50/40 rounded-xl border border-blue-200/60 space-y-2">
+                  <!-- PROCESS (Disembunyikan jika AFTER_ONLY atau TWO_STAGES) -->
+                  <div v-if="!isAfterOnly(item) && !isTwoStages(item)" class="p-2.5 bg-blue-50/40 rounded-xl border border-blue-200/60 space-y-2">
                     <div class="flex items-center justify-between">
                       <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-600 text-white">PROCESS</span>
                       <span class="text-[9px] font-mono text-slate-400">{{ getPhotosForItemStage(item.id, 'PROCESS').length }} Foto</span>
@@ -404,22 +412,22 @@
                       </div>
                     </div>
                     <div v-else class="h-20 rounded-lg border border-dashed border-blue-200 flex items-center justify-center text-slate-400 text-[10px]">
-                      {{ item.doc_mode === 'AFTER_ONLY' ? 'Mode Hanya Foto Selesai' : 'Belum ada foto' }}
+                      Belum ada foto
                     </div>
                   </div>
 
-                  <!-- AFTER -->
+                  <!-- AFTER (Hasil Akhir) -->
                   <div class="p-2.5 bg-emerald-50/40 rounded-xl border border-emerald-200/60 space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-600 text-white">AFTER</span>
+                      <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-600 text-white">{{ isAfterOnly(item) ? 'DOKUMENTASI HASIL (AFTER)' : 'AFTER' }}</span>
                       <span class="text-[9px] font-mono text-slate-400">{{ getPhotosForItemStage(item.id, 'AFTER').length }} Foto</span>
                     </div>
-                    <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="space-y-2">
+                    <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" :class="isAfterOnly(item) ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5' : 'space-y-2'">
                       <div
                         v-for="p in getPhotosForItemStage(item.id, 'AFTER')"
                         :key="p.id"
                         @click="openLightbox(p)"
-                        class="h-28 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs"
+                        class="h-28 sm:h-32 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs"
                       >
                         <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
                         <button type="button" @click.stop="downloadSinglePhoto(p)" class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white flex items-center justify-center text-[10px] border border-white/40">
@@ -817,10 +825,19 @@ function getPhotosForItemStage(itemId, stage) {
   });
 }
 
+function isAfterOnly(item) {
+  const mode = String(item?.doc_mode || selectedOrder.value?.doc_mode || '').toUpperCase();
+  return mode === 'AFTER_ONLY' || mode === 'ONE_STAGE' || mode === '1_STAGE' || mode === 'AFTER';
+}
+
+function isTwoStages(item) {
+  const mode = String(item?.doc_mode || selectedOrder.value?.doc_mode || '').toUpperCase();
+  return mode === 'TWO_STAGES' || mode === 'BEFORE_AFTER';
+}
+
 function isItemFullyDocumented(item) {
-  const docMode = item.doc_mode || selectedOrder.value?.doc_mode || 'BEFORE_PROCESS_AFTER';
   const afterPhotos = getPhotosForItemStage(item.id, 'AFTER');
-  if (docMode === 'AFTER_ONLY') {
+  if (isAfterOnly(item)) {
     return afterPhotos.length > 0;
   }
   const beforePhotos = getPhotosForItemStage(item.id, 'BEFORE');

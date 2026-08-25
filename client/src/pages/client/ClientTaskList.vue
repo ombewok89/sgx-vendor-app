@@ -429,10 +429,18 @@
                   </span>
                 </div>
 
-                <!-- Side-by-Side 3-Phase Comparison Cards for Active Item -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                  <!-- 1. Before Photo -->
-                  <div class="border border-slate-200 rounded-2xl p-3 bg-amber-50/20 space-y-2 flex flex-col justify-between shadow-2xs">
+                <!-- Side-by-Side Comparison Cards for Active Item (Adapts to doc_mode) -->
+                <div
+                  :class="[
+                    isAfterOnly(displayItems[activeItemIndex])
+                      ? 'grid grid-cols-1 gap-3.5'
+                      : isTwoStages(displayItems[activeItemIndex])
+                      ? 'grid grid-cols-1 md:grid-cols-2 gap-3.5'
+                      : 'grid grid-cols-1 md:grid-cols-3 gap-3.5'
+                  ]"
+                >
+                  <!-- 1. Before Photo (Sembunyi jika AFTER_ONLY) -->
+                  <div v-if="!isAfterOnly(displayItems[activeItemIndex])" class="border border-slate-200 rounded-2xl p-3 bg-amber-50/20 space-y-2 flex flex-col justify-between shadow-2xs">
                     <div>
                       <div class="flex items-center justify-between mb-2">
                         <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs">
@@ -475,8 +483,8 @@
                     </div>
                   </div>
 
-                  <!-- 2. Process Photo -->
-                  <div class="border border-slate-200 rounded-2xl p-3 bg-blue-50/20 space-y-2 flex flex-col justify-between shadow-2xs">
+                  <!-- 2. Process Photo (Sembunyi jika AFTER_ONLY atau TWO_STAGES) -->
+                  <div v-if="!isAfterOnly(displayItems[activeItemIndex]) && !isTwoStages(displayItems[activeItemIndex])" class="border border-slate-200 rounded-2xl p-3 bg-blue-50/20 space-y-2 flex flex-col justify-between shadow-2xs">
                     <div>
                       <div class="flex items-center justify-between mb-2">
                         <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-2xs">
@@ -514,24 +522,24 @@
                       </div>
                       <div v-else class="h-40 rounded-xl border border-dashed border-blue-200 flex flex-col items-center justify-center text-slate-400 text-xs">
                         <ImageIcon class="w-6 h-6 opacity-40 mb-1" />
-                        <span>{{ displayItems[activeItemIndex].doc_mode === 'AFTER_ONLY' ? 'Mode Tanpa Foto Proses' : 'Foto Proses Belum Tersedia' }}</span>
+                        <span>Foto Proses Belum Tersedia</span>
                       </div>
                     </div>
                   </div>
 
-                  <!-- 3. After Photo -->
+                  <!-- 3. After Photo (Hasil Akhir) -->
                   <div class="border border-slate-200 rounded-2xl p-3 bg-emerald-50/20 space-y-2 flex flex-col justify-between shadow-2xs">
                     <div>
                       <div class="flex items-center justify-between mb-2">
                         <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
-                          HASIL AKHIR (AFTER)
+                          {{ isAfterOnly(displayItems[activeItemIndex]) ? 'DOKUMENTASI HASIL PEKERJAAN (AFTER)' : 'HASIL AKHIR (AFTER)' }}
                         </span>
                         <span class="text-[10px] font-mono text-emerald-700 font-bold">
                           {{ getPhotosForItemStage(displayItems[activeItemIndex].id, 'AFTER').length > 0 ? 'Selesai ✓' : 'Menunggu' }}
                         </span>
                       </div>
 
-                      <div v-if="getPhotosForItemStage(displayItems[activeItemIndex].id, 'AFTER').length > 0" class="space-y-2">
+                      <div v-if="getPhotosForItemStage(displayItems[activeItemIndex].id, 'AFTER').length > 0" :class="isAfterOnly(displayItems[activeItemIndex]) ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3' : 'space-y-2'">
                         <div
                           v-for="p in getPhotosForItemStage(displayItems[activeItemIndex].id, 'AFTER')"
                           :key="p.id"
@@ -611,10 +619,18 @@
                   </span>
                 </div>
 
-                <!-- 3 Columns for this Sub-Task -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <!-- Before Box -->
-                  <div class="border border-slate-200 rounded-xl p-2.5 bg-white space-y-1.5">
+                <!-- Dynamic Columns for this Sub-Task -->
+                <div
+                  :class="[
+                    isAfterOnly(item)
+                      ? 'grid grid-cols-1 gap-3'
+                      : isTwoStages(item)
+                      ? 'grid grid-cols-1 md:grid-cols-2 gap-3'
+                      : 'grid grid-cols-1 md:grid-cols-3 gap-3'
+                  ]"
+                >
+                  <!-- Before Box (Sembunyi jika AFTER_ONLY) -->
+                  <div v-if="!isAfterOnly(item)" class="border border-slate-200 rounded-xl p-2.5 bg-white space-y-1.5">
                     <div class="flex items-center justify-between text-[10px]">
                       <span class="font-bold text-amber-800">BEFORE</span>
                       <span class="text-slate-400 font-mono">{{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto</span>
@@ -627,8 +643,8 @@
                     </div>
                   </div>
 
-                  <!-- Process Box -->
-                  <div class="border border-slate-200 rounded-xl p-2.5 bg-white space-y-1.5">
+                  <!-- Process Box (Sembunyi jika AFTER_ONLY atau TWO_STAGES) -->
+                  <div v-if="!isAfterOnly(item) && !isTwoStages(item)" class="border border-slate-200 rounded-xl p-2.5 bg-white space-y-1.5">
                     <div class="flex items-center justify-between text-[10px]">
                       <span class="font-bold text-blue-800">PROCESS</span>
                       <span class="text-slate-400 font-mono">{{ getPhotosForItemStage(item.id, 'PROCESS').length }} Foto</span>
@@ -644,8 +660,8 @@
                   <!-- After Box -->
                   <div class="border border-slate-200 rounded-xl p-2.5 bg-white space-y-1.5">
                     <div class="flex items-center justify-between text-[10px]">
-                      <span class="font-bold text-emerald-800">AFTER</span>
-                      <span class="text-emerald-700 font-bold font-mono">{{ getPhotosForItemStage(item.id, 'AFTER').length > 0 ? '✓' : '-' }}</span>
+                      <span class="font-bold text-emerald-800">{{ isAfterOnly(item) ? 'DOKUMENTASI HASIL (AFTER)' : 'AFTER' }}</span>
+                      <span class="text-emerald-700 font-bold font-mono">{{ getPhotosForItemStage(item.id, 'AFTER').length }} Foto</span>
                     </div>
                     <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" class="h-32 rounded-lg overflow-hidden bg-slate-900 relative cursor-pointer" @click="openLightbox(getPhotosForItemStage(item.id, 'AFTER')[0])">
                       <img :src="getFileUrl(getPhotosForItemStage(item.id, 'AFTER')[0].file_path)" class="w-full h-full object-cover" />
@@ -912,10 +928,19 @@ function getPhotosForItemStage(itemId, stage) {
   });
 }
 
+function isAfterOnly(item) {
+  const mode = String(item?.doc_mode || selectedOrder.value?.doc_mode || '').toUpperCase();
+  return mode === 'AFTER_ONLY' || mode === 'ONE_STAGE' || mode === '1_STAGE' || mode === 'AFTER';
+}
+
+function isTwoStages(item) {
+  const mode = String(item?.doc_mode || selectedOrder.value?.doc_mode || '').toUpperCase();
+  return mode === 'TWO_STAGES' || mode === 'BEFORE_AFTER';
+}
+
 function isItemFullyDocumented(item) {
-  const docMode = item.doc_mode || selectedOrder.value?.doc_mode || 'BEFORE_PROCESS_AFTER';
   const afterPhotos = getPhotosForItemStage(item.id, 'AFTER');
-  if (docMode === 'AFTER_ONLY') {
+  if (isAfterOnly(item)) {
     return afterPhotos.length > 0;
   }
   const beforePhotos = getPhotosForItemStage(item.id, 'BEFORE');
