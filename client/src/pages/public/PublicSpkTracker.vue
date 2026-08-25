@@ -697,6 +697,16 @@
                       class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
                     />
                     
+                    <!-- Floating Download Button -->
+                    <button
+                      type="button"
+                      @click.stop="downloadSinglePhoto(p)"
+                      class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-lg flex items-center justify-center transition-all cursor-pointer border border-white/20 hover:border-[#EDC80A] z-20"
+                      title="Unduh Foto Evidensi"
+                    >
+                      <Download class="w-4 h-4" />
+                    </button>
+
                     <!-- Overlay Badge & GPS Metadata -->
                     <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent flex flex-col justify-between p-3 pointer-events-none">
                       <div class="flex items-center justify-between">
@@ -708,8 +718,8 @@
                         >
                           {{ mobileSubStage }}
                         </span>
-                        <span class="text-[10px] bg-black/70 px-2 py-0.5 rounded-md text-slate-200 font-mono">
-                          🔍 Klik Zoom
+                        <span class="text-[10px] bg-black/70 px-2 py-0.5 rounded-md text-slate-200 font-mono mr-9">
+                          🔍 Zoom
                         </span>
                       </div>
 
@@ -758,7 +768,15 @@
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2.5 text-[10px] text-white font-mono flex items-center justify-between">
+                      <button
+                        type="button"
+                        @click.stop="downloadSinglePhoto(p)"
+                        class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/20 z-20"
+                        title="Unduh Foto Before"
+                      >
+                        <Download class="w-3.5 h-3.5" />
+                      </button>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2.5 text-[10px] text-white font-mono flex items-center justify-between pointer-events-none">
                         <span class="text-blue-300 font-bold">BEFORE</span>
                         <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
@@ -786,7 +804,15 @@
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2.5 text-[10px] text-white font-mono flex items-center justify-between">
+                      <button
+                        type="button"
+                        @click.stop="downloadSinglePhoto(p)"
+                        class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/20 z-20"
+                        title="Unduh Foto After"
+                      >
+                        <Download class="w-3.5 h-3.5" />
+                      </button>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2.5 text-[10px] text-white font-mono flex items-center justify-between pointer-events-none">
                         <span class="text-emerald-300 font-bold">AFTER</span>
                         <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
@@ -828,7 +854,15 @@
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono flex items-center justify-between">
+                      <button
+                        type="button"
+                        @click.stop="downloadSinglePhoto(p)"
+                        class="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-sm flex items-center justify-center transition-all cursor-pointer border border-white/20 z-20"
+                        title="Unduh Foto Before"
+                      >
+                        <Download class="w-3 h-3" />
+                      </button>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono flex items-center justify-between pointer-events-none">
                         <span class="text-blue-300 font-bold">BEFORE</span>
                         <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
@@ -855,7 +889,15 @@
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="Process" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono flex items-center justify-between">
+                      <button
+                        type="button"
+                        @click.stop="downloadSinglePhoto(p)"
+                        class="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-sm flex items-center justify-center transition-all cursor-pointer border border-white/20 z-20"
+                        title="Unduh Foto Process"
+                      >
+                        <Download class="w-3 h-3" />
+                      </button>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono flex items-center justify-between pointer-events-none">
                         <span class="text-amber-300 font-bold">PROCESS</span>
                         <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
@@ -882,7 +924,15 @@
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono flex items-center justify-between">
+                      <button
+                        type="button"
+                        @click.stop="downloadSinglePhoto(p)"
+                        class="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-sm flex items-center justify-center transition-all cursor-pointer border border-white/20 z-20"
+                        title="Unduh Foto After"
+                      >
+                        <Download class="w-3 h-3" />
+                      </button>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 text-[9px] text-white font-mono flex items-center justify-between pointer-events-none">
                         <span class="text-emerald-300 font-bold">AFTER</span>
                         <span class="text-slate-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
@@ -965,7 +1015,15 @@
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono">
+                      <button
+                        type="button"
+                        @click.stop="downloadSinglePhoto(p)"
+                        class="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-sm flex items-center justify-center transition-all cursor-pointer border border-white/20 z-20"
+                        title="Unduh Foto Before"
+                      >
+                        <Download class="w-3 h-3" />
+                      </button>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
                         <span class="text-blue-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
                     </div>
@@ -991,7 +1049,15 @@
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="Process" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono">
+                      <button
+                        type="button"
+                        @click.stop="downloadSinglePhoto(p)"
+                        class="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-sm flex items-center justify-center transition-all cursor-pointer border border-white/20 z-20"
+                        title="Unduh Foto Process"
+                      >
+                        <Download class="w-3 h-3" />
+                      </button>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
                         <span class="text-amber-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
                     </div>
@@ -1017,7 +1083,15 @@
                       @click="openLightbox(p)"
                     >
                       <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono">
+                      <button
+                        type="button"
+                        @click.stop="downloadSinglePhoto(p)"
+                        class="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-sm flex items-center justify-center transition-all cursor-pointer border border-white/20 z-20"
+                        title="Unduh Foto After"
+                      >
+                        <Download class="w-3 h-3" />
+                      </button>
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
                         <span class="text-emerald-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</span>
                       </div>
                     </div>
@@ -1064,6 +1138,14 @@
               >
                 <div class="h-36 sm:h-44 w-full bg-slate-900 relative overflow-hidden">
                   <img :src="getFileUrl(p.file_path)" :alt="p.stage" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
+                  <button
+                    type="button"
+                    @click.stop="downloadSinglePhoto(p)"
+                    class="absolute top-2 right-2 w-7 h-7 rounded-full bg-slate-950/85 hover:bg-[#EDC80A] text-white hover:text-[#1E1E1D] shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/20 z-20"
+                    title="Unduh Foto"
+                  >
+                    <Download class="w-3.5 h-3.5" />
+                  </button>
                   <span
                     :class="[
                       'absolute top-2 left-2 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm border',
@@ -1126,9 +1208,9 @@
               <img
                 :src="getFileUrl(activeLightboxPhoto.file_path)"
                 :alt="`Bukti ${activeLightboxPhoto.stage}`"
-                class="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl border border-white/10 mb-3"
+                class="max-w-full max-h-[70vh] object-contain rounded-2xl shadow-2xl border border-white/10 mb-3"
               />
-              <div class="text-center text-xs text-slate-300 space-y-1.5 bg-[#111827]/95 border border-amber-500/30 px-5 py-3 rounded-2xl backdrop-blur-2xl shadow-2xl">
+              <div class="text-center text-xs text-slate-300 space-y-2 bg-[#111827]/95 border border-amber-500/30 px-6 py-4 rounded-2xl backdrop-blur-2xl shadow-2xl w-full max-w-xl">
                 <div class="flex items-center justify-center gap-2">
                   <span
                     :class="[
@@ -1147,6 +1229,18 @@
                   <span>🕒 {{ activeLightboxPhoto.captured_at || '-' }}</span>
                   <span>📍 GPS: {{ isValidGps(activeLightboxPhoto.latitude) ? `${Number(activeLightboxPhoto.latitude).toFixed(5)}, ${Number(activeLightboxPhoto.longitude).toFixed(5)}` : 'Terverifikasi Lokasi' }}</span>
                   <span v-if="activeLightboxPhoto.file_hash" class="text-[10px] text-slate-500">🔒 SHA: {{ activeLightboxPhoto.file_hash.substring(0, 16) }}...</span>
+                </div>
+                
+                <!-- Action Button in Lightbox -->
+                <div class="pt-2 flex items-center justify-center gap-2 border-t border-slate-800/80 mt-2">
+                  <button
+                    type="button"
+                    @click.stop="downloadSinglePhoto(activeLightboxPhoto)"
+                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#EDC80A] to-[#F59E0B] text-[#1E1E1D] font-black text-xs shadow-lg shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer hover:brightness-110"
+                  >
+                    <Download class="w-4 h-4" />
+                    <span>Unduh Foto (Resolusi Asli)</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1484,6 +1578,38 @@ function navigateLightbox(step) {
   if (newIdx >= 0 && newIdx < currentList.length) {
     activeLightboxPhoto.value = currentList[newIdx];
   }
+}
+
+function downloadSinglePhoto(photo) {
+  if (!photo || !photo.file_path) return;
+  const url = getFileUrl(photo.file_path);
+  const stageName = photo.stage || 'EVIDENCE';
+  const cleanSpk = (wo.value?.spk_number || 'SPK').replace(/[^A-Za-z0-9\-_]/g, '_');
+  const fileName = `SGX-${cleanSpk}-${stageName}-${photo.id || Date.now()}.jpg`;
+
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error('Network error');
+      return response.blob();
+    })
+    .then(blob => {
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
+    })
+    .catch(() => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.target = '_blank';
+      a.click();
+    });
 }
 
 function handleShare() {
