@@ -19,7 +19,16 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-2 self-start sm:self-auto">
+        <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <button
+            @click="exportClientCSV"
+            :disabled="filteredOrders.length === 0"
+            class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            title="Download Rekapitulasi Toko ke CSV/Excel"
+          >
+            <FileSpreadsheet class="w-4 h-4" />
+            <span>Export Rekap</span>
+          </button>
           <span class="px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/10 rounded-xl text-xs font-bold text-white flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>{{ filteredOrders.length }} Toko Terdaftar</span>
@@ -104,8 +113,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
       <!-- Left Column: Desktop Stores List & Filters -->
       <div class="hidden lg:block bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm space-y-3.5">
-        <!-- Search & Filter -->
-        <div class="space-y-2">
+        <!-- Search & Date Filter -->
+        <div class="space-y-2.5">
           <div class="relative">
             <Search class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
             <input
@@ -116,19 +125,40 @@
             />
           </div>
 
+          <!-- Quick Date Period Select -->
+          <div>
+            <select
+              v-model="selectedDatePeriod"
+              class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 cursor-pointer focus:outline-none"
+            >
+              <option value="ALL">🗓️ Semua Periode Waktu</option>
+              <option value="THIS_MONTH">🗓️ SPK Bulan Ini</option>
+              <option value="LAST_MONTH">🗓️ SPK Bulan Lalu</option>
+            </select>
+          </div>
+
+          <!-- Status Tab Filter Pills (TOTAL + Status) -->
           <div class="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-bold">
             <button
-              v-for="st in statusTabs"
+              v-for="st in computedStatusTabs"
               :key="st.value"
               @click="selectedStatus = st.value"
               :class="[
-                'px-2.5 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap',
+                'px-2.5 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
                 selectedStatus === st.value
                   ? 'bg-purple-900 text-white shadow-xs'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
               ]"
             >
-              {{ st.label }}
+              <span>{{ st.label }}</span>
+              <span
+                :class="[
+                  'px-1.5 py-0.2 rounded-full text-[9px] font-mono',
+                  selectedStatus === st.value ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                ]"
+              >
+                {{ st.count }}
+              </span>
             </button>
           </div>
         </div>
@@ -764,7 +794,8 @@ import {
   Sparkles,
   Share2,
   FileText,
-  RotateCcw
+  RotateCcw,
+  FileSpreadsheet
 } from 'lucide-vue-next';
 
 defineEmits(['preview-ba']);
@@ -783,12 +814,21 @@ const latestOrderRevision = computed(() => {
 
 const searchQuery = ref('');
 const selectedStatus = ref('ALL');
+const selectedDatePeriod = ref('ALL'); // 'ALL' | 'THIS_MONTH' | 'LAST_MONTH'
 
-const statusTabs = [
-  { label: 'Semua Toko', value: 'ALL' },
-  { label: 'Sedang Berjalan', value: 'IN_PROGRESS' },
-  { label: 'Selesai 100%', value: 'COMPLETED' }
-];
+const computedStatusTabs = computed(() => {
+  const all = workOrders.value.length;
+  const inProg = workOrders.value.filter(w => ['ASSIGNED', 'CHECKED_IN', 'IN_PROGRESS'].includes(w.status)).length;
+  const review = workOrders.value.filter(w => ['SUBMITTED', 'UNDER_REVIEW', 'REVISION'].includes(w.status)).length;
+  const done = workOrders.value.filter(w => ['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(w.status)).length;
+
+  return [
+    { label: 'TOTAL TOKO', value: 'ALL', count: all },
+    { label: 'Pengerjaan', value: 'IN_PROGRESS', count: inProg },
+    { label: 'Review', value: 'REVIEW', count: review },
+    { label: 'Selesai 100%', value: 'COMPLETED', count: done }
+  ];
+});
 
 // Interactive Demo Sample Store for Preview when company has no work orders yet
 const sampleDemoOrder = {
@@ -887,12 +927,34 @@ async function handleSelectOrder(id) {
 
 const filteredOrders = computed(() => {
   return workOrders.value.filter(wo => {
+    // 1. Status Filter
+    if (selectedStatus.value === 'IN_PROGRESS' && !['ASSIGNED', 'CHECKED_IN', 'IN_PROGRESS'].includes(wo.status)) {
+      return false;
+    }
+    if (selectedStatus.value === 'REVIEW' && !['SUBMITTED', 'UNDER_REVIEW', 'REVISION'].includes(wo.status)) {
+      return false;
+    }
     if (selectedStatus.value === 'COMPLETED' && !['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(wo.status)) {
       return false;
     }
-    if (selectedStatus.value === 'IN_PROGRESS' && ['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(wo.status)) {
-      return false;
+
+    // 2. Date Period Filter
+    if (selectedDatePeriod.value !== 'ALL') {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const d = new Date(wo.start_date || wo.created_at || new Date());
+
+      if (selectedDatePeriod.value === 'THIS_MONTH') {
+        if (d.getFullYear() !== currentYear || d.getMonth() !== currentMonth) return false;
+      } else if (selectedDatePeriod.value === 'LAST_MONTH') {
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        if (d.getFullYear() !== lastYear || d.getMonth() !== lastMonth) return false;
+      }
     }
+
+    // 3. Search Query Filter
     if (searchQuery.value) {
       const q = searchQuery.value.toLowerCase();
       const matchSpk = wo.spk_number?.toLowerCase().includes(q);
@@ -903,6 +965,40 @@ const filteredOrders = computed(() => {
     return true;
   });
 });
+
+function exportClientCSV() {
+  const data = filteredOrders.value;
+  if (!data || data.length === 0) return;
+
+  const headers = [
+    'No. SPK',
+    'Nama Toko / Cabang',
+    'Wilayah / Kota',
+    'Judul Pekerjaan',
+    'Progres (%)',
+    'Status Pengerjaan',
+    'Target Deadline'
+  ];
+
+  const rows = data.map(wo => [
+    `"${(wo.spk_number || '').replace(/"/g, '""')}"`,
+    `"${(wo.location_name || '').replace(/"/g, '""')}"`,
+    `"${(wo.area?.name || wo.area_name || '').replace(/"/g, '""')}"`,
+    `"${(wo.title || '').replace(/"/g, '""')}"`,
+    `"${wo.progress_percent || 0}%"`,
+    `"${wo.status || ''}"`,
+    `"${wo.deadline || wo.due_date || ''}"`
+  ]);
+
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `Rekap_Cabang_Toko_Klien_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
 const displayItems = computed(() => {
   if (selectedOrder.value?.items && selectedOrder.value.items.length > 0) {

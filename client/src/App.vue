@@ -168,6 +168,7 @@ import FieldHistory from './pages/field/FieldHistory.vue';
 // Client / Principal Pages (Indomarco, Smartfren, Perbankan)
 import ClientDashboard from './pages/client/ClientDashboard.vue';
 import ClientTaskList from './pages/client/ClientTaskList.vue';
+import ClientIssueList from './pages/client/ClientIssueList.vue';
 import ClientBaList from './pages/client/ClientBaList.vue';
 
 // Superuser Page
@@ -327,6 +328,9 @@ const currentView = computed(() => {
     case 'client_tasks':
     case 'vendor_tasks':
       return ClientTaskList;
+    case 'client_issues':
+    case 'vendor_issues':
+      return ClientIssueList;
     case 'client_ba':
     case 'vendor_ba':
       return ClientBaList;

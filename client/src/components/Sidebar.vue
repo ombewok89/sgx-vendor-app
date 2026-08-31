@@ -203,6 +203,7 @@ const navItems = computed(() => {
       items = [
         { id: 'client_dashboard', label: 'Dashboard Client', icon: LayoutDashboard },
         { id: 'client_tasks', label: 'Progres & Evidensi Toko', icon: Store },
+        { id: 'client_issues', label: 'Kendala Lapangan', icon: AlertTriangle },
         { id: 'client_ba', label: 'Dokumen BA Opname', icon: FileCheck2 },
       ];
       break;

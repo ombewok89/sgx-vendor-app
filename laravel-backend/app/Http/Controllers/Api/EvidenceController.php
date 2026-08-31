@@ -277,7 +277,19 @@ class EvidenceController extends Controller
 
     public function issuesList(Request $request)
     {
-        $query = Issue::with(['workOrder:id,spk_number,title,location_name', 'user:id,name', 'resolver:id,name']);
+        $user = $request->user();
+        $query = Issue::with(['workOrder:id,spk_number,title,location_name,vendor_id', 'user:id,name', 'resolver:id,name']);
+
+        // Scope to client vendor if user is a client/vendor
+        if ($user && in_array($user->role, ['VENDOR', 'CLIENT'])) {
+            $vendorId = $user->vendor_id;
+            if ($vendorId) {
+                $query->whereHas('workOrder', function ($q) use ($vendorId) {
+                    $q->where('vendor_id', $vendorId);
+                });
+            }
+        }
+
         if ($request->filled('work_order_id')) {
             $query->where('work_order_id', $request->work_order_id);
         }

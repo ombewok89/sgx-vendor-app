@@ -48,7 +48,24 @@
         </div>
       </button>
 
-      <!-- 3. Dokumen BA Tab -->
+      <!-- 3. Kendala Tab -->
+      <button
+        type="button"
+        @click="$emit('update:activeTab', 'client_issues')"
+        class="flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-2xl transition-all duration-200 active:scale-90 cursor-pointer relative"
+        :class="activeTab === 'client_issues' ? 'text-amber-400 font-black' : 'text-slate-400 hover:text-slate-200'"
+      >
+        <div
+          v-if="activeTab === 'client_issues'"
+          class="absolute inset-0 bg-amber-500/20 rounded-2xl border border-amber-500/30"
+        />
+        <div class="relative z-10 flex flex-col items-center gap-0.5">
+          <AlertTriangle class="w-5 h-5 transition-transform" :class="{ 'scale-110': activeTab === 'client_issues' }" />
+          <span class="text-[10px] tracking-tight">Kendala</span>
+        </div>
+      </button>
+
+      <!-- 4. Dokumen BA Tab -->
       <button
         type="button"
         @click="$emit('update:activeTab', 'client_ba')"
@@ -73,7 +90,7 @@
         </div>
       </button>
 
-      <!-- 4. Profil Tab -->
+      <!-- 5. Profil Tab -->
       <button
         type="button"
         @click="$emit('open-profile')"
@@ -96,7 +113,8 @@ import { useAuth } from '../composables/useAuth';
 import {
   LayoutDashboard,
   Store,
-  FileCheck2
+  FileCheck2,
+  AlertTriangle
 } from 'lucide-vue-next';
 
 defineProps({
