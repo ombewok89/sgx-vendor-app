@@ -59,8 +59,16 @@ if (file_exists($envPath)) {
     // Test MySQL Connection
     echo "<h3>🗄️ MySQL Connection Test:</h3>";
     try {
-        require_once __DIR__ . '/laravel-backend/vendor/autoload.php';
-        $app = require_once __DIR__ . '/laravel-backend/bootstrap/app.php';
+        if (file_exists(__DIR__ . '/laravel-backend/vendor/autoload.php')) {
+            require_once __DIR__ . '/laravel-backend/vendor/autoload.php';
+            $app = require_once __DIR__ . '/laravel-backend/bootstrap/app.php';
+        } elseif (file_exists(__DIR__ . '/vendor/autoload.php')) {
+            require_once __DIR__ . '/vendor/autoload.php';
+            $app = require_once __DIR__ . '/bootstrap/app.php';
+        } else {
+            throw new \Exception("Composer vendor/autoload.php tidak ditemukan di root maupun di laravel-backend/");
+        }
+
         $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
         $kernel->bootstrap();
         
