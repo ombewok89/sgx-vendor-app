@@ -74,8 +74,14 @@
                 </td>
                 <td class="py-3.5 px-4">
                   <div class="font-bold text-slate-900">{{ item.name }}</div>
-                  <div v-if="item.banner_url" class="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-semibold mt-0.5">
-                    <span>✓ Banner Terpasang</span>
+                  <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                    <span v-if="item.banner_url" class="inline-flex items-center gap-1 text-[9px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md font-semibold">
+                      ✓ Banner
+                    </span>
+                    <span v-if="item.ba_template_id" class="inline-flex items-center gap-1 text-[9px] text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-md font-semibold">
+                      <FileCode class="w-2.5 h-2.5" />
+                      <span>{{ getTemplateName(item.ba_template_id) }}</span>
+                    </span>
                   </div>
                 </td>
                 <td class="py-3.5 px-4">
@@ -201,6 +207,27 @@
               class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
             />
           </div>
+          <div>
+            <label class="block font-bold mb-1 flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <FileCode class="w-3.5 h-3.5 text-purple-700" />
+                <span>Template Dokumen BA Opname Resmi</span>
+              </span>
+              <span class="text-[10px] text-slate-400 font-normal">Opsional</span>
+            </label>
+            <select
+              v-model="formInput.ba_template_id"
+              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 text-xs font-semibold text-slate-800"
+            >
+              <option :value="null">-- Gunakan Template Default Sistem SGX --</option>
+              <option v-for="tmpl in availableTemplates" :key="tmpl.id" :value="tmpl.id">
+                {{ tmpl.name }} ({{ tmpl.code }}) {{ tmpl.is_default ? '★ Default' : '' }}
+              </option>
+            </select>
+            <p class="text-[10px] text-slate-500 mt-1">
+              Template ini akan otomatis dipakai saat pencetakan Berita Acara (BA) untuk pekerjaan klien ini.
+            </p>
+          </div>
 
           <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
             <button
@@ -325,6 +352,29 @@
             </div>
           </div>
 
+          <!-- 4. Template Dokumen BA Opname Resmi Klien -->
+          <div class="p-3.5 bg-purple-50/70 border border-purple-200 rounded-2xl space-y-1.5">
+            <label class="block font-bold text-slate-900 text-xs flex items-center justify-between">
+              <span class="flex items-center gap-1.5 text-purple-950">
+                <FileCode class="w-4 h-4 text-purple-700" />
+                <span>Template Dokumen BA Opname Khusus Klien</span>
+              </span>
+              <span class="text-[10px] text-purple-600 font-medium">Kustomisasi Dokumen</span>
+            </label>
+            <select
+              v-model="brandingForm.ba_template_id"
+              class="w-full px-3 py-2 bg-white border border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 text-xs font-bold text-slate-800"
+            >
+              <option :value="null">-- Gunakan Template Default Sistem SGX --</option>
+              <option v-for="tmpl in availableTemplates" :key="tmpl.id" :value="tmpl.id">
+                {{ tmpl.name }} ({{ tmpl.code }}) {{ tmpl.is_default ? '★ Default' : '' }}
+              </option>
+            </select>
+            <p class="text-[10px] text-slate-600">
+              Dokumen BA Opname untuk pekerjaan klien ini akan otomatis menggunakan kertas kop surat, logo, dan format klausul dari template yang dipilih.
+            </p>
+          </div>
+
           <!-- Action Buttons -->
           <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
             <button
@@ -352,9 +402,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { api, getFileUrl } from '../../services/api';
-import { Building2, Plus, Pencil, Trash2, X, Sparkles, Image as ImageIcon, Save } from 'lucide-vue-next';
+import { Building2, Plus, Pencil, Trash2, X, Sparkles, Image as ImageIcon, Save, FileCode } from 'lucide-vue-next';
 
 const vendors = ref([]);
+const availableTemplates = ref([]);
 const loading = ref(true);
 const saving = ref(false);
 
@@ -373,9 +424,15 @@ const bannerPreviewUrl = ref('');
 async function fetchVendors() {
   loading.value = true;
   try {
-    const res = await api.getVendors();
-    if (res.success && res.data) {
-      vendors.value = res.data;
+    const [resVendors, resTemplates] = await Promise.all([
+      api.getVendors(),
+      api.getTemplates().catch(() => ({ data: [] }))
+    ]);
+    if (resVendors.success && resVendors.data) {
+      vendors.value = resVendors.data;
+    }
+    if (resTemplates.data) {
+      availableTemplates.value = resTemplates.data;
     }
   } catch (err) {
     console.error('Failed to load vendors', err);
@@ -384,15 +441,21 @@ async function fetchVendors() {
   }
 }
 
+function getTemplateName(id) {
+  if (!id) return '';
+  const tmpl = availableTemplates.value.find(t => t.id === Number(id));
+  return tmpl ? tmpl.name : `Template #${id}`;
+}
+
 function openAddModal() {
   isEditing.value = false;
-  formInput.value = { code: '', name: '', contact_person: '', phone: '', email: '', address: '' };
+  formInput.value = { code: '', name: '', contact_person: '', phone: '', email: '', address: '', ba_template_id: null };
   showModal.value = true;
 }
 
 function openEditModal(item) {
   isEditing.value = true;
-  formInput.value = { ...item };
+  formInput.value = { ...item, ba_template_id: item.ba_template_id || null };
   showModal.value = true;
 }
 
@@ -401,6 +464,7 @@ function openBrandingModal(item) {
   brandingForm.value = {
     npwp: item.npwp || '',
     website: item.website || '',
+    ba_template_id: item.ba_template_id || null,
   };
   logoFile.value = null;
   bannerFile.value = null;
@@ -434,6 +498,9 @@ async function handleSaveBranding() {
     if (bannerFile.value) fd.append('banner', bannerFile.value);
     if (brandingForm.value.npwp !== undefined) fd.append('npwp', brandingForm.value.npwp);
     if (brandingForm.value.website !== undefined) fd.append('website', brandingForm.value.website);
+    if (brandingForm.value.ba_template_id !== undefined) {
+      fd.append('ba_template_id', brandingForm.value.ba_template_id ? String(brandingForm.value.ba_template_id) : '');
+    }
 
     const res = await api.updateVendorBranding(selectedVendor.value.id, fd);
     if (res.success) {

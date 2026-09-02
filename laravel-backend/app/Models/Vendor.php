@@ -17,12 +17,19 @@ class Vendor extends Model
         'npwp',
         'website',
         'address',
+        'ba_template_id',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'ba_template_id' => 'integer',
     ];
+
+    public function baTemplate()
+    {
+        return $this->belongsTo(DocumentTemplate::class, 'ba_template_id');
+    }
 
     public function users()
     {

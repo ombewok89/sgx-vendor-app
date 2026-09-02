@@ -414,6 +414,7 @@
                   <button type="button" @click="insertBulletPointCustom(bodyTextarea)" title="Poin Bullet" class="px-2 py-0.5 hover:bg-white rounded-lg text-xs cursor-pointer font-bold">• List</button>
                   <button type="button" @click="insertNumberedPointCustom(bodyTextarea)" title="Poin Penomoran" class="px-2 py-0.5 hover:bg-white rounded-lg text-xs cursor-pointer font-bold">1. List</button>
                   <button type="button" @click="insertParagraphBreak(bodyTextarea)" title="Paragraf Baru" class="px-2 py-0.5 hover:bg-white rounded-lg text-xs cursor-pointer text-slate-600">¶ Paragraf</button>
+                  <button type="button" @click="insertCustomTable(bodyTextarea)" title="Sisipkan Tabel Data Fleksibel" class="px-2.5 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold rounded-lg text-xs cursor-pointer border border-indigo-200">➕ Sisipkan Tabel</button>
                   <span class="w-px h-3.5 bg-slate-300 mx-0.5"></span>
                   <button type="button" @click="resetToDefaultField('body_template')" title="Kembalikan ke Teks Standar" class="px-2 py-0.5 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg text-[10px] cursor-pointer">Reset</button>
                 </div>
@@ -616,33 +617,7 @@
           <!-- Opening Statement Formatted -->
           <div class="leading-relaxed text-slate-700" v-html="renderClauseWithSampleData(previewTmpl.header_html)"></div>
 
-          <!-- Simulated Table -->
-          <table class="w-full border border-slate-300 rounded-xl overflow-hidden text-xs bg-white/90 backdrop-blur-xs shadow-xs">
-            <tbody>
-              <tr class="border-b bg-slate-50/80">
-                <td class="w-1/3 py-2 px-3 font-semibold text-slate-600">Nomor SPK</td>
-                <td class="py-2 px-3 font-bold font-mono text-purple-900">SPK-2026-00125</td>
-              </tr>
-              <tr class="border-b">
-                <td class="py-2 px-3 font-semibold text-slate-600">Nama Proyek Cabang</td>
-                <td class="py-2 px-3 font-bold text-slate-900">Pemasangan Palang Merek & Signboard KCP Sukajadi</td>
-              </tr>
-              <tr class="border-b bg-slate-50/80">
-                <td class="py-2 px-3 font-semibold text-slate-600">Mitra Vendor Pelaksana</td>
-                <td class="py-2 px-3">PT Sinar Graha Kreatif (VND-001)</td>
-              </tr>
-              <tr class="border-b">
-                <td class="py-2 px-3 font-semibold text-slate-600">Nilai Kontrak Pekerjaan</td>
-                <td class="py-2 px-3 font-mono font-bold text-emerald-800">Rp 15.000.000</td>
-              </tr>
-              <tr>
-                <td class="py-2 px-3 font-semibold text-slate-600">Lokasi & GPS Check-in</td>
-                <td class="py-2 px-3 font-mono text-[11px]">-6.88500, 107.61360 (Akurasi ±12m)</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- Body Clause Formatted -->
+          <!-- Body Clause Formatted (Termasuk tabel custom HTML jika dibuat) -->
           <div class="leading-relaxed text-slate-700 space-y-2" v-html="renderClauseWithSampleData(previewTmpl.body_template)"></div>
 
           <!-- Dynamic Signatures Grid -->
@@ -886,6 +861,43 @@ function insertParagraphBreak(textareaRef) {
     }, 10);
   } else {
     formData.value.body_template = `${currentVal}${breakText}`;
+  }
+}
+
+function insertCustomTable(textareaRef) {
+  const textarea = textareaRef?.value || textareaRef;
+  const currentVal = formData.value.body_template || '';
+  const tableHtml = `\n<table class="w-full border border-slate-300 rounded-lg my-2 text-xs border-collapse">
+  <tbody>
+    <tr class="border-b bg-slate-50">
+      <td class="w-1/3 py-2 px-3 font-semibold text-slate-700">Nomor SPK</td>
+      <td class="py-2 px-3 font-mono font-bold text-purple-900">{{spk_number}}</td>
+    </tr>
+    <tr class="border-b">
+      <td class="py-2 px-3 font-semibold text-slate-700">Nama Pekerjaan</td>
+      <td class="py-2 px-3 font-bold text-slate-900">{{title}}</td>
+    </tr>
+    <tr class="border-b bg-slate-50">
+      <td class="py-2 px-3 font-semibold text-slate-700">Lokasi / Cabang</td>
+      <td class="py-2 px-3">{{location_name}}</td>
+    </tr>
+    <tr>
+      <td class="py-2 px-3 font-semibold text-slate-700">Nilai Kontrak</td>
+      <td class="py-2 px-3 font-mono font-bold text-emerald-800">{{contract_value}}</td>
+    </tr>
+  </tbody>
+</table>\n`;
+
+  if (textarea && typeof textarea.selectionStart === 'number') {
+    const start = textarea.selectionStart;
+    const newVal = currentVal.substring(0, start) + tableHtml + currentVal.substring(start);
+    formData.value.body_template = newVal;
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + tableHtml.length, start + tableHtml.length);
+    }, 10);
+  } else {
+    formData.value.body_template = `${currentVal}${tableHtml}`;
   }
 }
 

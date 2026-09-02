@@ -124,7 +124,13 @@ export const api = {
   getTemplates: () => request('/master/templates'),
   getTemplateById: (id) => request(`/master/templates/${id}`),
   createTemplate: (formData) => request('/master/templates', { method: 'POST', body: formData }),
-  updateTemplate: (id, formData) => request(`/master/templates/${id}`, { method: 'PUT', body: formData }),
+  updateTemplate: (id, formData) => {
+    if (formData instanceof FormData) {
+      formData.append('_method', 'PUT');
+      return request(`/master/templates/${id}`, { method: 'POST', body: formData });
+    }
+    return request(`/master/templates/${id}`, { method: 'PUT', body: formData });
+  },
   setDefaultTemplate: (id) => request(`/master/templates/${id}/set-default`, { method: 'POST' }),
   deleteTemplate: (id) => request(`/master/templates/${id}`, { method: 'DELETE' }),
 

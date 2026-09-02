@@ -254,6 +254,16 @@ router.put('/templates/:id', checkPermission('admin_templates', 'update'), templ
   }
 });
 
+router.post('/templates/:id', checkPermission('admin_templates', 'update'), templateUpload, async (req, res) => {
+  try {
+    const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const data = await masterDataService.updateTemplate(parseInt(req.params.id), req.body, req.files, req.user, ipAddress);
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
 router.post('/templates/:id/set-default', checkPermission('admin_templates', 'update'), async (req, res) => {
   try {
     const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;

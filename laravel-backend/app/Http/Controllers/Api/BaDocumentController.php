@@ -331,10 +331,33 @@ class BaDocumentController extends Controller
 
         $request->validate([
             'name' => 'required|string',
-            'code' => 'required|unique:document_templates,code',
+            'code' => 'required|string',
         ]);
 
-        $data = $request->all();
+        $data = $request->except(['logo', 'background_image', 'header_image', 'footer_image']);
+
+        // Handle uploaded files
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('uploads', 'public');
+            $data['logo_url'] = '/storage/' . $path;
+        }
+        if ($request->hasFile('background_image')) {
+            $path = $request->file('background_image')->store('uploads', 'public');
+            $data['background_image_url'] = '/storage/' . $path;
+        }
+        if ($request->hasFile('header_image')) {
+            $path = $request->file('header_image')->store('uploads', 'public');
+            $data['header_image_url'] = '/storage/' . $path;
+        }
+        if ($request->hasFile('footer_image')) {
+            $path = $request->file('footer_image')->store('uploads', 'public');
+            $data['footer_image_url'] = '/storage/' . $path;
+        }
+
+        if (isset($data['signatories_json']) && is_string($data['signatories_json'])) {
+            $data['signatories_json'] = json_decode($data['signatories_json'], true) ?: $data['signatories_json'];
+        }
+
         if ($request->boolean('is_default')) {
             DocumentTemplate::where('is_default', true)->update(['is_default' => false]);
             $data['is_default'] = true;
@@ -362,7 +385,34 @@ class BaDocumentController extends Controller
         $template = DocumentTemplate::findOrFail($id);
         $old = $template->toArray();
 
-        $data = $request->all();
+        $data = $request->except(['logo', 'background_image', 'header_image', 'footer_image']);
+
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('uploads', 'public');
+            $data['logo_url'] = '/storage/' . $path;
+        } elseif ($request->input('remove_logo') === '1') {
+            $data['logo_url'] = null;
+        }
+
+        if ($request->hasFile('background_image')) {
+            $path = $request->file('background_image')->store('uploads', 'public');
+            $data['background_image_url'] = '/storage/' . $path;
+        } elseif ($request->input('remove_background') === '1') {
+            $data['background_image_url'] = null;
+            $data['header_image_url'] = null;
+        }
+
+        if ($request->hasFile('footer_image')) {
+            $path = $request->file('footer_image')->store('uploads', 'public');
+            $data['footer_image_url'] = '/storage/' . $path;
+        } elseif ($request->input('remove_footer') === '1') {
+            $data['footer_image_url'] = null;
+        }
+
+        if (isset($data['signatories_json']) && is_string($data['signatories_json'])) {
+            $data['signatories_json'] = json_decode($data['signatories_json'], true) ?: $data['signatories_json'];
+        }
+
         if ($request->boolean('is_default')) {
             DocumentTemplate::where('is_default', true)->update(['is_default' => false]);
             $data['is_default'] = true;

@@ -157,6 +157,11 @@ class MasterDataController extends Controller
             }
         }
 
+        if ($request->has('ba_template_id')) {
+            $tmplId = $request->input('ba_template_id');
+            $updatePayload['ba_template_id'] = ($tmplId !== null && $tmplId !== '' && $tmplId !== 'null') ? (int)$tmplId : null;
+        }
+
         $vendor->update($updatePayload);
         AuditService::log($user, 'UPDATE_VENDOR_BRANDING', 'VENDOR', $vendor->id, $oldData, $vendor->toArray());
 

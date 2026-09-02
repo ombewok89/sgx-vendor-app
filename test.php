@@ -61,14 +61,20 @@ if (file_exists($envPath)) {
     try {
         require_once __DIR__ . '/laravel-backend/vendor/autoload.php';
         $app = require_once __DIR__ . '/laravel-backend/bootstrap/app.php';
+        $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+        $kernel->bootstrap();
         
         $pdo = \Illuminate\Support\Facades\DB::connection()->getPdo();
         echo "<p style='color:green;'><b>✅ KONEKSI DATABASE BERHASIL!</b> Terhubung ke MySQL server.</p>";
 
-        $tableCount = count(\Illuminate\Support\Facades\DB::select('SHOW TABLES'));
-        echo "<p>Jumlah Tabel Terdaftar: <b>{$tableCount} tabel</b></p>";
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $tableQuery = $driver === 'sqlite' ? "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'" : "SHOW TABLES";
+        $tables = \Illuminate\Support\Facades\DB::select($tableQuery);
+        $tableCount = count($tables);
+        echo "<p>Driver Database: <b>" . strtoupper($driver) . "</b> | Jumlah Tabel: <b>{$tableCount} tabel</b></p>";
         
-        $userCount = \Illuminate\Support\Facades\DB::table('users')->count();
+        $hasUsers = \Illuminate\Support\Facades\Schema::hasTable('users');
+        $userCount = $hasUsers ? \Illuminate\Support\Facades\DB::table('users')->count() : 0;
         echo "<p>Jumlah Akun Pengguna: <b>{$userCount} akun terdaftar</b></p>";
 
         // Safe Diagnostic Actions (NO migrate:fresh destructive commands)
@@ -205,12 +211,55 @@ if (file_exists($envPath)) {
                 echo "<td><a href='/api/storage-stream/{$clean}' target='_blank' style='color:#4f46e5; font-weight:bold;'>🔗 Buka Stream Gambar</a></td>";
                 echo "</tr>";
             }
-            echo "</table>";
+        } elseif (isset($_GET['action']) && $_GET['action'] === 'sync_schema') {
+            echo "<hr><h3>🔄 Memperbarui Skema Database (Safe Add Columns)...</h3>";
+            $messages = [];
+            try {
+                // 1. Check & Add ba_template_id to vendors
+                $columns = \Illuminate\Support\Facades\Schema::getColumnListing('vendors');
+                if (!in_array('ba_template_id', $columns)) {
+                    \Illuminate\Support\Facades\DB::statement("ALTER TABLE vendors ADD COLUMN ba_template_id INT NULL");
+                    $messages[] = "✅ Kolom <code>ba_template_id</code> berhasil ditambahkan ke tabel <code>vendors</code>.";
+                } else {
+                    $messages[] = "ℹ️ Kolom <code>ba_template_id</code> sudah ada di tabel <code>vendors</code>.";
+                }
+
+                // 2. Check & Add columns to document_templates
+                $tmplColumns = \Illuminate\Support\Facades\Schema::getColumnListing('document_templates');
+                $neededCols = [
+                    'logo_url' => "VARCHAR(255) NULL",
+                    'header_image_url' => "VARCHAR(255) NULL",
+                    'background_image_url' => "VARCHAR(255) NULL",
+                    'footer_image_url' => "VARCHAR(255) NULL",
+                    'signatories_json' => "TEXT NULL",
+                    'signatory_first_party_name' => "VARCHAR(255) NULL",
+                    'signatory_first_party_role' => "VARCHAR(255) NULL",
+                    'signatory_second_party_name' => "VARCHAR(255) NULL",
+                    'signatory_second_party_role' => "VARCHAR(255) NULL",
+                ];
+
+                foreach ($neededCols as $col => $sqlDef) {
+                    if (!in_array($col, $tmplColumns)) {
+                        \Illuminate\Support\Facades\DB::statement("ALTER TABLE document_templates ADD COLUMN {$col} {$sqlDef}");
+                        $messages[] = "✅ Kolom <code>{$col}</code> berhasil ditambahkan ke tabel <code>document_templates</code>.";
+                    } else {
+                        $messages[] = "ℹ️ Kolom <code>{$col}</code> sudah ada di tabel <code>document_templates</code>.";
+                    }
+                }
+
+                echo "<div style='background:#f0fdf4; border:1px solid #86efac; color:#166534; padding:15px; border-radius:8px;'>";
+                foreach ($messages as $m) echo "<p style='margin:4px 0;'>{$m}</p>";
+                echo "<p style='font-weight:bold; margin-top:8px;'>🎉 Sinkronisasi Skema Database Berhasil 100%!</p>";
+                echo "</div>";
+            } catch (\Exception $ex) {
+                echo "<p style='color:red;'><b>❌ Gagal Sinkronisasi Skema:</b> " . htmlspecialchars($ex->getMessage()) . "</p>";
+            }
         } else {
+            $currentUrl = '?key=' . urlencode($authKey);
             echo "<div style='margin-top: 20px; display:flex; gap:10px; flex-wrap:wrap;'>";
-            echo "<a href='?action=repair_storage' style='display:inline-block; padding: 12px 20px; background: #7c3aed; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>🛠️ 1-Klik Perbaiki Folder & Izin Foto Storage</a>";
-            echo "<a href='?action=clearcache' style='display:inline-block; padding: 12px 20px; background: #059669; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>🧹 1-Klik Bersihkan Cache Rute & Server</a>";
-            echo "<a href='?action=migrate' style='display:inline-block; padding: 12px 20px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>⚡ Migrasi Ulang Database</a>";
+            echo "<a href='{$currentUrl}&action=sync_schema' style='display:inline-block; padding: 12px 20px; background: #0284c7; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>🔄 1-Klik Sinkronisasi Skema Database (Template BA)</a>";
+            echo "<a href='{$currentUrl}&action=clearcache' style='display:inline-block; padding: 12px 20px; background: #059669; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>🧹 1-Klik Bersihkan Cache Rute & Server</a>";
+            echo "<a href='{$currentUrl}&action=repair_storage' style='display:inline-block; padding: 12px 20px; background: #7c3aed; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold;'>🛠️ 1-Klik Perbaiki Folder & Izin Foto Storage</a>";
             echo "</div>";
         }
 

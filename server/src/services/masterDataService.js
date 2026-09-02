@@ -12,10 +12,11 @@ async function getVendors(currentUser) {
 
 async function createVendor(data, currentUser, ipAddress) {
   const now = new Date().toISOString();
+  const baTemplateId = data.ba_template_id ? parseInt(data.ba_template_id) : null;
   const res = await run(
-    `INSERT INTO vendors (code, name, contact_person, phone, email, address, is_active, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
-    [data.code, data.name, data.contact_person || '', data.phone || '', data.email || '', data.address || '', now]
+    `INSERT INTO vendors (code, name, contact_person, phone, email, address, ba_template_id, is_active, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+    [data.code, data.name, data.contact_person || '', data.phone || '', data.email || '', data.address || '', baTemplateId, now]
   );
 
   await logAudit({
@@ -35,8 +36,12 @@ async function updateVendor(id, data, currentUser, ipAddress) {
   const old = await get(`SELECT * FROM vendors WHERE id = ?`, [id]);
   if (!old) throw new Error('Vendor tidak ditemukan');
 
+  const baTemplateId = data.ba_template_id !== undefined
+    ? (data.ba_template_id ? parseInt(data.ba_template_id) : null)
+    : (old.ba_template_id || null);
+
   await run(
-    `UPDATE vendors SET code = ?, name = ?, contact_person = ?, phone = ?, email = ?, address = ? WHERE id = ?`,
+    `UPDATE vendors SET code = ?, name = ?, contact_person = ?, phone = ?, email = ?, address = ?, ba_template_id = ? WHERE id = ?`,
     [
       data.code || old.code,
       data.name || old.name,
@@ -44,6 +49,7 @@ async function updateVendor(id, data, currentUser, ipAddress) {
       data.phone !== undefined ? data.phone : old.phone,
       data.email !== undefined ? data.email : old.email,
       data.address !== undefined ? data.address : old.address,
+      baTemplateId,
       id
     ]
   );

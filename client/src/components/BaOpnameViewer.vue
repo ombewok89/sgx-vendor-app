@@ -89,6 +89,10 @@
               <input type="checkbox" v-model="showSecurityHash" class="rounded text-purple-900 focus:ring-purple-500" />
               <span>Tampilkan GPS & Hash SHA-256</span>
             </label>
+            <label class="flex items-center gap-1.5 cursor-pointer select-none text-[11px] font-semibold text-slate-700">
+              <input type="checkbox" v-model="showDefaultDetailsTable" class="rounded text-purple-900 focus:ring-purple-500" />
+              <span>Tabel Ringkasan Baku</span>
+            </label>
           </div>
         </div>
       </div>
@@ -134,8 +138,8 @@
           <!-- Opening Statement Formatted with Dynamic Variables -->
           <div class="leading-relaxed text-slate-700" v-html="formattedHeader"></div>
 
-          <!-- Details Table -->
-          <div class="border border-slate-300 rounded-xl overflow-hidden shadow-xs bg-white/95 backdrop-blur-xs">
+          <!-- Details Table (Opsional / Dapat disembunyikan bila format manual sudah ada tabel) -->
+          <div v-if="showDefaultDetailsTable" class="border border-slate-300 rounded-xl overflow-hidden shadow-xs bg-white/95 backdrop-blur-xs">
             <table class="w-full text-xs">
               <tbody>
                 <tr class="border-b border-slate-200 bg-slate-50/80">
@@ -350,6 +354,7 @@ defineEmits(['close']);
 const photoGridCols = ref(3); // 2, 3, or 4 columns
 const includePhotoAnnex = ref(true);
 const showSecurityHash = ref(true);
+const showDefaultDetailsTable = ref(false);
 
 const photoGridClass = computed(() => {
   switch (photoGridCols.value) {
