@@ -358,6 +358,10 @@ class BaDocumentController extends Controller
             $data['signatories_json'] = json_decode($data['signatories_json'], true) ?: $data['signatories_json'];
         }
 
+        if (isset($data['table_config_json']) && is_string($data['table_config_json'])) {
+            $data['table_config_json'] = json_decode($data['table_config_json'], true) ?: $data['table_config_json'];
+        }
+
         if ($request->boolean('is_default')) {
             DocumentTemplate::where('is_default', true)->update(['is_default' => false]);
             $data['is_default'] = true;
@@ -411,6 +415,10 @@ class BaDocumentController extends Controller
 
         if (isset($data['signatories_json']) && is_string($data['signatories_json'])) {
             $data['signatories_json'] = json_decode($data['signatories_json'], true) ?: $data['signatories_json'];
+        }
+
+        if (isset($data['table_config_json']) && is_string($data['table_config_json'])) {
+            $data['table_config_json'] = json_decode($data['table_config_json'], true) ?: $data['table_config_json'];
         }
 
         if ($request->boolean('is_default')) {

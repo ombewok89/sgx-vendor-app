@@ -138,8 +138,11 @@
           <!-- Opening Statement Formatted with Dynamic Variables -->
           <div class="leading-relaxed text-slate-700" v-html="formattedHeader"></div>
 
-          <!-- Details Table (Opsional / Dapat disembunyikan bila format manual sudah ada tabel) -->
-          <div v-if="showDefaultDetailsTable" class="border border-slate-300 rounded-xl overflow-hidden shadow-xs bg-white/95 backdrop-blur-xs">
+          <!-- Dynamic Template Table (Posisi: Di bawah pembuka) -->
+          <div v-if="templateTableConfig?.enabled && templateTableConfig?.position === 'after_header'" v-html="renderedTemplateTable"></div>
+
+          <!-- Details Table Legacy (Opsional Toggle) -->
+          <div v-else-if="showDefaultDetailsTable" class="border border-slate-300 rounded-xl overflow-hidden shadow-xs bg-white/95 backdrop-blur-xs my-2">
             <table class="w-full text-xs">
               <tbody>
                 <tr class="border-b border-slate-200 bg-slate-50/80">
@@ -215,6 +218,9 @@
 
           <!-- Completion Clause Formatted with Dynamic Variables -->
           <div class="leading-relaxed text-slate-700 space-y-2" v-html="formattedBody"></div>
+
+          <!-- Dynamic Template Table (Posisi: Di bawah klausul) -->
+          <div v-if="templateTableConfig?.enabled && templateTableConfig?.position === 'after_body'" v-html="renderedTemplateTable"></div>
 
           <!-- Dynamic Signatures Grid -->
           <div
@@ -426,6 +432,44 @@ const formattedHeader = computed(() => {
 const formattedBody = computed(() => {
   const raw = template.value?.body_template || props.baData?.body_template || `Berdasarkan hasil pemeriksaan bukti foto digital (Before, Process, After) dan verifikasi teknis di lapangan, kedua belah pihak menyatakan bahwa seluruh item pekerjaan telah <strong>SELESAI 100% SECARA BAIK DAN MEMENUHI SPESIFIKASI MUTU</strong>.<br><br>Mitra Vendor memberikan jaminan masa pemeliharaan (garansi mutu) selama <strong>90 (sembilan puluh) hari kalender</strong> terhitung sejak tanggal penandatanganan Berita Acara ini.`;
   return replaceVariables(raw);
+});
+
+const templateTableConfig = computed(() => {
+  const raw = template.value?.table_config_json || props.baData?.table_config_json;
+  if (!raw) return null;
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (parsed && typeof parsed === 'object') return parsed;
+  } catch (e) {}
+  return null;
+});
+
+const renderedTemplateTable = computed(() => {
+  const cfg = templateTableConfig.value;
+  if (!cfg || !cfg.enabled || !cfg.rows || cfg.rows.length === 0) return '';
+  const rowsHtml = cfg.rows.map((row, idx) => {
+    const isEven = idx % 2 === 0;
+    const bgClass = cfg.style === 'striped' && isEven ? 'bg-slate-50/90' : 'bg-white';
+    const borderClass = cfg.style === 'clean' ? 'border-b border-slate-100' : 'border-b border-slate-200';
+    
+    let valClass = row.is_bold ? 'font-bold text-slate-900' : 'text-slate-800';
+    if (row.highlight === 'purple') valClass = 'font-mono font-bold text-purple-900';
+    else if (row.highlight === 'emerald') valClass = 'font-mono font-bold text-emerald-800';
+
+    return `<tr class="${borderClass} ${bgClass}">
+      <td class="w-1/3 py-2.5 px-4 font-semibold text-slate-600">${row.label}</td>
+      <td class="py-2.5 px-4 ${valClass}">${row.value || '-'}</td>
+    </tr>`;
+  }).join('\n');
+
+  const containerBorder = cfg.style === 'clean' ? 'border-t border-b border-slate-200' : 'border border-slate-300 rounded-xl overflow-hidden';
+  const tableRaw = `<table class="w-full ${containerBorder} text-xs my-2 border-collapse shadow-xs bg-white/95 backdrop-blur-xs">
+    <tbody>
+      ${rowsHtml}
+    </tbody>
+  </table>`;
+
+  return replaceVariables(tableRaw);
 });
 
 const signatoriesList = computed(() => {

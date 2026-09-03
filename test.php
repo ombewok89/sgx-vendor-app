@@ -239,6 +239,7 @@ if (file_exists($envPath)) {
                     'header_image_url' => "VARCHAR(255) NULL",
                     'background_image_url' => "VARCHAR(255) NULL",
                     'footer_image_url' => "VARCHAR(255) NULL",
+                    'table_config_json' => "LONGTEXT NULL",
                     'signatories_json' => "TEXT NULL",
                     'signatory_first_party_name' => "VARCHAR(255) NULL",
                     'signatory_first_party_role' => "VARCHAR(255) NULL",

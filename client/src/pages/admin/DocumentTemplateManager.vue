@@ -149,37 +149,51 @@
         </div>
 
         <!-- Form Tabs -->
-        <div class="flex gap-2 border-b border-slate-100 pb-2 font-bold text-xs">
+        <div class="flex flex-wrap gap-2 border-b border-slate-100 pb-2 font-bold text-xs">
           <button
             type="button"
             @click="modalTab = 'branding'"
             :class="[
-              'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer',
+              'px-3 py-1.5 rounded-xl transition-all cursor-pointer',
               modalTab === 'branding' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
             ]"
           >
-            1. Background Kop Surat & Logo
+            1. Background & Logo
           </button>
           <button
             type="button"
             @click="modalTab = 'content'"
             :class="[
-              'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5',
+              'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5',
               modalTab === 'content' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
             ]"
           >
-            <span>2. Klausul & Format Isi</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[9px] bg-emerald-100 text-emerald-800 font-bold">Visual Editor</span>
+            <span>2. Klausul & Pernyataan</span>
+          </button>
+          <button
+            type="button"
+            @click="modalTab = 'table'"
+            :class="[
+              'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5',
+              modalTab === 'table' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+            ]"
+          >
+            <Table class="w-3.5 h-3.5" />
+            <span>3. Tabel Data (Visual Builder)</span>
+            <span v-if="tableConfig.enabled" class="px-1.5 py-0.2 rounded-full text-[9px] bg-emerald-100 text-emerald-800 font-bold">
+              {{ tableConfig.rows.length }} Baris
+            </span>
+            <span v-else class="px-1.5 py-0.2 rounded-full text-[9px] bg-slate-200 text-slate-600">Off</span>
           </button>
           <button
             type="button"
             @click="modalTab = 'signatories'"
             :class="[
-              'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5',
+              'px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5',
               modalTab === 'signatories' ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
             ]"
           >
-            <span>3. Kolom Penandatangan</span>
+            <span>4. Tanda Tangan</span>
             <span class="px-1.5 py-0.2 rounded-full text-[9px]" :class="modalTab === 'signatories' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-900'">
               {{ signatoriesList.length }}
             </span>
@@ -414,7 +428,6 @@
                   <button type="button" @click="insertBulletPointCustom(bodyTextarea)" title="Poin Bullet" class="px-2 py-0.5 hover:bg-white rounded-lg text-xs cursor-pointer font-bold">• List</button>
                   <button type="button" @click="insertNumberedPointCustom(bodyTextarea)" title="Poin Penomoran" class="px-2 py-0.5 hover:bg-white rounded-lg text-xs cursor-pointer font-bold">1. List</button>
                   <button type="button" @click="insertParagraphBreak(bodyTextarea)" title="Paragraf Baru" class="px-2 py-0.5 hover:bg-white rounded-lg text-xs cursor-pointer text-slate-600">¶ Paragraf</button>
-                  <button type="button" @click="insertCustomTable(bodyTextarea)" title="Sisipkan Tabel Data Fleksibel" class="px-2.5 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold rounded-lg text-xs cursor-pointer border border-indigo-200">➕ Sisipkan Tabel</button>
                   <span class="w-px h-3.5 bg-slate-300 mx-0.5"></span>
                   <button type="button" @click="resetToDefaultField('body_template')" title="Kembalikan ke Teks Standar" class="px-2 py-0.5 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg text-[10px] cursor-pointer">Reset</button>
                 </div>
@@ -453,7 +466,190 @@
             </div>
           </div>
 
-          <!-- TAB 3: Dynamic Signatories Builder -->
+          <!-- TAB 3: Visual Dynamic Table Builder (No-Code Table Grid) -->
+          <div v-show="modalTab === 'table'" class="space-y-4">
+            <!-- Header Controls & Toggle -->
+            <div class="p-4 bg-gradient-to-r from-purple-50 via-indigo-50 to-emerald-50/60 border border-purple-200/80 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-900 text-white flex items-center justify-center shadow-xs">
+                  <Table class="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 class="font-bold text-slate-900 text-xs flex items-center gap-2">
+                    <span>Penyusun Tabel Data SPK Otomatis</span>
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold" :class="tableConfig.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'">
+                      {{ tableConfig.enabled ? 'Aktif' : 'Dinonaktifkan' }}
+                    </span>
+                  </h4>
+                  <p class="text-[11px] text-slate-600 mt-0.5">
+                    Buat dan susun baris data rincian SPK secara fleksibel tanpa perlu mengetik kode HTML.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <label class="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-purple-200 shadow-xs">
+                  <input type="checkbox" v-model="tableConfig.enabled" class="rounded text-purple-900 focus:ring-purple-500" />
+                  <span class="text-xs font-bold text-slate-800">Tampilkan Tabel</span>
+                </label>
+                <button
+                  type="button"
+                  @click="resetTableRows"
+                  class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-xs cursor-pointer flex items-center gap-1"
+                  title="Kembalikan Susunan Baris Standar"
+                >
+                  <RotateCcw class="w-3.5 h-3.5" />
+                  <span>Reset Baris</span>
+                </button>
+              </div>
+            </div>
+
+            <div v-if="tableConfig.enabled" class="space-y-4">
+              <!-- Table Settings (Position & Style) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs">
+                <div>
+                  <label class="block font-bold text-slate-800 mb-1">Posisi Peletakan Tabel Dokumen:</label>
+                  <select
+                    v-model="tableConfig.position"
+                    class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  >
+                    <option value="after_header">📍 Di Bawah Kalimat Pembuka (Standar Resmi)</option>
+                    <option value="after_body">📍 Di Bawah Klausul Pernyataan Selesai</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-800 mb-1">Gaya Tampilan Tabel:</label>
+                  <select
+                    v-model="tableConfig.style"
+                    class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  >
+                    <option value="striped">🎨 Bergaris Selang-seling (Striped Slate)</option>
+                    <option value="bordered">🎨 Border Penuh (Full Boxed)</option>
+                    <option value="clean">🎨 Minimalis Bersih (Clean Divider)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Interactive Rows Builder -->
+              <div class="space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <span>Daftar Baris Rincian Data ({{ tableConfig.rows.length }} Baris):</span>
+                  </span>
+                  <button
+                    type="button"
+                    @click="addTableRow"
+                    class="px-3 py-1 bg-purple-900 hover:bg-purple-800 text-white rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 shadow-xs"
+                  >
+                    <Plus class="w-3.5 h-3.5" />
+                    <span>Tambah Baris Baru</span>
+                  </button>
+                </div>
+
+                <!-- Row Cards List -->
+                <div class="space-y-2">
+                  <div
+                    v-for="(row, rIdx) in tableConfig.rows"
+                    :key="rIdx"
+                    class="p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs hover:border-purple-300 transition-all"
+                  >
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <!-- Row Number & Reorder -->
+                      <div class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-slate-100 border border-slate-300 text-slate-700 font-mono text-[10px] font-bold flex items-center justify-center">
+                          {{ rIdx + 1 }}
+                        </span>
+                        <div class="flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            :disabled="rIdx === 0"
+                            @click="moveTableRow(rIdx, -1)"
+                            class="p-1 text-slate-500 hover:text-purple-900 disabled:opacity-20 cursor-pointer"
+                            title="Pindah ke Atas"
+                          >
+                            <ArrowUp class="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            :disabled="rIdx === tableConfig.rows.length - 1"
+                            @click="moveTableRow(rIdx, 1)"
+                            class="p-1 text-slate-500 hover:text-purple-900 disabled:opacity-20 cursor-pointer"
+                            title="Pindah ke Bawah"
+                          >
+                            <ArrowDown class="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          v-model="row.label"
+                          placeholder="Label Judul Baris (cth: Nomor SPK)"
+                          class="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 w-44 focus:bg-white focus:ring-1 focus:ring-purple-500 focus:outline-none"
+                        />
+                      </div>
+
+                      <!-- Quick Presets Chips -->
+                      <div class="flex flex-wrap items-center gap-1">
+                        <span class="text-[10px] text-slate-400 mr-0.5">Pilih Variabel:</span>
+                        <button type="button" @click="setRowPresetVariable(row, '{{spk_number}}')" class="px-1.5 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-900 rounded text-[9px] font-mono border border-purple-200 cursor-pointer">No SPK</button>
+                        <button type="button" @click="setRowPresetVariable(row, '{{title}}')" class="px-1.5 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-900 rounded text-[9px] font-mono border border-purple-200 cursor-pointer">Pekerjaan</button>
+                        <button type="button" @click="setRowPresetVariable(row, '{{location_name}}')" class="px-1.5 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded text-[9px] font-mono border border-blue-200 cursor-pointer">Lokasi</button>
+                        <button type="button" @click="setRowPresetVariable(row, '{{contract_value}}')" class="px-1.5 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 rounded text-[9px] font-mono border border-emerald-200 cursor-pointer">Nilai</button>
+                        <button type="button" @click="setRowPresetVariable(row, '{{vendor_name}}')" class="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded text-[9px] font-mono border border-slate-200 cursor-pointer">Client</button>
+                        <button type="button" @click="setRowPresetVariable(row, '{{checkin_gps}}')" class="px-1.5 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded text-[9px] font-mono border border-amber-200 cursor-pointer">GPS</button>
+                        <button
+                          type="button"
+                          @click="removeTableRow(rIdx)"
+                          title="Hapus Baris Ini"
+                          class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded ml-1 cursor-pointer"
+                        >
+                          <Trash2 class="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Row Value & Formatting Options -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-slate-100 text-xs">
+                      <div class="sm:col-span-2">
+                        <input
+                          type="text"
+                          v-model="row.value"
+                          placeholder="Isi Nilai Baris / Variabel (cth: {{spk_number}} atau teks bebas)"
+                          class="w-full px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:bg-white focus:ring-1 focus:ring-purple-500 focus:outline-none"
+                        />
+                      </div>
+                      <div class="flex items-center gap-2 justify-end">
+                        <label class="flex items-center gap-1 cursor-pointer text-[11px] text-slate-600 font-semibold">
+                          <input type="checkbox" v-model="row.is_bold" class="rounded text-purple-900 focus:ring-purple-500" />
+                          <span>Tebal (Bold)</span>
+                        </label>
+                        <select
+                          v-model="row.highlight"
+                          class="px-2 py-0.5 bg-white border border-slate-200 rounded-lg text-[10px] font-semibold text-slate-700 focus:outline-none"
+                        >
+                          <option value="normal">Warna Biasa</option>
+                          <option value="purple">Ungu (SPK)</option>
+                          <option value="emerald">Hijau (Rupiah)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Formatted Table Preview Strip -->
+              <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 shadow-xs">
+                <span class="font-bold text-[10px] uppercase tracking-wider text-purple-900 flex items-center gap-1">
+                  <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Pratinjau Langsung Tampilan Cetak Tabel:</span>
+                </span>
+                <div class="p-3 bg-white rounded-xl border border-slate-200">
+                  <div v-html="renderClauseWithSampleData(renderTableHtmlFromConfig(tableConfig))"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: Dynamic Signatories Builder -->
           <div v-show="modalTab === 'signatories'" class="space-y-4">
             <div class="flex items-center justify-between">
               <div>
@@ -617,8 +813,14 @@
           <!-- Opening Statement Formatted -->
           <div class="leading-relaxed text-slate-700" v-html="renderClauseWithSampleData(previewTmpl.header_html)"></div>
 
-          <!-- Body Clause Formatted (Termasuk tabel custom HTML jika dibuat) -->
+          <!-- Dynamic Visual Table (Jika posisinya di bawah pembuka) -->
+          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_header'" v-html="renderClauseWithSampleData(renderTableHtmlFromConfig(getTableConfig(previewTmpl)))"></div>
+
+          <!-- Body Clause Formatted -->
           <div class="leading-relaxed text-slate-700 space-y-2" v-html="renderClauseWithSampleData(previewTmpl.body_template)"></div>
+
+          <!-- Dynamic Visual Table (Jika posisinya di bawah klausul) -->
+          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_body'" v-html="renderClauseWithSampleData(renderTableHtmlFromConfig(getTableConfig(previewTmpl)))"></div>
 
           <!-- Dynamic Signatures Grid -->
           <div
@@ -673,6 +875,10 @@ import {
   ImageIcon,
   UserCheck,
   Sparkles,
+  Table,
+  ArrowUp,
+  ArrowDown,
+  RotateCcw,
   X
 } from 'lucide-vue-next';
 
@@ -699,6 +905,87 @@ const formData = ref({
   header_html: '',
   body_template: ''
 });
+
+// Visual Dynamic Table Builder Configuration State
+const defaultTableRows = [
+  { label: 'Nomor SPK', value: '{{spk_number}}', custom_label: '', is_bold: true, highlight: 'purple' },
+  { label: 'Nama Pekerjaan', value: '{{title}}', custom_label: '', is_bold: true, highlight: 'normal' },
+  { label: 'Mitra Client', value: '{{vendor_name}}', custom_label: '', is_bold: false, highlight: 'normal' },
+  { label: 'Lokasi / Cabang', value: '{{location_name}}', custom_label: '', is_bold: false, highlight: 'normal' },
+  { label: 'Nilai Kontrak', value: '{{contract_value}}', custom_label: '', is_bold: true, highlight: 'emerald' },
+  { label: 'GPS Check-in', value: '{{checkin_gps}}', custom_label: '', is_bold: false, highlight: 'normal' }
+];
+
+const tableConfig = ref({
+  enabled: true,
+  position: 'after_header', // 'after_header', 'after_body', 'none'
+  style: 'striped', // 'striped', 'clean', 'bordered'
+  rows: JSON.parse(JSON.stringify(defaultTableRows))
+});
+
+function addTableRow() {
+  tableConfig.value.rows.push({
+    label: 'Keterangan Tambahan',
+    value: '',
+    custom_label: '',
+    is_bold: false,
+    highlight: 'normal'
+  });
+}
+
+function removeTableRow(index) {
+  if (tableConfig.value.rows.length > 1) {
+    tableConfig.value.rows.splice(index, 1);
+  }
+}
+
+function moveTableRow(index, direction) {
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= tableConfig.value.rows.length) return;
+  const temp = tableConfig.value.rows[index];
+  tableConfig.value.rows[index] = tableConfig.value.rows[targetIndex];
+  tableConfig.value.rows[targetIndex] = temp;
+}
+
+function resetTableRows() {
+  tableConfig.value.rows = JSON.parse(JSON.stringify(defaultTableRows));
+}
+
+function setRowPresetVariable(row, varTag) {
+  row.value = varTag;
+  if (varTag === '{{spk_number}}') { row.label = 'Nomor SPK'; row.is_bold = true; row.highlight = 'purple'; }
+  else if (varTag === '{{title}}') { row.label = 'Nama Pekerjaan'; row.is_bold = true; row.highlight = 'normal'; }
+  else if (varTag === '{{vendor_name}}') { row.label = 'Perusahaan Client'; row.is_bold = false; row.highlight = 'normal'; }
+  else if (varTag === '{{location_name}}') { row.label = 'Lokasi / Cabang'; row.is_bold = false; row.highlight = 'normal'; }
+  else if (varTag === '{{contract_value}}') { row.label = 'Nilai Kontrak'; row.is_bold = true; row.highlight = 'emerald'; }
+  else if (varTag === '{{ba_date}}') { row.label = 'Tanggal BA'; row.is_bold = false; row.highlight = 'normal'; }
+  else if (varTag === '{{checkin_gps}}') { row.label = 'GPS Check-in'; row.is_bold = false; row.highlight = 'normal'; }
+}
+
+function renderTableHtmlFromConfig(config) {
+  if (!config || !config.enabled || !config.rows || config.rows.length === 0) return '';
+  const rowsHtml = config.rows.map((row, idx) => {
+    const isEven = idx % 2 === 0;
+    const bgClass = config.style === 'striped' && isEven ? 'bg-slate-50/90' : 'bg-white';
+    const borderClass = config.style === 'clean' ? 'border-b border-slate-100' : 'border-b border-slate-200';
+    
+    let valClass = row.is_bold ? 'font-bold text-slate-900' : 'text-slate-800';
+    if (row.highlight === 'purple') valClass = 'font-mono font-bold text-purple-900';
+    else if (row.highlight === 'emerald') valClass = 'font-mono font-bold text-emerald-800';
+    
+    return `<tr class="${borderClass} ${bgClass}">
+      <td class="w-1/3 py-2 px-3.5 font-semibold text-slate-600">${row.label}</td>
+      <td class="py-2 px-3.5 ${valClass}">${row.value || '-'}</td>
+    </tr>`;
+  }).join('\n');
+
+  const containerBorder = config.style === 'clean' ? 'border-t border-b border-slate-200' : 'border border-slate-300 rounded-xl overflow-hidden';
+  return `<table class="w-full ${containerBorder} text-xs my-2 border-collapse shadow-xs">
+    <tbody>
+      ${rowsHtml}
+    </tbody>
+  </table>`;
+}
 
 const signatoriesList = ref([
   {
@@ -988,6 +1275,17 @@ async function loadTemplates() {
   }
 }
 
+function getTableConfig(tmpl) {
+  if (!tmpl) return tableConfig.value;
+  if (tmpl.table_config_json) {
+    try {
+      const parsed = typeof tmpl.table_config_json === 'string' ? JSON.parse(tmpl.table_config_json) : tmpl.table_config_json;
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch (e) {}
+  }
+  return tableConfig.value;
+}
+
 function openAddModal() {
   isEditing.value = false;
   modalTab.value = 'branding';
@@ -1001,6 +1299,12 @@ function openAddModal() {
     footer_image_url: '',
     header_html: clausePresets.standard.header,
     body_template: clausePresets.standard.body
+  };
+  tableConfig.value = {
+    enabled: true,
+    position: 'after_header',
+    style: 'striped',
+    rows: JSON.parse(JSON.stringify(defaultTableRows))
   };
   signatoriesList.value = [
     {
@@ -1029,6 +1333,7 @@ function openEditModal(tmpl) {
   isEditing.value = true;
   modalTab.value = 'branding';
   formData.value = { ...tmpl };
+  tableConfig.value = getTableConfig(tmpl);
   signatoriesList.value = getSignatoriesList(tmpl);
   logoFile.value = null;
   bgFile.value = null;
@@ -1106,6 +1411,7 @@ async function handleSubmit() {
     payload.append('code', formData.value.code);
     payload.append('header_html', formData.value.header_html || '');
     payload.append('body_template', formData.value.body_template || '');
+    payload.append('table_config_json', JSON.stringify(tableConfig.value));
     payload.append('signatories_json', JSON.stringify(signatoriesList.value));
 
     // Compatibility with legacy single signatory columns

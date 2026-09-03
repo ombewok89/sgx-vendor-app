@@ -16,6 +16,7 @@ class DocumentTemplate extends Model
         'header_html',
         'footer_html',
         'body_template',
+        'table_config_json',
         'signatories_json',
         'signatory_first_party_name',
         'signatory_first_party_role',
@@ -27,6 +28,7 @@ class DocumentTemplate extends Model
     protected $casts = [
         'is_default' => 'boolean',
         'signatories_json' => 'array',
+        'table_config_json' => 'array',
     ];
 
     public function baDocuments()
