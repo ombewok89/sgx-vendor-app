@@ -779,7 +779,7 @@
 
         <!-- Simulated Document Body with Background Paper Template -->
         <div
-          class="relative bg-white border border-slate-300 rounded-2xl p-8 sm:p-12 shadow-md space-y-6 text-slate-800 text-xs overflow-hidden min-h-[750px]"
+          class="relative bg-white border border-slate-300 rounded-2xl p-8 sm:p-12 shadow-md space-y-3.5 text-slate-800 text-xs overflow-hidden min-h-[750px]"
           :style="getPreviewBgStyle(previewTmpl)"
         >
           <!-- Kop Surat Banner or Text Header -->
@@ -811,16 +811,16 @@
           </div>
 
           <!-- Opening Statement Formatted -->
-          <div class="leading-relaxed text-slate-700" v-html="renderClauseWithSampleData(previewTmpl.header_html)"></div>
+          <div class="leading-relaxed text-slate-700 mb-2" v-html="renderClauseWithSampleData(previewTmpl.header_html)"></div>
 
           <!-- Dynamic Visual Table (Jika posisinya di bawah pembuka) -->
-          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_header'" v-html="renderTableHtmlFromConfig(getTableConfig(previewTmpl), true)"></div>
+          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_header'" class="my-2" v-html="renderTableHtmlFromConfig(getTableConfig(previewTmpl), true)"></div>
 
           <!-- Body Clause Formatted -->
-          <div class="leading-relaxed text-slate-700 space-y-2" v-html="renderClauseWithSampleData(previewTmpl.body_template)"></div>
+          <div class="leading-relaxed text-slate-700 my-2 space-y-1.5" v-html="renderClauseWithSampleData(previewTmpl.body_template)"></div>
 
           <!-- Dynamic Visual Table (Jika posisinya di bawah klausul) -->
-          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_body'" v-html="renderTableHtmlFromConfig(getTableConfig(previewTmpl), true)"></div>
+          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_body'" class="my-2" v-html="renderTableHtmlFromConfig(getTableConfig(previewTmpl), true)"></div>
 
           <!-- Dynamic Signatures Grid -->
           <div
@@ -1283,14 +1283,21 @@ async function loadTemplates() {
 }
 
 function getTableConfig(tmpl) {
-  if (!tmpl) return tableConfig.value;
+  if (!tmpl) return JSON.parse(JSON.stringify(tableConfig.value));
   if (tmpl.table_config_json) {
     try {
       const parsed = typeof tmpl.table_config_json === 'string' ? JSON.parse(tmpl.table_config_json) : tmpl.table_config_json;
-      if (parsed && typeof parsed === 'object') return parsed;
+      if (parsed && typeof parsed === 'object') {
+        return JSON.parse(JSON.stringify(parsed));
+      }
     } catch (e) {}
   }
-  return tableConfig.value;
+  return {
+    enabled: true,
+    position: 'after_header',
+    style: 'striped',
+    rows: JSON.parse(JSON.stringify(defaultTableRows))
+  };
 }
 
 function openAddModal() {

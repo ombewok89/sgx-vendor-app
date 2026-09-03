@@ -105,7 +105,7 @@
         <!-- ========================================== -->
         <!-- LEMBAR 1: SURAT POKOK BERITA ACARA OPNAME  -->
         <!-- ========================================== -->
-        <section class="ba-main-page space-y-6">
+        <section class="ba-main-page space-y-3.5">
           <!-- Official Header -->
           <div class="border-b-2 border-slate-900 pb-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -113,24 +113,22 @@
                 <img src="/sgx_icon.png" alt="Logo" class="w-full h-full object-contain" />
               </div>
               <div>
-                <h2 class="text-lg font-black text-slate-900 tracking-wide">PT SINAR KREASINDO BENCOOLEN - SGX</h2>
-                <p class="text-[11px] text-slate-600 font-medium">Digital Vendor Management & Infrastructure Quality Assurance</p>
-                <p class="text-[10px] text-slate-500">Anggut Bawah - Ratu Agung, Bengkulu - Indonesia 38222 | Telp: +62 23 8888 5251</p>
+                <h2 class="font-black text-base text-slate-900 tracking-tight">PT SINAR GRAHA KREATIF</h2>
+                <p class="text-[10px] text-slate-500 font-medium">Layanan Reklame, Branding Fasade, Digital Signage & Vendor Maintenance</p>
               </div>
             </div>
-            <div class="text-right">
-              <span class="inline-block px-3 py-1 bg-amber-50 text-amber-900 border border-amber-300 font-bold rounded-lg text-[11px] tracking-wider shadow-xs">
-                EVIDENCE CERTIFIED ✓
-              </span>
+            <div class="text-right text-[10px] text-slate-500 font-mono">
+              <div>KODE SISTEM: SGX-DIGITAL-EVIDENCE</div>
+              <div class="font-bold text-emerald-800">STATUS: TERVERIFIKASI RESMI</div>
             </div>
           </div>
 
-          <!-- Title -->
-          <div class="text-center py-2">
+          <!-- Document Title Header -->
+          <div class="text-center space-y-0.5">
             <h3 class="text-sm font-black uppercase tracking-wider underline text-slate-900">
               BERITA ACARA HASIL PEKERJAAN & OPNAME LAPANGAN KONSOLIDASI
             </h3>
-            <p class="text-xs text-slate-600 mt-1">
+            <p class="text-xs text-slate-600 mt-0.5">
               Nomor: <strong class="font-mono">{{ baData?.ba_number || '-' }}</strong>
             </p>
           </div>
@@ -139,7 +137,7 @@
           <div class="leading-relaxed text-slate-700" v-html="formattedHeader"></div>
 
           <!-- Dynamic Template Table (Posisi: Di bawah pembuka) -->
-          <div v-if="templateTableConfig?.enabled && templateTableConfig?.position === 'after_header'" v-html="renderedTemplateTable"></div>
+          <div v-if="templateTableConfig?.enabled && templateTableConfig?.position === 'after_header'" class="my-2" v-html="renderedTemplateTable"></div>
 
           <!-- Details Table Legacy (Opsional Toggle) -->
           <div v-else-if="showDefaultDetailsTable" class="border border-slate-300 rounded-xl overflow-hidden shadow-xs bg-white/95 backdrop-blur-xs my-2">

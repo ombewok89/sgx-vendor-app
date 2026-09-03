@@ -234,7 +234,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/master/templates', [BaDocumentController::class, 'templates']);
     Route::get('/master/templates/{id}', [BaDocumentController::class, 'show']);
     Route::post('/master/templates', [BaDocumentController::class, 'storeTemplate']);
-    Route::put('/master/templates/{id}', [BaDocumentController::class, 'updateTemplate']);
+    Route::match(['put', 'post'], '/master/templates/{id}', [BaDocumentController::class, 'updateTemplate']);
     Route::post('/master/templates/{id}/set-default', [BaDocumentController::class, 'setDefaultTemplate']);
     Route::delete('/master/templates/{id}', [BaDocumentController::class, 'deleteTemplate']);
 

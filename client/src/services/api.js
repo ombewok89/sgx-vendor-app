@@ -33,9 +33,16 @@ async function request(endpoint, options = {}) {
     headers
   });
 
-  const data = await response.json();
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (e) {
+    data = null;
+  }
+
   if (!response.ok) {
-    throw new Error(data.message || 'Terjadi kesalahan pada server');
+    const errorMsg = data?.message || data?.error || (data?.errors ? Object.values(data.errors).flat().join(', ') : null) || `Server Error (${response.status}: ${response.statusText})`;
+    throw new Error(errorMsg);
   }
   return data;
 }
@@ -126,7 +133,6 @@ export const api = {
   createTemplate: (formData) => request('/master/templates', { method: 'POST', body: formData }),
   updateTemplate: (id, formData) => {
     if (formData instanceof FormData) {
-      formData.append('_method', 'PUT');
       return request(`/master/templates/${id}`, { method: 'POST', body: formData });
     }
     return request(`/master/templates/${id}`, { method: 'PUT', body: formData });
