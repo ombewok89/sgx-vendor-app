@@ -867,17 +867,17 @@ function insertParagraphBreak(textareaRef) {
 function insertCustomTable(textareaRef) {
   const textarea = textareaRef?.value || textareaRef;
   const currentVal = formData.value.body_template || '';
-  const tableHtml = `\n<table class="w-full border border-slate-300 rounded-lg my-2 text-xs border-collapse">
+  const tableHtml = `<table class="w-full border border-slate-300 rounded-lg text-xs border-collapse mt-1 mb-2">
   <tbody>
-    <tr class="border-b bg-slate-50">
+    <tr class="border-b border-slate-200 bg-slate-50">
       <td class="w-1/3 py-2 px-3 font-semibold text-slate-700">Nomor SPK</td>
       <td class="py-2 px-3 font-mono font-bold text-purple-900">{{spk_number}}</td>
     </tr>
-    <tr class="border-b">
+    <tr class="border-b border-slate-200">
       <td class="py-2 px-3 font-semibold text-slate-700">Nama Pekerjaan</td>
       <td class="py-2 px-3 font-bold text-slate-900">{{title}}</td>
     </tr>
-    <tr class="border-b bg-slate-50">
+    <tr class="border-b border-slate-200 bg-slate-50">
       <td class="py-2 px-3 font-semibold text-slate-700">Lokasi / Cabang</td>
       <td class="py-2 px-3">{{location_name}}</td>
     </tr>
@@ -886,7 +886,7 @@ function insertCustomTable(textareaRef) {
       <td class="py-2 px-3 font-mono font-bold text-emerald-800">{{contract_value}}</td>
     </tr>
   </tbody>
-</table>\n`;
+</table>`;
 
   if (textarea && typeof textarea.selectionStart === 'number') {
     const start = textarea.selectionStart;
@@ -916,15 +916,22 @@ function stripHtml(html) {
 
 function renderClauseWithSampleData(text) {
   if (!text) return '-';
-  return text
+  let processed = text
     .replace(/\{\{spk_number\}\}/g, '<strong>SPK-2026-00125</strong>')
     .replace(/\{\{title\}\}/g, '<strong>Pemasangan Palang Merek KCP Sukajadi</strong>')
     .replace(/\{\{vendor_name\}\}/g, '<strong>PT Sinar Graha Kreatif</strong>')
     .replace(/\{\{location_name\}\}/g, '<strong>Jl. Ir. H. Juanda No. 120 Bandung</strong>')
     .replace(/\{\{contract_value\}\}/g, '<strong>Rp 15.000.000</strong>')
     .replace(/\{\{ba_date\}\}/g, '<strong>Minggu, 16 Agustus 2026</strong>')
-    .replace(/\{\{checkin_gps\}\}/g, '<strong>-6.88500, 107.61360</strong>')
+    .replace(/\{\{checkin_gps\}\}/g, '<strong>-6.88500, 107.61360</strong>');
+
+  // Bersihkan newline berlebih yang menempel langsung pada tag tabel agar tidak menumpuk <br>
+  processed = processed
+    .replace(/\s*(<table[\s\S]*?<\/table>)\s*/gi, '$1')
+    .replace(/\n{2,}/g, '<br><br>')
     .replace(/\n/g, '<br>');
+
+  return processed;
 }
 
 function getSignatoriesList(tmpl) {

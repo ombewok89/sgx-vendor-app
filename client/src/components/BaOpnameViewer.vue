@@ -401,15 +401,21 @@ function replaceVariables(text) {
   const valStr = `Rp ${Number(wo.value?.contract_value || 15000000).toLocaleString('id-ID')}`;
   const gpsStr = checkIn.value ? `${Number(checkIn.value.latitude).toFixed(5)}, ${Number(checkIn.value.longitude).toFixed(5)}` : '-';
 
-  return text
+  let processed = text
     .replace(/\{\{spk_number\}\}/g, wo.value?.spk_number || props.baData?.spk_number || props.baData?.work_order?.spk_number || '')
     .replace(/\{\{title\}\}/g, wo.value?.title || props.baData?.work_order_title || props.baData?.work_order?.title || '')
     .replace(/\{\{vendor_name\}\}/g, wo.value?.vendor_name || props.baData?.vendor_name || props.baData?.work_order?.vendor?.name || '')
     .replace(/\{\{location_name\}\}/g, wo.value?.location_name || props.baData?.work_order?.location_name || '')
     .replace(/\{\{contract_value\}\}/g, valStr)
     .replace(/\{\{ba_date\}\}/g, dateStr)
-    .replace(/\{\{checkin_gps\}\}/g, gpsStr)
+    .replace(/\{\{checkin_gps\}\}/g, gpsStr);
+
+  processed = processed
+    .replace(/\s*(<table[\s\S]*?<\/table>)\s*/gi, '$1')
+    .replace(/\n{2,}/g, '<br><br>')
     .replace(/\n/g, '<br>');
+
+  return processed;
 }
 
 const formattedHeader = computed(() => {
