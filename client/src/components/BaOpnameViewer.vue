@@ -416,7 +416,9 @@ function replaceVariables(text) {
     .replace(/\{\{ba_date\}\}/g, dateStr)
     .replace(/\{\{checkin_gps\}\}/g, gpsStr);
 
-  processed = processed
+  processed = processed.trim()
+    .replace(/(?:<br\s*\/?>\s*)+$/gi, '')
+    .replace(/^(?:<br\s*\/?>\s*)+/gi, '')
     .replace(/\s*(<table[\s\S]*?<\/table>)\s*/gi, '$1')
     .replace(/\n{2,}/g, '<br><br>')
     .replace(/\n/g, '<br>');
@@ -456,18 +458,11 @@ const renderedTemplateTable = computed(() => {
     if (row.highlight === 'purple') valClass = 'font-mono font-bold text-purple-900';
     else if (row.highlight === 'emerald') valClass = 'font-mono font-bold text-emerald-800';
 
-    return `<tr class="${borderClass} ${bgClass}">
-      <td class="w-1/3 py-2.5 px-4 font-semibold text-slate-600">${row.label}</td>
-      <td class="py-2.5 px-4 ${valClass}">${row.value || '-'}</td>
-    </tr>`;
-  }).join('\n');
+    return `<tr class="${borderClass} ${bgClass}"><td class="w-1/3 py-2.5 px-4 font-semibold text-slate-600">${row.label}</td><td class="py-2.5 px-4 ${valClass}">${row.value || '-'}</td></tr>`;
+  }).join('');
 
   const containerBorder = cfg.style === 'clean' ? 'border-t border-b border-slate-200' : 'border border-slate-300 rounded-xl overflow-hidden';
-  const tableRaw = `<table class="w-full ${containerBorder} text-xs my-2 border-collapse shadow-xs bg-white/95 backdrop-blur-xs">
-    <tbody>
-      ${rowsHtml}
-    </tbody>
-  </table>`;
+  const tableRaw = `<table class="w-full ${containerBorder} text-xs my-2 border-collapse shadow-xs bg-white/95 backdrop-blur-xs"><tbody>${rowsHtml}</tbody></table>`;
 
   return replaceVariables(tableRaw);
 });

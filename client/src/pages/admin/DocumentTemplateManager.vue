@@ -643,7 +643,7 @@
                   <span>Pratinjau Langsung Tampilan Cetak Tabel:</span>
                 </span>
                 <div class="p-3 bg-white rounded-xl border border-slate-200">
-                  <div v-html="renderClauseWithSampleData(renderTableHtmlFromConfig(tableConfig))"></div>
+                  <div v-html="renderTableHtmlFromConfig(tableConfig, true)"></div>
                 </div>
               </div>
             </div>
@@ -814,13 +814,13 @@
           <div class="leading-relaxed text-slate-700" v-html="renderClauseWithSampleData(previewTmpl.header_html)"></div>
 
           <!-- Dynamic Visual Table (Jika posisinya di bawah pembuka) -->
-          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_header'" v-html="renderClauseWithSampleData(renderTableHtmlFromConfig(getTableConfig(previewTmpl)))"></div>
+          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_header'" v-html="renderTableHtmlFromConfig(getTableConfig(previewTmpl), true)"></div>
 
           <!-- Body Clause Formatted -->
           <div class="leading-relaxed text-slate-700 space-y-2" v-html="renderClauseWithSampleData(previewTmpl.body_template)"></div>
 
           <!-- Dynamic Visual Table (Jika posisinya di bawah klausul) -->
-          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_body'" v-html="renderClauseWithSampleData(renderTableHtmlFromConfig(getTableConfig(previewTmpl)))"></div>
+          <div v-if="getTableConfig(previewTmpl).enabled && getTableConfig(previewTmpl).position === 'after_body'" v-html="renderTableHtmlFromConfig(getTableConfig(previewTmpl), true)"></div>
 
           <!-- Dynamic Signatures Grid -->
           <div
@@ -962,7 +962,7 @@ function setRowPresetVariable(row, varTag) {
   else if (varTag === '{{checkin_gps}}') { row.label = 'GPS Check-in'; row.is_bold = false; row.highlight = 'normal'; }
 }
 
-function renderTableHtmlFromConfig(config) {
+function renderTableHtmlFromConfig(config, isSample = false) {
   if (!config || !config.enabled || !config.rows || config.rows.length === 0) return '';
   const rowsHtml = config.rows.map((row, idx) => {
     const isEven = idx % 2 === 0;
@@ -973,18 +973,23 @@ function renderTableHtmlFromConfig(config) {
     if (row.highlight === 'purple') valClass = 'font-mono font-bold text-purple-900';
     else if (row.highlight === 'emerald') valClass = 'font-mono font-bold text-emerald-800';
     
-    return `<tr class="${borderClass} ${bgClass}">
-      <td class="w-1/3 py-2 px-3.5 font-semibold text-slate-600">${row.label}</td>
-      <td class="py-2 px-3.5 ${valClass}">${row.value || '-'}</td>
-    </tr>`;
-  }).join('\n');
+    let valText = row.value || '-';
+    if (isSample) {
+      valText = valText
+        .replace(/\{\{spk_number\}\}/g, 'SPK-2026-00125')
+        .replace(/\{\{title\}\}/g, 'Pemasangan Palang Merek KCP Sukajadi')
+        .replace(/\{\{vendor_name\}\}/g, 'PT Sinar Graha Kreatif')
+        .replace(/\{\{location_name\}\}/g, 'Jl. Ir. H. Juanda No. 120 Bandung')
+        .replace(/\{\{contract_value\}\}/g, 'Rp 15.000.000')
+        .replace(/\{\{ba_date\}\}/g, 'Minggu, 16 Agustus 2026')
+        .replace(/\{\{checkin_gps\}\}/g, '-6.88500, 107.61360');
+    }
+    
+    return `<tr class="${borderClass} ${bgClass}"><td class="w-1/3 py-2 px-3.5 font-semibold text-slate-600">${row.label}</td><td class="py-2 px-3.5 ${valClass}">${valText}</td></tr>`;
+  }).join('');
 
   const containerBorder = config.style === 'clean' ? 'border-t border-b border-slate-200' : 'border border-slate-300 rounded-xl overflow-hidden';
-  return `<table class="w-full ${containerBorder} text-xs my-2 border-collapse shadow-xs">
-    <tbody>
-      ${rowsHtml}
-    </tbody>
-  </table>`;
+  return `<table class="w-full ${containerBorder} text-xs my-2 border-collapse shadow-xs"><tbody>${rowsHtml}</tbody></table>`;
 }
 
 const signatoriesList = ref([
@@ -1212,8 +1217,10 @@ function renderClauseWithSampleData(text) {
     .replace(/\{\{ba_date\}\}/g, '<strong>Minggu, 16 Agustus 2026</strong>')
     .replace(/\{\{checkin_gps\}\}/g, '<strong>-6.88500, 107.61360</strong>');
 
-  // Bersihkan newline berlebih yang menempel langsung pada tag tabel agar tidak menumpuk <br>
-  processed = processed
+  // Bersihkan newline dan spasi berlebih di awal/akhir dan di sekitar tag tabel
+  processed = processed.trim()
+    .replace(/(?:<br\s*\/?>\s*)+$/gi, '')
+    .replace(/^(?:<br\s*\/?>\s*)+/gi, '')
     .replace(/\s*(<table[\s\S]*?<\/table>)\s*/gi, '$1')
     .replace(/\n{2,}/g, '<br><br>')
     .replace(/\n/g, '<br>');

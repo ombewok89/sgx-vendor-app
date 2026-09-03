@@ -639,3 +639,4 @@ Default Password untuk seluruh akun seed: admin123
 
 ==================================================
 
+cd /home/sinargra/vendor.sinargrafika.my.id && rm -f .git/index.lock && git pull origin main && cp -r laravel-backend/app/* app/ && cp -r laravel-backend/routes/* routes/ && php artisan optimize:clear
