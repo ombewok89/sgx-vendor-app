@@ -386,54 +386,63 @@ class BaDocumentController extends Controller
             ], 403);
         }
 
-        $template = DocumentTemplate::findOrFail($id);
-        $old = $template->toArray();
+        try {
+            $template = DocumentTemplate::findOrFail($id);
+            $old = $template->toArray();
 
-        $data = $request->except(['logo', 'background_image', 'header_image', 'footer_image']);
+            $data = $request->except(['logo', 'background_image', 'header_image', 'footer_image']);
 
-        if ($request->hasFile('logo')) {
-            $path = $request->file('logo')->store('uploads', 'public');
-            $data['logo_url'] = '/storage/' . $path;
-        } elseif ($request->input('remove_logo') === '1') {
-            $data['logo_url'] = null;
+            if ($request->hasFile('logo')) {
+                $path = $request->file('logo')->store('uploads', 'public');
+                $data['logo_url'] = '/storage/' . $path;
+            } elseif ($request->input('remove_logo') === '1') {
+                $data['logo_url'] = null;
+            }
+
+            if ($request->hasFile('background_image')) {
+                $path = $request->file('background_image')->store('uploads', 'public');
+                $data['background_image_url'] = '/storage/' . $path;
+                $data['header_image_url'] = '/storage/' . $path;
+            } elseif ($request->input('remove_background') === '1') {
+                $data['background_image_url'] = null;
+                $data['header_image_url'] = null;
+            }
+
+            if ($request->hasFile('footer_image')) {
+                $path = $request->file('footer_image')->store('uploads', 'public');
+                $data['footer_image_url'] = '/storage/' . $path;
+            } elseif ($request->input('remove_footer') === '1') {
+                $data['footer_image_url'] = null;
+            }
+
+            if (isset($data['signatories_json']) && is_string($data['signatories_json'])) {
+                $data['signatories_json'] = json_decode($data['signatories_json'], true) ?: $data['signatories_json'];
+            }
+
+            if (isset($data['table_config_json']) && is_string($data['table_config_json'])) {
+                $data['table_config_json'] = json_decode($data['table_config_json'], true) ?: $data['table_config_json'];
+            }
+
+            if ($request->boolean('is_default')) {
+                DocumentTemplate::where('is_default', true)->update(['is_default' => false]);
+                $data['is_default'] = true;
+            }
+
+            $template->update($data);
+            AuditService::log($request->user(), 'UPDATE_TEMPLATE', 'DOCUMENT_TEMPLATE', $template->id, $old, $template->toArray());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Template dokumen berhasil diperbarui.',
+                'data' => $template,
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Update template error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui template: ' . $e->getMessage(),
+            ], 500);
         }
-
-        if ($request->hasFile('background_image')) {
-            $path = $request->file('background_image')->store('uploads', 'public');
-            $data['background_image_url'] = '/storage/' . $path;
-        } elseif ($request->input('remove_background') === '1') {
-            $data['background_image_url'] = null;
-            $data['header_image_url'] = null;
-        }
-
-        if ($request->hasFile('footer_image')) {
-            $path = $request->file('footer_image')->store('uploads', 'public');
-            $data['footer_image_url'] = '/storage/' . $path;
-        } elseif ($request->input('remove_footer') === '1') {
-            $data['footer_image_url'] = null;
-        }
-
-        if (isset($data['signatories_json']) && is_string($data['signatories_json'])) {
-            $data['signatories_json'] = json_decode($data['signatories_json'], true) ?: $data['signatories_json'];
-        }
-
-        if (isset($data['table_config_json']) && is_string($data['table_config_json'])) {
-            $data['table_config_json'] = json_decode($data['table_config_json'], true) ?: $data['table_config_json'];
-        }
-
-        if ($request->boolean('is_default')) {
-            DocumentTemplate::where('is_default', true)->update(['is_default' => false]);
-            $data['is_default'] = true;
-        }
-
-        $template->update($data);
-        AuditService::log($request->user(), 'UPDATE_TEMPLATE', 'DOCUMENT_TEMPLATE', $template->id, $old, $template->toArray());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Template dokumen berhasil diperbarui.',
-            'data' => $template,
-        ]);
     }
 
     public function setDefaultTemplate(Request $request, $id)
