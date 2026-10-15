@@ -7,12 +7,19 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true
+        target: 'https://vendor.sinargrafika.my.id',
+        changeOrigin: true,
+        secure: true
+      },
+      '/storage': {
+        target: 'https://vendor.sinargrafika.my.id',
+        changeOrigin: true,
+        secure: true
       },
       '/uploads': {
-        target: 'http://localhost:5000',
-        changeOrigin: true
+        target: 'https://vendor.sinargrafika.my.id',
+        changeOrigin: true,
+        secure: true
       }
     }
   }

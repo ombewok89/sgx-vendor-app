@@ -1,0 +1,56 @@
+### SYSTEM DESIGN PROMPT: INDUSTRIAL CAD & FIELD OPS (YELLOW SIGNAL EDITION)
+Project: "SGX Portal" - Complete Digital Evidence & Operational Suite
+Client: PT Sinar Kreasindo Bencoolen (Signage Manufacturing & Field Operations)
+Design Philosophy: Heavy-duty industrial engineering software meets tactical mission control (inspired by Caterpillar / DeWalt industrial precision, Teenage Engineering, and AutoCAD).
+
+### STRICT DESIGN CONSTRAINTS (NO GENERIC AI LOOK)
+- NO soft purple, violet, or cyan gradients. NO frosted glassmorphism blur effects.
+- Corner Radius: STRICTLY sharp or minimal (rounded-none to max rounded-sm / 2px-4px).
+- Typography: Bold industrial sans-serif (Space Grotesk / DIN Pro) for headers, JetBrains Mono / Geist Mono for numbers, hashes, and dimensions.
+- High Information Density: compact, purposeful, no wasted blank space.
+
+### COLOR PALETTE & TOKENS
+- Primary Canvas: #0B0C0E (Matte Carbon Black) with subtle 24px blueprint dot-grid pattern (#1C2028).
+- Surface Modules: #13171F with crisp 1px solid borders (#232A36).
+- Signature Accent: Industrial Hazard Yellow (#FACC15 / #FFD000):
+  * Primary Action Buttons: Solid yellow background with sharp black bold text (`bg-[#FACC15] text-[#0B0C0E] hover:bg-[#FFE033] font-bold`).
+  * Active states, KPI counters, selected sidebar tabs, and dimensional annotation lines.
+  * Subtle yellow corner-crosshair accents on active cards.
+- Support Accents:
+  * Forensic Pass: #10B981 (SHA-256 & GPS verified green).
+  * Field Blockers / Urgent: #EF4444 (Safety Red).
+  * Technical Lines: #475569 (Measurement callouts & wireframe guides).
+
+---
+
+### UI COMPONENTS ACROSS MODULES (WITH YELLOW ACCENTS)
+
+1. GLOBAL SHELL & NAVIGATION:
+- Topbar:
+  * Brand: "SGX PORTAL" in bold tracking-wide white, with a solid yellow badge: "OPERATIONS CORE".
+  * Live status ticker: "SYSTEM ACTIVE // BENGKULU WORKSHOP" with a pulsing yellow indicator dot.
+  * Search bar styled like a terminal input with a yellow prompt cursor (`>_`).
+- Sidebar:
+  * Active menu item highlighted with a solid 3px yellow left border and crisp yellow text on deep dark surface.
+  * Badge counters (e.g., 21 unverified tasks) styled in solid yellow pills with black numbers.
+
+2. FORENSIC EVIDENCE GALLERY (Key Feature):
+- Photo viewer framed like an industrial measuring optic:
+  * Yellow dimension callout lines overlaid across the signage photos (e.g., "<--- 3000 mm --->").
+  * Status tag in the top corner: High-visibility solid yellow tag with black text: "[ BEFORE ]", "[ PROCESS ]", "[ AFTER ]".
+  * Bottom inspection bar: Dark strip with mono yellow coordinates (GPS) and an emerald green badge for "SHA-256: VALID".
+
+3. EXECUTIVE DASHBOARD & KPI CARDS:
+- 4 Bento KPI Metric Cards:
+  * Metric numbers (94.2%, 88.5%, Rp 960 Jt) rendered in large, crisp yellow mono typography.
+  * Thin yellow progress meters and mechanical gauge indicators.
+- Category breakdown:
+  * Ranked job list with yellow indicator bars showing market share (Signboard, Fasade, Huruf Timbul).
+
+4. WORK ORDER (SPK) & FIELD BLOCKER LOG:
+- SPK Cards formatted like physical yellow-tagged warehouse work orders.
+- Field Blocker tickets (Kendala Lapangan): Urgent delay tickets stamped with a diagonal yellow-and-black hazard stripe indicator tag on the card border.
+
+5. OFFICIAL BA OPNAME DRAFTING CANVAS:
+- High-contrast official handover certificate viewer.
+- Verification seal stamped with an industrial SGX inspection emblem.

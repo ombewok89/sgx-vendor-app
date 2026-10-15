@@ -1,505 +1,457 @@
 <template>
-  <div class="space-y-6">
-    <!-- Executive Top Strategic Scorecard -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- KPI 1: On-Time Delivery -->
-      <div class="glass-card rounded-3xl p-5 border border-white/80 shadow-glass relative overflow-hidden group hover:border-purple-300 transition-all duration-300">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">On-Time Delivery (SLA)</span>
-          <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
-            <Clock class="w-4 h-4" />
-          </div>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <div class="text-3xl font-black font-mono text-emerald-950">94.2%</div>
-          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-            Target ≥ 90% ✓
-          </span>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-2">Persentase pekerjaan diselesaikan tepat waktu sebelum batas deadline.</p>
-        <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div class="bg-gradient-to-r from-emerald-600 to-teal-500 h-full rounded-full w-[94.2%]" />
+  <div class="space-y-6 text-slate-100 font-sans">
+    <!-- Skeleton Loading State (Micro-interaction) -->
+    <div v-if="loadingSkeleton" class="space-y-6 animate-pulse">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div v-for="i in 4" :key="i" class="h-36 rounded-xs bg-[#13171F] border border-[#232A36] p-5 space-y-3">
+          <div class="h-3 w-24 bg-[#1C2028] rounded-xs"></div>
+          <div class="h-8 w-32 bg-[#1C2028] rounded-xs"></div>
+          <div class="h-2 w-full bg-[#1C2028] rounded-xs"></div>
         </div>
       </div>
-
-      <!-- KPI 2: First-Pass Yield -->
-      <div class="glass-card rounded-3xl p-5 border border-white/80 shadow-glass relative overflow-hidden group hover:border-purple-300 transition-all duration-300">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">First-Pass Approval</span>
-          <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-200">
-            <CheckCircle2 class="w-4 h-4" />
-          </div>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <div class="text-3xl font-black font-mono text-purple-950">88.5%</div>
-          <span class="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-            Mutu Tinggi
-          </span>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-2">Pekerjaan yang langsung disetujui tanpa perlu adanya permintaan revisi.</p>
-        <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div class="bg-gradient-to-r from-purple-600 to-indigo-500 h-full rounded-full w-[88.5%]" />
-        </div>
-      </div>
-
-      <!-- KPI 3: Total Project Valuation -->
-      <div class="glass-card rounded-3xl p-5 border border-white/80 shadow-glass relative overflow-hidden group hover:border-purple-300 transition-all duration-300">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Nilai Proyek SPK</span>
-          <div class="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center border border-teal-200">
-            <Coins class="w-4 h-4" />
-          </div>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <div class="text-2xl font-black font-mono text-teal-950">Rp 960 Jt</div>
-          <span class="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
-            73 SPK
-          </span>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-2">Akumulasi estimasi nilai seluruh kontrak pekerjaan vendor yang terdata.</p>
-        <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div class="bg-gradient-to-r from-teal-600 to-emerald-500 h-full rounded-full w-[85%]" />
-        </div>
-      </div>
-
-      <!-- KPI 4: Evidence Integrity -->
-      <div class="glass-card rounded-3xl p-5 border border-white/80 shadow-glass relative overflow-hidden group hover:border-purple-300 transition-all duration-300">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Integritas Bukti Foto</span>
-          <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200">
-            <ShieldCheck class="w-4 h-4" />
-          </div>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <div class="text-3xl font-black font-mono text-blue-950">100%</div>
-          <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-            SHA-256 Valid
-          </span>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-2">Seluruh foto terkunci enkripsi hash anti-manipulasi & GPS check-in resmi.</p>
-        <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div class="bg-gradient-to-r from-blue-600 to-cyan-500 h-full rounded-full w-full" />
-        </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 h-80 rounded-xs bg-[#13171F] border border-[#232A36]"></div>
+        <div class="lg:col-span-7 h-80 rounded-xs bg-[#13171F] border border-[#232A36]"></div>
       </div>
     </div>
 
-    <!-- EXCLUSIVE REDESIGN: Analisis Kategori / Jenis Pekerjaan Terbanyak & Nilai Anggaran dengan Donut Chart -->
-    <div class="glass-card rounded-3xl p-6 sm:p-7 border border-white/80 shadow-glass space-y-6">
-      <!-- Section Header with Executive Summary Pills -->
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-        <div>
-          <h3 class="font-black text-lg text-slate-900 flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-800 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-900/20">
-              <Briefcase class="w-4 h-4" />
+    <template v-else>
+      <!-- ==================================================== -->
+      <!-- B. INDUSTRIAL CAD BENTO KPI GRID (4 METRIC CARDS)    -->
+      <!-- ==================================================== -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 lg:gap-6">
+        <!-- Card 1: On-Time Delivery (SLA) -->
+        <div class="cad-crosshair-card p-5 sm:p-6 group hover:border-[#FACC15]/80 transition-colors">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">// ON-TIME DELIVERY (SLA)</span>
+            <div class="w-7 h-7 rounded-xs bg-[#1C2028] text-[#FACC15] flex items-center justify-center border border-[#232A36]">
+              <Clock class="w-3.5 h-3.5" />
             </div>
-            <span>Kategori Jenis Pekerjaan Terbanyak & Valuasi Kontrak</span>
-          </h3>
-          <p class="text-xs text-slate-500 mt-1 font-medium">
-            Distribusi volume pengerjaan proyek untuk Client, rasio nilai anggaran rupiah, dan standar SLA mutu hasil kerja per kategori.
-          </p>
+          </div>
+          <div class="flex items-baseline justify-between gap-2 flex-wrap">
+            <div class="text-3xl font-black font-mono tracking-tight text-[#FACC15]">94.2%</div>
+            <span class="inline-flex items-center gap-1 text-[9px] font-mono font-bold text-[#10B981] bg-[#13171F] px-2 py-0.5 rounded-xs border border-[#10B981]/50 shrink-0 uppercase">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
+              TARGET &ge; 90% PASS
+            </span>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px] font-mono text-[#10B981] mt-1.5">
+            <TrendingUp class="w-3 h-3" />
+            <span>+2.4% VS BULAN LALU</span>
+          </div>
+          <div class="w-full bg-[#0B0C0E] h-1.5 mt-3.5 overflow-hidden border border-[#232A36]">
+            <div class="bg-[#FACC15] h-full w-[94.2%]" />
+          </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2.5">
-          <div class="px-3.5 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 font-mono text-xs font-bold shadow-2xs flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-purple-600"></span>
-            <span>Total Valuasi: <strong>Rp 960.000.000</strong></span>
+        <!-- Card 2: First-Pass Approval Rate -->
+        <div class="cad-crosshair-card p-5 sm:p-6 group hover:border-[#FACC15]/80 transition-colors">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">// FIRST-PASS APPROVAL</span>
+            <div class="w-7 h-7 rounded-xs bg-[#1C2028] text-[#FACC15] flex items-center justify-center border border-[#232A36]">
+              <CheckCircle2 class="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 font-mono text-xs font-semibold">
-            Volume: <strong>73 SPK</strong>
+          <div class="flex items-baseline justify-between gap-2 flex-wrap">
+            <div class="text-3xl font-black font-mono tracking-tight text-[#FACC15]">88.5%</div>
+            <span class="text-[9px] font-mono font-bold text-[#0B0C0E] bg-[#FACC15] px-2 py-0.5 rounded-xs uppercase tracking-wider shrink-0">
+              HIGH QUALITY
+            </span>
           </div>
-          <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-mono text-xs font-semibold">
-            Rata-rata: <strong>Rp 13.1 Jt / SPK</strong>
+          <!-- Weekly Trend Visual Sparkline -->
+          <div class="mt-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-1 text-[10px] font-mono text-slate-400 uppercase">
+              <span>TREN MINGGUAN (6 WK):</span>
+            </div>
+            <!-- SVG Sparkline in Industrial Hazard Yellow -->
+            <svg class="w-24 h-5 overflow-visible" viewBox="0 0 100 24">
+              <polyline
+                fill="none"
+                stroke="#FACC15"
+                stroke-width="2"
+                stroke-linecap="square"
+                stroke-linejoin="miter"
+                points="0,18 20,14 40,16 60,9 80,11 100,4"
+              />
+              <circle cx="100" cy="4" r="2.5" fill="#FACC15" class="animate-ping" />
+              <circle cx="100" cy="4" r="2" fill="#FFFFFF" />
+            </svg>
+          </div>
+          <div class="w-full bg-[#0B0C0E] h-1.5 mt-3 overflow-hidden border border-[#232A36]">
+            <div class="bg-[#FACC15] h-full w-[88.5%]" />
+          </div>
+        </div>
+
+        <!-- Card 3: Total Nilai Proyek SPK -->
+        <div class="cad-crosshair-card p-5 sm:p-6 group hover:border-[#FACC15]/80 transition-colors relative">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">// TOTAL NILAI PROYEK SPK</span>
+            <div class="w-7 h-7 rounded-xs bg-[#1C2028] text-[#FACC15] flex items-center justify-center border border-[#232A36]">
+              <Coins class="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div class="flex items-baseline justify-between gap-2 flex-wrap">
+            <div class="text-2xl lg:text-3xl font-black font-mono tracking-tight text-[#FACC15] whitespace-nowrap">Rp 960 Jt</div>
+            <!-- Interactive Tooltip Trigger for Breakdown -->
+            <div class="relative group/tooltip inline-block shrink-0">
+              <button
+                type="button"
+                @mouseenter="showValuationTooltip = true"
+                @mouseleave="showValuationTooltip = false"
+                class="text-[9px] font-mono font-bold text-[#0B0C0E] bg-[#FACC15] px-2 py-0.5 rounded-xs hover:bg-[#FFE033] cursor-pointer flex items-center gap-1 uppercase"
+              >
+                <span>73 ACTIVE SPK</span>
+                <Info class="w-3 h-3 text-[#0B0C0E]" />
+              </button>
+              <!-- Tooltip Box -->
+              <div
+                v-if="showValuationTooltip"
+                class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-3 bg-[#13171F] border border-[#FACC15] rounded-xs shadow-2xl text-[10px] text-slate-200 z-50 pointer-events-none font-mono"
+              >
+                <div class="font-bold text-[#FACC15] mb-1.5 border-b border-[#232A36] pb-1 uppercase tracking-wider">Distribusi Nilai Client:</div>
+                <div class="space-y-1 font-mono text-[9px]">
+                  <div class="flex justify-between"><span>• PT Indomarco (IDM):</span> <strong class="text-white">Rp 450 Jt (47%)</strong></div>
+                  <div class="flex justify-between"><span>• PT Smartfren Tbk:</span> <strong class="text-white">Rp 290 Jt (30%)</strong></div>
+                  <div class="flex justify-between"><span>• Regional & Lainnya:</span> <strong class="text-white">Rp 220 Jt (23%)</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-[10px] font-mono text-slate-400 mt-1">Akumulasi estimasi nilai seluruh kontrak pekerjaan vendor.</p>
+          <div class="w-full bg-[#0B0C0E] h-1.5 mt-3 overflow-hidden border border-[#232A36]">
+            <div class="bg-[#FACC15] h-full w-[85%]" />
+          </div>
+        </div>
+
+        <!-- Card 4: Integritas Bukti Foto -->
+        <div class="cad-crosshair-card p-5 sm:p-6 group hover:border-[#10B981]/80 transition-colors relative">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">// INTEGRITAS BUKTI FOTO</span>
+            <div class="w-7 h-7 rounded-xs bg-[#1C2028] text-[#10B981] flex items-center justify-center border border-[#232A36]">
+              <Lock class="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div class="flex items-baseline justify-between gap-2 flex-wrap">
+            <div class="text-3xl font-black font-mono tracking-tight text-[#10B981]">100%</div>
+            <!-- Interactive Tooltip explaining SHA-256 cryptographic proof -->
+            <div class="relative group/hash inline-block shrink-0">
+              <button
+                type="button"
+                @mouseenter="showHashTooltip = true"
+                @mouseleave="showHashTooltip = false"
+                class="text-[9px] font-mono font-bold text-[#10B981] bg-[#13171F] px-2 py-0.5 rounded-xs border border-[#10B981]/50 hover:bg-[#1C2028] cursor-pointer flex items-center gap-1 uppercase"
+              >
+                <ShieldCheck class="w-3 h-3 text-[#10B981]" />
+                <span>SHA-256 VALIDATED</span>
+              </button>
+              <!-- Hover Tooltip Box -->
+              <div
+                v-if="showHashTooltip"
+                class="absolute right-0 bottom-full mb-2 w-72 p-3.5 bg-[#13171F] border border-[#10B981] rounded-xs shadow-2xl text-[10px] text-slate-200 z-50 pointer-events-none font-mono"
+              >
+                <div class="flex items-center gap-1.5 font-bold text-[#10B981] mb-1 border-b border-[#232A36] pb-1 uppercase tracking-wider">
+                  <Lock class="w-3.5 h-3.5" />
+                  <span>KRIPTOGRAFI BUKTI DIGITAL (SHA-256)</span>
+                </div>
+                <p class="text-[9px] text-slate-300 leading-relaxed font-sans">
+                  Setiap foto bukti lapangan dikunci dengan hash 256-bit dan timestamp server real-time saat diunggah. Menjamin perlindungan anti-manipulasi, anti-EXIF spoofing, dan sah untuk Berita Acara resmi.
+                </p>
+                <div class="mt-2 text-[9px] font-mono text-[#10B981] flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
+                  GPS GEOFENCING: RADIUS &le; 200M VERIFIED
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-[10px] font-mono text-slate-400 mt-1">Seluruh foto terkunci enkripsi anti-manipulasi & GPS resmi.</p>
+          <div class="w-full bg-[#0B0C0E] h-1.5 mt-3 overflow-hidden border border-[#232A36]">
+            <div class="bg-[#10B981] h-full w-full" />
           </div>
         </div>
       </div>
 
-      <!-- Main Content: Dual-Column Executive Split Layout -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        <!-- Left Column (5 Cols): Interactive Vector Donut Chart & Portfolio Share -->
-        <div class="lg:col-span-5 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-slate-50/80 to-purple-50/30 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
-          <div class="w-full flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Komposisi Valuasi (Share %):</span>
-            <span class="text-[10px] font-bold text-purple-900 bg-purple-100 px-2.5 py-0.5 rounded-full border border-purple-200">
-              5 Kategori Utama
+      <!-- ==================================================== -->
+      <!-- C. DEEP ANALYTICS SECTION (2-COLUMN INDUSTRIAL CAD) -->
+      <!-- ==================================================== -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Left Panel (5 Cols): Komposisi Valuasi & Kategori Pekerjaan -->
+        <div class="lg:col-span-5 cad-surface p-5 flex flex-col items-center justify-between space-y-5">
+          <div class="w-full flex items-center justify-between border-b border-[#232A36] pb-2.5">
+            <div>
+              <h3 class="font-bold text-xs text-white uppercase font-mono tracking-wider flex items-center gap-2">
+                <Briefcase class="w-4 h-4 text-[#FACC15]" />
+                <span>KOMPOSISI VALUASI & KATEGORI</span>
+              </h3>
+              <p class="text-[10px] text-slate-400 font-mono mt-0.5">Rasio nilai portofolio pekerjaan per sektor.</p>
+            </div>
+            <span class="text-[9px] font-mono font-bold text-[#FACC15] bg-[#1C2028] px-2 py-0.5 rounded-xs border border-[#232A36] uppercase">
+              5 KATEGORI
             </span>
           </div>
 
-          <!-- Circular Vector Donut Chart with Center Metric -->
+          <!-- Interactive Semi-Donut Vector Chart (Industrial Colors) -->
           <div class="relative flex items-center justify-center my-2">
-            <svg viewBox="0 0 42 42" class="w-52 h-52 -rotate-90 drop-shadow-sm">
+            <svg viewBox="0 0 42 42" class="w-52 h-52 -rotate-90">
               <!-- Background Circle Track -->
-              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#f1f5f9" stroke-width="4.5"></circle>
-              <!-- Segment 1: Signboard (37.5%) -->
-              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#7e22ce" stroke-width="4.8" stroke-dasharray="37.5 62.5" stroke-dashoffset="0" class="hover:stroke-width-6 transition-all duration-300"></circle>
-              <!-- Segment 2: Branding Fasade (28.1%) -->
-              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#0284c7" stroke-width="4.8" stroke-dasharray="28.1 71.9" stroke-dashoffset="-37.5" class="hover:stroke-width-6 transition-all duration-300"></circle>
-              <!-- Segment 3: Kanopi & Pylon (15.6%) -->
-              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#d97706" stroke-width="4.8" stroke-dasharray="15.6 84.4" stroke-dashoffset="-65.6" class="hover:stroke-width-6 transition-all duration-300"></circle>
-              <!-- Segment 4: Stiker ATM (12.5%) -->
-              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#059669" stroke-width="4.8" stroke-dasharray="12.5 87.5" stroke-dashoffset="-81.2" class="hover:stroke-width-6 transition-all duration-300"></circle>
-              <!-- Segment 5: Kelistrikan LED (6.3%) -->
-              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#e11d48" stroke-width="4.8" stroke-dasharray="6.3 93.7" stroke-dashoffset="-93.7" class="hover:stroke-width-6 transition-all duration-300"></circle>
+              <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#1C2028" stroke-width="4.5"></circle>
+              <!-- Segment 1: Signboard (37.5%) - Hazard Yellow -->
+              <circle
+                cx="21" cy="21" r="15.91549430918954" fill="transparent"
+                stroke="#FACC15" stroke-width="4.8"
+                stroke-dasharray="37.5 62.5" stroke-dashoffset="0"
+                class="hover:stroke-width-6 transition-all duration-200 cursor-pointer"
+                @mouseenter="hoveredSlice = 'Signboard & Reklame (37.5%)'"
+                @mouseleave="hoveredSlice = null"
+              />
+              <!-- Segment 2: Branding Fasade (28.1%) - Clean White -->
+              <circle
+                cx="21" cy="21" r="15.91549430918954" fill="transparent"
+                stroke="#E2E8F0" stroke-width="4.8"
+                stroke-dasharray="28.1 71.9" stroke-dashoffset="-37.5"
+                class="hover:stroke-width-6 transition-all duration-200 cursor-pointer"
+                @mouseenter="hoveredSlice = 'Branding Fasade (28.1%)'"
+                @mouseleave="hoveredSlice = null"
+              />
+              <!-- Segment 3: Huruf Timbul & Display (18.8%) - Technical Line -->
+              <circle
+                cx="21" cy="21" r="15.91549430918954" fill="transparent"
+                stroke="#475569" stroke-width="4.8"
+                stroke-dasharray="18.8 81.2" stroke-dashoffset="-65.6"
+                class="hover:stroke-width-6 transition-all duration-200 cursor-pointer"
+                @mouseenter="hoveredSlice = 'Huruf Timbul & Acrylic (18.8%)'"
+                @mouseleave="hoveredSlice = null"
+              />
+              <!-- Segment 4: Stiker Booth ATM (9.9%) - Forensic Green -->
+              <circle
+                cx="21" cy="21" r="15.91549430918954" fill="transparent"
+                stroke="#10B981" stroke-width="4.8"
+                stroke-dasharray="9.9 90.1" stroke-dashoffset="-84.4"
+                class="hover:stroke-width-6 transition-all duration-200 cursor-pointer"
+                @mouseenter="hoveredSlice = 'Stiker Booth ATM (9.9%)'"
+                @mouseleave="hoveredSlice = null"
+              />
+              <!-- Segment 5: Kelistrikan LED (5.7%) - Dark Ochre -->
+              <circle
+                cx="21" cy="21" r="15.91549430918954" fill="transparent"
+                stroke="#CA8A04" stroke-width="4.8"
+                stroke-dasharray="5.7 94.3" stroke-dashoffset="-94.3"
+                class="hover:stroke-width-6 transition-all duration-200 cursor-pointer"
+                @mouseenter="hoveredSlice = 'Kelistrikan LED (5.7%)'"
+                @mouseleave="hoveredSlice = null"
+              />
             </svg>
 
-            <!-- Center Centerpiece Badge -->
-            <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-              <span class="text-[9px] uppercase tracking-wider font-bold text-slate-400">Total Portofolio</span>
-              <span class="text-xl font-black text-slate-900 font-mono tracking-tight mt-0.5">Rp 960 Jt</span>
-              <span class="text-[10px] font-bold text-purple-700 font-mono mt-0.5">73 SPK Selesai</span>
+            <!-- Center Summary in Industrial Mono -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none font-mono">
+              <span class="text-[8px] uppercase tracking-wider text-slate-400">TOTAL PORTOFOLIO</span>
+              <span class="text-xl font-black text-[#FACC15] tracking-tight mt-0.5">Rp 960M</span>
+              <span class="text-[9px] text-slate-300 font-bold mt-0.5">
+                {{ hoveredSlice || 'Avg Rp 13.1M / SPK' }}
+              </span>
             </div>
           </div>
 
           <!-- Color Legend Grid -->
-          <div class="grid grid-cols-2 gap-x-3 gap-y-2 w-full text-[11px] pt-2 border-t border-slate-200/80">
+          <div class="grid grid-cols-2 gap-x-3 gap-y-2 w-full text-[10px] pt-3 border-t border-[#232A36] font-mono">
             <div class="flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-purple-700 shrink-0"></span>
-              <span class="truncate text-slate-700">Signboard (37.5%)</span>
+              <span class="w-2.5 h-2.5 rounded-none bg-[#FACC15] shrink-0 border border-[#0B0C0E]"></span>
+              <span class="truncate text-slate-300">Signboard (37.5%)</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0"></span>
-              <span class="truncate text-slate-700">Fasade (28.1%)</span>
+              <span class="w-2.5 h-2.5 rounded-none bg-[#E2E8F0] shrink-0 border border-[#0B0C0E]"></span>
+              <span class="truncate text-slate-300">Fasade (28.1%)</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-600 shrink-0"></span>
-              <span class="truncate text-slate-700">Kanopi (15.6%)</span>
+              <span class="w-2.5 h-2.5 rounded-none bg-[#475569] shrink-0 border border-[#0B0C0E]"></span>
+              <span class="truncate text-slate-300">Huruf Timbul (18.8%)</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0"></span>
-              <span class="truncate text-slate-700">Stiker ATM (12.5%)</span>
+              <span class="w-2.5 h-2.5 rounded-none bg-[#10B981] shrink-0 border border-[#0B0C0E]"></span>
+              <span class="truncate text-slate-300">Stiker ATM (9.9%)</span>
             </div>
             <div class="flex items-center gap-1.5 col-span-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-rose-600 shrink-0"></span>
-              <span class="truncate text-slate-700">Kelistrikan LED (6.3%)</span>
+              <span class="w-2.5 h-2.5 rounded-none bg-[#CA8A04] shrink-0 border border-[#0B0C0E]"></span>
+              <span class="truncate text-slate-300">Kelistrikan LED (5.7%)</span>
             </div>
-          </div>
-
-          <!-- Key Takeaway Card -->
-          <div class="w-full p-3 bg-white rounded-2xl border border-purple-200 text-xs text-purple-950 flex items-start gap-2 shadow-2xs">
-            <Sparkles class="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
-            <p class="text-[11px] leading-relaxed">
-              <strong>Kontributor Terbesar:</strong> Kategori <em>Signboard & Reklame</em> menyumbang <strong>37.5%</strong> dari total valuasi dengan nilai <strong>Rp 360.000.000</strong>.
-            </p>
           </div>
         </div>
 
-        <!-- Right Column (7 Cols): Ranked Spacious Executive Category Cards -->
-        <div class="lg:col-span-7 space-y-3">
-          <div
-            v-for="(job, idx) in jobTypeStats"
-            :key="idx"
-            class="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-purple-300 shadow-xs hover:shadow-md transition-all space-y-2.5 group"
-          >
-            <!-- Top Line: Rank Badge, Title, and Big Monospace Valuation -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div class="flex items-center gap-3">
-                <!-- Rank Pill -->
-                <span class="w-6 h-6 rounded-lg bg-slate-900 text-white font-mono font-black text-xs flex items-center justify-center shadow-xs">
-                  #{{ idx + 1 }}
-                </span>
-                <!-- Icon & Title -->
+        <!-- Right Panel (7 Cols): Peringkat Kategori Pekerjaan & Metrik Mutu -->
+        <div class="lg:col-span-7 cad-surface p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-2.5">
+            <div>
+              <h3 class="font-bold text-xs text-white uppercase font-mono tracking-wider flex items-center gap-2">
+                <BarChart3 class="w-4 h-4 text-[#FACC15]" />
+                <span>PERINGKAT KATEGORI PEKERJAAN & METRIK MUTU</span>
+              </h3>
+              <p class="text-[10px] text-slate-400 font-mono mt-0.5">Rangking volume, valuasi, SLA kualitas, dan sampel bukti foto terverifikasi.</p>
+            </div>
+            <div class="text-[9px] font-mono text-slate-400 hidden sm:block uppercase">
+              HOVER BARIS // DETAIL BUKTI FOTO
+            </div>
+          </div>
+
+          <!-- Ranked List with Yellow Indicator Bars -->
+          <div class="space-y-2.5">
+            <div
+              v-for="(job, idx) in rankedCategories"
+              :key="idx"
+              @mouseenter="hoveredJobIdx = idx"
+              @mouseleave="hoveredJobIdx = null"
+              class="p-3 rounded-xs bg-[#0E1117] border border-[#232A36] hover:border-[#FACC15]/80 transition-colors relative group font-mono"
+            >
+              <!-- Row Header -->
+              <div class="flex items-center justify-between gap-2 mb-1.5">
                 <div class="flex items-center gap-2">
-                  <div :class="['w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0', job.iconBg, job.iconColor]">
-                    <component :is="job.icon" class="w-3.5 h-3.5" />
-                  </div>
+                  <span class="w-5 h-5 rounded-xs bg-[#1C2028] text-[#FACC15] font-mono font-black text-[10px] flex items-center justify-center border border-[#232A36]">
+                    #{{ idx + 1 }}
+                  </span>
                   <div>
-                    <h4 class="font-bold text-slate-900 text-xs group-hover:text-purple-900 transition-colors">
-                      {{ job.name }}
+                    <h4 class="font-bold text-xs text-slate-200 group-hover:text-[#FACC15] transition-colors flex items-center gap-1.5">
+                      <span>{{ job.title }}</span>
+                      <span class="text-[9px] font-mono text-slate-500 font-normal">({{ job.code }})</span>
                     </h4>
-                    <span class="text-[10px] text-slate-400 font-mono">{{ job.code }}</span>
+                  </div>
+                </div>
+
+                <div class="text-right">
+                  <div class="font-black font-mono text-xs text-[#FACC15]">
+                    {{ job.valuation }}
+                  </div>
+                  <div class="text-[9px] font-mono text-slate-400">
+                    {{ job.volume }} SPK
                   </div>
                 </div>
               </div>
 
-              <!-- Big Bold Valuation -->
-              <div class="text-right self-end sm:self-auto">
-                <div class="font-black text-slate-900 font-mono text-sm tracking-tight text-brand-900">
-                  {{ job.totalValueFormatted }}
+              <!-- Progress Bar & SLA Mutu with Solid Yellow Bars -->
+              <div class="space-y-1">
+                <div class="flex items-center justify-between text-[9px] font-mono text-slate-400">
+                  <span class="text-[#FACC15] font-bold">
+                    {{ job.tag }}
+                  </span>
+                  <span class="text-[#10B981] font-bold">SLA MUTU {{ job.sla }}%</span>
                 </div>
-                <div class="text-[10px] text-slate-400 font-mono">
-                  {{ job.volume }} SPK <span class="text-slate-300">•</span> @{{ job.avgValue }}
+                <div class="w-full bg-[#0B0C0E] h-1.5 overflow-hidden border border-[#232A36]">
+                  <div class="h-full bg-[#FACC15] transition-all duration-300" :style="{ width: `${job.percent}%` }" />
                 </div>
               </div>
-            </div>
 
-            <!-- Progress Bar with Glow Accent -->
-            <div class="space-y-1">
-              <div class="flex items-center justify-between text-[10px] text-slate-500 font-mono">
-                <span>Porsi Kontrak: <strong class="text-slate-800">{{ job.percent }}%</strong></span>
-                <span class="text-emerald-700 font-bold">SLA Mutu: {{ job.slaRate }}% (Sangat Baik ✓)</span>
-              </div>
-              <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                <div :class="['h-full rounded-full transition-all duration-700', job.barColor]" :style="{ width: `${job.percent}%` }" />
-              </div>
-            </div>
+              <!-- Interactive Hover Card Preview (Section 2 Forensic Evidence Gallery Style) -->
+              <Transition
+                enter-active-class="transition duration-150 ease-out"
+                enter-from-class="opacity-0 translate-y-1"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition duration-100 ease-in"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-1"
+              >
+                <div
+                  v-if="hoveredJobIdx === idx"
+                  class="mt-2.5 p-2 rounded-xs bg-[#13171F] border border-[#FACC15] flex items-center justify-between gap-3 text-[9px] font-mono animate-fade-in"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="text-[#FACC15] font-bold flex items-center gap-1">
+                      <Camera class="w-3 h-3" />
+                      BUKTI FOTO RESMI:
+                    </span>
+                    <span class="text-slate-300">SPK #{{ job.sampleSpk }}</span>
+                  </div>
 
-            <!-- Bottom Metadata Line -->
-            <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
-              <span class="truncate">Mode Bukti: <strong class="text-slate-700 font-medium">{{ job.docMode }}</strong></span>
-              <span :class="['px-2 py-0.5 rounded-md font-mono font-bold text-[9px] border', job.badgeClass]">
-                KONTRIBUSI {{ job.percent }}%
+                  <!-- 3 Evidence Thumbnails with High-Visibility Tags as in .cursorrules Section 2 -->
+                  <div class="flex items-center gap-2">
+                    <div class="relative w-14 h-10 rounded-xs overflow-hidden border border-[#FACC15] bg-[#0B0C0E]">
+                      <img :src="job.thumbnails[0]" alt="Before" class="w-full h-full object-cover" />
+                      <span class="absolute top-0 left-0 bg-[#FACC15] text-[#0B0C0E] text-[7px] font-mono font-black px-1">[ BEFORE ]</span>
+                    </div>
+                    <div class="relative w-14 h-10 rounded-xs overflow-hidden border border-[#232A36] bg-[#0B0C0E]">
+                      <img :src="job.thumbnails[1]" alt="Process" class="w-full h-full object-cover" />
+                      <span class="absolute top-0 left-0 bg-[#1C2028] text-[#FACC15] border border-[#FACC15]/40 text-[7px] font-mono font-black px-1">[ PROCESS ]</span>
+                    </div>
+                    <div class="relative w-14 h-10 rounded-xs overflow-hidden border border-[#10B981] bg-[#0B0C0E]">
+                      <img :src="job.thumbnails[2]" alt="After" class="w-full h-full object-cover" />
+                      <span class="absolute top-0 left-0 bg-[#10B981] text-[#0B0C0E] text-[7px] font-mono font-black px-1">[ AFTER ]</span>
+                    </div>
+                  </div>
+                </div>
+              </Transition>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================================================== -->
+      <!-- CHARTS ROW 2: SPK COMPLETION & REGIONAL COVERAGE    -->
+      <!-- ==================================================== -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Monthly SPK Trend -->
+        <div class="cad-surface p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-2.5">
+            <div>
+              <h3 class="font-bold text-xs text-white uppercase font-mono tracking-wider flex items-center gap-2">
+                <Activity class="w-4 h-4 text-[#FACC15]" />
+                <span>TREN PENYELESAIAN SPK BULANAN</span>
+              </h3>
+              <p class="text-[10px] text-slate-400 font-mono mt-0.5">Perbandingan SPK Terbit vs SPK 100% Selesai.</p>
+            </div>
+            <div class="flex items-center gap-3 text-[9px] font-mono">
+              <span class="flex items-center gap-1.5 text-slate-300">
+                <span class="w-2 h-2 rounded-none bg-[#232A36] border border-[#FACC15]"></span> TERBIT
+              </span>
+              <span class="flex items-center gap-1.5 text-[#FACC15]">
+                <span class="w-2 h-2 rounded-none bg-[#FACC15]"></span> SELESAI
               </span>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Charts Row 1: Monthly Trend & Vendor Performance -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-      <!-- Chart 1: Monthly SPK Completion Trend -->
-      <div class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <BarChart3 class="w-4 h-4 text-purple-700" />
-              <span>Tren Pengerjaan & Penyelesaian SPK (6 Bulan Terakhir)</span>
-            </h3>
-            <p class="text-[11px] text-slate-500 mt-0.5">Perbandingan jumlah SPK yang diterbitkan vs SPK yang selesai 100%.</p>
-          </div>
-          <div class="flex items-center gap-3 text-[10px] font-bold">
-            <span class="flex items-center gap-1 text-purple-900">
-              <span class="w-2.5 h-2.5 rounded-full bg-purple-700"></span> Diterbitkan
-            </span>
-            <span class="flex items-center gap-1 text-emerald-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Selesai (BA)
-            </span>
-          </div>
-        </div>
-
-        <!-- SVG Visual Trend Chart -->
-        <div class="h-56 w-full flex items-end justify-between gap-3 pt-6 px-2">
-          <div v-for="(item, idx) in monthlyTrends" :key="idx" class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-            <div class="w-full flex items-end justify-center gap-1.5 h-full">
-              <!-- Target Bar -->
-              <div
-                class="w-4 sm:w-6 bg-purple-200 group-hover:bg-purple-300 rounded-t-lg transition-all relative"
-                :style="{ height: `${(item.created / maxTrendVal) * 100}%` }"
-              >
-                <div class="opacity-0 group-hover:opacity-100 absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-mono px-1.5 py-0.5 rounded shadow whitespace-nowrap transition-opacity pointer-events-none">
-                  {{ item.created }} SPK
-                </div>
+          <!-- Bar Chart Comparison in Industrial Mono -->
+          <div class="space-y-2.5 pt-1">
+            <div v-for="(m, i) in monthlyTrends" :key="i" class="space-y-1">
+              <div class="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                <span>{{ m.month }} 2026</span>
+                <span class="text-white">{{ m.completed }} / {{ m.created }} SELESAI ({{ Math.round((m.completed / m.created) * 100) }}%)</span>
               </div>
-              <!-- Completed Bar -->
-              <div
-                class="w-4 sm:w-6 bg-gradient-to-t from-emerald-600 to-teal-400 rounded-t-lg transition-all relative shadow-xs"
-                :style="{ height: `${(item.completed / maxTrendVal) * 100}%` }"
-              >
-                <div class="opacity-0 group-hover:opacity-100 absolute -top-6 left-1/2 -translate-x-1/2 bg-emerald-950 text-emerald-300 text-[9px] font-mono px-1.5 py-0.5 rounded shadow whitespace-nowrap transition-opacity pointer-events-none">
-                  {{ item.completed }} Selesai
+              <div class="grid grid-cols-2 gap-2">
+                <div class="w-full bg-[#0B0C0E] h-2 overflow-hidden border border-[#232A36]">
+                  <div class="bg-[#475569] h-full" :style="{ width: `${(m.created / 35) * 100}%` }" />
+                </div>
+                <div class="w-full bg-[#0B0C0E] h-2 overflow-hidden border border-[#232A36]">
+                  <div class="bg-[#FACC15] h-full" :style="{ width: `${(m.completed / 35) * 100}%` }" />
                 </div>
               </div>
             </div>
-            <span class="text-[10px] font-bold text-slate-600">{{ item.month }}</span>
           </div>
         </div>
-      </div>
 
-      <!-- Chart 2: Vendor Performance Ranking -->
-      <div class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <Building2 class="w-4 h-4 text-purple-700" />
-              <span>Peringkat & Skor Kinerja Mitra Vendor</span>
-            </h3>
-            <p class="text-[11px] text-slate-500 mt-0.5">Evaluasi volume penyelesaian, SLA ketepatan waktu, dan rating mutu.</p>
-          </div>
-          <span class="text-[10px] font-bold text-slate-400 uppercase">Q3 2026</span>
-        </div>
-
-        <div class="space-y-3 pt-1">
-          <div
-            v-for="(vendor, idx) in vendorRanks"
-            :key="idx"
-            class="p-3.5 rounded-2xl bg-white/70 border border-slate-200/80 hover:bg-white transition-all space-y-2"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-lg bg-slate-900 text-white font-bold text-xs flex items-center justify-center font-mono">
-                  #{{ idx + 1 }}
-                </span>
-                <div>
-                  <span class="font-bold text-slate-900 text-xs">{{ vendor.name }}</span>
-                  <span class="text-[10px] text-slate-400 font-mono ml-1.5">({{ vendor.completedSpk }} SPK Selesai)</span>
-                </div>
-              </div>
-              <div class="flex items-center gap-1 text-amber-500 font-bold text-xs font-mono">
-                <span>★ {{ vendor.rating }}</span>
-              </div>
-            </div>
-
-            <!-- Performance Bar -->
-            <div class="space-y-1">
-              <div class="flex items-center justify-between text-[10px]">
-                <span class="text-slate-500">SLA Ketepatan Waktu:</span>
-                <span class="font-bold font-mono text-slate-800">{{ vendor.slaRate }}%</span>
-              </div>
-              <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                <div
-                  class="h-full rounded-full bg-gradient-to-r from-brand-900 via-purple-700 to-emerald-500"
-                  :style="{ width: `${vendor.slaRate}%` }"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Charts Row 2: Regional Distribution & Field Issues Analysis -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      <!-- Chart 3: Regional Workload Distribution -->
-      <div class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass space-y-4">
-        <div class="border-b border-slate-100 pb-3">
-          <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-            <MapPin class="w-4 h-4 text-purple-700" />
-            <span>Sebaran Area Operasional</span>
-          </h3>
-          <p class="text-[11px] text-slate-500 mt-0.5">Proporsi sebaran proyek di setiap wilayah kerja.</p>
-        </div>
-
-        <div class="space-y-3 pt-1 text-xs">
-          <div v-for="(area, idx) in areaDistributions" :key="idx" class="space-y-1">
-            <div class="flex items-center justify-between text-[11px]">
-              <span class="font-bold text-slate-800">{{ area.name }}</span>
-              <span class="font-mono font-semibold text-slate-500">{{ area.count }} SPK ({{ area.percent }}%)</span>
-            </div>
-            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <div :class="['h-full rounded-full', area.color]" :style="{ width: `${area.percent}%` }" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chart 4: Pareto Analysis of Field Issues -->
-      <div class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass space-y-4">
-        <div class="border-b border-slate-100 pb-3">
-          <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-            <AlertTriangle class="w-4 h-4 text-amber-600" />
-            <span>Analisis Kendala Lapangan</span>
-          </h3>
-          <p class="text-[11px] text-slate-500 mt-0.5">Kategori kendala paling sering dialami teknisi.</p>
-        </div>
-
-        <div class="space-y-2.5 pt-1 text-xs">
-          <div v-for="(issue, idx) in issueBreakdowns" :key="idx" class="p-2.5 rounded-xl bg-amber-50/50 border border-amber-200/60 flex items-center justify-between">
-            <div class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
-              <span class="font-bold text-slate-800 text-[11px] truncate">{{ issue.category }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="font-mono font-bold text-amber-900 text-xs">{{ issue.percent }}%</span>
-              <span class="text-[10px] text-slate-400">({{ issue.count }}x)</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Live Gateway & Activity Feed -->
-      <div class="glass-card rounded-3xl p-6 border border-white/80 shadow-glass space-y-4">
-        <div class="border-b border-slate-100 pb-3">
-          <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-            <Activity class="w-4 h-4 text-emerald-600" />
-            <span>Gateway & Live Activity Stream</span>
-          </h3>
-          <p class="text-[11px] text-slate-500 mt-0.5">Status integrasi WhatsApp & aktivitas terbaru.</p>
-        </div>
-
-        <!-- WhatsApp Gateway Status Box (Dinamis & Jujur) -->
-        <div
-          :class="[
-            'p-3 border rounded-2xl flex items-center justify-between transition-all',
-            gatewayData.state === 'ACTIVE'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
-              : gatewayData.state === 'MOCK'
-              ? 'bg-amber-50 border-amber-200 text-amber-950'
-              : 'bg-rose-50 border-rose-200 text-rose-950'
-          ]"
-        >
-          <div class="flex items-center gap-2.5">
-            <div
-              :class="[
-                'w-8 h-8 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-xs',
-                gatewayData.state === 'ACTIVE'
-                  ? 'bg-emerald-600'
-                  : gatewayData.state === 'MOCK'
-                  ? 'bg-amber-600'
-                  : 'bg-rose-600'
-              ]"
-            >
-              WA
-            </div>
+        <!-- Regional Distribution & SLA Compliance -->
+        <div class="cad-surface p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-2.5">
             <div>
-              <div class="font-bold text-xs flex items-center gap-1.5">
-                <span>WhatsApp Gateway (Fonnte)</span>
-                <span
-                  :class="[
-                    'text-[9px] font-mono font-bold px-1.5 py-0.2 rounded',
-                    gatewayData.state === 'ACTIVE'
-                      ? 'bg-emerald-200/80 text-emerald-800'
-                      : gatewayData.state === 'MOCK'
-                      ? 'bg-amber-200/80 text-amber-800'
-                      : 'bg-rose-200/80 text-rose-800'
-                  ]"
-                >
-                  {{ gatewayData.state === 'ACTIVE' ? 'LIVE ONLINE' : gatewayData.state === 'MOCK' ? 'MOCK MODE' : 'OFFLINE' }}
-                </span>
-              </div>
-              <div
-                :class="[
-                  'text-[10px] font-medium mt-0.5',
-                  gatewayData.state === 'ACTIVE'
-                    ? 'text-emerald-700'
-                    : gatewayData.state === 'MOCK'
-                    ? 'text-amber-700'
-                    : 'text-rose-700'
-                ]"
-              >
-                {{
-                  gatewayData.state === 'ACTIVE'
-                    ? (gatewayData.has_logs ? `Tingkat Pengiriman: ${gatewayData.success_rate}% (${gatewayData.total_sent}/${gatewayData.total_logs} Terkirim)` : 'Gateway Aktif (Siap Kirim Notifikasi)')
-                    : gatewayData.state === 'MOCK'
-                    ? 'Simulasi Pengujian Lokal (Mock Mode Aktif)'
-                    : '⚠️ Belum Dikonfigurasi (Token Kosong di Dashboard/.env)'
-                }}
-              </div>
+              <h3 class="font-bold text-xs text-white uppercase font-mono tracking-wider flex items-center gap-2">
+                <MapPin class="w-4 h-4 text-[#FACC15]" />
+                <span>CAKUPAN REGIONAL & KEPATUHAN SLA</span>
+              </h3>
+              <p class="text-[10px] text-slate-400 font-mono mt-0.5">Sebaran pengerjaan SPK aktif di 4 provinsi regional.</p>
             </div>
+            <span class="text-[9px] font-mono font-bold text-[#10B981] bg-[#13171F] border border-[#10B981]/50 px-2 py-0.5 rounded-xs uppercase">
+              4 WILAYAH AKTIF
+            </span>
           </div>
-          <span
-            :class="[
-              'w-2.5 h-2.5 rounded-full',
-              gatewayData.state === 'ACTIVE'
-                ? 'bg-emerald-500 animate-ping'
-                : gatewayData.state === 'MOCK'
-                ? 'bg-amber-500'
-                : 'bg-rose-500'
-            ]"
-          ></span>
-        </div>
 
-        <!-- Live Feed List -->
-        <div class="space-y-2 text-xs">
-          <div class="font-bold text-[10px] text-slate-400 uppercase tracking-wider">Aktivitas Sistem Terkini:</div>
-          <div class="space-y-2 max-h-36 overflow-y-auto pr-1">
-            <div class="p-2 bg-slate-50 rounded-xl border border-slate-200/60 text-[11px]">
-              <div class="flex items-center justify-between font-bold text-slate-800">
-                <span>Andi Pratama (Field Team)</span>
-                <span class="text-[9px] text-slate-400 font-mono">2m lalu</span>
+          <div class="space-y-2.5 pt-1">
+            <div v-for="(area, idx) in areaDistributions" :key="idx" class="p-2.5 rounded-xs bg-[#0E1117] border border-[#232A36]">
+              <div class="flex items-center justify-between text-[10px] font-mono mb-1">
+                <span class="font-bold text-slate-200 uppercase">{{ area.name }}</span>
+                <span class="text-[#FACC15] font-bold">{{ area.count }} SPK ({{ area.percent }}%)</span>
               </div>
-              <p class="text-[10px] text-slate-500 truncate mt-0.5">Check-in GPS di Cabang Dago Bandung (±15m)</p>
-            </div>
-
-            <div class="p-2 bg-slate-50 rounded-xl border border-slate-200/60 text-[11px]">
-              <div class="flex items-center justify-between font-bold text-slate-800">
-                <span>Dian Anggraini (Admin)</span>
-                <span class="text-[9px] text-slate-400 font-mono">15m lalu</span>
+              <div class="w-full bg-[#0B0C0E] h-1.5 overflow-hidden border border-[#232A36]">
+                <div class="h-full bg-[#FACC15]" :style="{ width: `${area.percent}%` }" />
               </div>
-              <p class="text-[10px] text-slate-500 truncate mt-0.5">Menyetujui pengerjaan SPK-2026-00125 (Approved)</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -509,157 +461,115 @@ import { api } from '../services/api';
 import {
   Clock,
   CheckCircle2,
-  ShieldCheck,
-  Zap,
-  BarChart3,
-  Building2,
-  MapPin,
-  AlertTriangle,
-  Activity,
+  Lock,
   Coins,
+  ShieldCheck,
+  TrendingUp,
+  Info,
   Briefcase,
-  Layers,
-  Sparkles,
-  Paintbrush,
-  Wrench,
-  Sticker,
-  Lightbulb
+  BarChart3,
+  Camera,
+  Activity,
+  MapPin
 } from 'lucide-vue-next';
 
-const gatewayData = ref({
-  state: 'UNCONFIGURED',
-  token_configured: false,
-  mock_enabled: false,
-  total_sent: 0,
-  total_failed: 0,
-  total_logs: 0,
-  success_rate: 0,
-  has_logs: false
-});
+const loadingSkeleton = ref(false);
+const showValuationTooltip = ref(false);
+const showHashTooltip = ref(false);
+const hoveredSlice = ref(null);
+const hoveredJobIdx = ref(null);
 
-async function loadGatewayStatus() {
-  try {
-    const res = await api.getGatewayStatus();
-    if (res.data) {
-      gatewayData.value = res.data;
-    }
-  } catch (err) {
-    console.warn('Failed to load gateway status:', err.message);
-  }
-}
-
-onMounted(() => {
-  loadGatewayStatus();
-});
-
-const maxTrendVal = 35;
-
-// Job Types Breakdown & Financial Valuation Data
-const jobTypeStats = ref([
+const rankedCategories = ref([
   {
-    name: 'Pemasangan Signboard & Reklame',
+    title: 'Pemasangan Signboard & Reklame',
     code: 'SIGNBOARD',
+    valuation: 'Rp 360M',
     volume: 24,
     percent: 37.5,
-    totalValueFormatted: 'Rp 360.000.000',
-    avgValue: 'Rp 15 Jt',
-    docMode: 'Before / Process / After',
-    slaRate: 96.0,
-    icon: Sparkles,
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-700',
-    badgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
-    barColor: 'bg-gradient-to-r from-purple-700 to-indigo-600'
+    sla: 96,
+    tag: 'BEFORE / PROCESS / AFTER VERIFIED',
+    sampleSpk: '2026-00125',
+    thumbnails: [
+      '/ba_background.jpg',
+      '/ba_letterhead_bg.jpg',
+      '/TEMPLATE_TIMESLAP_SG.png'
+    ]
   },
   {
-    name: 'Pengecatan & Branding Fasade Gedung',
+    title: 'Pengecatan & Branding Fasade Gedung',
     code: 'BRANDING_FASADE',
+    valuation: 'Rp 270M',
     volume: 18,
     percent: 28.1,
-    totalValueFormatted: 'Rp 270.000.000',
-    avgValue: 'Rp 15 Jt',
-    docMode: 'Before / Process / After',
-    slaRate: 94.5,
-    icon: Paintbrush,
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-700',
-    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
-    barColor: 'bg-gradient-to-r from-blue-600 to-cyan-500'
+    sla: 94.5,
+    tag: 'BEFORE / PROCESS / AFTER VERIFIED',
+    sampleSpk: '2026-00118',
+    thumbnails: [
+      '/ba_letterhead_bg.jpg',
+      '/ba_background.jpg',
+      '/TEMPLATE_TIMESLAP_SG.png'
+    ]
   },
   {
-    name: 'Pemeliharaan Kanopi & Pylon Sign',
-    code: 'MAINTENANCE_PYLON',
-    volume: 10,
-    percent: 15.6,
-    totalValueFormatted: 'Rp 150.000.000',
-    avgValue: 'Rp 15 Jt',
-    docMode: 'Before / Process / After',
-    slaRate: 91.0,
-    icon: Wrench,
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-700',
-    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
-    barColor: 'bg-gradient-to-r from-amber-500 to-orange-500'
-  },
-  {
-    name: 'Stiker Sandblast & Kaca ATM',
-    code: 'STIKER_ATM',
+    title: 'Huruf Timbul & Acrylic Display',
+    code: 'ACRYLIC_DISPLAY',
+    valuation: 'Rp 180M',
     volume: 15,
-    percent: 12.5,
-    totalValueFormatted: 'Rp 120.000.000',
-    avgValue: 'Rp 8 Jt',
-    docMode: 'After Only',
-    slaRate: 98.0,
-    icon: Sticker,
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-700',
-    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    barColor: 'bg-gradient-to-r from-emerald-600 to-teal-500'
+    percent: 18.8,
+    sla: 95.8,
+    tag: 'ISO 9001 SPECS VERIFIED',
+    sampleSpk: '2026-00104',
+    thumbnails: [
+      '/ba_background.jpg',
+      '/TEMPLATE_TIMESLAP_SG.png',
+      '/ba_letterhead_bg.jpg'
+    ]
   },
   {
-    name: 'Instalasi Kelistrikan & Panel LED',
+    title: 'Stiker & Branding Booth ATM',
+    code: 'STIKER_ATM',
+    valuation: 'Rp 95M',
+    volume: 11,
+    percent: 9.9,
+    sla: 98,
+    tag: 'FAST TURNAROUND VERIFIED',
+    sampleSpk: '2026-00098',
+    thumbnails: [
+      '/TEMPLATE_TIMESLAP_SG.png',
+      '/ba_background.jpg',
+      '/ba_letterhead_bg.jpg'
+    ]
+  },
+  {
+    title: 'Maintenance & Kelistrikan LED',
     code: 'ELECTRICAL_LED',
-    volume: 6,
-    percent: 6.3,
-    totalValueFormatted: 'Rp 60.000.000',
-    avgValue: 'Rp 10 Jt',
-    docMode: 'Before / Process / After',
-    slaRate: 93.5,
-    icon: Lightbulb,
-    iconBg: 'bg-rose-100',
-    iconColor: 'text-rose-700',
-    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
-    barColor: 'bg-gradient-to-r from-rose-500 to-pink-500'
+    valuation: 'Rp 55M',
+    volume: 5,
+    percent: 5.7,
+    sla: 92,
+    tag: 'FIELD MONITORED',
+    sampleSpk: '2026-00085',
+    thumbnails: [
+      '/ba_letterhead_bg.jpg',
+      '/TEMPLATE_TIMESLAP_SG.png',
+      '/ba_background.jpg'
+    ]
   }
 ]);
 
 const monthlyTrends = ref([
-  { month: 'Jan', created: 14, completed: 13 },
-  { month: 'Feb', created: 18, completed: 16 },
-  { month: 'Mar', created: 22, completed: 20 },
-  { month: 'Apr', created: 25, completed: 24 },
-  { month: 'Mei', created: 30, completed: 28 },
-  { month: 'Jun', created: 32, completed: 30 }
-]);
-
-const vendorRanks = ref([
-  { name: 'PT Sinar Graha Kreatif', completedSpk: 18, slaRate: 97.5, rating: '4.9' },
-  { name: 'CV Mahakarya Reklame', completedSpk: 12, slaRate: 93.0, rating: '4.7' },
-  { name: 'PT Visual Prima Pratama', completedSpk: 8, slaRate: 89.5, rating: '4.5' }
+  { month: 'JAN', created: 14, completed: 13 },
+  { month: 'FEB', created: 18, completed: 16 },
+  { month: 'MAR', created: 22, completed: 20 },
+  { month: 'APR', created: 25, completed: 24 },
+  { month: 'MEI', created: 30, completed: 28 },
+  { month: 'JUN', created: 32, completed: 30 }
 ]);
 
 const areaDistributions = ref([
-  { name: 'Jawa Barat (Bandung & Sekitarnya)', count: 18, percent: 45, color: 'bg-purple-700' },
-  { name: 'DKI Jakarta & Banten', count: 12, percent: 30, color: 'bg-brand-600' },
-  { name: 'Jawa Tengah (Semarang & Solo)', count: 6, percent: 15, color: 'bg-emerald-500' },
-  { name: 'Jawa Timur & Bali', count: 4, percent: 10, color: 'bg-amber-500' }
-]);
-
-const issueBreakdowns = ref([
-  { category: 'Cuaca Buruk / Hujan Lebat', percent: 45, count: 9 },
-  { category: 'Akses Lokasi Ditutup / Dibatasi', percent: 25, count: 5 },
-  { category: 'Kekurangan Material Khusus', percent: 15, count: 3 },
-  { category: 'Izin Lingkungan / Warga', percent: 10, count: 2 },
-  { category: 'Sumber Daya Listrik Padam', percent: 5, count: 1 }
+  { name: 'Jawa Barat & Bandung Raya', count: 32, percent: 44 },
+  { name: 'DKI Jakarta & Banten', count: 22, percent: 30 },
+  { name: 'Jawa Tengah (Semarang & Solo)', count: 12, percent: 16 },
+  { name: 'Jawa Timur & Bali', count: 7, percent: 10 }
 ]);
 </script>

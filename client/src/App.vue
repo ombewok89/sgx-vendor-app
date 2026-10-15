@@ -27,16 +27,18 @@
     @login-success="handleLoginSuccess"
   />
 
-  <!-- 3. Authenticated: Full Application Stage -->
-  <div v-else class="min-h-screen bg-mesh-header flex flex-col selection:bg-brand-500 selection:text-white">
+  <!-- 3. Authenticated: Full Application Stage (Industrial CAD Canvas) -->
+  <div v-else class="min-h-screen bg-industrial-grid flex flex-col selection:bg-[#FACC15] selection:text-[#0B0C0E] font-sans">
     <!-- Navbar Header with Glassmorphism -->
     <Navbar
       @menu-toggle="sidebarOpen = !sidebarOpen"
       @select-spk="handleSelectWorkOrder"
       @open-ba="handleOpenBa"
+      @navigate-tab="activeTab = $event"
+      @open-create-spk="showCreateModal = true"
     />
 
-    <div class="flex-1 flex">
+    <div class="flex-1 flex w-full">
       <!-- Sidebar Navigation -->
       <Sidebar
         v-model:activeTab="activeTab"
@@ -44,10 +46,12 @@
         @close="sidebarOpen = false"
       />
 
-      <!-- Main Content Stage with Smooth Transitions -->
+      <!-- Main Content Stage with Smooth Transitions & Flexible Breathing Space -->
       <main
-        class="flex-1 lg:pl-64 p-3.5 sm:p-6 md:p-8 max-w-[1600px] w-full mx-auto animate-fade-in"
-        :class="{ 'pb-24 lg:pb-8': auth.state.user?.role === 'FIELD_TEAM' || auth.state.user?.role === 'VENDOR' }"
+        class="flex-1 min-w-0 w-full transition-all duration-300 ease-in-out p-4 sm:p-6 lg:p-8 max-w-[1720px] animate-fade-in"
+        :class="[
+          { 'pb-24 lg:pb-8': auth.state.user?.role === 'FIELD_TEAM' || auth.state.user?.role === 'VENDOR' }
+        ]"
       >
         <component
           :is="currentView"
@@ -176,7 +180,7 @@ import SuperDashboard from './pages/superuser/SuperDashboard.vue';
 
 const auth = useAuth();
 const activeTab = ref('admin_dashboard');
-const sidebarOpen = ref(false);
+const sidebarOpen = ref(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
 const publicTrackToken = ref('');
 const isPublicTimestampCamera = ref(false);
 

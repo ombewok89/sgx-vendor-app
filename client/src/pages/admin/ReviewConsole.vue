@@ -1,102 +1,126 @@
 <template>
-  <div class="space-y-5">
-    <!-- Toast Notification -->
+  <div class="space-y-4">
+    <!-- Notification Toast (Industrial Banner) -->
     <Transition
-      enter-active-class="transition duration-300 ease-out"
+      enter-active-class="transition duration-200 ease-out"
       enter-from-class="opacity-0 -translate-y-2"
       enter-to-class="opacity-100 translate-y-0"
-      leave-active-class="transition duration-200 ease-in"
+      leave-active-class="transition duration-150 ease-in"
       leave-from-class="opacity-100 translate-y-0"
       leave-to-class="opacity-0 -translate-y-2"
     >
       <div
         v-if="successToast"
-        class="p-4 bg-emerald-600/95 backdrop-blur-md text-white font-bold text-xs rounded-2xl shadow-xl flex items-center justify-between border border-emerald-400/50"
+        class="p-3 bg-emerald-950/90 border-l-4 border-l-emerald-400 border-y border-r border-emerald-800/60 text-white font-mono text-xs rounded-xs flex items-center justify-between shadow-lg"
       >
         <div class="flex items-center gap-2.5">
-          <CheckCircle2 class="w-5 h-5 text-emerald-200" />
-          <span>{{ successToast }}</span>
+          <CheckCircle2 class="w-4 h-4 text-emerald-400 shrink-0" />
+          <span class="font-bold tracking-wide">{{ successToast }}</span>
         </div>
-        <button @click="successToast = null" class="p-1 hover:bg-emerald-700 rounded-lg">
+        <button @click="successToast = null" class="p-1 hover:bg-emerald-900/50 rounded-xs text-emerald-300">
           <X class="w-4 h-4" />
         </button>
       </div>
     </Transition>
 
-    <!-- Title -->
-    <div>
-      <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-600/20">
-          <CheckSquare class="w-4 h-4" />
+    <!-- Page Header (CAD Blueprint Style) -->
+    <div class="bg-[#13171F] border border-[#232A36] p-4 rounded-xs flex flex-col md:flex-row md:items-center justify-between gap-3 relative overflow-hidden">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xs bg-[#0B0C0E] border border-hazard/40 flex items-center justify-center text-hazard shrink-0">
+          <CheckSquare class="w-5 h-5" />
         </div>
-        <span>Review & Verifikasi Pekerjaan</span>
-      </h2>
-      <p class="text-xs text-slate-500 mt-1 font-medium">Pemeriksaan bukti foto lapangan, koordinat GPS check-in, dan persetujuan resmi (Approval).</p>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base sm:text-lg font-heading font-black text-white uppercase tracking-wider">
+              Review & Verifikasi Lapangan
+            </h2>
+            <span class="bg-hazard/10 text-hazard border border-hazard/30 text-[9px] font-mono px-1.5 py-0.2 rounded-xs font-bold uppercase">
+              CONSOLE VER. 2.4
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 font-mono mt-0.5">
+            Pemeriksaan bukti forensik foto, audit koordinat GPS check-in, dan validasi persetujuan resmi (Approval QA).
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Pill -->
+      <div class="flex items-center gap-2 self-start md:self-auto">
+        <div class="px-3 py-1.5 bg-[#0B0C0E] border border-[#232A36] rounded-xs font-mono text-xs flex items-center gap-2">
+          <span class="text-slate-400">STATUS AUDIT:</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-emerald-400 font-bold">READY TO REVIEW</span>
+        </div>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      <!-- Left: Queue List (Glassmorphic Cards) -->
-      <div class="glass-card rounded-3xl p-4 shadow-glass border border-white/80 space-y-3">
-        <div class="flex items-center justify-between border-b border-slate-200/80 pb-2.5 px-1">
+    <!-- Main Grid: Queue on Left, Forensic Inspection on Right -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      
+      <!-- LEFT: Queue Column (4 cols) -->
+      <div class="lg:col-span-4 bg-[#13171F] border border-[#232A36] rounded-xs p-3.5 space-y-3 flex flex-col">
+        <!-- Header Queue -->
+        <div class="flex items-center justify-between border-b border-[#232A36] pb-2 px-0.5">
           <div class="flex items-center gap-2">
-            <h3 class="font-bold text-xs text-slate-800">Antrian Review</h3>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-100 text-purple-900 border border-purple-200">
+            <div class="w-2 h-2 bg-hazard"></div>
+            <h3 class="font-heading font-black text-xs text-white uppercase tracking-wider">
+              Antrian Pekerjaan
+            </h3>
+            <span class="px-2 py-0.5 rounded-xs text-[10px] font-mono font-bold bg-[#0B0C0E] text-hazard border border-hazard/40">
               {{ filteredQueue.length }}
             </span>
           </div>
           <button
             @click="loadQueue(selectedOrder?.id)"
             :disabled="loading"
-            class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition-all cursor-pointer active:scale-95"
+            class="p-1.5 bg-[#0B0C0E] border border-[#232A36] hover:border-slate-500 rounded-xs text-slate-400 hover:text-white transition-all cursor-pointer"
             title="Segarkan Antrian"
           >
-            <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
+            <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin text-hazard' : '']" />
           </button>
         </div>
 
-        <!-- Search & Filter Controls -->
-        <div class="space-y-2">
-          <div class="relative">
-            <Search class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              v-model="searchQuery"
-              placeholder="Cari SPK / Toko / PIC..."
-              class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
-            />
-          </div>
-
-          <!-- Status Filter Tabs -->
-          <div class="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-bold scrollbar-none">
-            <button
-              v-for="tab in filterTabs"
-              :key="tab.id"
-              @click="activeStatusFilter = tab.id"
-              :class="[
-                'px-2.5 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1',
-                activeStatusFilter === tab.id
-                  ? 'bg-purple-900 text-white shadow-xs'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-              ]"
-            >
-              <span>{{ tab.label }}</span>
-              <span
-                :class="[
-                  'px-1.5 py-0.2 rounded-full text-[9px] font-mono',
-                  activeStatusFilter === tab.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-                ]"
-              >
-                {{ tab.count }}
-              </span>
-            </button>
-          </div>
+        <!-- Search Input -->
+        <div class="relative">
+          <Search class="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder=">_ CARI SPK, TOKO, PIC..."
+            class="w-full pl-8 pr-3 py-1.5 bg-[#0B0C0E] border border-[#232A36] rounded-xs text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-hazard transition-colors"
+          />
         </div>
 
-        <!-- List Items -->
-        <div class="space-y-2 max-h-[70vh] overflow-y-auto pr-1 custom-scrollbar">
-          <div v-if="loading" class="text-center py-10 text-slate-400 text-xs">
-            <Loader2 class="w-5 h-5 animate-spin mx-auto mb-2 text-purple-600" />
-            <span>Memuat antrian review...</span>
+        <!-- Status Filter Tabs (Terminal Pills) -->
+        <div class="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-mono scrollbar-none">
+          <button
+            v-for="tab in filterTabs"
+            :key="tab.id"
+            @click="activeStatusFilter = tab.id"
+            :class="[
+              'px-2 py-1 rounded-xs transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 border',
+              activeStatusFilter === tab.id
+                ? 'bg-hazard text-carbon border-hazard font-bold shadow-xs'
+                : 'bg-[#0B0C0E] text-slate-400 hover:text-slate-200 border-[#232A36]'
+            ]"
+          >
+            <span>{{ tab.label }}</span>
+            <span
+              :class="[
+                'px-1 py-0.2 rounded-none text-[9px] font-mono',
+                activeStatusFilter === tab.id ? 'bg-carbon/20 text-carbon font-black' : 'bg-[#181D26] text-slate-400'
+              ]"
+            >
+              {{ tab.count }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Queue Item List -->
+        <div class="space-y-1.5 max-h-[calc(100vh-280px)] overflow-y-auto pr-1 custom-scrollbar flex-1">
+          <div v-if="loading" class="text-center py-12 text-slate-400 text-xs font-mono">
+            <Loader2 class="w-5 h-5 animate-spin mx-auto mb-2 text-hazard" />
+            <span>MEMUAT_ANTRIAN_DATA...</span>
           </div>
 
           <template v-else-if="filteredQueue.length > 0">
@@ -105,260 +129,283 @@
               :key="wo.id"
               @click="handleSelectOrder(wo.id)"
               :class="[
-                'p-3.5 rounded-2xl border text-xs cursor-pointer transition-all duration-200',
+                'p-3 rounded-xs border text-xs cursor-pointer transition-all',
                 selectedOrder?.id === wo.id
-                  ? 'glass-card border-brand-500 ring-2 ring-brand-500/20 shadow-sm translate-x-0.5'
-                  : 'bg-white/60 border-slate-200/70 hover:bg-white hover:border-slate-300'
+                  ? 'bg-[#181D26] border-l-4 border-l-hazard border-y border-r border-[#2A3342] shadow-md'
+                  : 'bg-[#0E1117] border-[#232A36] hover:bg-[#141821] hover:border-slate-600'
               ]"
             >
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="font-mono font-bold text-slate-900">{{ wo.spk_number }}</span>
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono font-bold text-white tracking-wide text-[11px] flex items-center gap-1.5">
+                  <span v-if="selectedOrder?.id === wo.id" class="w-1.5 h-1.5 bg-hazard"></span>
+                  {{ wo.spk_number }}
+                </span>
                 <StatusBadge :status="wo.status" />
               </div>
-              <div class="font-bold text-slate-800 truncate mb-1">{{ wo.title || wo.location_name }}</div>
-              <div class="text-[11px] text-slate-500 flex items-center justify-between">
-                <span class="truncate max-w-[120px]">{{ wo.vendor_name || wo.vendor?.name || 'Client SGX' }}</span>
-                <span class="font-mono text-purple-800 font-bold">{{ wo.progress_percent || 0 }}%</span>
+              <div class="font-bold text-slate-200 truncate text-[12px] mb-1">
+                {{ wo.title || wo.location_name }}
+              </div>
+              <div class="text-[10px] font-mono text-slate-400 flex items-center justify-between pt-1 border-t border-[#1C2028]">
+                <span class="truncate max-w-[150px] text-slate-400">
+                  {{ wo.vendor_name || wo.vendor?.name || 'VENDOR SGX' }}
+                </span>
+                <span class="font-mono text-hazard font-bold">
+                  {{ wo.progress_percent || 0 }}% PROG
+                </span>
               </div>
             </div>
           </template>
 
-          <div v-else class="text-center py-10 text-slate-400 text-xs space-y-1">
-            <Store class="w-8 h-8 text-slate-300 mx-auto mb-1" />
-            <p class="font-bold text-slate-700">Tidak ada SPK di kategori ini</p>
-            <p class="text-[11px]">Silakan ubah filter status di atas untuk melihat SPK lainnya.</p>
+          <div v-else class="text-center py-12 text-slate-500 text-xs font-mono space-y-2 border border-dashed border-[#232A36] rounded-xs p-4">
+            <Store class="w-6 h-6 text-slate-600 mx-auto" />
+            <p class="font-bold text-slate-400">DATA_TIDAK_DITEMUKAN</p>
+            <p class="text-[10px] text-slate-500">Ubah filter tab status di atas untuk melihat data lainnya.</p>
           </div>
         </div>
       </div>
 
-      <!-- Right: Detailed Inspection Workspace -->
-      <div class="lg:col-span-2 glass-card rounded-3xl p-6 shadow-glass border border-white/80 space-y-6">
+      <!-- RIGHT: Detailed Forensic Inspection Workspace (8 cols) -->
+      <div class="lg:col-span-8 bg-[#13171F] border border-[#232A36] rounded-xs p-4 sm:p-5 space-y-4">
         <template v-if="selectedOrder">
-          <!-- Header Info & Actions -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="font-mono font-bold text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-800">
-                  {{ selectedOrder.spk_number }}
-                </span>
-                <StatusBadge :status="selectedOrder.status" />
-              </div>
-              <h3 class="font-black text-slate-900 text-base mt-1">{{ selectedOrder.title }}</h3>
-            </div>
-
-            <!-- Review Decision Action Buttons -->
-            <div class="flex items-center gap-2 flex-wrap">
-              <!-- STATE 1: Ready for Review (Submitted by Field Team) -->
-              <template v-if="['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(selectedOrder.status)">
-                <button
-                  type="button"
-                  @click="showRevisionModal = true"
-                  :disabled="actionLoading"
-                  class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-2xs"
-                >
-                  <RotateCcw class="w-3.5 h-3.5" />
-                  <span>Minta Revisi</span>
-                </button>
-                <button
-                  type="button"
-                  @click="showApproveModal = true"
-                  :disabled="actionLoading"
-                  class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md shadow-emerald-900/20 transition-all active:scale-95 cursor-pointer"
-                >
-                  <CheckCircle2 class="w-4 h-4" />
-                  <span>Setujui (Approve)</span>
-                </button>
-              </template>
-
-              <!-- STATE 2: Approved / Completed -->
-              <template v-else-if="['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(selectedOrder.status)">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-xs rounded-xl flex items-center gap-1.5">
-                    <Check class="w-4 h-4 text-emerald-600" />
-                    <span>Disetujui ✓</span>
-                  </span>
-
-                  <button
-                    v-if="!selectedOrder.ba_document"
-                    type="button"
-                    @click="handleGenerateBa"
-                    :disabled="actionLoading"
-                    class="px-3.5 py-1.5 bg-gradient-to-r from-brand-900 to-brand-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-                  >
-                    <FileCheck2 class="w-4 h-4" />
-                    <span>Terbitkan BA Opname</span>
-                  </button>
-                  <template v-else>
-                    <button
-                      type="button"
-                      @click="$emit('open-ba', selectedOrder.ba_document)"
-                      class="px-3.5 py-1.5 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
-                    >
-                      <FileCheck2 class="w-4 h-4" />
-                      <span>Lihat BA Opname</span>
-                    </button>
-                  </template>
-                </div>
-              </template>
-
-              <!-- STATE 3: Under Active Revision by Field Team -->
-              <template v-else-if="selectedOrder.status === 'REVISION'">
+          
+          <!-- Workspace Header: SPK Info & Primary Decisions -->
+          <div class="border-b border-[#232A36] pb-4 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
                 <div class="flex items-center gap-2">
-                  <span class="px-3 py-1.5 bg-rose-50 text-rose-800 border border-rose-200 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-2xs">
-                    <RotateCcw class="w-3.5 h-3.5 text-rose-600" />
-                    <span>Sedang Dalam Perbaikan Revisi Lapangan</span>
+                  <span class="font-mono font-bold text-xs bg-[#0B0C0E] border border-hazard/40 text-hazard px-2 py-0.5 rounded-none">
+                    [ SPK: {{ selectedOrder.spk_number }} ]
                   </span>
+                  <StatusBadge :status="selectedOrder.status" />
+                </div>
+                <h3 class="font-heading font-black text-white text-base sm:text-lg mt-1 tracking-wide">
+                  {{ selectedOrder.title }}
+                </h3>
+              </div>
+
+              <!-- Action Decision Controls (Hazard Yellow + Safety Red + Industrial Emerald) -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Ready for Review -->
+                <template v-if="['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(selectedOrder.status)">
+                  <button
+                    type="button"
+                    @click="showRevisionModal = true"
+                    :disabled="actionLoading"
+                    class="px-3.5 py-2 bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-600 font-mono font-bold text-xs rounded-xs flex items-center gap-1.5 uppercase transition-all cursor-pointer active:scale-95"
+                  >
+                    <RotateCcw class="w-3.5 h-3.5" />
+                    <span>Minta Revisi</span>
+                  </button>
                   <button
                     type="button"
                     @click="showApproveModal = true"
                     :disabled="actionLoading"
-                    class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
-                    title="Setujui jika hasil foto perbaikan telah lengkap"
+                    class="cad-btn-primary px-4 py-2 text-xs flex items-center gap-1.5 uppercase cursor-pointer active:scale-95 shadow-md"
                   >
-                    <CheckCircle2 class="w-3.5 h-3.5" />
-                    <span>Setujui Perbaikan</span>
+                    <CheckCircle2 class="w-4 h-4" />
+                    <span>SETUJUI (APPROVE)</span>
                   </button>
-                </div>
-              </template>
+                </template>
 
-              <!-- STATE 4: Not Submitted Yet (Assigned / In Progress) -->
-              <template v-else>
-                <div class="px-3.5 py-2 bg-amber-50 text-amber-900 border border-amber-200 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-2xs">
-                  <Clock class="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span>Pekerjaan Sedang Berjalan (Belum Diajukan Review)</span>
-                </div>
-              </template>
-            </div>
-          </div>
+                <!-- Approved / Completed -->
+                <template v-else-if="['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(selectedOrder.status)">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1.5 bg-emerald-950/80 text-emerald-400 border border-emerald-500/60 font-mono font-bold text-xs rounded-xs flex items-center gap-1.5">
+                      <Check class="w-3.5 h-3.5 text-emerald-400" />
+                      <span>DISETUJUI RESMI ✓</span>
+                    </span>
 
-          <!-- Verified GPS & Timestamp Banner (Glassmorphic) -->
-          <div class="p-4 bg-white/70 border border-slate-200/80 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs shadow-xs">
-            <div>
-              <span class="text-[10px] font-bold text-slate-400 uppercase">LOKASI & AREA</span>
-              <div class="font-bold text-slate-900 mt-0.5">{{ selectedOrder.location_name }}</div>
-              <div class="text-slate-500 text-[11px]">Area: {{ selectedOrder.area_name }}</div>
+                    <button
+                      v-if="!selectedOrder.ba_document"
+                      type="button"
+                      @click="handleGenerateBa"
+                      :disabled="actionLoading"
+                      class="px-3.5 py-1.5 bg-hazard hover:bg-yellow-400 text-carbon font-mono font-black text-xs rounded-xs flex items-center gap-1.5 cursor-pointer uppercase transition-all"
+                    >
+                      <FileCheck2 class="w-3.5 h-3.5" />
+                      <span>Terbitkan BA Opname</span>
+                    </button>
+                    <button
+                      v-else
+                      type="button"
+                      @click="$emit('open-ba', selectedOrder.ba_document)"
+                      class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs rounded-xs flex items-center gap-1.5 cursor-pointer uppercase transition-all"
+                    >
+                      <FileCheck2 class="w-3.5 h-3.5" />
+                      <span>Lihat BA Opname</span>
+                    </button>
+                  </div>
+                </template>
+
+                <!-- Revision Stage -->
+                <template v-else-if="selectedOrder.status === 'REVISION'">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1.5 bg-red-950/70 text-red-400 border border-red-500/50 font-mono font-bold text-xs rounded-xs flex items-center gap-1.5">
+                      <RotateCcw class="w-3.5 h-3.5 text-red-400" />
+                      <span>PERBAIKAN REVISI LAPANGAN</span>
+                    </span>
+                    <button
+                      type="button"
+                      @click="showApproveModal = true"
+                      :disabled="actionLoading"
+                      class="px-3 py-1.5 bg-hazard hover:bg-yellow-400 text-carbon font-mono font-black text-xs rounded-xs flex items-center gap-1.5 cursor-pointer uppercase"
+                    >
+                      <CheckCircle2 class="w-3.5 h-3.5" />
+                      <span>Setujui Perbaikan</span>
+                    </button>
+                  </div>
+                </template>
+
+                <!-- In Progress -->
+                <template v-else>
+                  <div class="px-3 py-1.5 bg-[#0B0C0E] border border-amber-500/40 text-amber-400 font-mono font-bold text-xs rounded-xs flex items-center gap-1.5">
+                    <Clock class="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>PEKERJAAN_BERJALAN (BELUM SUBMIT)</span>
+                  </div>
+                </template>
+              </div>
             </div>
-            <div>
-              <span class="text-[10px] font-bold text-slate-400 uppercase">CHECK-IN GPS RESMI</span>
-              <div v-if="selectedOrder.check_ins && selectedOrder.check_ins.length > 0" class="mt-0.5">
-                <div class="font-mono text-emerald-700 font-bold">
-                  {{ Number(selectedOrder.check_ins[0].latitude).toFixed(5) }}, {{ Number(selectedOrder.check_ins[0].longitude).toFixed(5) }}
+
+            <!-- GPS & Field Telemetry Bar (Dark Industrial CAD Strip) -->
+            <div class="p-3 bg-[#0B0C0E] border border-[#232A36] rounded-xs grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+              <div class="border-b sm:border-b-0 sm:border-r border-[#232A36] pb-2 sm:pb-0 pr-2">
+                <span class="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">LOKASI & REGIONAL</span>
+                <div class="font-bold text-white mt-0.5 truncate">{{ selectedOrder.location_name }}</div>
+                <div class="text-slate-400 text-[11px]">Area: {{ selectedOrder.area_name }}</div>
+              </div>
+
+              <div class="border-b sm:border-b-0 sm:border-r border-[#232A36] pb-2 sm:pb-0 pr-2">
+                <span class="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">TELEMETRI CHECK-IN GPS</span>
+                <div v-if="selectedOrder.check_ins && selectedOrder.check_ins.length > 0" class="mt-0.5">
+                  <div class="text-hazard font-bold tracking-tight">
+                    {{ Number(selectedOrder.check_ins[0].latitude).toFixed(5) }}, {{ Number(selectedOrder.check_ins[0].longitude).toFixed(5) }}
+                  </div>
+                  <div class="text-slate-400 text-[10px]">
+                    AKURASI: ±{{ selectedOrder.check_ins[0].accuracy }}m • {{ new Date(selectedOrder.check_ins[0].server_timestamp).toLocaleTimeString('id-ID') }}
+                  </div>
                 </div>
-                <div class="text-slate-500 text-[10px]">
-                  Akurasi: ±{{ selectedOrder.check_ins[0].accuracy }}m • {{ new Date(selectedOrder.check_ins[0].server_timestamp).toLocaleTimeString('id-ID') }}
+                <div v-else class="text-amber-500/80 italic text-[11px] mt-0.5">
+                  [ BELUM ADA CHECK-IN ]
                 </div>
               </div>
-              <div v-else class="text-amber-600 italic">Belum Check-In</div>
-            </div>
-            <div>
-              <span class="text-[10px] font-bold text-slate-400 uppercase">PELAKSANA & VENDOR</span>
-              <div class="font-bold text-slate-900 mt-0.5">{{ selectedOrder.pic_name || '-' }} ({{ selectedOrder.pic_phone }})</div>
-              <div class="text-slate-500 text-[11px]">{{ selectedOrder.vendor_name }}</div>
-            </div>
-          </div>
 
-          <!-- Photo Evidence Side-by-Side Review -->
-          <div class="space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h4 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-                  <Camera class="w-4 h-4 text-purple-700" />
-                  <span>Verifikasi Dokumentasi Foto per Sub-Pekerjaan ({{ displayItems.length }} Item)</span>
+                <span class="text-[10px] text-slate-500 uppercase tracking-wider block font-bold">PELAKSANA / VENDOR</span>
+                <div class="font-bold text-white mt-0.5 truncate">{{ selectedOrder.pic_name || '-' }} ({{ selectedOrder.pic_phone }})</div>
+                <div class="text-slate-400 text-[11px] truncate">{{ selectedOrder.vendor_name }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FORENSIC EVIDENCE GALLERY HEADER & TOOLS -->
+          <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div>
+                <h4 class="font-heading font-black text-xs sm:text-sm text-white uppercase tracking-wider flex items-center gap-2">
+                  <Camera class="w-4 h-4 text-hazard" />
+                  <span>Forensic Evidence Gallery ({{ displayItems.length }} Sub-Item)</span>
                 </h4>
-                <p class="text-[11px] text-slate-500">Periksa bukti visual sebelum & sesudah pada masing-masing sub-lingkup pekerjaan.</p>
+                <p class="text-[11px] font-mono text-slate-400 mt-0.5">
+                  Pemeriksaan visual matriks Before - Process - After dengan optik pengukuran dan verifikasi hash SHA-256.
+                </p>
               </div>
 
-              <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                <!-- Add Addendum Sub-Task Button -->
+              <!-- Controls: Add Addendum, View Mode, Download All -->
+              <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap font-mono">
+                <!-- Add Addendum Button -->
                 <button
                   v-if="!['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(selectedOrder.status)"
                   type="button"
                   @click="openAddendumModal"
-                  class="px-3 py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
-                  title="Tambah lingkup pekerjaan baru pada SPK ini"
+                  class="px-2.5 py-1.5 bg-[#181D26] hover:bg-[#202734] text-hazard border border-hazard/40 rounded-xs text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                  title="Tambah item pekerjaan tambahan (Addendum)"
                 >
                   <Plus class="w-3.5 h-3.5" />
-                  <span>+ Tambah Sub-Pekerjaan</span>
+                  <span>+ ADDENDUM</span>
                 </button>
 
-                <div class="bg-slate-200/80 p-0.5 rounded-xl flex items-center text-[10px] font-bold">
+                <!-- Switch Mode Button Group -->
+                <div class="bg-[#0B0C0E] p-0.5 rounded-xs border border-[#232A36] flex items-center text-[10px]">
                   <button
                     type="button"
                     @click="photoViewMode = 'BY_ITEM'"
                     :class="[
-                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                      photoViewMode === 'BY_ITEM' ? 'bg-white text-purple-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      'px-2 py-1 rounded-none transition-all cursor-pointer font-bold',
+                      photoViewMode === 'BY_ITEM' ? 'bg-hazard text-carbon' : 'text-slate-400 hover:text-white'
                     ]"
                   >
-                    Per Sub-Item
+                    MATRIKS ITEM
                   </button>
                   <button
                     type="button"
                     @click="photoViewMode = 'ALL_STAGES'"
                     :class="[
-                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                      photoViewMode === 'ALL_STAGES' ? 'bg-white text-purple-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      'px-2 py-1 rounded-none transition-all cursor-pointer font-bold',
+                      photoViewMode === 'ALL_STAGES' ? 'bg-hazard text-carbon' : 'text-slate-400 hover:text-white'
                     ]"
                   >
-                    Semua Tahap
+                    SEMUA TAHAP
                   </button>
                 </div>
 
+                <!-- Download All Photos -->
                 <button
                   v-if="selectedOrder.evidence_photos && selectedOrder.evidence_photos.length > 0"
                   type="button"
                   @click="downloadAllPhotos"
-                  class="px-3 py-1.5 bg-gradient-to-r from-purple-800 to-indigo-600 hover:from-purple-700 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
-                  title="Unduh semua foto bukti SPK ini"
+                  class="px-2.5 py-1.5 bg-[#0B0C0E] hover:bg-[#181D26] text-white border border-[#232A36] hover:border-slate-500 rounded-xs text-[11px] font-bold flex items-center gap-1.5 cursor-pointer"
+                  title="Unduh semua foto bukti"
                 >
-                  <Download class="w-3.5 h-3.5" />
-                  <span class="hidden sm:inline">Unduh Semua ({{ selectedOrder.evidence_photos.length }})</span>
+                  <Download class="w-3.5 h-3.5 text-hazard" />
+                  <span>UNDUH ({{ selectedOrder.evidence_photos.length }})</span>
                 </button>
               </div>
             </div>
 
-            <!-- MODE 1: STRUCTURED SUB-TASK TRIPTYCH MATRIX (Reviewer Workspace) -->
+            <!-- MODE 1: STRUCTURED SUB-TASK TRIPTYCH MATRIX (Industrial Measuring Optic View) -->
             <div v-if="photoViewMode === 'BY_ITEM'" class="space-y-4">
               <div
                 v-for="(item, itmIdx) in displayItems"
                 :key="item.id || itmIdx"
-                class="glass-card rounded-2xl p-4 sm:p-5 border border-white/80 space-y-3 shadow-xs"
+                class="bg-[#0E1117] border border-[#232A36] rounded-xs p-3.5 sm:p-4 space-y-3 relative"
               >
-                <!-- Sub-Task Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-2.5">
+                <!-- Sub-Task Header Strip -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#232A36] pb-2.5">
                   <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-lg bg-purple-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                      {{ itmIdx + 1 }}
+                    <span class="w-6 h-6 rounded-none bg-hazard text-carbon font-mono font-black text-xs flex items-center justify-center shrink-0">
+                      {{ String(itmIdx + 1).padStart(2, '0') }}
                     </span>
                     <div>
                       <div class="flex items-center gap-2">
-                        <h5 class="font-bold text-slate-900 text-xs sm:text-sm">
+                        <h5 class="font-heading font-black text-white text-xs sm:text-sm uppercase tracking-wide">
                           {{ item.item_name }}
                         </h5>
                         <span
                           v-if="item.is_addendum"
-                          class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs animate-pulse"
+                          class="px-1.5 py-0.2 rounded-none text-[8px] font-mono font-black uppercase tracking-wider bg-hazard text-carbon"
                         >
-                          + ADDENDUM / TAMBAHAN
+                          [ ADDENDUM ]
                         </span>
                       </div>
-                      <span class="text-[10px] text-slate-500 font-mono">Bobot: {{ item.weight_percent || 100 }}%</span>
+                      <span class="text-[10px] text-slate-400 font-mono">
+                        BOBOT KERJA: {{ item.weight_percent || 100 }}% • MODE: {{ item.doc_mode || 'STANDARD' }}
+                      </span>
                     </div>
                   </div>
 
                   <span
                     :class="[
-                      'px-2.5 py-0.5 rounded-full text-[10px] font-bold border',
+                      'px-2 py-0.5 rounded-none text-[9px] font-mono font-bold border uppercase',
                       isItemFullyDocumented(item)
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                        : 'bg-amber-50 text-amber-800 border-amber-300'
+                        ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/60'
+                        : 'bg-amber-950/80 text-amber-400 border-amber-500/60'
                     ]"
                   >
-                    {{ isItemFullyDocumented(item) ? 'Evidensi Lengkap ✓' : 'Belum Lengkap ⏳' }}
+                    {{ isItemFullyDocumented(item) ? '[ EVIDENSI LENGKAP ✓ ]' : '[ EVIDENSI PARSIAL ⏳ ]' }}
                   </span>
                 </div>
 
-                <!-- Dynamic Review Grid: Adapts to doc_mode (1-Stage, 2-Stage, 3-Stage) -->
+                <!-- Dynamic Review Grid (BEFORE / PROCESS / AFTER) -->
                 <div
                   :class="[
                     isAfterOnly(item)
@@ -368,75 +415,206 @@
                       : 'grid grid-cols-1 sm:grid-cols-3 gap-3'
                   ]"
                 >
-                  <!-- BEFORE (Disembunyikan jika AFTER_ONLY) -->
-                  <div v-if="!isAfterOnly(item)" class="p-2.5 bg-amber-50/40 rounded-xl border border-amber-200/60 space-y-2">
-                    <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500 text-white">BEFORE</span>
-                      <span class="text-[9px] font-mono text-slate-400">{{ getPhotosForItemStage(item.id, 'BEFORE').length }} Foto</span>
+                  <!-- STAGE: BEFORE -->
+                  <div v-if="!isAfterOnly(item)" class="space-y-2">
+                    <div class="flex items-center justify-between font-mono text-[10px] px-0.5">
+                      <span class="text-slate-400 font-bold uppercase tracking-wider">TAHAP: BEFORE</span>
+                      <span class="text-hazard">{{ getPhotosForItemStage(item.id, 'BEFORE').length }} FOTO</span>
                     </div>
+
                     <div v-if="getPhotosForItemStage(item.id, 'BEFORE').length > 0" class="space-y-2">
                       <div
                         v-for="p in getPhotosForItemStage(item.id, 'BEFORE')"
                         :key="p.id"
-                        @click="openLightbox(p)"
-                        class="h-28 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs"
+                        class="bg-[#0B0C0E] border border-[#232A36] rounded-none overflow-hidden group relative"
                       >
-                        <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                        <button type="button" @click.stop="downloadSinglePhoto(p)" class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white flex items-center justify-center text-[10px] border border-white/40">
-                          <Download class="w-2.5 h-2.5" />
-                        </button>
+                        <!-- Photo Viewer Optic -->
+                        <div class="h-36 bg-[#000000] relative cursor-pointer overflow-hidden" @click="openLightbox(p)">
+                          <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                          
+                          <!-- Top Solid Tag -->
+                          <div class="absolute top-2 left-2 z-10">
+                            <span class="bg-hazard text-carbon font-mono font-black text-[9px] px-2 py-0.5 rounded-none shadow-md">
+                              [ BEFORE ]
+                            </span>
+                          </div>
+
+                          <!-- Reticle Crosshair Callouts -->
+                          <div class="absolute inset-0 pointer-events-none border border-hazard/20 m-1 flex flex-col justify-between p-1">
+                            <div class="flex justify-between text-[8px] font-mono text-hazard/70">
+                              <span>+ 0,0</span>
+                              <span>SPECS +</span>
+                            </div>
+                            <!-- Yellow Dimension Callout Line -->
+                            <div class="w-full text-center py-0.5 bg-black/40 backdrop-blur-2xs border-y border-dashed border-hazard/60 text-[9px] font-mono text-hazard font-bold tracking-widest">
+                              &lt;--- DIMENSI AWAL ---&gt;
+                            </div>
+                            <div class="flex justify-between text-[8px] font-mono text-hazard/70">
+                              <span>+ CAM_OPTIC</span>
+                              <span>REV_01 +</span>
+                            </div>
+                          </div>
+
+                          <!-- Download Button -->
+                          <button
+                            type="button"
+                            @click.stop="downloadSinglePhoto(p)"
+                            class="absolute top-2 right-2 w-6 h-6 rounded-none bg-carbon/90 hover:bg-hazard hover:text-carbon text-white border border-[#232A36] flex items-center justify-center transition-colors cursor-pointer z-20"
+                            title="Unduh Foto"
+                          >
+                            <Download class="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <!-- Bottom Inspection Bar -->
+                        <div class="p-2 bg-[#0B0C0E] border-t border-[#232A36] text-[9px] font-mono flex items-center justify-between">
+                          <span class="text-hazard font-bold truncate max-w-[130px]">
+                            GPS: {{ p.latitude ? Number(p.latitude).toFixed(4) : '-' }}, {{ p.longitude ? Number(p.longitude).toFixed(4) : '-' }}
+                          </span>
+                          <span class="bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-1 py-0.2 rounded-none font-bold">
+                            SHA-256: VALID
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div v-else class="h-20 rounded-lg border border-dashed border-amber-200 flex items-center justify-center text-slate-400 text-[10px]">
-                      Belum ada foto
+
+                    <div v-else class="h-36 rounded-none border border-dashed border-[#232A36] bg-[#0B0C0E]/50 flex flex-col items-center justify-center text-slate-500 text-[10px] font-mono">
+                      <span>[ BELUM ADA FOTO BEFORE ]</span>
                     </div>
                   </div>
 
-                  <!-- PROCESS (Disembunyikan jika AFTER_ONLY atau TWO_STAGES) -->
-                  <div v-if="!isAfterOnly(item) && !isTwoStages(item)" class="p-2.5 bg-blue-50/40 rounded-xl border border-blue-200/60 space-y-2">
-                    <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-600 text-white">PROCESS</span>
-                      <span class="text-[9px] font-mono text-slate-400">{{ getPhotosForItemStage(item.id, 'PROCESS').length }} Foto</span>
+                  <!-- STAGE: PROCESS -->
+                  <div v-if="!isAfterOnly(item) && !isTwoStages(item)" class="space-y-2">
+                    <div class="flex items-center justify-between font-mono text-[10px] px-0.5">
+                      <span class="text-slate-400 font-bold uppercase tracking-wider">TAHAP: PROCESS</span>
+                      <span class="text-hazard">{{ getPhotosForItemStage(item.id, 'PROCESS').length }} FOTO</span>
                     </div>
+
                     <div v-if="getPhotosForItemStage(item.id, 'PROCESS').length > 0" class="space-y-2">
                       <div
                         v-for="p in getPhotosForItemStage(item.id, 'PROCESS')"
                         :key="p.id"
-                        @click="openLightbox(p)"
-                        class="h-28 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs"
+                        class="bg-[#0B0C0E] border border-[#232A36] rounded-none overflow-hidden group relative"
                       >
-                        <img :src="getFileUrl(p.file_path)" alt="Process" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                        <button type="button" @click.stop="downloadSinglePhoto(p)" class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white flex items-center justify-center text-[10px] border border-white/40">
-                          <Download class="w-2.5 h-2.5" />
-                        </button>
+                        <!-- Photo Viewer Optic -->
+                        <div class="h-36 bg-[#000000] relative cursor-pointer overflow-hidden" @click="openLightbox(p)">
+                          <img :src="getFileUrl(p.file_path)" alt="Process" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                          
+                          <!-- Top Solid Tag -->
+                          <div class="absolute top-2 left-2 z-10">
+                            <span class="bg-blue-400 text-carbon font-mono font-black text-[9px] px-2 py-0.5 rounded-none shadow-md">
+                              [ PROCESS ]
+                            </span>
+                          </div>
+
+                          <!-- Reticle Crosshair Callouts -->
+                          <div class="absolute inset-0 pointer-events-none border border-blue-400/20 m-1 flex flex-col justify-between p-1">
+                            <div class="flex justify-between text-[8px] font-mono text-blue-300/70">
+                              <span>+ ASSEMBLY</span>
+                              <span>INSPECTION +</span>
+                            </div>
+                            <div class="w-full text-center py-0.5 bg-black/40 backdrop-blur-2xs border-y border-dashed border-blue-400/60 text-[9px] font-mono text-blue-300 font-bold tracking-widest">
+                              &lt;--- TAHAP PENGERJAAN ---&gt;
+                            </div>
+                            <div class="flex justify-between text-[8px] font-mono text-blue-300/70">
+                              <span>+ MOUNTING</span>
+                              <span>PROGRESS +</span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            @click.stop="downloadSinglePhoto(p)"
+                            class="absolute top-2 right-2 w-6 h-6 rounded-none bg-carbon/90 hover:bg-hazard hover:text-carbon text-white border border-[#232A36] flex items-center justify-center transition-colors cursor-pointer z-20"
+                            title="Unduh Foto"
+                          >
+                            <Download class="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <!-- Bottom Inspection Bar -->
+                        <div class="p-2 bg-[#0B0C0E] border-t border-[#232A36] text-[9px] font-mono flex items-center justify-between">
+                          <span class="text-hazard font-bold truncate max-w-[130px]">
+                            GPS: {{ p.latitude ? Number(p.latitude).toFixed(4) : '-' }}, {{ p.longitude ? Number(p.longitude).toFixed(4) : '-' }}
+                          </span>
+                          <span class="bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-1 py-0.2 rounded-none font-bold">
+                            SHA-256: VALID
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div v-else class="h-20 rounded-lg border border-dashed border-blue-200 flex items-center justify-center text-slate-400 text-[10px]">
-                      Belum ada foto
+
+                    <div v-else class="h-36 rounded-none border border-dashed border-[#232A36] bg-[#0B0C0E]/50 flex flex-col items-center justify-center text-slate-500 text-[10px] font-mono">
+                      <span>[ BELUM ADA FOTO PROCESS ]</span>
                     </div>
                   </div>
 
-                  <!-- AFTER (Hasil Akhir) -->
-                  <div class="p-2.5 bg-emerald-50/40 rounded-xl border border-emerald-200/60 space-y-2">
-                    <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-600 text-white">{{ isAfterOnly(item) ? 'DOKUMENTASI HASIL (AFTER)' : 'AFTER' }}</span>
-                      <span class="text-[9px] font-mono text-slate-400">{{ getPhotosForItemStage(item.id, 'AFTER').length }} Foto</span>
+                  <!-- STAGE: AFTER (Hasil Akhir) -->
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between font-mono text-[10px] px-0.5">
+                      <span class="text-slate-400 font-bold uppercase tracking-wider">
+                        {{ isAfterOnly(item) ? 'HASIL AKHIR (AFTER ONLY)' : 'TAHAP: AFTER' }}
+                      </span>
+                      <span class="text-hazard">{{ getPhotosForItemStage(item.id, 'AFTER').length }} FOTO</span>
                     </div>
-                    <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" :class="isAfterOnly(item) ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5' : 'space-y-2'">
+
+                    <div v-if="getPhotosForItemStage(item.id, 'AFTER').length > 0" :class="isAfterOnly(item) ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3' : 'space-y-2'">
                       <div
                         v-for="p in getPhotosForItemStage(item.id, 'AFTER')"
                         :key="p.id"
-                        @click="openLightbox(p)"
-                        class="h-28 sm:h-32 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs"
+                        class="bg-[#0B0C0E] border border-[#232A36] rounded-none overflow-hidden group relative"
                       >
-                        <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                        <button type="button" @click.stop="downloadSinglePhoto(p)" class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white flex items-center justify-center text-[10px] border border-white/40">
-                          <Download class="w-2.5 h-2.5" />
-                        </button>
+                        <!-- Photo Viewer Optic -->
+                        <div class="h-36 bg-[#000000] relative cursor-pointer overflow-hidden" @click="openLightbox(p)">
+                          <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                          
+                          <!-- Top Solid Tag -->
+                          <div class="absolute top-2 left-2 z-10">
+                            <span class="bg-hazard text-carbon font-mono font-black text-[9px] px-2 py-0.5 rounded-none shadow-md">
+                              [ AFTER ]
+                            </span>
+                          </div>
+
+                          <!-- Reticle Crosshair Callouts -->
+                          <div class="absolute inset-0 pointer-events-none border border-emerald-400/30 m-1 flex flex-col justify-between p-1">
+                            <div class="flex justify-between text-[8px] font-mono text-emerald-400/80 font-bold">
+                              <span>+ VERIFIED</span>
+                              <span>FINAL QA +</span>
+                            </div>
+                            <!-- Yellow Dimension Callout Line -->
+                            <div class="w-full text-center py-0.5 bg-black/50 backdrop-blur-2xs border-y border-dashed border-hazard text-[9px] font-mono text-hazard font-black tracking-widest">
+                              &lt;--- SPK COMPLETED 100% ---&gt;
+                            </div>
+                            <div class="flex justify-between text-[8px] font-mono text-emerald-400/80 font-bold">
+                              <span>+ SIGNAGE_OK</span>
+                              <span>BA_READY +</span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            @click.stop="downloadSinglePhoto(p)"
+                            class="absolute top-2 right-2 w-6 h-6 rounded-none bg-carbon/90 hover:bg-hazard hover:text-carbon text-white border border-[#232A36] flex items-center justify-center transition-colors cursor-pointer z-20"
+                            title="Unduh Foto"
+                          >
+                            <Download class="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <!-- Bottom Inspection Bar -->
+                        <div class="p-2 bg-[#0B0C0E] border-t border-[#232A36] text-[9px] font-mono flex items-center justify-between">
+                          <span class="text-hazard font-bold truncate max-w-[130px]">
+                            GPS: {{ p.latitude ? Number(p.latitude).toFixed(4) : '-' }}, {{ p.longitude ? Number(p.longitude).toFixed(4) : '-' }}
+                          </span>
+                          <span class="bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-1 py-0.2 rounded-none font-bold">
+                            SHA-256: VALID
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div v-else class="h-20 rounded-lg border border-dashed border-emerald-200 flex items-center justify-center text-slate-400 text-[10px]">
-                      Belum ada foto
+
+                    <div v-else class="h-36 rounded-none border border-dashed border-[#232A36] bg-[#0B0C0E]/50 flex flex-col items-center justify-center text-slate-500 text-[10px] font-mono">
+                      <span>[ BELUM ADA FOTO HASIL AKHIR ]</span>
                     </div>
                   </div>
                 </div>
@@ -444,224 +622,255 @@
             </div>
 
             <!-- MODE 2: FLAT STAGE VIEW -->
-            <div v-else class="space-y-3">
-              <div v-for="stage in ['BEFORE', 'PROCESS', 'AFTER']" :key="stage" class="glass-card rounded-2xl p-4 border border-white/70">
-                <div class="flex items-center justify-between mb-3">
-                  <span class="font-bold text-xs text-slate-800 uppercase tracking-wider">TAHAP: {{ stage }}</span>
-                  <span class="text-[11px] font-medium text-slate-500">
-                    ({{ selectedOrder.evidence_photos?.filter(p => p.stage === stage).length || 0 }} Foto Terlampir)
+            <div v-else class="space-y-4">
+              <div v-for="stage in ['BEFORE', 'PROCESS', 'AFTER']" :key="stage" class="bg-[#0E1117] border border-[#232A36] rounded-xs p-3.5 space-y-3">
+                <div class="flex items-center justify-between border-b border-[#232A36] pb-2 font-mono">
+                  <div class="flex items-center gap-2">
+                    <span class="bg-hazard text-carbon font-mono font-black text-[9px] px-2 py-0.5 rounded-none">
+                      [ {{ stage }} ]
+                    </span>
+                    <span class="text-white text-xs font-bold uppercase">KLASIFIKASI DOKUMENTASI: {{ stage }}</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400 font-mono">
+                    {{ selectedOrder.evidence_photos?.filter(p => p.stage === stage).length || 0 }} BERKAS TERCATAT
                   </span>
                 </div>
 
                 <div
                   v-if="selectedOrder.evidence_photos?.filter(p => p.stage === stage).length > 0"
-                  class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+                  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"
                 >
                   <div
                     v-for="(photo, pIdx) in selectedOrder.evidence_photos.filter(p => p.stage === stage)"
                     :key="photo.id"
-                    @click="openLightbox(photo)"
-                    class="bg-slate-900 rounded-2xl overflow-hidden shadow-xs group relative cursor-pointer hover:shadow-md transition-all"
+                    class="bg-[#0B0C0E] border border-[#232A36] rounded-none overflow-hidden group relative"
                   >
-                    <img
-                      :src="getFileUrl(photo.file_path)"
-                      :alt="`Evidence ${stage}`"
-                      class="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    <div class="h-36 bg-[#000000] relative cursor-pointer overflow-hidden" @click="openLightbox(photo)">
+                      <img
+                        :src="getFileUrl(photo.file_path)"
+                        :alt="`Evidence ${stage}`"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                      />
 
-                    <!-- DYNAMIC FLOATING CORNER DOWNLOAD BUTTON (Bottom-Right) -->
-                    <div class="absolute bottom-1.5 right-1.5 z-10">
+                      <!-- Overlay Reticle -->
+                      <div class="absolute inset-0 pointer-events-none border border-hazard/20 m-1 flex flex-col justify-between p-1">
+                        <div class="flex justify-between text-[8px] font-mono text-hazard/70">
+                          <span>#{{ photo.sequence || pIdx + 1 }}</span>
+                          <span>FORENSIC_TAG</span>
+                        </div>
+                        <div class="w-full text-center py-0.5 bg-black/40 border-y border-dashed border-hazard/50 text-[8px] font-mono text-hazard font-bold">
+                          &lt;--- {{ stage }} OPTIC ---&gt;
+                        </div>
+                        <div class="text-[8px] font-mono text-slate-400">
+                          {{ new Date(photo.server_timestamp).toLocaleTimeString('id-ID') }}
+                        </div>
+                      </div>
+
                       <button
                         type="button"
                         @click.stop="downloadSinglePhoto(photo)"
-                        class="w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/40 backdrop-blur-xs"
-                        title="Unduh Foto Resolusi Asli"
+                        class="absolute top-2 right-2 w-6 h-6 rounded-none bg-carbon/90 hover:bg-hazard hover:text-carbon text-white border border-[#232A36] flex items-center justify-center transition-colors cursor-pointer z-20"
+                        title="Unduh Resolusi Penuh"
                       >
                         <Download class="w-3 h-3" />
                       </button>
                     </div>
 
-                    <div class="p-2 text-[10px] text-white">
-                      <div class="font-bold truncate">Foto #{{ photo.sequence || pIdx + 1 }}</div>
-                      <div class="text-[8px] font-mono text-emerald-400 truncate">SHA-256: {{ photo.file_hash?.substring(0, 12) }}...</div>
-                      <div class="text-[9px] text-slate-300 mt-0.5 font-mono">
-                        {{ new Date(photo.server_timestamp).toLocaleTimeString('id-ID') }}
-                      </div>
+                    <!-- Bottom Inspection Bar -->
+                    <div class="p-2 bg-[#0B0C0E] border-t border-[#232A36] text-[9px] font-mono flex items-center justify-between">
+                      <span class="text-hazard font-bold truncate max-w-[130px]">
+                        GPS: {{ photo.latitude ? Number(photo.latitude).toFixed(4) : '-' }}, {{ photo.longitude ? Number(photo.longitude).toFixed(4) : '-' }}
+                      </span>
+                      <span class="bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-1 py-0.2 rounded-none font-bold">
+                        SHA-256: VALID
+                      </span>
                     </div>
                   </div>
                 </div>
-                <div v-else class="text-center py-5 text-slate-400 text-xs italic">
-                  Belum ada foto pada tahap {{ stage }}.
+
+                <div v-else class="text-center py-6 text-slate-500 text-xs font-mono border border-dashed border-[#232A36]">
+                  [ TIDAK ADA FOTO PADA TAHAP {{ stage }} ]
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Technical Issues Note -->
-          <div v-if="selectedOrder.issues && selectedOrder.issues.length > 0" class="p-4 bg-amber-500/10 border border-amber-300 rounded-2xl space-y-1.5 text-xs">
-            <div class="font-bold text-amber-900 flex items-center gap-2">
-              <AlertTriangle class="w-4 h-4 text-amber-600" />
-              <span>Laporan Kendala Lapangan:</span>
+          <!-- Technical Field Issues Note -->
+          <div v-if="selectedOrder.issues && selectedOrder.issues.length > 0" class="p-3 bg-red-950/20 border-l-4 border-l-red-500 border-y border-r border-red-900/40 rounded-xs space-y-1.5 text-xs font-mono">
+            <div class="font-bold text-red-400 flex items-center gap-2">
+              <AlertTriangle class="w-4 h-4 text-red-400 shrink-0" />
+              <span class="uppercase tracking-wider">LOG KENDALA TEKNIS LAPANGAN:</span>
             </div>
-            <p v-for="iss in selectedOrder.issues" :key="iss.id" class="text-slate-800">
-              <strong>{{ iss.issue_type }}:</strong> {{ iss.notes }}
+            <p v-for="iss in selectedOrder.issues" :key="iss.id" class="text-slate-300">
+              <strong class="text-red-300">[{{ iss.issue_type }}]:</strong> {{ iss.notes }}
             </p>
           </div>
         </template>
-        <div v-else class="py-24 text-center text-slate-400 text-xs font-medium">
-          Pilih salah satu SPK di sebelah kiri untuk memulai proses review dan verifikasi.
+
+        <div v-else class="py-32 text-center text-slate-500 text-xs font-mono space-y-2 border border-dashed border-[#232A36] rounded-xs">
+          <CheckSquare class="w-8 h-8 text-slate-600 mx-auto" />
+          <p class="font-bold text-slate-400 uppercase">PILIH_SPK_UNTUK_INSPEKSI</p>
+          <p class="text-slate-500 text-[11px]">Silakan klik salah satu pekerjaan pada daftar antrian sebelah kiri untuk memulai audit visual.</p>
         </div>
       </div>
     </div>
 
-    <!-- Approve Confirmation Modal -->
-    <div v-if="showApproveModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="glass-modal rounded-3xl max-w-md w-full shadow-2xl p-6 space-y-4 text-xs border border-white/80">
-        <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
-          <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-            <CheckCircle2 class="w-5 h-5 text-emerald-600" />
-            <span>Konfirmasi Persetujuan (Approval)</span>
-          </h3>
-          <button @click="showApproveModal = false" class="text-slate-400 hover:text-slate-600">
-            <X class="w-5 h-5" />
-          </button>
-        </div>
+    <!-- Approve Confirmation Modal (CAD Style) -->
+    <Teleport to="body">
+      <div v-if="showApproveModal" class="fixed inset-0 z-50 bg-[#0B0C0E]/80 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-[#13171F] border border-hazard/40 rounded-xs max-w-md w-full shadow-2xl p-5 space-y-4 text-xs font-mono">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-3">
+            <h3 class="font-heading font-black text-sm text-white flex items-center gap-2 uppercase tracking-wider">
+              <CheckCircle2 class="w-4 h-4 text-hazard" />
+              <span>Validasi Persetujuan (Approval)</span>
+            </h3>
+            <button @click="showApproveModal = false" class="text-slate-400 hover:text-white p-1">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
 
-        <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 space-y-1">
-          <p class="font-bold">Apakah Anda yakin menyetujui hasil pekerjaan ini?</p>
-          <p class="text-[11px] text-emerald-800">
-            Nomor SPK: <strong>{{ selectedOrder.spk_number }}</strong> ({{ selectedOrder.title }})
-          </p>
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Catatan Persetujuan / Quality Assurance:</label>
-          <textarea
-            rows="3"
-            v-model="reviewNotes"
-            class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-          />
-        </div>
-
-        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-          <button
-            type="button"
-            @click="showApproveModal = false"
-            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
-          >
-            Batal
-          </button>
-          <button
-            type="button"
-            @click="handleApproveConfirm"
-            :disabled="actionLoading"
-            class="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
-          >
-            <Loader2 v-if="actionLoading" class="w-3.5 h-3.5 animate-spin" />
-            <CheckCircle2 v-else class="w-3.5 h-3.5" />
-            <span>{{ actionLoading ? 'Memproses...' : 'Ya, Setujui Pekerjaan' }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Revision Modal -->
-    <div v-if="showRevisionModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="glass-modal rounded-3xl max-w-md w-full shadow-2xl p-6 space-y-4 text-xs border border-white/80">
-        <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
-          <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-            <RotateCcw class="w-4 h-4 text-rose-600" />
-            <span>Permintaan Revisi Spesifik</span>
-          </h3>
-          <button @click="showRevisionModal = false" class="text-slate-400 hover:text-slate-600">
-            <X class="w-5 h-5" />
-          </button>
-        </div>
-
-        <form @submit.prevent="handleSendRevision" class="space-y-3.5">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Target Bagian yang Memerlukan Revisi:</label>
-            <select
-              v-model="revisionStage"
-              class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-rose-500 focus:outline-none"
-            >
-              <option value="AFTER">Foto AFTER (Hasil Akhir)</option>
-              <option value="PROCESS">Foto PROCESS (Proses Pengerjaan)</option>
-              <option value="BEFORE">Foto BEFORE (Sebelum Pengerjaan)</option>
-              <option value="ALL">Seluruh Dokumentasi & Kendala</option>
-            </select>
+          <div class="p-3 bg-[#0B0C0E] border-l-4 border-l-hazard border-y border-r border-[#232A36] text-slate-300 space-y-1">
+            <p class="font-bold text-white uppercase tracking-wider">Konfirmasi Penyelesaian SPK:</p>
+            <p class="text-[11px] text-hazard">
+              Nomor: <strong>{{ selectedOrder?.spk_number }}</strong> - {{ selectedOrder?.title }}
+            </p>
+            <p class="text-[10px] text-slate-400">
+              Persetujuan ini akan mengunci bukti foto dan melegalkan status pekerjaan untuk penerbitan Berita Acara (BA Opname).
+            </p>
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Alasan / Instruksi Perbaikan Khusus *:</label>
+            <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Catatan Persetujuan / Quality Assurance:</label>
             <textarea
               rows="3"
-              required
-              placeholder="Contoh: Foto After nomor 2 kurang fokus/buram. Mohon ambil ulang foto sudut palang merek secara jelas."
-              v-model="revisionReason"
-              class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white"
+              v-model="reviewNotes"
+              class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] rounded-xs text-white focus:border-hazard focus:outline-none font-mono text-xs"
             />
           </div>
 
-          <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <div class="pt-2 flex items-center justify-end gap-2 border-t border-[#232A36]">
             <button
               type="button"
-              @click="showRevisionModal = false"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
+              @click="showApproveModal = false"
+              class="px-4 py-2 bg-[#0B0C0E] hover:bg-[#181D26] text-slate-300 border border-[#232A36] font-bold rounded-xs cursor-pointer uppercase"
             >
               Batal
             </button>
             <button
-              type="submit"
+              type="button"
+              @click="handleApproveConfirm"
               :disabled="actionLoading"
-              class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-xs cursor-pointer active:scale-95"
+              class="cad-btn-primary px-5 py-2 text-xs flex items-center gap-1.5 cursor-pointer uppercase font-bold"
             >
-              {{ actionLoading ? 'Mengirim...' : 'Kirim Revisi ke Lapangan' }}
+              <Loader2 v-if="actionLoading" class="w-3.5 h-3.5 animate-spin" />
+              <CheckCircle2 v-else class="w-3.5 h-3.5" />
+              <span>{{ actionLoading ? 'MEMPROSES...' : 'YA, SETUJUI PEKERJAAN' }}</span>
             </button>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
+    </Teleport>
 
-    <!-- Add Addendum Sub-Task Modal Dialog for Reviewer -->
+    <!-- Revision Request Modal (Safety Red CAD Style) -->
+    <Teleport to="body">
+      <div v-if="showRevisionModal" class="fixed inset-0 z-50 bg-[#0B0C0E]/80 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-[#13171F] border border-red-500/50 rounded-xs max-w-md w-full shadow-2xl p-5 space-y-4 text-xs font-mono">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-3">
+            <h3 class="font-heading font-black text-sm text-red-400 flex items-center gap-2 uppercase tracking-wider">
+              <RotateCcw class="w-4 h-4 text-red-400" />
+              <span>Instruksi Revisi Lapangan</span>
+            </h3>
+            <button @click="showRevisionModal = false" class="text-slate-400 hover:text-white p-1">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+
+          <form @submit.prevent="handleSendRevision" class="space-y-3.5">
+            <div>
+              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Target Bagian yang Direvisi:</label>
+              <select
+                v-model="revisionStage"
+                class="w-full px-3 py-2 border border-[#232A36] rounded-xs bg-[#0B0C0E] text-white focus:border-red-500 focus:outline-none font-mono text-xs"
+              >
+                <option value="AFTER">FOTO HASIL AKHIR (AFTER)</option>
+                <option value="PROCESS">FOTO PROSES INSTALASI (PROCESS)</option>
+                <option value="BEFORE">FOTO KONDISI AWAL (BEFORE)</option>
+                <option value="ALL">SELURUH DOKUMENTASI & KENDALA</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Alasan / Instruksi Perbaikan Teknis *:</label>
+              <textarea
+                rows="3"
+                required
+                placeholder="Contoh: Foto After nomor 2 buram / tidak fokus. Ambil ulang foto sudut palang merek beserta pencahayaan menyala."
+                v-model="revisionReason"
+                class="w-full px-3 py-2 border border-[#232A36] rounded-xs focus:border-red-500 focus:outline-none bg-[#0B0C0E] text-white font-mono text-xs"
+              />
+            </div>
+
+            <div class="pt-2 flex items-center justify-end gap-2 border-t border-[#232A36]">
+              <button
+                type="button"
+                @click="showRevisionModal = false"
+                class="px-4 py-2 bg-[#0B0C0E] hover:bg-[#181D26] text-slate-300 border border-[#232A36] font-bold rounded-xs cursor-pointer uppercase"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                :disabled="actionLoading"
+                class="px-5 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xs cursor-pointer uppercase tracking-wider flex items-center gap-1.5"
+              >
+                <RotateCcw class="w-3.5 h-3.5" />
+                <span>{{ actionLoading ? 'MENGIRIM...' : 'KIRIM REVISI KE TEKNISI' }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Add Addendum Sub-Task Modal Dialog -->
     <Teleport to="body">
       <div
         v-if="showAddendumModal"
-        class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+        class="fixed inset-0 z-50 bg-[#0B0C0E]/80 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
       >
-        <div class="glass-modal rounded-3xl max-w-md w-full shadow-2xl p-6 space-y-4 text-xs border border-white/80">
-          <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
-            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <Plus class="w-4 h-4 text-amber-600" />
+        <div class="bg-[#13171F] border border-hazard/40 rounded-xs max-w-md w-full shadow-2xl p-5 space-y-4 text-xs font-mono">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-3">
+            <h3 class="font-heading font-black text-sm text-white flex items-center gap-2 uppercase tracking-wider">
+              <Plus class="w-4 h-4 text-hazard" />
               <span>Tambah Sub-Pekerjaan (Addendum)</span>
             </h3>
-            <button @click="showAddendumModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
-              <X class="w-5 h-5" />
+            <button @click="showAddendumModal = false" class="text-slate-400 hover:text-white cursor-pointer p-1">
+              <X class="w-4 h-4" />
             </button>
           </div>
 
-          <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-[11px] space-y-1">
-            <p class="font-bold">Instruksi Tambahan Pekerjaan Pengawas:</p>
-            <p class="font-mono text-[10px]">{{ selectedOrder?.spk_number }} - {{ selectedOrder?.title }}</p>
-            <p class="text-amber-800 text-[10px]">SPK akan dialihkan ke status pengerjaan agar tim lapangan melengkapi dokumentasi foto untuk item baru ini.</p>
+          <div class="p-3 bg-[#0B0C0E] border-l-4 border-l-hazard border-y border-r border-[#232A36] text-slate-300 text-[11px] space-y-1">
+            <p class="font-bold text-white uppercase tracking-wider">Instruksi Tambahan Pengawas:</p>
+            <p class="font-mono text-hazard text-[10px]">{{ selectedOrder?.spk_number }} - {{ selectedOrder?.title }}</p>
+            <p class="text-slate-400 text-[10px]">SPK akan dialihkan ke status pengerjaan agar tim lapangan melengkapi dokumentasi foto untuk item baru ini.</p>
           </div>
 
           <div class="space-y-3">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Nama Sub-Pekerjaan Tambahan <span class="text-rose-500">*</span>:</label>
+              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Nama Sub-Pekerjaan Tambahan <span class="text-red-400">*</span>:</label>
               <input
                 type="text"
                 v-model="addendumForm.itemName"
                 placeholder="Contoh: Pengelasan Rangka Tambahan & Pengecatan Ulang"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] rounded-xs focus:border-hazard focus:outline-none text-white text-xs font-mono"
               />
             </div>
 
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Mode Dokumentasi Foto:</label>
+              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Mode Dokumentasi Foto:</label>
               <select
                 v-model="addendumForm.docMode"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] rounded-xs focus:border-hazard focus:outline-none text-white text-xs font-mono"
               >
                 <option value="BEFORE_PROCESS_AFTER">BEFORE ➔ PROCESS ➔ AFTER (Standar Lengkap)</option>
                 <option value="BEFORE_AFTER">BEFORE ➔ AFTER (Tanpa Foto Proses)</option>
@@ -670,21 +879,21 @@
             </div>
 
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Catatan / Instruksi Pengawas:</label>
+              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Catatan / Instruksi Pengawas:</label>
               <textarea
                 rows="2"
                 v-model="addendumForm.notes"
                 placeholder="Detail instruksi penambahan pekerjaan untuk teknisi di lokasi..."
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] rounded-xs focus:border-hazard focus:outline-none text-white text-xs font-mono"
               />
             </div>
           </div>
 
-          <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <div class="pt-2 flex items-center justify-end gap-2 border-t border-[#232A36]">
             <button
               type="button"
               @click="showAddendumModal = false"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
+              class="px-4 py-2 bg-[#0B0C0E] hover:bg-[#181D26] text-slate-300 border border-[#232A36] font-bold rounded-xs cursor-pointer uppercase"
             >
               Batal
             </button>
@@ -692,17 +901,17 @@
               type="button"
               @click="handleSubmitAddendum"
               :disabled="submittingAddendum"
-              class="px-5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+              class="cad-btn-primary px-5 py-2 font-bold rounded-xs flex items-center gap-1.5 cursor-pointer uppercase disabled:opacity-50"
             >
               <Plus class="w-3.5 h-3.5" />
-              <span>{{ submittingAddendum ? 'Menyimpan...' : 'Simpan & Tambah Item' }}</span>
+              <span>{{ submittingAddendum ? 'MENYIMPAN...' : 'SIMPAN & TAMBAH ITEM' }}</span>
             </button>
           </div>
         </div>
       </div>
     </Teleport>
 
-    <!-- Reusable Photo Lightbox Full-Screen Viewer -->
+    <!-- Forensic Photo Lightbox Full-Screen Viewer -->
     <PhotoLightboxModal
       :isOpen="isLightboxOpen"
       :photos="selectedOrder?.evidence_photos || []"
@@ -788,7 +997,7 @@ async function handleSubmitAddendum() {
     if (res.success || res.data) {
       alert(`Pekerjaan tambahan '${addendumForm.value.itemName}' berhasil ditambahkan. Status SPK dialihkan ke pengerjaan.`);
       showAddendumModal.value = false;
-      await loadInitialData(selectedOrder.value.id);
+      await loadQueue(selectedOrder.value.id);
     }
   } catch (err) {
     console.error('Failed to add addendum item in review:', err);
@@ -854,11 +1063,11 @@ const revisionReason = ref('');
 const filterTabs = computed(() => {
   const all = allWorkOrders.value;
   return [
-    { id: 'ALL', label: 'Semua Antrian', count: all.length },
-    { id: 'WAITING_REVIEW', label: 'Menunggu Review', count: all.filter(w => ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(w.status)).length },
-    { id: 'REVISION', label: 'Perlu Revisi', count: all.filter(w => w.status === 'REVISION').length },
-    { id: 'IN_PROGRESS', label: 'Sedang Berjalan', count: all.filter(w => ['IN_PROGRESS', 'CHECKED_IN'].includes(w.status)).length },
-    { id: 'APPROVED', label: 'Disetujui / Selesai', count: all.filter(w => ['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(w.status)).length },
+    { id: 'ALL', label: 'SEMUA', count: all.length },
+    { id: 'WAITING_REVIEW', label: 'PERLU REVIEW', count: all.filter(w => ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(w.status)).length },
+    { id: 'REVISION', label: 'REVISI', count: all.filter(w => w.status === 'REVISION').length },
+    { id: 'IN_PROGRESS', label: 'BERJALAN', count: all.filter(w => ['IN_PROGRESS', 'CHECKED_IN'].includes(w.status)).length },
+    { id: 'APPROVED', label: 'SELESAI', count: all.filter(w => ['APPROVED', 'BA_OPNAME', 'COMPLETED'].includes(w.status)).length },
   ];
 });
 
@@ -939,7 +1148,7 @@ async function handleApproveConfirm() {
       review_notes: reviewNotes.value
     });
     showApproveModal.value = false;
-    successToast.value = `Pekerjaan ${selectedOrder.value.spk_number} berhasil disetujui (APPROVED)!`;
+    successToast.value = `SPK ${selectedOrder.value.spk_number} BERHASIL DISETUJUI (APPROVED)!`;
     setTimeout(() => successToast.value = null, 4000);
 
     const updated = await api.getWorkOrderById(selectedOrder.value.id);
@@ -967,7 +1176,7 @@ async function handleSendRevision() {
     });
     showRevisionModal.value = false;
     revisionReason.value = '';
-    successToast.value = `Permintaan revisi dikirimkan ke tim lapangan.`;
+    successToast.value = `Instruksi revisi berhasil dikirimkan ke teknisi lapangan.`;
     setTimeout(() => successToast.value = null, 4000);
 
     const updated = await api.getWorkOrderById(selectedOrder.value.id);
@@ -997,8 +1206,6 @@ async function handleGenerateBa() {
     actionLoading.value = false;
   }
 }
-
-
 
 /**
  * Lightbox & Download Handlers

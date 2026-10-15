@@ -1,74 +1,78 @@
 <template>
-  <div class="space-y-5">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/80 p-5 rounded-3xl border border-slate-200/80 shadow-xs">
+  <div class="space-y-4 font-mono">
+    <!-- Header (CAD Blueprint Style) -->
+    <div class="bg-[#13171F] border border-[#232A36] p-4 rounded-xs flex flex-col md:flex-row md:items-center justify-between gap-3 relative overflow-hidden">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-900 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-brand-900/20">
+        <div class="w-10 h-10 rounded-xs bg-[#0B0C0E] border border-hazard/40 flex items-center justify-center text-hazard shrink-0">
           <MapPin class="w-5 h-5" />
         </div>
         <div>
-          <h2 class="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Master Area & Wilayah Operasional</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 text-brand-900 font-mono">
-              {{ areas.length }} Area
+          <div class="flex items-center gap-2">
+            <h2 class="text-base sm:text-lg font-heading font-black text-white uppercase tracking-wider">
+              Master Area & Wilayah Operasional
+            </h2>
+            <span class="bg-hazard/10 text-hazard border border-hazard/30 text-[9px] font-mono px-1.5 py-0.2 rounded-none font-bold uppercase">
+              {{ areas.length }} REGION
             </span>
-          </h2>
-          <p class="text-xs text-slate-500 font-medium">Cakupan wilayah operasional, kota, kabupaten, dan provinsi penugasan SPK.</p>
+          </div>
+          <p class="text-xs text-slate-400 font-mono mt-0.5">
+            Cakupan wilayah operasional, kota, kabupaten, dan provinsi penugasan SPK lapangan.
+          </p>
         </div>
       </div>
 
       <button
         @click="openAddModal"
-        class="px-4 py-2.5 bg-gradient-to-r from-brand-900 via-brand-800 to-brand-700 hover:from-brand-800 hover:to-brand-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-brand-900/20 active:scale-95 transition-all self-start sm:self-auto cursor-pointer"
+        class="cad-btn-primary px-4 py-2 text-xs font-bold flex items-center gap-2 cursor-pointer uppercase active:scale-95 transition-all self-start sm:self-auto"
       >
         <Plus class="w-4 h-4" />
         <span>Tambah Area Baru</span>
       </button>
     </div>
 
-    <!-- Table Container -->
-    <div class="glass-card rounded-3xl border border-white/80 shadow-glass overflow-hidden">
+    <!-- Table Container (CAD High Density) -->
+    <div class="bg-[#13171F] border border-[#232A36] rounded-xs overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-100/70 text-slate-600 font-bold border-b border-slate-200/80">
+        <table class="w-full text-left text-xs font-mono">
+          <thead class="bg-[#0E1117] text-slate-400 font-bold border-b border-[#232A36] uppercase text-[10px] tracking-wider">
             <tr>
-              <th class="py-3.5 px-4">Nama Wilayah Area</th>
-              <th class="py-3.5 px-4">Kota / Kabupaten</th>
-              <th class="py-3.5 px-4">Provinsi</th>
-              <th class="py-3.5 px-4">Kecamatan</th>
-              <th class="py-3.5 px-4 text-center w-28">Aksi</th>
+              <th class="py-3 px-4">Nama Wilayah Area</th>
+              <th class="py-3 px-4">Kota / Kabupaten</th>
+              <th class="py-3 px-4">Provinsi</th>
+              <th class="py-3 px-4">Kecamatan</th>
+              <th class="py-3 px-4 text-center w-28">Aksi</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100/80 text-slate-700">
+          <tbody class="divide-y divide-[#1C2028] text-slate-300">
             <template v-if="loading">
               <tr>
-                <td colspan="5" class="py-12 text-center text-slate-400 font-medium">
-                  <div class="flex flex-col items-center justify-center gap-2">
-                    <div class="w-6 h-6 border-2 border-brand-900 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Memuat data master area...</span>
-                  </div>
+                <td colspan="5" class="py-12 text-center text-slate-500 font-medium">
+                  <div class="w-6 h-6 border-2 border-hazard border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <span>MEMUAT_DATA_MASTER_AREA...</span>
                 </td>
               </tr>
             </template>
             <template v-else-if="areas.length > 0">
-              <tr v-for="item in areas" :key="item.id" class="hover:bg-brand-50/30 transition-colors">
-                <td class="py-3.5 px-4 font-bold text-slate-900">{{ item.name }}</td>
-                <td class="py-3.5 px-4 font-semibold text-slate-800">{{ item.city || '-' }}</td>
-                <td class="py-3.5 px-4 text-slate-600">{{ item.province || '-' }}</td>
-                <td class="py-3.5 px-4 text-slate-500">{{ item.district || '-' }}</td>
+              <tr v-for="item in areas" :key="item.id" class="hover:bg-[#181D26] transition-colors">
+                <td class="py-3.5 px-4 font-heading font-black text-white uppercase text-xs">
+                  {{ item.name }}
+                </td>
+                <td class="py-3.5 px-4 font-bold text-slate-200">{{ item.city || '-' }}</td>
+                <td class="py-3.5 px-4 text-slate-400">{{ item.province || '-' }}</td>
+                <td class="py-3.5 px-4 text-slate-500 text-[11px]">{{ item.district || '-' }}</td>
                 <td class="py-3.5 px-4 text-center">
                   <div class="flex items-center justify-center gap-1.5">
                     <button
                       @click="openEditModal(item)"
                       title="Edit Area"
-                      class="p-1.5 rounded-lg bg-slate-100 hover:bg-brand-100 hover:text-brand-900 text-slate-600 transition-colors active:scale-90 cursor-pointer"
+                      class="p-1 rounded-none bg-[#0B0C0E] hover:bg-[#181D26] hover:text-white text-slate-400 border border-[#232A36] transition-colors cursor-pointer"
                     >
                       <Pencil class="w-3.5 h-3.5" />
                     </button>
                     <button
                       @click="handleDelete(item)"
                       title="Hapus Area"
-                      class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-100 hover:text-rose-700 text-slate-600 transition-colors active:scale-90 cursor-pointer"
+                      class="p-1 rounded-none bg-[#0B0C0E] hover:bg-red-950/80 hover:text-red-400 text-slate-400 border border-[#232A36] transition-colors cursor-pointer"
                     >
                       <Trash2 class="w-3.5 h-3.5" />
                     </button>
@@ -78,7 +82,9 @@
             </template>
             <template v-else>
               <tr>
-                <td colspan="5" class="py-12 text-center text-slate-400 font-medium">Belum ada area operasional.</td>
+                <td colspan="5" class="py-12 text-center text-slate-500 font-medium border border-dashed border-[#232A36]">
+                  [ BELUM ADA AREA OPERASIONAL ]
+                </td>
               </tr>
             </template>
           </tbody>
@@ -86,79 +92,81 @@
       </div>
     </div>
 
-    <!-- Modal Form -->
-    <div v-if="showModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="glass-modal rounded-3xl max-w-md w-full shadow-2xl p-6 space-y-4 text-xs border border-white/80">
-        <div class="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
-          <h3 class="font-black text-sm text-slate-900">
-            {{ isEditing ? 'Edit' : 'Tambah' }} Master Area
-          </h3>
-          <button @click="showModal = false" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
-            <X class="w-4 h-4" />
-          </button>
+    <!-- Modal Form (CAD Style) -->
+    <Teleport to="body">
+      <div v-if="showModal" class="fixed inset-0 z-50 bg-[#0B0C0E]/80 backdrop-blur-xs flex items-center justify-center p-4 font-mono">
+        <div class="bg-[#13171F] border border-hazard/40 rounded-xs max-w-md w-full shadow-2xl p-5 space-y-4 text-xs">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-3">
+            <h3 class="font-heading font-black text-sm text-white uppercase tracking-wider">
+              {{ isEditing ? 'Edit' : 'Tambah' }} Master Area
+            </h3>
+            <button @click="showModal = false" class="text-slate-400 hover:text-white p-1">
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+
+          <form @submit.prevent="handleSubmit" class="space-y-3">
+            <div>
+              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Nama Area Operasional *</label>
+              <input
+                required
+                type="text"
+                placeholder="CONTOH: JAKARTA BARAT, BANDUNG RAYA"
+                v-model="formInput.name"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] rounded-xs text-white focus:border-hazard text-xs uppercase"
+              />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Kota / Kabupaten *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Kota Jakarta Barat"
+                  v-model="formInput.city"
+                  class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] rounded-xs text-white focus:border-hazard text-xs"
+                />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Provinsi *</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="DKI Jakarta"
+                  v-model="formInput.province"
+                  class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] rounded-xs text-white focus:border-hazard text-xs"
+                />
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider">Kecamatan (Opsional)</label>
+              <input
+                type="text"
+                placeholder="Grogol Petamburan"
+                v-model="formInput.district"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] rounded-xs text-white focus:border-hazard text-xs"
+              />
+            </div>
+
+            <div class="pt-3 border-t border-[#232A36] flex items-center justify-end gap-2">
+              <button
+                type="button"
+                @click="showModal = false"
+                class="px-4 py-2 bg-[#0B0C0E] hover:bg-[#181D26] text-slate-300 border border-[#232A36] font-bold rounded-xs cursor-pointer uppercase"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                class="cad-btn-primary px-5 py-2 font-bold rounded-xs uppercase cursor-pointer active:scale-95 transition-all"
+              >
+                {{ isEditing ? 'SIMPAN PERUBAHAN' : 'SIMPAN AREA' }}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form @submit.prevent="handleSubmit" class="space-y-3">
-          <div>
-            <label class="block font-bold mb-1">Nama Area Operasional *</label>
-            <input
-              required
-              type="text"
-              placeholder="Contoh: Jakarta Barat, Bandung Raya"
-              v-model="formInput.name"
-              class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block font-bold mb-1">Kota / Kabupaten *</label>
-              <input
-                required
-                type="text"
-                placeholder="Kota Jakarta Barat"
-                v-model="formInput.city"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-            <div>
-              <label class="block font-bold mb-1">Provinsi *</label>
-              <input
-                required
-                type="text"
-                placeholder="DKI Jakarta"
-                v-model="formInput.province"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-          </div>
-          <div>
-            <label class="block font-bold mb-1">Kecamatan (Opsional)</label>
-            <input
-              type="text"
-              placeholder="Grogol Petamburan"
-              v-model="formInput.district"
-              class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-
-          <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              @click="showModal = false"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              class="px-5 py-2 bg-brand-900 text-white font-bold rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer"
-            >
-              {{ isEditing ? 'Simpan Perubahan' : 'Simpan Area' }}
-            </button>
-          </div>
-        </form>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 

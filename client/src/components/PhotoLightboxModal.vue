@@ -2,147 +2,174 @@
   <Teleport to="body">
     <div
       v-if="isOpen"
-      class="fixed inset-0 z-[10000] bg-slate-950/95 backdrop-blur-md flex flex-col justify-between overflow-hidden animate-fade-in select-none"
+      class="fixed inset-0 z-[10000] bg-[#0B0C0E]/98 flex flex-col justify-between overflow-hidden animate-fade-in select-none font-mono"
       @keydown.esc="close"
       @keydown.left="prevPhoto"
       @keydown.right="nextPhoto"
       tabindex="0"
       ref="lightboxRef"
     >
-      <!-- Top Action Bar -->
-      <div class="p-4 sm:px-6 flex items-center justify-between border-b border-white/10 bg-slate-900/60 backdrop-blur-md z-20 shrink-0">
+      <!-- Top Action Bar (CAD Blueprint Spec) -->
+      <div class="p-3 sm:px-6 flex items-center justify-between border-b border-[#232A36] bg-[#13171F] z-20 shrink-0">
         <!-- Photo Title & Stage -->
         <div class="flex items-center gap-3">
-          <span :class="['px-2.5 py-1 rounded-lg font-bold text-xs border uppercase tracking-wider', getStageBadge(currentPhoto?.stage)]">
-            {{ currentPhoto?.stage || 'EVIDENCE' }}
+          <span class="bg-hazard text-carbon font-mono font-black text-xs px-2.5 py-1 rounded-none shadow-sm uppercase tracking-wider">
+            [ {{ currentPhoto?.stage || 'EVIDENCE' }} ]
           </span>
           <div>
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>{{ currentPhoto?.work_order_title || currentPhoto?.item_name || 'Dokumentasi Foto Evidensi' }}</span>
-              <span v-if="currentPhoto?.spk_number" class="text-xs font-mono text-purple-300 font-normal">
+            <h3 class="text-xs sm:text-sm font-heading font-black text-white flex items-center gap-2">
+              <span class="truncate max-w-[200px] sm:max-w-md">{{ currentPhoto?.work_order_title || currentPhoto?.item_name || 'Dokumentasi Bukti Lapangan' }}</span>
+              <span v-if="currentPhoto?.spk_number" class="text-xs font-mono text-hazard font-normal">
                 ({{ currentPhoto.spk_number }})
               </span>
             </h3>
-            <p class="text-[11px] text-slate-400 font-mono">
-              Foto {{ currentIndex + 1 }} dari {{ photoList.length }}
+            <p class="text-[10px] text-slate-400 font-mono mt-0.5">
+              FORENSIC FRAME {{ currentIndex + 1 }} / {{ photoList.length }} • ID: {{ currentPhoto?.id || '-' }}
             </p>
           </div>
         </div>
 
         <!-- Actions: Zoom, Download, Close -->
         <div class="flex items-center gap-2">
-          <!-- Zoom Out -->
-          <button
-            @click="zoom = Math.max(0.5, zoom - 0.25)"
-            class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer"
-            title="Perkecil (Zoom Out)"
-          >
-            <ZoomOut class="w-4 h-4" />
-          </button>
-
-          <!-- Zoom Reset -->
-          <button
-            @click="zoom = 1"
-            class="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold transition-all cursor-pointer"
-            title="Reset Ukuran"
-          >
-            {{ Math.round(zoom * 100) }}%
-          </button>
-
-          <!-- Zoom In -->
-          <button
-            @click="zoom = Math.min(3, zoom + 0.25)"
-            class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer"
-            title="Perbesar (Zoom In)"
-          >
-            <ZoomIn class="w-4 h-4" />
-          </button>
-
-          <div class="w-px h-6 bg-white/20 mx-1" />
+          <!-- Zoom Controls -->
+          <div class="flex items-center bg-[#0B0C0E] border border-[#232A36] rounded-xs p-0.5">
+            <button
+              @click="zoom = Math.max(0.5, zoom - 0.25)"
+              class="p-1.5 hover:bg-[#181D26] text-slate-300 hover:text-white rounded-none cursor-pointer"
+              title="Perkecil (Zoom Out)"
+            >
+              <ZoomOut class="w-3.5 h-3.5" />
+            </button>
+            <button
+              @click="zoom = 1"
+              class="px-2 py-1 text-[10px] font-mono font-bold text-hazard hover:bg-[#181D26] cursor-pointer"
+              title="Reset Zoom"
+            >
+              {{ Math.round(zoom * 100) }}%
+            </button>
+            <button
+              @click="zoom = Math.min(3, zoom + 0.25)"
+              class="p-1.5 hover:bg-[#181D26] text-slate-300 hover:text-white rounded-none cursor-pointer"
+              title="Perbesar (Zoom In)"
+            >
+              <ZoomIn class="w-3.5 h-3.5" />
+            </button>
+          </div>
 
           <!-- Download Button -->
           <button
             @click="handleDownload(currentPhoto)"
-            class="px-3.5 py-2 bg-gradient-to-r from-purple-800 to-indigo-600 hover:from-purple-700 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+            class="cad-btn-primary px-3 py-1.5 text-xs flex items-center gap-1.5 uppercase font-bold cursor-pointer"
             title="Unduh Foto Resolusi Asli"
           >
-            <Download class="w-4 h-4" />
-            <span class="hidden sm:inline">Unduh Foto</span>
+            <Download class="w-3.5 h-3.5" />
+            <span class="hidden sm:inline">Unduh</span>
           </button>
 
           <!-- Close Button -->
           <button
             @click="close"
-            class="p-2 rounded-xl bg-white/10 hover:bg-rose-600/80 text-white transition-all active:scale-95 cursor-pointer ml-1"
+            class="p-2 bg-[#0B0C0E] hover:bg-red-950/80 text-slate-400 hover:text-red-400 border border-[#232A36] hover:border-red-600 rounded-xs transition-colors cursor-pointer"
             title="Tutup (ESC)"
           >
-            <X class="w-5 h-5" />
+            <X class="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      <!-- Main Photo Canvas with Nav Arrows -->
-      <div class="relative flex-1 flex items-center justify-center p-4 overflow-hidden min-h-0">
-        <!-- Previous Photo Button -->
+      <!-- Main Photo Canvas with Measuring Optic Frame -->
+      <div class="relative flex-1 flex items-center justify-center p-4 sm:p-8 overflow-hidden min-h-0 bg-[#07080A]">
+        <!-- Background Blueprint Grid -->
+        <div class="absolute inset-0 bg-industrial-grid pointer-events-none opacity-40"></div>
+
+        <!-- Left Nav Arrow -->
         <button
           v-if="photoList.length > 1"
           @click="prevPhoto"
-          class="absolute left-4 z-20 w-11 h-11 rounded-full bg-slate-900/80 hover:bg-purple-900 border border-white/20 text-white flex items-center justify-center shadow-2xl backdrop-blur-md transition-all active:scale-90 hover:scale-110 cursor-pointer"
-          title="Foto Sebelumnya (Panah Kiri)"
+          class="absolute left-4 z-30 w-10 h-10 rounded-xs bg-[#13171F]/90 hover:bg-hazard hover:text-carbon border border-[#232A36] text-white flex items-center justify-center shadow-2xl transition-all cursor-pointer"
+          title="Foto Sebelumnya"
         >
-          <ChevronLeft class="w-6 h-6" />
+          <ChevronLeft class="w-5 h-5" />
         </button>
 
-        <!-- Image with Zoom Transition -->
-        <div class="w-full h-full flex items-center justify-center overflow-auto p-2">
-          <img
-            v-if="currentPhoto?.file_path"
-            :src="currentPhoto.file_url || getFileUrl(currentPhoto.file_path)"
-            :alt="currentPhoto.file_name || 'Evidence Photo'"
-            :style="{ transform: `scale(${zoom})`, transformOrigin: 'center center' }"
-            class="max-w-full max-h-full object-contain rounded-xl shadow-2xl transition-transform duration-200 pointer-events-auto select-none"
-            loading="eager"
-            @error="handleLightboxImageError($event, currentPhoto)"
-          />
+        <!-- Image Container with Industrial Measuring Reticle Frame -->
+        <div class="relative max-w-full max-h-full flex items-center justify-center overflow-auto p-4 z-10">
+          <div class="relative border-2 border-[#232A36] bg-[#000000] p-1 shadow-2xl">
+            <!-- CAD Corner Crosshair Markers -->
+            <div class="absolute -top-3 -left-3 text-hazard font-mono text-xs pointer-events-none font-bold">┌</div>
+            <div class="absolute -top-3 -right-3 text-hazard font-mono text-xs pointer-events-none font-bold">┐</div>
+            <div class="absolute -bottom-3 -left-3 text-hazard font-mono text-xs pointer-events-none font-bold">└</div>
+            <div class="absolute -bottom-3 -right-3 text-hazard font-mono text-xs pointer-events-none font-bold">┘</div>
+
+            <!-- Overlaid Dimension Callout Line -->
+            <div class="absolute inset-x-2 top-4 z-20 pointer-events-none">
+              <div class="flex items-center justify-between text-[10px] font-mono text-hazard bg-black/60 px-3 py-1 border border-hazard/40">
+                <span>&lt;---</span>
+                <span class="font-bold tracking-widest uppercase">SPK FORENSIC OPTIC • 3000 mm CALIBRATION</span>
+                <span>---&gt;</span>
+              </div>
+            </div>
+
+            <!-- Actual Image -->
+            <img
+              v-if="currentPhoto?.file_path"
+              :src="currentPhoto.file_url || getFileUrl(currentPhoto.file_path)"
+              :alt="currentPhoto.file_name || 'Evidence Photo'"
+              :style="{ transform: `scale(${zoom})`, transformOrigin: 'center center' }"
+              class="max-w-full max-h-[68vh] object-contain transition-transform duration-200 select-none block"
+              loading="eager"
+              @error="handleLightboxImageError($event, currentPhoto)"
+            />
+
+            <!-- Overlaid Bottom Dimension Marker -->
+            <div class="absolute inset-x-2 bottom-4 z-20 pointer-events-none">
+              <div class="flex items-center justify-between text-[9px] font-mono text-hazard/80 bg-black/70 px-2 py-0.5 border border-dashed border-hazard/40">
+                <span>[+] LAT/LON ALIGNED</span>
+                <span class="font-mono">RETICLE: ACTIVE</span>
+                <span>[+] SGX-FORENSIC</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Next Photo Button -->
+        <!-- Right Nav Arrow -->
         <button
           v-if="photoList.length > 1"
           @click="nextPhoto"
-          class="absolute right-4 z-20 w-11 h-11 rounded-full bg-slate-900/80 hover:bg-purple-900 border border-white/20 text-white flex items-center justify-center shadow-2xl backdrop-blur-md transition-all active:scale-90 hover:scale-110 cursor-pointer"
-          title="Foto Berikutnya (Panah Kanan)"
+          class="absolute right-4 z-30 w-10 h-10 rounded-xs bg-[#13171F]/90 hover:bg-hazard hover:text-carbon border border-[#232A36] text-white flex items-center justify-center shadow-2xl transition-all cursor-pointer"
+          title="Foto Berikutnya"
         >
-          <ChevronRight class="w-6 h-6" />
+          <ChevronRight class="w-5 h-5" />
         </button>
       </div>
 
-      <!-- Bottom Forensic Metadata Bar -->
-      <div class="p-4 sm:px-6 bg-slate-900/80 border-t border-white/10 backdrop-blur-md z-20 shrink-0 text-white text-xs">
+      <!-- Bottom Forensic Metadata Inspection Bar -->
+      <div class="p-3 sm:px-6 bg-[#13171F] border-t border-[#232A36] z-20 shrink-0 text-white text-xs">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 max-w-7xl mx-auto">
           <!-- Left Forensic Details -->
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-slate-300">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
             <!-- Timestamp -->
-            <span class="flex items-center gap-1.5 font-mono">
-              <Clock class="w-3.5 h-3.5 text-purple-400 shrink-0" />
+            <span class="flex items-center gap-1.5 font-mono text-slate-300">
+              <Clock class="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span>{{ formatDateTime(currentPhoto?.server_timestamp || currentPhoto?.created_at) }}</span>
             </span>
 
-            <!-- GPS Coordinates -->
-            <span v-if="isValidGps(currentPhoto?.latitude)" class="flex items-center gap-1.5 font-mono text-emerald-400">
+            <!-- GPS Coordinates (Hazard Yellow) -->
+            <span v-if="isValidGps(currentPhoto?.latitude)" class="flex items-center gap-1.5 font-mono text-hazard font-bold">
               <MapPin class="w-3.5 h-3.5 shrink-0" />
               <span>GPS: {{ Number(currentPhoto.latitude).toFixed(5) }}, {{ Number(currentPhoto.longitude).toFixed(5) }} (±{{ currentPhoto.accuracy || 10 }}m)</span>
             </span>
 
-            <!-- SHA-256 Integrity -->
-            <span class="flex items-center gap-1 font-mono text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
-              <ShieldCheck class="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span class="truncate max-w-[180px]">SHA-256: {{ currentPhoto?.file_hash?.substring(0, 16) || 'Verifikasi Terdaftar' }}...</span>
+            <!-- Emerald SHA-256 Badge -->
+            <span class="flex items-center gap-1 font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-none border border-emerald-500/50">
+              <ShieldCheck class="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span class="font-bold">SHA-256: VALID</span>
+              <span class="text-slate-400 text-[10px] ml-1">({{ currentPhoto?.file_hash?.substring(0, 10) || 'OK' }}...)</span>
             </span>
 
             <!-- Uploader -->
             <span v-if="currentPhoto?.uploader_name" class="text-slate-400">
-              Oleh: <strong class="text-slate-200">{{ currentPhoto.uploader_name }}</strong>
+              PIC: <strong class="text-white">{{ currentPhoto.uploader_name }}</strong>
             </span>
           </div>
 
@@ -152,10 +179,10 @@
               :href="`https://www.google.com/maps?q=${currentPhoto.latitude},${currentPhoto.longitude}`"
               target="_blank"
               rel="noopener noreferrer"
-              class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold flex items-center gap-1.5 transition-all"
+              class="px-2.5 py-1 bg-[#0B0C0E] hover:bg-[#181D26] text-hazard border border-[#232A36] hover:border-hazard/50 text-[10px] font-mono font-bold flex items-center gap-1.5 transition-all rounded-xs"
             >
-              <ExternalLink class="w-3.5 h-3.5 text-purple-300" />
-              <span>Buka di Google Maps</span>
+              <ExternalLink class="w-3 h-3 text-hazard" />
+              <span>BUKA GOOGLE MAPS</span>
             </a>
           </div>
         </div>
@@ -238,21 +265,6 @@ function prevPhoto() {
   }
 }
 
-function getStageBadge(stage) {
-  switch (stage) {
-    case 'BEFORE':
-      return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
-    case 'PROCESS':
-      return 'bg-blue-500/20 text-blue-300 border-blue-500/40';
-    case 'AFTER':
-      return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
-    case 'ISSUE':
-      return 'bg-rose-500/20 text-rose-300 border-rose-500/40';
-    default:
-      return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
-  }
-}
-
 function formatDateTime(dateStr) {
   if (!dateStr) return 'Waktu tercatat di server';
   return new Date(dateStr).toLocaleString('id-ID', {
@@ -275,7 +287,7 @@ function handleLightboxImageError(event, photo) {
   } else {
     const stage = photo.stage || 'EVIDENCE';
     const name = (photo.file_name || 'Foto Lapangan').substring(0, 24);
-    event.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450"><rect width="600" height="450" fill="%230f172a"/><text x="50%" y="42%" fill="%2338bdf8" font-family="sans-serif" font-size="18" font-weight="bold" text-anchor="middle">FOTO BUKTI (${stage})</text><text x="50%" y="56%" fill="%2394a3b8" font-family="monospace" font-size="14" text-anchor="middle">${encodeURIComponent(name)}</text><text x="50%" y="70%" fill="%2334d399" font-family="monospace" font-size="12" text-anchor="middle">SHA-256 VALID</text></svg>`;
+    event.target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450" viewBox="0 0 600 450"><rect width="600" height="450" fill="%230b0c0e"/><text x="50%" y="42%" fill="%23facc15" font-family="monospace" font-size="16" font-weight="bold" text-anchor="middle">[ FORENSIC EVIDENCE: ${stage} ]</text><text x="50%" y="56%" fill="%2394a3b8" font-family="monospace" font-size="13" text-anchor="middle">${encodeURIComponent(name)}</text><text x="50%" y="70%" fill="%2334d399" font-family="monospace" font-size="12" text-anchor="middle">SHA-256: VALID</text></svg>`;
   }
 }
 

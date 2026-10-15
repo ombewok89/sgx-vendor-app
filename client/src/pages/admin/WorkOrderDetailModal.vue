@@ -1,28 +1,28 @@
 <template>
-  <div v-if="workOrderId" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-    <div class="glass-modal rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden my-6 flex flex-col max-h-[90vh] border border-white/80">
+  <div v-if="workOrderId" class="fixed inset-0 z-50 bg-[#0B0C0E]/85 flex items-center justify-center p-4 overflow-y-auto font-sans">
+    <div class="bg-[#13171F] rounded-xs max-w-4xl w-full shadow-2xl overflow-hidden my-6 flex flex-col max-h-[90vh] border border-[#FACC15]">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-slate-200/80 flex items-center justify-between bg-slate-100/60 shrink-0">
+      <div class="px-6 py-3.5 border-b border-[#232A36] flex items-center justify-between bg-[#0E1117] shrink-0 font-mono">
         <div>
           <div class="flex items-center gap-2">
-            <span class="font-mono font-bold text-xs bg-slate-200 px-2 py-0.5 rounded text-slate-800">
-              {{ workOrder?.spk_number || 'Memuat...' }}
+            <span class="font-mono font-black text-xs bg-[#FACC15] text-[#0B0C0E] px-2 py-0.5 rounded-xs border border-[#0B0C0E] uppercase tracking-wider">
+              SPK: {{ workOrder?.spk_number || 'MEMUAT...' }}
             </span>
             <StatusBadge :status="workOrder?.status" />
           </div>
-          <h3 class="font-black text-slate-900 text-base mt-1">{{ workOrder?.title }}</h3>
+          <h3 class="font-black text-white text-base mt-1 font-sans">{{ workOrder?.title }}</h3>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 font-mono">
           <!-- Share Live Tracking Button -->
           <button
             type="button"
             @click="showShareModal = true"
-            class="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 font-bold text-xs rounded-xl shadow-2xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            class="px-3 py-1.5 bg-[#1C2028] hover:bg-[#1A202C] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15] font-bold text-xs rounded-xs flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
             title="Bagikan Tautan Pemantauan Langsung (Live Tracking)"
           >
-            <Share2 class="w-3.5 h-3.5 text-purple-700" />
-            <span class="hidden sm:inline">Bagikan</span>
+            <Share2 class="w-3.5 h-3.5 text-[#FACC15]" />
+            <span class="hidden sm:inline">BAGIKAN</span>
           </button>
 
           <!-- Superuser Archive / Unarchive Action Buttons -->
@@ -32,7 +32,7 @@
               type="button"
               @click="handleArchiveSpk"
               :disabled="archiving"
-              class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+              class="px-3 py-1.5 bg-[#1C2028] hover:bg-[#1A202C] text-amber-300 border border-amber-400 font-bold text-xs rounded-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 uppercase"
               title="Arsipkan SPK yang telah selesai (Hanya Superuser)"
             >
               <Archive class="w-3.5 h-3.5" />
@@ -44,7 +44,7 @@
               type="button"
               @click="handleUnarchiveSpk"
               :disabled="archiving"
-              class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+              class="px-3 py-1.5 bg-[#1C2028] hover:bg-[#1A202C] text-[#10B981] border border-[#10B981] font-bold text-xs rounded-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 uppercase"
               title="Pulihkan SPK kembali ke daftar aktif"
             >
               <RotateCcw class="w-3.5 h-3.5" />
@@ -57,44 +57,44 @@
             v-if="isSupervisor"
             @click="isEditModalOpen = true"
             type="button"
-            class="px-3.5 py-2 bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-700 hover:to-indigo-600 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+            class="px-3 py-1.5 bg-[#1C2028] hover:bg-[#1A202C] text-white border border-[#232A36] hover:border-[#FACC15] font-bold text-xs rounded-xs flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
             title="Edit Data & Pengaturan SPK (Supervisor Only)"
           >
-            <Pencil class="w-3.5 h-3.5" />
-            <span>Edit SPK</span>
+            <Pencil class="w-3.5 h-3.5 text-[#FACC15]" />
+            <span>EDIT SPK</span>
           </button>
 
           <button
             @click="$emit('close')"
-            class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition-all cursor-pointer"
+            class="p-1.5 text-slate-400 hover:text-[#FACC15] hover:bg-[#1C2028] rounded-xs transition-colors cursor-pointer border border-[#232A36]"
           >
-            <X class="w-5 h-5" />
+            <X class="w-4 h-4" />
           </button>
         </div>
       </div>
 
       <!-- Content -->
-      <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-700 custom-scrollbar">
-        <div v-if="loading" class="py-16 text-center text-slate-400 font-medium">
-          Memuat detail lengkap pekerjaan SPK...
+      <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-300 custom-scrollbar">
+        <div v-if="loading" class="py-16 text-center text-slate-400 font-mono">
+          MEMUAT DETAIL LENGKAP PEKERJAAN SPK...
         </div>
 
         <template v-else-if="workOrder">
           <!-- Stepper Progress -->
-          <div class="glass-card rounded-2xl p-4 border border-white/60">
+          <div class="cad-surface p-4">
             <StepperProgress :status="workOrder.status" :progressPercent="workOrder.progress_percent" :hasBa="!!workOrder.ba_document" />
           </div>
 
           <!-- Archived SPK Banner -->
           <div
             v-if="workOrder.is_archived"
-            class="p-4 bg-amber-500/15 border border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md"
+            class="p-3 bg-[#1C2028] border border-amber-400/60 rounded-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-200 font-mono"
           >
-            <div class="flex items-center gap-2.5 text-amber-950">
-              <Archive class="w-5 h-5 text-amber-700 shrink-0" />
+            <div class="flex items-center gap-2.5">
+              <Archive class="w-4 h-4 text-amber-400 shrink-0" />
               <div>
-                <div class="font-bold text-sm">SPK Ini Telah Diarsipkan (Archived)</div>
-                <div class="text-[11px] text-amber-800">
+                <div class="font-bold text-xs uppercase text-amber-300">SPK Ini Telah Diarsipkan (Archived)</div>
+                <div class="text-[10px] text-slate-400">
                   Diarsipkan pada {{ workOrder.archived_at ? new Date(workOrder.archived_at).toLocaleString('id-ID') : 'sebelumnya' }}. Seluruh bukti dan riwayat tetap tersimpan aman.
                 </div>
               </div>
@@ -104,7 +104,7 @@
               type="button"
               @click="handleUnarchiveSpk"
               :disabled="archiving"
-              class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition-all disabled:opacity-50"
+              class="px-3 py-1.5 bg-[#13171F] hover:bg-[#1A202C] text-[#10B981] border border-[#10B981] font-bold text-xs rounded-xs cursor-pointer active:scale-95 transition-colors disabled:opacity-50 uppercase"
             >
               {{ archiving ? 'Memulihkan...' : 'Pulihkan ke Aktif' }}
             </button>
@@ -113,28 +113,28 @@
           <!-- Action Banners -->
           <div
             v-if="['SUBMITTED', 'IN_PROGRESS', 'UNDER_REVIEW'].includes(workOrder.status)"
-            class="p-4 bg-purple-500/10 border border-purple-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur-md"
+            class="p-3 bg-[#1C2028] border border-[#FACC15]/60 rounded-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono"
           >
-            <div class="flex items-center gap-2.5 text-purple-950">
-              <CheckCircle2 class="w-5 h-5 text-purple-600 shrink-0" />
+            <div class="flex items-center gap-2.5 text-slate-200">
+              <CheckCircle2 class="w-4 h-4 text-[#FACC15] shrink-0" />
               <div>
-                <div class="font-bold text-sm">Pekerjaan Siap Direview & Diverifikasi</div>
-                <div class="text-[11px] text-purple-700">Foto dokumentasi dan data verifikasi lapangan telah tersedia.</div>
+                <div class="font-bold text-xs uppercase text-[#FACC15]">Pekerjaan Siap Direview & Diverifikasi</div>
+                <div class="text-[10px] text-slate-400">Foto dokumentasi dan data verifikasi lapangan telah tersedia.</div>
               </div>
             </div>
             <div class="flex items-center gap-2">
               <button
                 @click="handleQuickApprove"
-                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all"
+                class="px-3 py-1.5 bg-[#10B981] hover:bg-emerald-400 text-[#0B0C0E] font-black text-xs rounded-xs cursor-pointer flex items-center gap-1.5 active:scale-95 transition-colors uppercase"
               >
-                <CheckCircle2 class="w-4 h-4" />
-                <span>Setujui (Approve)</span>
+                <CheckCircle2 class="w-3.5 h-3.5" />
+                <span>SETUJUI (APPROVE)</span>
               </button>
               <button
                 @click="handleGoToReview"
-                class="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer active:scale-95 transition-all"
+                class="px-3 py-1.5 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-black text-xs rounded-xs cursor-pointer active:scale-95 transition-colors uppercase"
               >
-                Buka Review Console →
+                REVIEW CONSOLE &rarr;
               </button>
             </div>
           </div>

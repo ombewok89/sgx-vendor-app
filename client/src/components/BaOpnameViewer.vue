@@ -1,20 +1,20 @@
 <template>
-  <div class="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-    <div class="glass-modal rounded-3xl max-w-5xl w-full shadow-2xl overflow-hidden border border-white/80 max-h-[95vh] flex flex-col my-auto ba-print-container">
+  <div class="fixed inset-0 z-[100] bg-[#0B0C0E]/90 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="bg-[#13171F] rounded-xs max-w-5xl w-full shadow-2xl overflow-hidden border border-[#232A36] max-h-[95vh] flex flex-col my-auto ba-print-container font-mono">
       
-      <!-- Modal Header & Flexible Print Configuration Bar (Non-Printable) -->
-      <div class="p-4 border-b border-slate-200/80 bg-white/90 backdrop-blur-md no-print shrink-0 space-y-3">
+      <!-- Modal Header & Flexible Print Configuration Bar (CAD Blueprint Style) -->
+      <div class="p-3.5 sm:px-5 border-b border-[#232A36] bg-[#13171F] no-print shrink-0 space-y-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-purple-900 flex items-center justify-center text-white shadow-xs">
+            <div class="w-9 h-9 rounded-xs bg-[#0B0C0E] border border-hazard/40 flex items-center justify-center text-hazard shrink-0">
               <ShieldCheck class="w-5 h-5" />
             </div>
             <div>
-              <h3 class="font-black text-sm text-slate-900">
+              <h3 class="font-heading font-black text-xs sm:text-sm text-white uppercase tracking-wider">
                 Dokumen Resmi Berita Acara (BA Opname) & Lampiran Foto
               </h3>
-              <p class="text-[10px] text-slate-500 font-mono">
-                {{ baData?.ba_number || 'BA/2026/08/0001' }} • {{ wo?.title || 'Proyek SGX' }}
+              <p class="text-[10px] text-slate-400 font-mono">
+                <span class="text-hazard font-bold">{{ baData?.ba_number || 'BA/2026/08/0001' }}</span> • {{ wo?.title || 'Proyek SGX' }}
               </p>
             </div>
           </div>
@@ -22,15 +22,15 @@
             <button
               type="button"
               @click="handlePrint"
-              class="px-4 py-2 bg-gradient-to-r from-purple-900 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs active:scale-95 transition-all cursor-pointer"
+              class="cad-btn-primary px-3.5 py-1.5 text-xs font-bold flex items-center gap-2 uppercase cursor-pointer active:scale-95 transition-all"
             >
               <Printer class="w-4 h-4" />
-              <span>Cetak / Download PDF</span>
+              <span>Cetak / PDF</span>
             </button>
             <button
               type="button"
               @click="$emit('close')"
-              class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all cursor-pointer font-bold text-sm"
+              class="p-1.5 text-slate-400 hover:text-white hover:bg-[#0B0C0E] border border-transparent hover:border-[#232A36] rounded-xs transition-all cursor-pointer font-bold text-sm"
             >
               ✕
             </button>
@@ -38,30 +38,30 @@
         </div>
 
         <!-- Flexible Print Customizer Controls -->
-        <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="pt-2 border-t border-[#232A36] flex flex-wrap items-center justify-between gap-3 text-xs">
           <!-- Photo Layout Grid Selector -->
           <div class="flex items-center gap-2">
-            <span class="text-slate-500 font-bold text-[11px] flex items-center gap-1">
-              <LayoutGrid class="w-3.5 h-3.5 text-purple-700" />
-              <span>Ukuran & Grid Foto Lampiran:</span>
+            <span class="text-slate-400 font-bold text-[10px] flex items-center gap-1 uppercase">
+              <LayoutGrid class="w-3.5 h-3.5 text-hazard" />
+              <span>Grid Foto:</span>
             </span>
-            <div class="inline-flex rounded-xl bg-slate-100 p-0.5 border border-slate-200">
+            <div class="inline-flex rounded-none bg-[#0B0C0E] p-0.5 border border-[#232A36]">
               <button
                 type="button"
                 @click="photoGridCols = 2"
                 :class="[
-                  'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer',
-                  photoGridCols === 2 ? 'bg-white text-purple-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  'px-2 py-0.5 rounded-none text-[10px] font-bold transition-all cursor-pointer uppercase',
+                  photoGridCols === 2 ? 'bg-hazard text-carbon' : 'text-slate-400 hover:text-white'
                 ]"
               >
-                2 Kolom (Besar / HD)
+                2 Kolom (HD)
               </button>
               <button
                 type="button"
                 @click="photoGridCols = 3"
                 :class="[
-                  'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer',
-                  photoGridCols === 3 ? 'bg-white text-purple-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  'px-2 py-0.5 rounded-none text-[10px] font-bold transition-all cursor-pointer uppercase',
+                  photoGridCols === 3 ? 'bg-hazard text-carbon' : 'text-slate-400 hover:text-white'
                 ]"
               >
                 3 Kolom (Standar)
@@ -70,8 +70,8 @@
                 type="button"
                 @click="photoGridCols = 4"
                 :class="[
-                  'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer',
-                  photoGridCols === 4 ? 'bg-white text-purple-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  'px-2 py-0.5 rounded-none text-[10px] font-bold transition-all cursor-pointer uppercase',
+                  photoGridCols === 4 ? 'bg-hazard text-carbon' : 'text-slate-400 hover:text-white'
                 ]"
               >
                 4 Kolom (Kompak)
@@ -80,17 +80,17 @@
           </div>
 
           <!-- Photo Stage Filter & Checkboxes -->
-          <div class="flex items-center gap-3">
-            <label class="flex items-center gap-1.5 cursor-pointer select-none text-[11px] font-semibold text-slate-700">
-              <input type="checkbox" v-model="includePhotoAnnex" class="rounded text-purple-900 focus:ring-purple-500" />
-              <span>Cetak Lembar Lampiran Foto (Annex)</span>
+          <div class="flex items-center gap-3 text-[10px]">
+            <label class="flex items-center gap-1.5 cursor-pointer select-none text-slate-300">
+              <input type="checkbox" v-model="includePhotoAnnex" class="rounded-none border-[#232A36] bg-[#0B0C0E] text-hazard focus:ring-hazard" />
+              <span>Lampiran Foto (Annex)</span>
             </label>
-            <label class="flex items-center gap-1.5 cursor-pointer select-none text-[11px] font-semibold text-slate-700">
-              <input type="checkbox" v-model="showSecurityHash" class="rounded text-purple-900 focus:ring-purple-500" />
-              <span>Tampilkan GPS & Hash SHA-256</span>
+            <label class="flex items-center gap-1.5 cursor-pointer select-none text-slate-300">
+              <input type="checkbox" v-model="showSecurityHash" class="rounded-none border-[#232A36] bg-[#0B0C0E] text-hazard focus:ring-hazard" />
+              <span>Telemetri GPS & SHA-256</span>
             </label>
-            <label class="flex items-center gap-1.5 cursor-pointer select-none text-[11px] font-semibold text-slate-700">
-              <input type="checkbox" v-model="showDefaultDetailsTable" class="rounded text-purple-900 focus:ring-purple-500" />
+            <label class="flex items-center gap-1.5 cursor-pointer select-none text-slate-300">
+              <input type="checkbox" v-model="showDefaultDetailsTable" class="rounded-none border-[#232A36] bg-[#0B0C0E] text-hazard focus:ring-hazard" />
               <span>Tabel Ringkasan Baku</span>
             </label>
           </div>
