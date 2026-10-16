@@ -35,7 +35,7 @@
 
         <span class="px-3 py-1.5 bg-[#0B0C0E] border border-[#232A36] rounded-xs font-bold text-slate-300 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-emerald-400">{{ filteredPhotos.length }} FOTO TERDAFTAR</span>
+          <span class="text-emerald-400 font-mono">{{ displayedPhotos.length }}/{{ filteredPhotos.length }} FOTO DIMUAT</span>
         </span>
 
         <button
@@ -108,25 +108,28 @@
     </div>
 
     <!-- Photos Grid (Forensic Measuring Optic Media Wall) -->
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-      <div
-        v-for="photo in filteredPhotos"
-        :key="photo.id"
-        :class="[
-          'bg-[#0E1117] border rounded-none overflow-hidden flex flex-col justify-between transition-all duration-200 group cursor-pointer relative',
-          isSelected(photo.id) ? 'border-hazard shadow-md bg-[#181D26]' : 'border-[#232A36] hover:border-slate-500'
-        ]"
-        @click="openLightbox(photo)"
-      >
-        <div>
-          <!-- Image Thumbnail with Measuring Optic Frame -->
-          <div class="h-44 bg-[#000000] relative overflow-hidden flex items-center justify-center">
-            <img
-              :src="photo.file_url || getFileUrl(photo.file_path)"
-              :alt="photo.file_name"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              @error="handleImageError($event, photo)"
-            />
+    <div v-else class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+        <div
+          v-for="photo in displayedPhotos"
+          :key="photo.id"
+          :class="[
+            'bg-[#0E1117] border rounded-none overflow-hidden flex flex-col justify-between transition-all duration-200 group cursor-pointer relative',
+            isSelected(photo.id) ? 'border-hazard shadow-md bg-[#181D26]' : 'border-[#232A36] hover:border-slate-500'
+          ]"
+          @click="openLightbox(photo)"
+        >
+          <div>
+            <!-- Image Thumbnail with Measuring Optic Frame -->
+            <div class="h-44 bg-[#0B0C0E] relative overflow-hidden flex items-center justify-center">
+              <img
+                :src="photo.file_url || getFileUrl(photo.file_path)"
+                :alt="photo.file_name"
+                loading="lazy"
+                decoding="async"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                @error="handleImageError($event, photo)"
+              />
 
             <!-- Overlaid CAD Optic Reticles & Dimension Line -->
             <div class="absolute inset-0 pointer-events-none border border-hazard/20 m-1 flex flex-col justify-between p-1 z-10">
@@ -240,6 +243,49 @@
       </div>
     </div>
 
+    <!-- Industrial CAD Pagination / Load More Strip -->
+    <div
+      v-if="filteredPhotos.length > displayedPhotos.length"
+      class="bg-[#13171F] border border-[#232A36] p-3.5 rounded-xs flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs"
+    >
+      <div class="text-slate-400 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-hazard animate-pulse"></span>
+        <span>
+          MENAMPILKAN <strong class="text-white">{{ displayedPhotos.length }}</strong> DARI <strong class="text-hazard">{{ filteredPhotos.length }}</strong> FOTO FORENSIK
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button
+          type="button"
+          @click="loadMore"
+          class="flex-1 sm:flex-none cad-btn-primary px-4 py-2 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer uppercase shadow-xs active:scale-98 transition-all"
+        >
+          <span>+ TAMPILKAN 24 FOTO BERIKUTNYA</span>
+          <span class="bg-carbon/20 px-1.5 py-0.5 rounded-none text-[10px]">
+            +{{ Math.min(24, filteredPhotos.length - displayedPhotos.length) }}
+          </span>
+        </button>
+        <button
+          type="button"
+          @click="loadAll"
+          class="px-3 py-2 bg-[#0B0C0E] hover:bg-[#181D26] border border-[#232A36] hover:border-slate-500 rounded-xs text-slate-300 font-bold cursor-pointer uppercase transition-all"
+          title="Tampilkan seluruh foto sekaligus"
+        >
+          SEMUA ({{ filteredPhotos.length }})
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Status if all loaded -->
+    <div
+      v-else-if="filteredPhotos.length > 24"
+      class="text-center py-2 text-[10px] font-mono text-slate-500 uppercase tracking-widest"
+    >
+      -- SELURUH {{ filteredPhotos.length }} FOTO BUKTI TELAH DITAMPILKAN --
+    </div>
+  </div>
+
     <!-- Floating Bulk Actions Bottom Bar (Industrial CAD Strip) -->
     <Teleport to="body">
       <div
@@ -298,7 +344,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { api, getFileUrl } from '../../services/api';
 import { useAuth } from '../../composables/useAuth';
 import PhotoLightboxModal from '../../components/PhotoLightboxModal.vue';
@@ -326,6 +372,7 @@ const selectedStage = ref('ALL');
 const selectedVendor = ref('');
 const searchQuery = ref('');
 const selectedPhotoIds = ref([]);
+const visibleLimit = ref(24);
 
 const isLightboxOpen = ref(false);
 const selectedLightboxIndex = ref(0);
@@ -374,6 +421,24 @@ const filteredPhotos = computed(() => {
     }
     return true;
   });
+});
+
+// Incremental Display Pagination (Prevents DOM overload & optimizes initial render)
+const displayedPhotos = computed(() => {
+  return filteredPhotos.value.slice(0, visibleLimit.value);
+});
+
+function loadMore() {
+  visibleLimit.value += 24;
+}
+
+function loadAll() {
+  visibleLimit.value = filteredPhotos.value.length;
+}
+
+// Reset visible batch whenever filter or search query changes
+watch([selectedStage, selectedVendor, searchQuery], () => {
+  visibleLimit.value = 24;
 });
 
 // Selection System
