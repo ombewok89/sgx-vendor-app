@@ -236,6 +236,15 @@
                     {{ workOrder.require_checkin ? 'AKTIF (Wajib Check-In)' : 'NONAKTIF (Bebas Lokasi)' }}
                   </button>
                 </div>
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-500">Berkas Fisik BA Opname:</span>
+                  <span
+                    class="px-2 py-0.5 rounded-md text-[10px] font-bold border"
+                    :class="workOrder.require_ba_doc ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-100 text-slate-600 border-slate-300'"
+                  >
+                    {{ workOrder.require_ba_doc ? 'WAJIB (Diunggah Sebelum Submit)' : 'BEBAS (Opsional)' }}
+                  </span>
+                </div>
                 <div class="flex justify-between">
                   <span>Periode:</span>
                   <span class="font-mono text-slate-900 font-bold">{{ workOrder.start_date }} s/d {{ workOrder.deadline }}</span>

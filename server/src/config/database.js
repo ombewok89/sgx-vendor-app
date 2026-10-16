@@ -341,6 +341,9 @@ async function initDatabase() {
   try {
     await run(`ALTER TABLE work_orders ADD COLUMN geofence_radius INTEGER NOT NULL DEFAULT 200`);
   } catch (e) {}
+  try {
+    await run(`ALTER TABLE work_orders ADD COLUMN require_ba_doc INTEGER NOT NULL DEFAULT 0`);
+  } catch (e) {}
 
   // Column migration for check_ins geofencing verification
   try {

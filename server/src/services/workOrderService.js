@@ -210,9 +210,9 @@ async function createWorkOrder(data, currentUser, ipAddress) {
     INSERT INTO work_orders (
       spk_number, title, vendor_id, area_id, job_type_id, location_name,
       target_lat, target_lng, pic_user_id, start_date, deadline,
-      doc_mode, require_checkin, require_geofence, geofence_radius, contract_value, status, progress_percent, notes,
+      doc_mode, require_checkin, require_ba_doc, require_geofence, geofence_radius, contract_value, status, progress_percent, notes,
       created_by, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     spkNumber,
     data.title,
@@ -227,6 +227,7 @@ async function createWorkOrder(data, currentUser, ipAddress) {
     data.deadline,
     data.doc_mode || 'BEFORE_PROCESS_AFTER',
     data.require_checkin !== undefined ? (data.require_checkin ? 1 : 0) : 1,
+    data.require_ba_doc ? 1 : 0,
     requireGeofence,
     geofenceRadius,
     contractValue,
@@ -442,6 +443,14 @@ async function submitWorkOrder(workOrderId, currentUser, ipAddress) {
     const openRevisions = (workOrder.revisions || []).filter(r => r.status === 'OPEN');
     for (const rev of openRevisions) {
       await run(`UPDATE revisions SET status = 'RESOLVED', resolved_at = ? WHERE id = ?`, [now, rev.id]);
+    }
+  }
+
+  // 4b. Verify Physical BA Opname Document if required
+  if (workOrder.require_ba_doc) {
+    const baPhotos = photos.filter(p => p.stage === 'BA_OPNAME' || p.stage === 'BA');
+    if (baPhotos.length < 1) {
+      throw new Error('Gagal Submit: Pekerjaan ini mewajibkan unggah foto bukti berkas fisik Berita Acara (BA) Opname.');
     }
   }
 

@@ -404,6 +404,32 @@
                 </div>
               </div>
             </div>
+
+            <!-- 3. BA Opname Physical Document Requirement -->
+            <div class="p-3 bg-[#0E1117] border border-[#232A36] rounded-xs space-y-1.5 sm:col-span-2">
+              <div class="flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  id="require_ba_doc"
+                  v-model="formData.require_ba_doc"
+                  class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer"
+                />
+                <div>
+                  <label for="require_ba_doc" class="font-bold text-white cursor-pointer text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                    <FileCheck2 class="w-3.5 h-3.5 text-[#FACC15]" />
+                    <span>Wajib Upload Foto Berkas BA Opname</span>
+                  </label>
+                  <p class="text-[10px] text-slate-400 mt-0.5 font-sans">
+                    <span v-if="formData.require_ba_doc" class="text-[#FACC15] font-bold">
+                      ✓ Wajib (Pekerjaan baru dapat diajukan setelah mengunggah foto bukti fisik Berita Acara yang telah ditandatangani toko).
+                    </span>
+                    <span v-else class="text-slate-400">
+                      Opsional / Bebas (Pekerjaan dapat diajukan tanpa foto berkas fisik BA Opname).
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Notes -->
@@ -525,6 +551,7 @@ const formData = reactive({
   require_geofence: false,
   geofence_radius: 500,
   use_timestamp: true,
+  require_ba_doc: false,
   notes: ''
 });
 
@@ -667,6 +694,7 @@ async function handleSubmit() {
       deadline: formData.deadline,
       require_checkin: !!formData.require_checkin,
       use_timestamp: !!formData.use_timestamp,
+      require_ba_doc: !!formData.require_ba_doc,
       notes: formData.notes || null,
       items: validItems
     };

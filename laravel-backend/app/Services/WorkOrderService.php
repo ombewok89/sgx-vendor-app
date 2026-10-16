@@ -81,6 +81,8 @@ class WorkOrderService
                 'deadline' => $data['deadline'],
                 'doc_mode' => $data['doc_mode'] ?? 'BEFORE_PROCESS_AFTER',
                 'require_checkin' => $data['require_checkin'] ?? true,
+                'use_timestamp' => $data['use_timestamp'] ?? true,
+                'require_ba_doc' => $data['require_ba_doc'] ?? false,
                 'status' => !empty($data['pic_user_id']) ? 'ASSIGNED' : 'DRAFT',
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $user->id,

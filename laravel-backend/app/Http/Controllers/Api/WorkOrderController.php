@@ -140,6 +140,11 @@ class WorkOrderController extends Controller
                 $insertData['use_timestamp'] = $request->boolean('use_timestamp', true);
             }
 
+            // Safely assign require_ba_doc if column exists in table
+            if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'require_ba_doc')) {
+                $insertData['require_ba_doc'] = $request->boolean('require_ba_doc', false);
+            }
+
             $workOrder = WorkOrder::create($insertData);
 
             // Save Items
@@ -222,6 +227,10 @@ class WorkOrderController extends Controller
 
             if ($request->has('use_timestamp')) {
                 $data['use_timestamp'] = $request->boolean('use_timestamp');
+            }
+
+            if ($request->has('require_ba_doc')) {
+                $data['require_ba_doc'] = $request->boolean('require_ba_doc');
             }
 
             if ($request->has('pic_user_id')) {
@@ -465,6 +474,19 @@ class WorkOrderController extends Controller
                 'success' => false,
                 'message' => 'Pekerjaan belum dapat diajukan: Foto bukti belum lengkap pada tahap: ' . implode(', ', $missing) . '.',
             ], 422);
+        }
+
+        // Validate Physical BA Opname Document if required by SPK
+        if ($workOrder->require_ba_doc) {
+            $hasBaDoc = $workOrder->evidencePhotos()
+                ->whereIn('stage', ['BA_OPNAME', 'BA'])
+                ->exists();
+            if (!$hasBaDoc) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pekerjaan belum dapat diajukan: SPK ini mewajibkan unggah foto bukti berkas fisik Berita Acara (BA) Opname yang telah ditandatangani.',
+                ], 422);
+            }
         }
 
         $workOrder->update([

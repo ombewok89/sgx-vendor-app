@@ -27,7 +27,7 @@ class EvidenceService
 
         // 3. Save File to physical storage directories with standard secure permissions
         $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-        $allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+        $allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
         if (!in_array($extension, $allowedExts)) {
             $extension = 'jpg';
         }

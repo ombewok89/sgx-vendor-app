@@ -416,6 +416,62 @@
             </div>
           </div>
 
+          <!-- Langkah Khusus: Upload Foto Berkas Fisik BA Opname -->
+          <div
+            v-if="selectedTask?.require_ba_doc || hasBaPhotoUploaded"
+            class="glass-card rounded-2xl p-5 space-y-4 border text-xs transition-all"
+            :class="selectedTask?.require_ba_doc ? 'border-amber-400 bg-amber-500/5 shadow-amber-500/5' : 'border-slate-200'"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
+              <div>
+                <h4 class="font-bold text-slate-900 flex items-center gap-2">
+                  <FileText class="w-4 h-4 text-amber-600" />
+                  <span>BERKAS FISIK: Foto Berita Acara (BA) Opname</span>
+                  <span
+                    v-if="selectedTask?.require_ba_doc"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 uppercase"
+                  >
+                    WAJIB SEBELUM SUBMIT
+                  </span>
+                  <span
+                    v-else
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300 uppercase"
+                  >
+                    OPSIONAL
+                  </span>
+                </h4>
+                <p class="text-[11px] text-slate-500 mt-1">
+                  Unggah foto bukti lembar fisik dokumen Berita Acara (BA) Opname yang telah ditandatangani dan dicap oleh Kepala Toko / PIC Cabang.
+                </p>
+              </div>
+
+              <div v-if="hasBaPhotoUploaded" class="self-start sm:self-auto">
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300">
+                  <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600" />
+                  Berkas BA Terlampir ✓
+                </span>
+              </div>
+            </div>
+
+            <PhotoUploader
+              :workOrderId="selectedTask.id"
+              :itemId="null"
+              stage="BA_OPNAME"
+              :requiredCount="1"
+              :existingPhotos="selectedTask.evidence_photos || []"
+              :spkNumber="selectedTask.spk_number"
+              :locationName="selectedTask.location_name"
+              :workOrderTitle="selectedTask.title"
+              :address="selectedTask.address_note || selectedTask.location_name"
+              :targetLat="selectedTask.target_lat"
+              :targetLng="selectedTask.target_lng"
+              :checkInLat="selectedTask.check_ins?.[0]?.latitude"
+              :checkInLng="selectedTask.check_ins?.[0]?.longitude"
+              :useTimestamp="selectedTask.use_timestamp !== false"
+              @uploadSuccess="() => handleSelectTask(selectedTask.id)"
+            />
+          </div>
+
           <!-- Step 3: Kendala Teknis Lapangan -->
           <div class="glass-card rounded-2xl p-5 space-y-4 border border-white/70 text-xs">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -530,7 +586,7 @@
             </div>
 
             <!-- Validation Checklist Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div
                 :class="[
                   'p-3.5 rounded-2xl border flex items-center gap-3 transition-all',
@@ -539,7 +595,7 @@
               >
                 <CheckCircle2 :class="['w-4 h-4 shrink-0', isCheckinSatisfied ? 'text-emerald-400' : 'text-slate-500']" />
                 <div>
-                  <div class="font-bold text-white">Check-in GPS Lokasi Cabang</div>
+                  <div class="font-bold text-white">Check-in GPS Cabang</div>
                   <div class="text-[10px] opacity-80">{{ isCheckedIn ? 'Sudah Tervalidasi ✓' : (!selectedTask?.require_checkin ? 'Bebas Lokasi (Opsional) ✓' : 'Belum Check-In') }}</div>
                 </div>
               </div>
@@ -552,9 +608,26 @@
               >
                 <CheckCircle2 :class="['w-4 h-4 shrink-0', isAllItemsComplete ? 'text-emerald-400' : 'text-slate-500']" />
                 <div>
-                  <div class="font-bold text-white">Kelengkapan Foto Sub-Pekerjaan</div>
+                  <div class="font-bold text-white">Foto Sub-Pekerjaan</div>
                   <div class="text-[10px] opacity-80">
                     {{ completedItemsCount }} dari {{ taskItems.length }} Item Lengkap
+                  </div>
+                </div>
+              </div>
+
+              <div
+                :class="[
+                  'p-3.5 rounded-2xl border flex items-center gap-3 transition-all',
+                  isBaPhotoSatisfied ? 'bg-emerald-950/60 border-emerald-600/80 text-emerald-300' : 'bg-amber-950/60 border-amber-500/80 text-amber-300'
+                ]"
+              >
+                <CheckCircle2 :class="['w-4 h-4 shrink-0', isBaPhotoSatisfied ? 'text-emerald-400' : 'text-amber-500']" />
+                <div>
+                  <div class="font-bold text-white">Foto Berkas BA Opname</div>
+                  <div class="text-[10px] opacity-80">
+                    {{ isBaPhotoSatisfied
+                      ? (hasBaPhotoUploaded ? 'Sudah Diunggah ✓' : 'Bebas / Opsional ✓')
+                      : 'Wajib Diunggah (Belum Ada Foto BA)' }}
                   </div>
                 </div>
               </div>
@@ -776,9 +849,20 @@ const isCheckinSatisfied = computed(() => {
   return !selectedTask.value?.require_checkin || isCheckedIn.value;
 });
 
+const hasBaPhotoUploaded = computed(() => {
+  const photos = selectedTask.value?.evidence_photos || [];
+  return photos.some(p => p.stage === 'BA_OPNAME' || p.stage === 'BA');
+});
+
+const isBaPhotoSatisfied = computed(() => {
+  if (!selectedTask.value?.require_ba_doc) return true;
+  return hasBaPhotoUploaded.value;
+});
+
 const canSubmit = computed(() => {
   return isCheckinSatisfied.value &&
     isAllItemsComplete.value &&
+    isBaPhotoSatisfied.value &&
     !['SUBMITTED', 'UNDER_REVIEW', 'REVIEW', 'APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask.value?.status);
 });
 
@@ -789,6 +873,10 @@ async function handleSubmitWorkOrder() {
   }
   if (!isAllItemsComplete.value) {
     alert('Gagal: Dokumentasi foto dari seluruh sub-pekerjaan belum lengkap.');
+    return;
+  }
+  if (!isBaPhotoSatisfied.value) {
+    alert('Gagal: SPK ini mewajibkan foto bukti berkas fisik Berita Acara (BA) Opname yang telah ditandatangani dan dicap toko sebelum dapat diajukan!');
     return;
   }
   if (!selectedTask.value?.id) {

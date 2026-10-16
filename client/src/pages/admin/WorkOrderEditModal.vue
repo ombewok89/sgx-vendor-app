@@ -352,6 +352,31 @@
               </div>
             </div>
 
+            <!-- BA Opname Physical Document Requirement -->
+            <div class="p-3 bg-amber-50/50 border border-amber-200/80 rounded-xl space-y-1.5">
+              <div class="flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  id="edit_require_ba_doc"
+                  v-model="formData.require_ba_doc"
+                  class="w-4 h-4 mt-0.5 text-amber-600 rounded cursor-pointer accent-amber-600"
+                />
+                <div class="space-y-0.5">
+                  <label for="edit_require_ba_doc" class="font-bold text-slate-900 cursor-pointer text-xs flex items-center gap-1.5">
+                    <span>📄 Wajib Upload Foto Berkas Fisik BA Opname</span>
+                  </label>
+                  <p class="text-[11px] text-slate-500">
+                    <span v-if="formData.require_ba_doc" class="text-amber-900 font-medium">
+                      ✓ <strong>Wajib:</strong> Teknisi harus mengunggah foto lembar BA Opname bertandatangan sebelum SPK dapat diajukan.
+                    </span>
+                    <span v-else class="text-slate-500">
+                      Bebas / Opsional: SPK dapat diajukan tanpa foto berkas fisik BA Opname.
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <!-- Notes -->
             <div>
               <label class="block font-bold text-slate-700 mb-1">Catatan / Instruksi Khusus Supervisor</label>
@@ -450,6 +475,7 @@ const formData = reactive({
   deadline: '',
   require_checkin: true,
   use_timestamp: true,
+  require_ba_doc: false,
   doc_mode: 'BEFORE_PROCESS_AFTER',
   status: 'ASSIGNED',
   notes: ''
@@ -490,6 +516,7 @@ async function loadInitialData() {
       formData.deadline = wo.deadline || '';
       formData.require_checkin = typeof wo.require_checkin === 'boolean' ? wo.require_checkin : true;
       formData.use_timestamp = typeof wo.use_timestamp === 'boolean' ? wo.use_timestamp : true;
+      formData.require_ba_doc = typeof wo.require_ba_doc === 'boolean' ? wo.require_ba_doc : false;
       formData.doc_mode = wo.doc_mode || 'BEFORE_PROCESS_AFTER';
       formData.status = wo.status || 'ASSIGNED';
       formData.notes = wo.notes || '';

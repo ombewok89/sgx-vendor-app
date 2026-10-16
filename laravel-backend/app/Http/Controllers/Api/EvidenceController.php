@@ -25,10 +25,10 @@ class EvidenceController extends Controller
 
         $request->validate([
             'work_order_id' => 'required|exists:work_orders,id',
-            'stage' => 'required|in:BEFORE,PROCESS,AFTER,ISSUE',
-            'photo' => 'nullable|file|image|mimes:jpeg,jpg,png,webp|max:15360',
-            'file' => 'nullable|file|image|mimes:jpeg,jpg,png,webp|max:15360',
-            'image' => 'nullable|file|image|mimes:jpeg,jpg,png,webp|max:15360',
+            'stage' => 'required|in:BEFORE,PROCESS,AFTER,ISSUE,BA_OPNAME,BA',
+            'photo' => 'nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:20480',
+            'file' => 'nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:20480',
+            'image' => 'nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:20480',
         ]);
 
         $user = $request->user();

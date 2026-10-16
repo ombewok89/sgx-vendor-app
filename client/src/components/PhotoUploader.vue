@@ -4,7 +4,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
         <h4 class="font-bold text-sm text-slate-900 flex items-center gap-2">
-          <span>Tahap: {{ stage }}</span>
+          <span>Tahap: {{ stage === 'BA_OPNAME' || stage === 'BA' ? 'BERKAS FISIK BA OPNAME' : stage }}</span>
           <span
             v-if="isSatisfied"
             class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-300"
@@ -41,6 +41,7 @@
           <span v-else-if="stage === 'PROCESS'">Foto tim saat proses pengerjaan lapangan & penggunaan APD.</span>
           <span v-else-if="stage === 'AFTER'">Foto hasil akhir pekerjaan yang telah selesai dan rapi.</span>
           <span v-else-if="stage === 'ISSUE'">Foto bukti pendukung kendala teknis lapangan.</span>
+          <span v-else-if="stage === 'BA_OPNAME' || stage === 'BA'">Foto lembar fisik Berita Acara (BA) Opname yang telah ditandatangani dan dicap pihak toko/cabang.</span>
         </p>
       </div>
 
@@ -296,7 +297,8 @@ const photoToDelete = ref(null);
 
 const stagePhotos = computed(() => {
   return (props.existingPhotos || []).filter((p) => {
-    const stageMatch = p.stage === props.stage;
+    const stageMatch = p.stage === props.stage ||
+      ((props.stage === 'BA_OPNAME' || props.stage === 'BA') && (p.stage === 'BA_OPNAME' || p.stage === 'BA'));
     if (props.itemId) {
       return stageMatch && (p.item_id === props.itemId || !p.item_id);
     }
