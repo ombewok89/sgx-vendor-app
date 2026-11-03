@@ -148,74 +148,148 @@
       </div>
     </div>
 
-    <!-- Create / Edit Modal (Industrial CAD) -->
-    <div v-if="showModal" class="fixed inset-0 z-50 bg-[#0B0C0E]/80 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-[#13171F] border border-[#232A36] rounded-xs max-w-3xl w-full shadow-2xl p-6 space-y-4 text-xs font-mono text-white max-h-[92vh] overflow-y-auto custom-scrollbar">
-        <div class="flex items-center justify-between border-b border-[#232A36] pb-3">
-          <h3 class="font-bold text-sm text-white uppercase tracking-wider flex items-center gap-2">
-            <FileCode class="w-4 h-4 text-[#FACC15]" />
-            <span>{{ isEditing ? 'Edit Template Dokumen BA' : 'Tambah Template Dokumen BA Baru' }}</span>
-          </h3>
-          <button @click="showModal = false" class="text-slate-400 hover:text-white cursor-pointer">
-            <X class="w-4 h-4" />
-          </button>
+    <!-- Create / Edit Modal (Industrial CAD Studio with Real-Time Live View) -->
+    <div v-if="showModal" class="fixed inset-0 z-50 bg-[#0B0C0E]/85 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 font-sans">
+      <div class="bg-[#13171F] border border-[#232A36] rounded-xs w-full max-w-[96vw] 2xl:max-w-[1550px] shadow-2xl flex flex-col h-[94vh] font-mono text-white overflow-hidden animate-fade-in">
+        
+        <!-- Header Strip -->
+        <div class="px-4 py-3 sm:px-6 sm:py-3.5 border-b border-[#232A36] flex items-center justify-between bg-[#0E1117] shrink-0">
+          <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div class="w-8 h-8 rounded-xs bg-[#1C2028] border border-[#FACC15] text-[#FACC15] flex items-center justify-center shrink-0">
+              <FileCode class="w-4 h-4 text-[#FACC15]" />
+            </div>
+            <div class="min-w-0">
+              <h3 class="font-bold text-xs sm:text-sm text-white uppercase tracking-wider truncate">
+                {{ isEditing ? 'EDIT TEMPLATE DOKUMEN BA OPNAME' : 'TAMBAH TEMPLATE DOKUMEN BA BARU' }}
+              </h3>
+              <p class="text-[10px] sm:text-[11px] text-slate-400 font-mono truncate">
+                Editor desain kop surat, klausul serah terima, tabel data & tanda tangan dengan pratinjau langsung.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <!-- Toggle Live View Pane on Desktop -->
+            <button
+              type="button"
+              @click="toggleLiveViewPane"
+              :class="[
+                'hidden xl:flex px-2.5 py-1.5 rounded-xs text-[11px] font-mono font-bold items-center gap-1.5 border transition-all cursor-pointer',
+                showLiveViewPane
+                  ? 'bg-[#1C2028] text-[#FACC15] border-[#FACC15]/40 shadow-xs'
+                  : 'bg-[#0E1117] text-slate-400 hover:text-white border-[#232A36]'
+              ]"
+              title="Tampilkan / Sembunyikan Panel Live View"
+            >
+              <Eye class="w-3.5 h-3.5 text-[#FACC15]" />
+              <span>{{ showLiveViewPane ? 'LIVE VIEW: AKTIF' : 'TAMPILKAN LIVE VIEW' }}</span>
+            </button>
+
+            <!-- Close Modal -->
+            <button
+              type="button"
+              @click="showModal = false"
+              class="p-1.5 text-slate-400 hover:text-white bg-[#1C2028] hover:bg-[#232A36] border border-[#232A36] rounded-xs transition-colors cursor-pointer"
+              title="Tutup Modal"
+            >
+              <X class="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        <!-- Form Tabs (Industrial CAD Segmented) -->
-        <div class="flex flex-wrap gap-1 p-1 bg-[#0E1117] border border-[#232A36] rounded-xs font-mono text-xs">
-          <button
-            type="button"
-            @click="modalTab = 'branding'"
+        <!-- Main Body: Split between Left Form Editor and Right Live View Document -->
+        <div class="flex-1 flex flex-col xl:flex-row min-h-0 overflow-hidden">
+          
+          <!-- LEFT PANE: Form Editor Tabs & Inputs -->
+          <div
             :class="[
-              'px-3 py-1.5 rounded-xs transition-colors cursor-pointer uppercase tracking-wider',
-              modalTab === 'branding' ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
+              'flex flex-col min-h-0 overflow-hidden',
+              showLiveViewPane ? 'w-full xl:w-[48%] 2xl:w-[46%]' : 'w-full',
+              (mobileActiveTab === 'live' && showLiveViewPane) ? 'hidden xl:flex' : 'flex'
             ]"
           >
-            1. Background & Logo
-          </button>
-          <button
-            type="button"
-            @click="modalTab = 'content'"
-            :class="[
-              'px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider',
-              modalTab === 'content' ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
-            ]"
-          >
-            <span>2. Klausul & Pernyataan</span>
-          </button>
-          <button
-            type="button"
-            @click="modalTab = 'table'"
-            :class="[
-              'px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider',
-              modalTab === 'table' ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
-            ]"
-          >
-            <Table class="w-3.5 h-3.5" />
-            <span>3. Tabel Data</span>
-            <span v-if="tableConfig.enabled" class="px-1.5 py-0.2 rounded-xs text-[9px] bg-emerald-950/60 text-emerald-400 border border-emerald-500/40 font-bold">
-              {{ tableConfig.rows.length }} Baris
-            </span>
-            <span v-else class="px-1.5 py-0.2 rounded-xs text-[9px] bg-slate-800 text-slate-500">Off</span>
-          </button>
-          <button
-            type="button"
-            @click="modalTab = 'signatories'"
-            :class="[
-              'px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider',
-              modalTab === 'signatories' ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold' : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
-            ]"
-          >
-            <span>4. Tanda Tangan</span>
-            <span class="px-1.5 py-0.2 rounded-xs text-[9px] bg-[#13171F] text-[#FACC15] border border-[#232A36]">
-              {{ signatoriesList.length }}
-            </span>
-          </button>
-        </div>
+            <!-- Form Tabs -->
+            <div class="p-2.5 sm:px-4 sm:py-2.5 bg-[#0E1117] border-b border-[#232A36] shrink-0">
+              <div class="flex flex-wrap gap-1 font-mono text-xs">
+                <button
+                  type="button"
+                  @click="modalTab = 'branding'; mobileActiveTab = 'editor'"
+                  :class="[
+                    'px-2.5 sm:px-3 py-1.5 rounded-xs transition-colors cursor-pointer uppercase tracking-wider text-[11px]',
+                    (modalTab === 'branding' && mobileActiveTab === 'editor')
+                      ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
+                  ]"
+                >
+                  1. Kop & Logo
+                </button>
+                <button
+                  type="button"
+                  @click="modalTab = 'content'; mobileActiveTab = 'editor'"
+                  :class="[
+                    'px-2.5 sm:px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider text-[11px]',
+                    (modalTab === 'content' && mobileActiveTab === 'editor')
+                      ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
+                  ]"
+                >
+                  <span>2. Klausul</span>
+                </button>
+                <button
+                  type="button"
+                  @click="modalTab = 'table'; mobileActiveTab = 'editor'"
+                  :class="[
+                    'px-2.5 sm:px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider text-[11px]',
+                    (modalTab === 'table' && mobileActiveTab === 'editor')
+                      ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
+                  ]"
+                >
+                  <Table class="w-3.5 h-3.5" />
+                  <span>3. Tabel</span>
+                  <span v-if="tableConfig.enabled" class="px-1.5 py-0.2 rounded-xs text-[9px] bg-emerald-950/60 text-emerald-400 border border-emerald-500/40 font-bold">
+                    {{ tableConfig.rows.length }}
+                  </span>
+                  <span v-else class="px-1.5 py-0.2 rounded-xs text-[9px] bg-slate-800 text-slate-500">Off</span>
+                </button>
+                <button
+                  type="button"
+                  @click="modalTab = 'signatories'; mobileActiveTab = 'editor'"
+                  :class="[
+                    'px-2.5 sm:px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider text-[11px]',
+                    (modalTab === 'signatories' && mobileActiveTab === 'editor')
+                      ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
+                  ]"
+                >
+                  <span>4. TTD</span>
+                  <span class="px-1.5 py-0.2 rounded-xs text-[9px] bg-[#13171F] text-[#FACC15] border border-[#232A36]">
+                    {{ signatoriesList.length }}
+                  </span>
+                </button>
 
-        <form @submit.prevent="handleSubmit" class="space-y-4 font-mono">
-          <!-- TAB 1: Background Template & Logo Upload -->
-          <div v-show="modalTab === 'branding'" class="space-y-4">
+                <!-- Mobile Switch to Live View Button -->
+                <button
+                  type="button"
+                  @click="mobileActiveTab = 'live'; showLiveViewPane = true"
+                  :class="[
+                    'xl:hidden px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-1.5 uppercase tracking-wider font-bold text-[11px] ml-auto',
+                    mobileActiveTab === 'live'
+                      ? 'bg-[#FACC15] text-[#0B0C0E] shadow-sm'
+                      : 'text-[#FACC15] hover:bg-[#1A202C]/60 border border-[#FACC15]/40'
+                  ]"
+                >
+                  <Eye class="w-3.5 h-3.5" />
+                  <span>👁️ Live View</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Scrollable Form Inputs -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-3.5 sm:p-5">
+              <form @submit.prevent="handleSubmit" id="templateForm" class="space-y-4 font-mono">
+                <!-- TAB 1: Background Template & Logo Upload -->
+                <div v-show="modalTab === 'branding'" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">Nama Template *</label>
@@ -756,24 +830,170 @@
             </div>
           </div>
 
-          <!-- Modal Actions -->
-          <div class="pt-3 border-t border-[#232A36] flex items-center justify-end gap-2 font-mono">
-            <button
-              type="button"
-              @click="showModal = false"
-              class="px-4 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs cursor-pointer uppercase tracking-wider"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              :disabled="saving"
-              class="px-5 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold rounded-xs shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50 uppercase tracking-wider"
-            >
-              {{ saving ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan Template' : 'Terbitkan Template Baru' }}
-            </button>
+              </form>
+            </div>
+
+            <!-- Sticky Bottom Actions -->
+            <div class="p-3 sm:px-5 sm:py-3.5 bg-[#0E1117] border-t border-[#232A36] flex items-center justify-between gap-2 shrink-0 font-mono">
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="mobileActiveTab === 'live'"
+                  type="button"
+                  @click="mobileActiveTab = 'editor'"
+                  class="xl:hidden px-3 py-2 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#FACC15]/40 font-bold rounded-xs cursor-pointer uppercase text-xs"
+                >
+                  ← Kembali ke Form Editor
+                </button>
+                <button
+                  v-else
+                  type="button"
+                  @click="mobileActiveTab = 'live'; showLiveViewPane = true"
+                  class="xl:hidden px-3 py-2 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] font-bold rounded-xs cursor-pointer uppercase text-xs flex items-center gap-1.5"
+                >
+                  <Eye class="w-3.5 h-3.5" />
+                  <span>Lihat Live View →</span>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  @click="showModal = false"
+                  class="px-4 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs cursor-pointer uppercase tracking-wider text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  form="templateForm"
+                  :disabled="saving"
+                  class="px-5 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold rounded-xs shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50 uppercase tracking-wider text-xs"
+                >
+                  {{ saving ? 'Menyimpan...' : isEditing ? 'Simpan Perubahan' : 'Terbitkan Template' }}
+                </button>
+              </div>
+            </div>
           </div>
-        </form>
+
+          <!-- RIGHT PANE: Real-Time Live View (Simulasi Lembar Kertas BA Opname) -->
+          <div
+            v-if="showLiveViewPane"
+            :class="[
+              'flex flex-col min-h-0 bg-[#08090C] border-t xl:border-t-0 xl:border-l border-[#232A36] p-3 sm:p-4 overflow-y-auto custom-scrollbar',
+              'w-full xl:w-[52%] 2xl:w-[54%]',
+              mobileActiveTab === 'live' ? 'flex flex-1' : 'hidden xl:flex'
+            ]"
+          >
+            <!-- Live View Bar -->
+            <div class="flex items-center justify-between pb-2.5 border-b border-[#232A36] mb-3 shrink-0">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                  LIVE VIEW LEMBAR KERTAS BA
+                </span>
+                <span class="px-1.5 py-0.2 rounded-xs bg-[#13171F] text-[#FACC15] border border-[#232A36] text-[9px] font-mono font-bold">
+                  REAL-TIME A4
+                </span>
+              </div>
+
+              <!-- Controls: Return button for mobile, zoom scale -->
+              <div class="flex items-center gap-2 font-mono">
+                <button
+                  type="button"
+                  @click="mobileActiveTab = 'editor'"
+                  class="xl:hidden px-2.5 py-1 bg-[#1C2028] text-[#FACC15] border border-[#FACC15]/40 rounded-xs text-[10px] font-bold cursor-pointer"
+                >
+                  ← Edit Form
+                </button>
+                <button
+                  type="button"
+                  @click="liveZoom = (liveZoom === 1 ? 0.85 : liveZoom === 0.85 ? 0.75 : 1)"
+                  class="px-2.5 py-1 rounded-xs bg-[#1C2028] hover:bg-[#232A36] text-slate-300 text-[10px] border border-[#232A36] font-mono cursor-pointer"
+                  title="Ubah Skala Zoom"
+                >
+                  SKALA: {{ Math.round(liveZoom * 100) }}%
+                </button>
+              </div>
+            </div>
+
+            <!-- The Live Simulated Printable A4 Paper Document -->
+            <div class="flex-1 flex justify-center items-start overflow-y-auto custom-scrollbar p-1">
+              <div
+                class="origin-top transition-transform duration-150 w-full max-w-[650px] shadow-2xl relative bg-white border border-slate-300 rounded-none p-6 sm:p-9 text-slate-800 text-xs select-none"
+                :style="[
+                  getPreviewBgStyle(livePreviewTemplate),
+                  { transform: `scale(${liveZoom})`, transformOrigin: 'top center' }
+                ]"
+              >
+                <!-- Kop Surat Banner or Text Header -->
+                <div v-if="!livePreviewTemplate.background_image_url" class="flex items-center justify-between border-b-2 border-slate-900 pb-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div v-if="livePreviewTemplate.logo_url" class="w-12 h-12 rounded-xs border bg-white p-1 shadow-xs">
+                      <img :src="livePreviewTemplate.logo_url" alt="Logo" class="w-full h-full object-contain" />
+                    </div>
+                    <div>
+                      <h2 class="font-black text-sm text-slate-900 tracking-tight">PT SINAR GRAHA KREATIF</h2>
+                      <p class="text-[9px] text-slate-500 font-mono">Digital Evidence & Vendor Work Management System</p>
+                    </div>
+                  </div>
+                  <div class="text-right text-[9px] text-slate-500 font-mono">
+                    <div>KODE DOKUMEN: {{ livePreviewTemplate.code || 'TMPL-BA' }}</div>
+                    <div>STATUS: TERVERIFIKASI RESMI</div>
+                  </div>
+                </div>
+                <div v-else class="h-14">
+                  <!-- Spacer for background letterhead kop surat -->
+                </div>
+
+                <!-- Document Title -->
+                <div class="text-center space-y-0.5 mb-2.5">
+                  <h3 class="font-black text-sm sm:text-base uppercase tracking-wide text-slate-900 font-heading">
+                    BERITA ACARA SERAH TERIMA & OPNAME PEKERJAAN
+                  </h3>
+                  <p class="text-[11px] font-mono font-bold text-slate-600">Nomor: BA/SGX/2026/08/00125</p>
+                </div>
+
+                <!-- Opening Statement Formatted -->
+                <div class="leading-relaxed text-slate-700 mb-2 font-sans" v-html="renderClauseWithSampleData(formData.header_html)"></div>
+
+                <!-- Dynamic Visual Table (after_header) -->
+                <div v-if="tableConfig.enabled && tableConfig.position === 'after_header'" class="my-2" v-html="renderTableHtmlFromConfig(tableConfig, true)"></div>
+
+                <!-- Body Clause Formatted -->
+                <div class="leading-relaxed text-slate-700 my-2 space-y-1 font-sans" v-html="renderClauseWithSampleData(formData.body_template)"></div>
+
+                <!-- Dynamic Visual Table (after_body) -->
+                <div v-if="tableConfig.enabled && tableConfig.position === 'after_body'" class="my-2" v-html="renderTableHtmlFromConfig(tableConfig, true)"></div>
+
+                <!-- Dynamic Signatures Grid -->
+                <div
+                  class="grid gap-3 pt-6 text-center text-xs"
+                  :class="getSignatoryGridClass(signatoriesList.length)"
+                >
+                  <div
+                    v-for="(sig, sIdx) in signatoriesList"
+                    :key="sIdx"
+                    class="space-y-10"
+                  >
+                    <div>
+                      <p class="text-slate-500 font-medium text-[10px] font-mono uppercase">{{ sig.party_title || `Pihak #${sIdx + 1}` }}</p>
+                      <strong class="text-slate-800 text-[11px] block truncate">{{ sig.company_name || 'NAMA PERUSAHAAN' }}</strong>
+                    </div>
+                    <div class="border-t border-slate-500 pt-1.5 mx-2">
+                      <div class="font-bold text-slate-900 text-[11px]">{{ sig.name || '........................' }}</div>
+                      <div class="text-[9px] text-slate-500 font-mono">{{ sig.role || 'Jabatan Resmi' }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Footer Image if exists -->
+                <div v-if="livePreviewTemplate.footer_image_url" class="rounded-xs overflow-hidden my-3 border border-slate-200">
+                  <img :src="livePreviewTemplate.footer_image_url" alt="Footer Banner" class="w-full h-auto object-contain" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -876,7 +1096,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { api } from '../../services/api';
 import {
   FileCode,
@@ -903,6 +1123,18 @@ const showModal = ref(false);
 const isEditing = ref(false);
 const modalTab = ref('branding');
 const selectedPresetKey = ref('standard');
+
+// Real-Time Live View State for Create/Edit Modal
+const showLiveViewPane = ref(true);
+const mobileActiveTab = ref('editor'); // 'editor' | 'live'
+const liveZoom = ref(0.9);
+
+function toggleLiveViewPane() {
+  showLiveViewPane.value = !showLiveViewPane.value;
+  if (!showLiveViewPane.value) {
+    mobileActiveTab.value = 'editor';
+  }
+}
 
 const headerTextarea = ref(null);
 const bodyTextarea = ref(null);
@@ -1027,6 +1259,23 @@ const footerFile = ref(null);
 const logoPreview = ref(null);
 const bgPreview = ref(null);
 const footerPreview = ref(null);
+
+// Computed dynamic object for live preview inside modal
+const livePreviewTemplate = computed(() => {
+  return {
+    id: formData.value.id,
+    name: formData.value.name || 'Pratinjau Template BA',
+    code: formData.value.code || 'TMPL-BA-DRAFT',
+    logo_url: logoPreview.value || formData.value.logo_url,
+    background_image_url: bgPreview.value || formData.value.background_image_url || formData.value.header_image_url,
+    header_image_url: formData.value.header_image_url,
+    footer_image_url: footerPreview.value || formData.value.footer_image_url,
+    header_html: formData.value.header_html,
+    body_template: formData.value.body_template,
+    table_config_json: JSON.stringify(tableConfig.value),
+    signatories_json: JSON.stringify(signatoriesList.value)
+  };
+});
 
 const showPreviewModal = ref(false);
 const previewTmpl = ref(null);
@@ -1316,6 +1565,9 @@ function getTableConfig(tmpl) {
 function openAddModal() {
   isEditing.value = false;
   modalTab.value = 'branding';
+  mobileActiveTab.value = 'editor';
+  showLiveViewPane.value = true;
+  liveZoom.value = 0.9;
   formData.value = {
     id: null,
     name: '',
@@ -1359,6 +1611,9 @@ function openAddModal() {
 function openEditModal(tmpl) {
   isEditing.value = true;
   modalTab.value = 'branding';
+  mobileActiveTab.value = 'editor';
+  showLiveViewPane.value = true;
+  liveZoom.value = 0.9;
   formData.value = { ...tmpl };
   tableConfig.value = getTableConfig(tmpl);
   signatoriesList.value = getSignatoriesList(tmpl);
