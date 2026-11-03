@@ -477,8 +477,8 @@
                 </td>
 
                 <!-- Column 4: Progress & Status -->
-                <td class="py-3 px-4 align-middle">
-                  <div class="space-y-1">
+                <td class="py-3 px-4 align-middle font-mono">
+                  <div class="space-y-1.5">
                     <div class="flex items-center justify-between gap-1 flex-wrap">
                       <div class="flex items-center gap-1">
                         <StatusBadge :status="wo.status" />
@@ -489,13 +489,27 @@
                           ARSIP
                         </span>
                       </div>
-                      <span class="font-mono font-bold text-[10px] text-[#FACC15]">{{ wo.progress_percent }}%</span>
+                      <span :class="['font-mono font-bold text-xs', getStatusTextColor(wo.status)]">
+                        {{ wo.progress_percent }}%
+                      </span>
                     </div>
+
+                    <!-- Dynamic Progress Bar colored by Status -->
                     <div class="w-full bg-[#0B0C0E] h-1.5 overflow-hidden border border-[#232A36]">
                       <div
-                        class="h-full bg-[#FACC15] transition-all duration-300"
+                        :class="['h-full transition-all duration-300', getProgressBarColor(wo.status)]"
                         :style="{ width: `${wo.progress_percent}%` }"
                       />
+                    </div>
+
+                    <!-- Status Description / Label text -->
+                    <div class="flex items-center justify-between text-[9px]">
+                      <span :class="['font-bold tracking-wider uppercase', getStatusTextColor(wo.status)]">
+                        {{ getStatusDescription(wo.status) }}
+                      </span>
+                      <span class="text-slate-500 font-mono">
+                        {{ wo.progress_percent === 100 ? 'LENGKAP' : (wo.status === 'REVISION' ? 'KENDALA' : 'AKTIF') }}
+                      </span>
                     </div>
                   </div>
                 </td>
@@ -620,14 +634,17 @@
           </div>
           <div>
             <span class="text-slate-500 text-[9px] uppercase">// PROGRES</span>
-            <div class="text-[#FACC15] font-bold">{{ wo.progress_percent }}% SELESAI</div>
+            <div :class="['font-bold font-mono', getStatusTextColor(wo.status)]">{{ wo.progress_percent }}% SELESAI</div>
           </div>
         </div>
 
         <!-- Bottom: Progress Bar & Actions -->
         <div class="pt-1 space-y-2">
           <div class="w-full bg-[#0B0C0E] h-1.5 overflow-hidden border border-[#232A36]">
-            <div class="bg-[#FACC15] h-full" :style="{ width: `${wo.progress_percent}%` }" />
+            <div
+              :class="['h-full transition-all duration-300', getProgressBarColor(wo.status)]"
+              :style="{ width: `${wo.progress_percent}%` }"
+            />
           </div>
 
           <div class="flex items-center justify-between gap-2 pt-1">
@@ -860,6 +877,90 @@ function exportCSV() {
 function switchTab(tab) {
   activeTab.value = tab;
   loadData();
+}
+
+function getStatusTextColor(status) {
+  switch (status) {
+    case 'COMPLETED':
+    case 'APPROVED':
+    case 'BA_OPNAME':
+      return 'text-emerald-400';
+    case 'REVISION':
+      return 'text-rose-400';
+    case 'SUBMITTED':
+    case 'REVIEW':
+      return 'text-purple-400';
+    case 'UNDER_REVIEW':
+      return 'text-indigo-400';
+    case 'IN_PROGRESS':
+      return 'text-[#FACC15]';
+    case 'CHECKED_IN':
+      return 'text-teal-400';
+    case 'ASSIGNED':
+      return 'text-amber-300';
+    case 'READY':
+      return 'text-sky-400';
+    case 'DRAFT':
+    default:
+      return 'text-slate-400';
+  }
+}
+
+function getProgressBarColor(status) {
+  switch (status) {
+    case 'COMPLETED':
+    case 'APPROVED':
+    case 'BA_OPNAME':
+      return 'bg-emerald-500';
+    case 'REVISION':
+      return 'bg-rose-500';
+    case 'SUBMITTED':
+    case 'REVIEW':
+      return 'bg-purple-500';
+    case 'UNDER_REVIEW':
+      return 'bg-indigo-500';
+    case 'IN_PROGRESS':
+      return 'bg-[#FACC15]';
+    case 'CHECKED_IN':
+      return 'bg-teal-500';
+    case 'ASSIGNED':
+      return 'bg-amber-400';
+    case 'READY':
+      return 'bg-sky-500';
+    case 'DRAFT':
+    default:
+      return 'bg-slate-500';
+  }
+}
+
+function getStatusDescription(status) {
+  switch (status) {
+    case 'COMPLETED':
+      return '100% Selesai';
+    case 'BA_OPNAME':
+      return 'BA Opname Terbit';
+    case 'APPROVED':
+      return 'Disetujui Client/SPV';
+    case 'REVISION':
+      return 'Perlu Revisi / Kendala';
+    case 'SUBMITTED':
+    case 'REVIEW':
+      return 'Menunggu Review';
+    case 'UNDER_REVIEW':
+      return 'Sedang Direview';
+    case 'IN_PROGRESS':
+      return 'Pengerjaan Lapangan';
+    case 'CHECKED_IN':
+      return 'Check-In Lapangan';
+    case 'ASSIGNED':
+      return 'Tim Ditugaskan';
+    case 'READY':
+      return 'Siap Penugasan';
+    case 'DRAFT':
+      return 'Draft Awal';
+    default:
+      return status || 'Pekerjaan';
+  }
 }
 
 function openEditSpk(id) {
