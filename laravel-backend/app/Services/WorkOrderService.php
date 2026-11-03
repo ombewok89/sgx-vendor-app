@@ -27,22 +27,29 @@ class WorkOrderService
         return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 
-    public static function getScopedQuery($user)
+    public static function getScopedQuery($user, bool $isDetailed = false)
     {
-        $query = WorkOrder::with([
+        $relations = [
             'vendor:id,code,name',
             'area:id,name,province,city',
             'jobType:id,code,name,doc_mode',
             'pic:id,name,phone',
             'assignments:id,name,phone',
-            'items',
-            'checkIns',
-            'evidencePhotos',
-            'issues',
-            'reviews',
-            'revisions',
-            'baDocument'
-        ]);
+        ];
+
+        if ($isDetailed) {
+            $relations = array_merge($relations, [
+                'items',
+                'checkIns',
+                'evidencePhotos',
+                'issues',
+                'reviews',
+                'revisions',
+                'baDocument'
+            ]);
+        }
+
+        $query = WorkOrder::with($relations);
 
         if ($user->hasAnyRole(['VENDOR', 'CLIENT'])) {
             if ($user->vendor_id) {

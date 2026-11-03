@@ -19,7 +19,7 @@ class WorkOrderController extends Controller
         // Auto-normalize legacy 'REVIEW' status to standard 'SUBMITTED'
         $this->ensureArchiveColumnsExist();
 
-        $query = WorkOrderService::getScopedQuery($user);
+        $query = WorkOrderService::getScopedQuery($user, false);
 
         // Filter is_archived:
         // Jika request archived=true / status=ARCHIVED dan user adalah SUPERUSER -> HANYA tampilkan yang is_archived = true
@@ -58,10 +58,12 @@ class WorkOrderController extends Controller
 
         $workOrders = $query->orderByDesc('id')->get();
 
-        // Calculate and normalize real progress for each work order
+        // Calculate and normalize real progress for each work order only if missing
         foreach ($workOrders as $wo) {
-            $calc = WorkOrderService::recalculateProgress($wo);
-            $wo->progress_percent = $calc;
+            if ($wo->progress_percent === null) {
+                $calc = WorkOrderService::recalculateProgress($wo);
+                $wo->progress_percent = $calc;
+            }
         }
 
         return response()->json([
@@ -73,7 +75,7 @@ class WorkOrderController extends Controller
     public function show(Request $request, $id)
     {
         $user = $request->user();
-        $workOrder = WorkOrderService::getScopedQuery($user)->find($id);
+        $workOrder = WorkOrderService::getScopedQuery($user, true)->find($id);
 
         if (!$workOrder) {
             return response()->json([

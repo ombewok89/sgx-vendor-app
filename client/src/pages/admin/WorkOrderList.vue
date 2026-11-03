@@ -65,7 +65,7 @@
         </div>
 
         <button
-          @click="loadData"
+          @click="loadData(true)"
           class="px-3 py-2 bg-[#13171F] hover:bg-[#1A202C] rounded-xs text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1.5 border border-[#232A36] hover:border-[#FACC15]/60 transition-colors active:scale-95 cursor-pointer uppercase"
           title="Segarkan Data"
         >
@@ -396,20 +396,44 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-[#232A36] text-slate-300 bg-[#13171F]">
-            <template v-if="loading">
-              <tr>
-                <td colspan="6" class="py-14 text-center text-slate-400 font-mono">
-                  <div class="flex flex-col items-center justify-center gap-2">
-                    <RefreshCw class="w-6 h-6 animate-spin text-[#FACC15]" />
-                    <span>MEMUAT DATA PEKERJAAN SPK...</span>
+            <!-- SKELETON CAD LOADING STATE -->
+            <template v-if="loading && allWorkOrders.length === 0">
+              <tr v-for="n in (perPage > 0 ? Math.min(perPage, 8) : 5)" :key="'skel-' + n" class="animate-pulse">
+                <td class="py-3.5 px-3 text-center">
+                  <div class="h-5 w-6 bg-[#18202A] rounded-xs mx-auto border border-[#232A36]"></div>
+                </td>
+                <td class="py-3.5 px-4 space-y-1.5">
+                  <div class="flex items-center gap-2">
+                    <div class="h-3.5 w-24 bg-[#1F2735] rounded-xs"></div>
+                    <div class="h-3 w-16 bg-[#18202A] rounded-xs"></div>
                   </div>
+                  <div class="h-3.5 w-2/3 bg-[#1F2735] rounded-xs"></div>
+                  <div class="h-2.5 w-1/3 bg-[#18202A] rounded-xs"></div>
+                </td>
+                <td class="py-3.5 px-4 space-y-1.5">
+                  <div class="h-3.5 w-28 bg-[#1F2735] rounded-xs"></div>
+                  <div class="h-2.5 w-20 bg-[#18202A] rounded-xs"></div>
+                </td>
+                <td class="py-3.5 px-4 space-y-1.5">
+                  <div class="h-3.5 w-20 bg-[#1F2735] rounded-xs"></div>
+                  <div class="h-2.5 w-14 bg-[#18202A] rounded-xs"></div>
+                </td>
+                <td class="py-3.5 px-4 space-y-1.5">
+                  <div class="flex justify-between">
+                    <div class="h-3 w-20 bg-[#1F2735] rounded-xs"></div>
+                    <div class="h-3 w-8 bg-[#18202A] rounded-xs"></div>
+                  </div>
+                  <div class="h-1.5 w-full bg-[#18202A] rounded-xs"></div>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="h-6 w-16 bg-[#18202A] rounded-xs ml-auto border border-[#232A36]"></div>
                 </td>
               </tr>
             </template>
 
-            <template v-else-if="filteredWorkOrders.length > 0">
+            <template v-else-if="paginatedWorkOrders.length > 0">
               <tr
-                v-for="(wo, index) in filteredWorkOrders"
+                v-for="(wo, index) in paginatedWorkOrders"
                 :key="wo.id"
                 @click="$emit('select-work-order', wo.id)"
                 class="hover:bg-[#1A202C] cursor-pointer transition-colors group"
@@ -417,7 +441,7 @@
                 <!-- Column 0: Number / Index -->
                 <td class="py-3 px-2 text-center align-middle font-mono">
                   <span class="inline-flex items-center justify-center min-w-[26px] h-6 px-1.5 rounded-xs bg-[#0E1117] text-slate-300 font-bold text-[11px] border border-[#232A36] group-hover:text-[#FACC15] group-hover:border-[#FACC15]/40 transition-colors">
-                    {{ index + 1 }}
+                    {{ (currentPage - 1) * (perPage === -1 ? 0 : perPage) + index + 1 }}
                   </span>
                 </td>
 
@@ -559,115 +583,229 @@
     <!-- VIEW MODE B: YELLOW-TAGGED WAREHOUSE WORK ORDER CARDS     -->
     <!-- (Strictly complying with .cursorrules Section 4)          -->
     <!-- ========================================================= -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 font-mono">
-      <div
-        v-for="(wo, index) in filteredWorkOrders"
-        :key="wo.id"
-        @click="$emit('select-work-order', wo.id)"
-        :class="[
-          'cad-crosshair-card p-4 transition-colors cursor-pointer group relative flex flex-col justify-between space-y-3 bg-[#13171F] border',
-          wo.status === 'REVISION'
-            ? 'border-[#EF4444] hover:border-[#EF4444]'
-            : 'border-[#232A36] hover:border-[#FACC15]'
-        ]"
-      >
-        <!-- Top Warehouse Yellow Header Strip -->
-        <div class="flex items-start justify-between gap-2 border-b border-[#232A36] pb-2.5">
-          <div class="flex flex-col gap-1">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <!-- Sequential Index Badge -->
-              <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-xs bg-[#0E1117] text-[#FACC15] font-bold text-[10px] border border-[#232A36]">
-                #{{ index + 1 }}
-              </span>
-              <!-- Physical Yellow Tagged Badge -->
-              <span class="bg-[#FACC15] text-[#0B0C0E] font-black text-[10px] px-2 py-0.5 rounded-xs border border-[#0B0C0E] tracking-wider uppercase">
-                SPK: {{ wo.spk_number }}
-              </span>
-              <span class="text-[9px] font-bold text-slate-400 bg-[#0E1117] px-1.5 py-0.5 rounded-xs border border-[#232A36] uppercase">
-                {{ wo.jobType?.name || wo.job_type?.name || wo.job_type_name || 'PROJECT' }}
-              </span>
+    <div v-else class="space-y-4 font-mono">
+      <!-- Skeleton Cards for View Mode B -->
+      <div v-if="loading && allWorkOrders.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div v-for="n in 6" :key="'skel-card-' + n" class="p-4 bg-[#13171F] border border-[#232A36] rounded-xs space-y-3 animate-pulse">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-2.5">
+            <div class="h-4 w-28 bg-[#1F2735] rounded-xs"></div>
+            <div class="h-4 w-20 bg-[#18202A] rounded-xs"></div>
+          </div>
+          <div class="h-4 w-3/4 bg-[#1F2735] rounded-xs"></div>
+          <div class="h-3 w-1/2 bg-[#18202A] rounded-xs"></div>
+          <div class="h-16 bg-[#0E1117] rounded-xs border border-[#232A36]"></div>
+          <div class="h-1.5 w-full bg-[#18202A] rounded-xs"></div>
+        </div>
+      </div>
+
+      <div v-else-if="paginatedWorkOrders.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div
+          v-for="(wo, index) in paginatedWorkOrders"
+          :key="wo.id"
+          @click="$emit('select-work-order', wo.id)"
+          :class="[
+            'cad-crosshair-card p-4 transition-colors cursor-pointer group relative flex flex-col justify-between space-y-3 bg-[#13171F] border',
+            wo.status === 'REVISION'
+              ? 'border-[#EF4444] hover:border-[#EF4444]'
+              : 'border-[#232A36] hover:border-[#FACC15]'
+          ]"
+        >
+          <!-- Top Warehouse Yellow Header Strip -->
+          <div class="flex items-start justify-between gap-2 border-b border-[#232A36] pb-2.5">
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <!-- Sequential Index Badge -->
+                <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-xs bg-[#0E1117] text-[#FACC15] font-bold text-[10px] border border-[#232A36]">
+                  #{{ (currentPage - 1) * (perPage === -1 ? 0 : perPage) + index + 1 }}
+                </span>
+                <!-- Physical Yellow Tagged Badge -->
+                <span class="bg-[#FACC15] text-[#0B0C0E] font-black text-[10px] px-2 py-0.5 rounded-xs border border-[#0B0C0E] tracking-wider uppercase">
+                  SPK: {{ wo.spk_number }}
+                </span>
+                <span class="text-[9px] font-bold text-slate-400 bg-[#0E1117] px-1.5 py-0.5 rounded-xs border border-[#232A36] uppercase">
+                  {{ wo.jobType?.name || wo.job_type?.name || wo.job_type_name || 'PROJECT' }}
+                </span>
+              </div>
+              <div class="text-[9px] text-slate-500 uppercase">
+                REGISTERED // SGX BENCOOLEN
+              </div>
             </div>
-            <div class="text-[9px] text-slate-500 uppercase">
-              REGISTERED // SGX BENCOOLEN
-            </div>
-          </div>
 
-          <div class="flex items-center gap-1">
-            <!-- Diagonal Hazard Stripe Stamp for Revision / Field Blocker -->
-            <span
-              v-if="wo.status === 'REVISION'"
-              class="hazard-stripes text-[#0B0C0E] font-black text-[9px] px-1.5 py-0.5 rounded-xs border border-[#0B0C0E] uppercase"
-              title="Tiket Kendala Lapangan Aktif"
-            >
-              KENDALA LAPANGAN
-            </span>
-            <StatusBadge :status="wo.status" />
-          </div>
-        </div>
-
-        <!-- Middle: Title & Store Location -->
-        <div class="space-y-1.5">
-          <h4 class="text-white font-bold text-sm leading-snug group-hover:text-[#FACC15] transition-colors font-sans">
-            {{ wo.title }}
-          </h4>
-          <div class="flex items-center gap-1.5 text-slate-400 text-[10px]">
-            <MapPin class="w-3 h-3 text-[#FACC15] shrink-0" />
-            <span class="text-slate-200 font-bold">{{ wo.area?.name || wo.area_name || 'WILAYAH' }}</span>
-            <span class="text-slate-600">//</span>
-            <span class="truncate text-slate-400">{{ wo.location_name }}</span>
-          </div>
-        </div>
-
-        <!-- Technical Metadata Grid (Client, PIC, Deadline) -->
-        <div class="grid grid-cols-2 gap-2 p-2 bg-[#0E1117] border border-[#232A36] rounded-xs text-[10px]">
-          <div>
-            <span class="text-slate-500 text-[9px] uppercase">// CLIENT</span>
-            <div class="text-slate-200 font-bold truncate">{{ wo.vendor?.name || wo.vendor_name || '-' }}</div>
-          </div>
-          <div>
-            <span class="text-slate-500 text-[9px] uppercase">// TEKNISI PIC</span>
-            <div class="text-slate-200 font-bold truncate">{{ wo.pic?.name || wo.pic_name || 'BELUM DITUGASKAN' }}</div>
-          </div>
-          <div>
-            <span class="text-slate-500 text-[9px] uppercase">// DEADLINE</span>
-            <div class="text-[#FACC15] font-bold">{{ wo.deadline || '-' }}</div>
-          </div>
-          <div>
-            <span class="text-slate-500 text-[9px] uppercase">// PROGRES</span>
-            <div :class="['font-bold font-mono', getStatusTextColor(wo.status)]">{{ wo.progress_percent }}% SELESAI</div>
-          </div>
-        </div>
-
-        <!-- Bottom: Progress Bar & Actions -->
-        <div class="pt-1 space-y-2">
-          <div class="w-full bg-[#0B0C0E] h-1.5 overflow-hidden border border-[#232A36]">
-            <div
-              :class="['h-full transition-all duration-300', getProgressBarColor(wo.status)]"
-              :style="{ width: `${wo.progress_percent}%` }"
-            />
-          </div>
-
-          <div class="flex items-center justify-between gap-2 pt-1">
-            <span class="text-[9px] text-slate-500">ID: #{{ wo.id }}</span>
-            <div class="flex items-center gap-1.5">
-              <button
-                v-if="isSupervisor"
-                @click.stop="openEditSpk(wo.id)"
-                class="p-1.5 bg-[#0E1117] hover:bg-[#1A202C] text-slate-300 hover:text-[#FACC15] rounded-xs border border-[#232A36] hover:border-[#FACC15]"
-                title="Edit SPK"
+            <div class="flex items-center gap-1">
+              <!-- Diagonal Hazard Stripe Stamp for Revision / Field Blocker -->
+              <span
+                v-if="wo.status === 'REVISION'"
+                class="hazard-stripes text-[#0B0C0E] font-black text-[9px] px-1.5 py-0.5 rounded-xs border border-[#0B0C0E] uppercase"
+                title="Tiket Kendala Lapangan Aktif"
               >
-                <Pencil class="w-3 h-3" />
-              </button>
-              <button
-                @click.stop="$emit('select-work-order', wo.id)"
-                class="px-3 py-1 bg-[#FACC15] text-[#0B0C0E] hover:bg-[#FFE033] font-bold text-xs rounded-xs flex items-center gap-1 uppercase"
-              >
-                <Eye class="w-3 h-3 stroke-[2.5]" />
-                <span>LIHAT DETAIL</span>
-              </button>
+                KENDALA LAPANGAN
+              </span>
+              <StatusBadge :status="wo.status" />
+            </div>
+          </div>
+
+          <!-- Middle: Title & Store Location -->
+          <div class="space-y-1.5">
+            <h4 class="text-white font-bold text-sm leading-snug group-hover:text-[#FACC15] transition-colors font-sans">
+              {{ wo.title }}
+            </h4>
+            <div class="flex items-center gap-1.5 text-slate-400 text-[10px]">
+              <MapPin class="w-3 h-3 text-[#FACC15] shrink-0" />
+              <span class="text-slate-200 font-bold">{{ wo.area?.name || wo.area_name || 'WILAYAH' }}</span>
+              <span class="text-slate-600">//</span>
+              <span class="truncate text-slate-400">{{ wo.location_name }}</span>
+            </div>
+          </div>
+
+          <!-- Technical Metadata Grid (Client, PIC, Deadline) -->
+          <div class="grid grid-cols-2 gap-2 p-2 bg-[#0E1117] border border-[#232A36] rounded-xs text-[10px]">
+            <div>
+              <span class="text-slate-500 text-[9px] uppercase">// CLIENT</span>
+              <div class="text-slate-200 font-bold truncate">{{ wo.vendor?.name || wo.vendor_name || '-' }}</div>
+            </div>
+            <div>
+              <span class="text-slate-500 text-[9px] uppercase">// TEKNISI PIC</span>
+              <div class="text-slate-200 font-bold truncate">{{ wo.pic?.name || wo.pic_name || 'BELUM DITUGASKAN' }}</div>
+            </div>
+            <div>
+              <span class="text-slate-500 text-[9px] uppercase">// DEADLINE</span>
+              <div class="text-[#FACC15] font-bold">{{ wo.deadline || '-' }}</div>
+            </div>
+            <div>
+              <span class="text-slate-500 text-[9px] uppercase">// PROGRES</span>
+              <div :class="['font-bold font-mono', getStatusTextColor(wo.status)]">{{ wo.progress_percent }}% SELESAI</div>
+            </div>
+          </div>
+
+          <!-- Bottom: Progress Bar & Actions -->
+          <div class="pt-1 space-y-2">
+            <div class="w-full bg-[#0B0C0E] h-1.5 overflow-hidden border border-[#232A36]">
+              <div
+                :class="['h-full transition-all duration-300', getProgressBarColor(wo.status)]"
+                :style="{ width: `${wo.progress_percent}%` }"
+              />
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <span class="text-[9px] text-slate-500">ID: #{{ wo.id }}</span>
+              <div class="flex items-center gap-1.5">
+                <button
+                  v-if="isSupervisor"
+                  @click.stop="openEditSpk(wo.id)"
+                  class="p-1.5 bg-[#0E1117] hover:bg-[#1A202C] text-slate-300 hover:text-[#FACC15] rounded-xs border border-[#232A36] hover:border-[#FACC15]"
+                  title="Edit SPK"
+                >
+                  <Pencil class="w-3 h-3" />
+                </button>
+                <button
+                  @click.stop="$emit('select-work-order', wo.id)"
+                  class="px-3 py-1 bg-[#FACC15] text-[#0B0C0E] hover:bg-[#FFE033] font-bold text-xs rounded-xs flex items-center gap-1 uppercase"
+                >
+                  <Eye class="w-3 h-3 stroke-[2.5]" />
+                  <span>LIHAT DETAIL</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Empty state for cards -->
+      <div v-else class="py-14 text-center text-slate-400 font-mono bg-[#13171F] border border-[#232A36] rounded-xs">
+        <div class="flex flex-col items-center justify-center gap-2">
+          <Archive v-if="activeTab === 'ARCHIVED'" class="w-8 h-8 opacity-30 text-[#FACC15]" />
+          <FileText v-else class="w-8 h-8 opacity-30 text-slate-500" />
+          <p class="text-xs uppercase">
+            {{ activeTab === 'ARCHIVED' ? 'BELUM ADA PEKERJAAN SPK YANG DIARSIPKAN.' : 'TIDAK ADA DATA SPK YANG COCOK DENGAN FILTER.' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- INDUSTRIAL CAD PAGINATION BAR                             -->
+    <!-- ========================================================= -->
+    <div
+      v-if="filteredWorkOrders.length > 0"
+      class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-[#0E1117] border border-[#232A36] rounded-xs font-mono text-xs text-slate-400 mt-4"
+    >
+      <!-- Left: Item count & Per page selector -->
+      <div class="flex items-center gap-3">
+        <span class="text-[11px]">
+          MENAMPILKAN <strong class="text-[#FACC15]">{{ paginationRangeText }}</strong> DARI <strong class="text-white">{{ filteredWorkOrders.length }}</strong> SPK
+        </span>
+        <div class="flex items-center gap-1.5 pl-3 border-l border-[#232A36]">
+          <span class="text-[10px] text-slate-500 uppercase">BARIS:</span>
+          <select
+            v-model="perPage"
+            class="bg-[#141820] text-slate-200 border border-[#232A36] rounded-xs px-2 py-1 text-[11px] focus:outline-none focus:border-[#FACC15] cursor-pointer"
+          >
+            <option :value="10">10</option>
+            <option :value="15">15</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+            <option :value="-1">SEMUA</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Right: Page Controls -->
+      <div v-if="totalPages > 1" class="flex items-center gap-1">
+        <button
+          type="button"
+          @click="goToPage(1)"
+          :disabled="currentPage === 1"
+          class="px-2 py-1 bg-[#141820] border border-[#232A36] rounded-xs hover:border-[#FACC15] hover:text-[#FACC15] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#232A36] disabled:hover:text-slate-400 transition-colors"
+          title="Halaman Pertama"
+        >
+          ««
+        </button>
+        <button
+          type="button"
+          @click="goToPage(currentPage - 1)"
+          :disabled="currentPage === 1"
+          class="px-2.5 py-1 bg-[#141820] border border-[#232A36] rounded-xs hover:border-[#FACC15] hover:text-[#FACC15] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#232A36] disabled:hover:text-slate-400 transition-colors"
+          title="Halaman Sebelumnya"
+        >
+          ‹ PREV
+        </button>
+
+        <!-- Page Numbers List -->
+        <template v-for="(p, pIdx) in visiblePages" :key="pIdx">
+          <span v-if="p === '...'" class="px-1 text-slate-600 select-none">...</span>
+          <button
+            v-else
+            type="button"
+            @click="goToPage(p)"
+            :class="[
+              'px-2.5 py-1 rounded-xs font-bold transition-all',
+              currentPage === p
+                ? 'bg-[#FACC15] text-[#0B0C0E] border border-[#FACC15]'
+                : 'bg-[#141820] text-slate-300 border border-[#232A36] hover:border-[#FACC15] hover:text-[#FACC15]'
+            ]"
+          >
+            {{ p }}
+          </button>
+        </template>
+
+        <button
+          type="button"
+          @click="goToPage(currentPage + 1)"
+          :disabled="currentPage === totalPages"
+          class="px-2.5 py-1 bg-[#141820] border border-[#232A36] rounded-xs hover:border-[#FACC15] hover:text-[#FACC15] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#232A36] disabled:hover:text-slate-400 transition-colors"
+          title="Halaman Selanjutnya"
+        >
+          NEXT ›
+        </button>
+        <button
+          type="button"
+          @click="goToPage(totalPages)"
+          :disabled="currentPage === totalPages"
+          class="px-2 py-1 bg-[#141820] border border-[#232A36] rounded-xs hover:border-[#FACC15] hover:text-[#FACC15] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-[#232A36] disabled:hover:text-slate-400 transition-colors"
+          title="Halaman Terakhir"
+        >
+          »»
+        </button>
       </div>
     </div>
 
@@ -682,7 +820,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { api } from '../../services/api';
 import { useAuth } from '../../composables/useAuth';
 import StatusBadge from '../../components/StatusBadge.vue';
@@ -721,6 +859,51 @@ const vendors = ref([]);
 const areas = ref([]);
 const loading = ref(true);
 
+// --- Industrial CAD Pagination State ---
+const currentPage = ref(1);
+const perPage = ref(15);
+
+const totalPages = computed(() => {
+  if (perPage.value === -1) return 1;
+  const count = filteredWorkOrders.value.length;
+  return Math.max(1, Math.ceil(count / perPage.value));
+});
+
+const paginatedWorkOrders = computed(() => {
+  if (perPage.value === -1) return filteredWorkOrders.value;
+  const start = (currentPage.value - 1) * perPage.value;
+  return filteredWorkOrders.value.slice(start, start + perPage.value);
+});
+
+const paginationRangeText = computed(() => {
+  const total = filteredWorkOrders.value.length;
+  if (total === 0) return '0';
+  if (perPage.value === -1) return `1 - ${total}`;
+  const start = (currentPage.value - 1) * perPage.value + 1;
+  const end = Math.min(currentPage.value * perPage.value, total);
+  return `${start} - ${end}`;
+});
+
+const visiblePages = computed(() => {
+  const total = totalPages.value;
+  const current = currentPage.value;
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, '...', total];
+  }
+  if (current >= total - 3) {
+    return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total];
+});
+
+function goToPage(page) {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+}
+
 const search = ref('');
 const selectedQuickStatus = ref('ALL'); // 'ALL' | 'IN_PROGRESS' | 'REVIEW' | 'COMPLETED'
 const vendorFilter = ref('');
@@ -728,6 +911,11 @@ const areaFilter = ref('');
 const datePeriodFilter = ref('ALL');
 const customStartDate = ref('');
 const customEndDate = ref('');
+
+// Auto-reset to page 1 on any filter change
+watch([search, selectedQuickStatus, vendorFilter, areaFilter, datePeriodFilter, customStartDate, customEndDate, perPage, activeTab], () => {
+  currentPage.value = 1;
+});
 
 const currentMonthName = computed(() => {
   return new Date().toLocaleString('id-ID', { month: 'long', year: 'numeric' });
@@ -968,22 +1156,65 @@ function openEditSpk(id) {
   editModalOpen.value = true;
 }
 
-async function loadData() {
-  loading.value = true;
+async function loadData(forceRefresh = false) {
+  // 1. Instant Cache Render: load immediately from sessionStorage if memory is empty
+  if (allWorkOrders.value.length === 0) {
+    try {
+      const cachedWo = sessionStorage.getItem(`sgx_cached_wo_${activeTab.value}`);
+      if (cachedWo) {
+        allWorkOrders.value = JSON.parse(cachedWo);
+      }
+      const cachedVendors = sessionStorage.getItem('sgx_cached_vendors');
+      if (cachedVendors) {
+        vendors.value = JSON.parse(cachedVendors);
+      }
+      const cachedAreas = sessionStorage.getItem('sgx_cached_areas');
+      if (cachedAreas) {
+        areas.value = JSON.parse(cachedAreas);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Only show skeleton loading indicator if no cached data exists
+  if (allWorkOrders.value.length === 0) {
+    loading.value = true;
+  }
+
   try {
     const params = {};
     if (activeTab.value === 'ARCHIVED') {
       params.archived = 'true';
     }
 
-    const [woRes, vRes, aRes] = await Promise.all([
-      api.getWorkOrders(params),
-      api.getVendors(),
-      api.getAreas()
-    ]);
+    // Only fetch master data (vendors/areas) if not yet loaded or on forced refresh
+    const fetchPromises = [api.getWorkOrders(params)];
+    if (vendors.value.length === 0 || forceRefresh) {
+      fetchPromises.push(api.getVendors());
+    } else {
+      fetchPromises.push(Promise.resolve({ data: vendors.value }));
+    }
+
+    if (areas.value.length === 0 || forceRefresh) {
+      fetchPromises.push(api.getAreas());
+    } else {
+      fetchPromises.push(Promise.resolve({ data: areas.value }));
+    }
+
+    const [woRes, vRes, aRes] = await Promise.all(fetchPromises);
     allWorkOrders.value = woRes.data || [];
     vendors.value = vRes.data || [];
     areas.value = aRes.data || [];
+
+    // Cache successful fetch for instant load next time
+    try {
+      sessionStorage.setItem(`sgx_cached_wo_${activeTab.value}`, JSON.stringify(allWorkOrders.value));
+      sessionStorage.setItem('sgx_cached_vendors', JSON.stringify(vendors.value));
+      sessionStorage.setItem('sgx_cached_areas', JSON.stringify(areas.value));
+    } catch (e) {
+      // quota or private mode
+    }
   } catch (err) {
     console.error('Failed to load work orders:', err);
   } finally {
