@@ -125,7 +125,7 @@
 
           <template v-else-if="filteredQueue.length > 0">
             <div
-              v-for="wo in filteredQueue"
+              v-for="(wo, index) in filteredQueue"
               :key="wo.id"
               @click="handleSelectOrder(wo.id)"
               :class="[
@@ -137,6 +137,7 @@
             >
               <div class="flex items-center justify-between mb-1">
                 <span class="font-mono font-bold text-white tracking-wide text-[11px] flex items-center gap-1.5">
+                  <span class="text-[9px] font-mono font-bold text-slate-400 bg-[#0B0C0E] px-1.5 py-0.2 rounded-xs border border-[#232A36]">#{{ index + 1 }}</span>
                   <span v-if="selectedOrder?.id === wo.id" class="w-1.5 h-1.5 bg-hazard"></span>
                   {{ wo.spk_number }}
                 </span>

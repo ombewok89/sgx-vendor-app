@@ -100,6 +100,7 @@
         <table class="w-full text-left text-xs">
           <thead class="bg-slate-100/60 text-slate-500 font-bold border-b border-slate-200/80">
             <tr>
+              <th class="py-3 px-3 w-12 text-center">No</th>
               <th class="py-3 px-4">No. SPK & Nama Pekerjaan</th>
               <th class="py-3 px-4">Vendor</th>
               <th class="py-3 px-4">Area & Lokasi</th>
@@ -111,10 +112,15 @@
           <tbody class="divide-y divide-slate-100/80 text-slate-700">
             <template v-if="recentOrders.length > 0">
               <tr
-                v-for="order in recentOrders"
+                v-for="(order, index) in recentOrders"
                 :key="order.id"
                 class="hover:bg-brand-50/40 transition-colors"
               >
+                <td class="py-3.5 px-3 text-center font-mono font-bold text-slate-500">
+                  <span class="inline-flex items-center justify-center min-w-[24px] h-5 px-1 rounded bg-slate-100 text-slate-600 text-[11px] border border-slate-200">
+                    {{ index + 1 }}
+                  </span>
+                </td>
                 <td class="py-3.5 px-4">
                   <div class="font-mono font-bold text-brand-900 text-[11px]">{{ order.spk_number }}</div>
                   <div class="text-slate-700 font-semibold truncate max-w-xs mt-0.5">{{ order.title }}</div>
@@ -135,7 +141,7 @@
               </tr>
             </template>
             <tr v-else>
-              <td colspan="6" class="py-10 text-center text-slate-400 font-medium">
+              <td colspan="7" class="py-10 text-center text-slate-400 font-medium">
                 Belum ada data pekerjaan. Klik "Buat SPK Baru" untuk memulai.
               </td>
             </tr>

@@ -33,7 +33,7 @@
 
       <div class="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
         <div
-          v-for="task in tasks"
+          v-for="(task, idx) in tasks"
           :key="task.id"
           @click="handleSelectTask(task.id)"
           :class="[
@@ -44,14 +44,17 @@
           ]"
         >
           <div class="flex items-center justify-between gap-1.5 mb-1.5">
-            <span
-              :class="[
-                'font-mono font-black text-[11px] px-2 py-0.5 rounded-md',
-                selectedTask?.id === task.id ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-800'
-              ]"
-            >
-              {{ task.spk_number }}
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">#{{ idx + 1 }}</span>
+              <span
+                :class="[
+                  'font-mono font-black text-[11px] px-2 py-0.5 rounded-md',
+                  selectedTask?.id === task.id ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-800'
+                ]"
+              >
+                {{ task.spk_number }}
+              </span>
+            </div>
             <StatusBadge :status="task.status" />
           </div>
 
@@ -81,7 +84,7 @@
 
         <div v-if="tasks.length > 0" class="space-y-3">
           <div
-            v-for="task in tasks"
+            v-for="(task, idx) in tasks"
             :key="task.id"
             @click="handleSelectTask(task.id)"
             :class="[
@@ -98,9 +101,14 @@
             />
 
             <div class="flex items-center justify-between mb-2">
-              <span class="font-mono font-black text-xs text-slate-800 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/60">
-                {{ task.spk_number }}
-              </span>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-xs text-slate-500 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/60">
+                  #{{ idx + 1 }}
+                </span>
+                <span class="font-mono font-black text-xs text-slate-800 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200/60">
+                  {{ task.spk_number }}
+                </span>
+              </div>
               <StatusBadge :status="task.status" />
             </div>
 

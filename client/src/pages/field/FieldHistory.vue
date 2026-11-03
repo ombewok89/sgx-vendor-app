@@ -74,16 +74,21 @@
     <!-- History Cards Grid -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
       <div
-        v-for="wo in filteredHistory"
+        v-for="(wo, index) in filteredHistory"
         :key="wo.id"
         class="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all flex flex-col justify-between space-y-4"
       >
         <!-- Card Top -->
         <div class="space-y-2.5">
           <div class="flex items-center justify-between gap-2 flex-wrap">
-            <span class="font-mono text-xs font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-100">
-              {{ wo.spk_number }}
-            </span>
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl border border-slate-200">
+                #{{ index + 1 }}
+              </span>
+              <span class="font-mono text-xs font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-100">
+                {{ wo.spk_number }}
+              </span>
+            </div>
             <span
               class="text-xs font-bold px-2.5 py-1 rounded-lg uppercase"
               :class="getStatusBadgeClass(wo.status)"

@@ -31,7 +31,7 @@
         <div class="space-y-2.5 max-h-[75vh] overflow-y-auto pr-1 custom-scrollbar">
           <template v-if="workOrders.length > 0">
             <div
-              v-for="wo in workOrders"
+              v-for="(wo, index) in workOrders"
               :key="wo.id"
               @click="handleSelectOrder(wo.id)"
               :class="[
@@ -42,7 +42,12 @@
               ]"
             >
               <div class="flex items-center justify-between mb-1.5">
-                <span class="font-mono font-bold text-slate-900">{{ wo.spk_number }}</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                    #{{ index + 1 }}
+                  </span>
+                  <span class="font-mono font-bold text-slate-900">{{ wo.spk_number }}</span>
+                </div>
                 <StatusBadge :status="wo.status" />
               </div>
               <div class="font-bold text-slate-900 truncate mb-1.5">{{ wo.title }}</div>

@@ -107,7 +107,7 @@
     <!-- Issues Card Grid -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div
-        v-for="issue in filteredIssues"
+        v-for="(issue, index) in filteredIssues"
         :key="issue.id"
         :class="[
           'bg-white rounded-3xl p-5 border shadow-sm space-y-4 flex flex-col justify-between transition-all duration-300',
@@ -118,6 +118,9 @@
           <!-- Top Tag & Store Info -->
           <div class="flex items-center justify-between gap-2 flex-wrap">
             <div class="flex items-center gap-2">
+              <span class="font-mono font-bold text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                #{{ index + 1 }}
+              </span>
               <span
                 :class="[
                   'px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5',

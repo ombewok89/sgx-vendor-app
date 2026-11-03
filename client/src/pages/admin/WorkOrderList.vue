@@ -387,17 +387,18 @@
         <table class="w-full text-left text-xs table-auto border-collapse font-sans">
           <thead class="bg-[#0E1117] text-slate-400 font-mono font-bold border-b border-[#232A36] text-[10px] uppercase tracking-wider">
             <tr>
-              <th class="py-3 px-4 w-[34%]">// NO. SPK & PEKERJAAN</th>
-              <th class="py-3 px-4 w-[22%]">// CLIENT & PELAKSANA SGX</th>
+              <th class="py-3 px-3 w-[50px] text-center font-mono text-[10px]">// NO</th>
+              <th class="py-3 px-4 w-[33%]">// NO. SPK & PEKERJAAN</th>
+              <th class="py-3 px-4 w-[21%]">// CLIENT & PELAKSANA SGX</th>
               <th class="py-3 px-4 w-[14%]">// DEADLINE TARGET</th>
               <th class="py-3 px-4 w-[18%]">// PROGRES & STATUS</th>
-              <th class="py-3 px-4 w-[12%] text-right">// AKSI</th>
+              <th class="py-3 px-4 w-[14%] text-right">// AKSI</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-[#232A36] text-slate-300 bg-[#13171F]">
             <template v-if="loading">
               <tr>
-                <td colspan="5" class="py-14 text-center text-slate-400 font-mono">
+                <td colspan="6" class="py-14 text-center text-slate-400 font-mono">
                   <div class="flex flex-col items-center justify-center gap-2">
                     <RefreshCw class="w-6 h-6 animate-spin text-[#FACC15]" />
                     <span>MEMUAT DATA PEKERJAAN SPK...</span>
@@ -408,11 +409,18 @@
 
             <template v-else-if="filteredWorkOrders.length > 0">
               <tr
-                v-for="wo in filteredWorkOrders"
+                v-for="(wo, index) in filteredWorkOrders"
                 :key="wo.id"
                 @click="$emit('select-work-order', wo.id)"
                 class="hover:bg-[#1A202C] cursor-pointer transition-colors group"
               >
+                <!-- Column 0: Number / Index -->
+                <td class="py-3 px-2 text-center align-middle font-mono">
+                  <span class="inline-flex items-center justify-center min-w-[26px] h-6 px-1.5 rounded-xs bg-[#0E1117] text-slate-300 font-bold text-[11px] border border-[#232A36] group-hover:text-[#FACC15] group-hover:border-[#FACC15]/40 transition-colors">
+                    {{ index + 1 }}
+                  </span>
+                </td>
+
                 <!-- Column 1: SPK & Job Information (with Yellow Warehouse Tag) -->
                 <td class="py-3 px-4 align-middle">
                   <div class="flex items-center gap-2 mb-1">
@@ -517,7 +525,7 @@
 
             <template v-else>
               <tr>
-                <td colspan="5" class="py-14 text-center text-slate-400 font-mono">
+                <td colspan="6" class="py-14 text-center text-slate-400 font-mono">
                   <div class="flex flex-col items-center justify-center gap-2">
                     <Archive v-if="activeTab === 'ARCHIVED'" class="w-8 h-8 opacity-30 text-[#FACC15]" />
                     <FileText v-else class="w-8 h-8 opacity-30 text-slate-500" />
@@ -539,7 +547,7 @@
     <!-- ========================================================= -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 font-mono">
       <div
-        v-for="wo in filteredWorkOrders"
+        v-for="(wo, index) in filteredWorkOrders"
         :key="wo.id"
         @click="$emit('select-work-order', wo.id)"
         :class="[
@@ -553,6 +561,10 @@
         <div class="flex items-start justify-between gap-2 border-b border-[#232A36] pb-2.5">
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-1.5 flex-wrap">
+              <!-- Sequential Index Badge -->
+              <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-xs bg-[#0E1117] text-[#FACC15] font-bold text-[10px] border border-[#232A36]">
+                #{{ index + 1 }}
+              </span>
               <!-- Physical Yellow Tagged Badge -->
               <span class="bg-[#FACC15] text-[#0B0C0E] font-black text-[10px] px-2 py-0.5 rounded-xs border border-[#0B0C0E] tracking-wider uppercase">
                 SPK: {{ wo.spk_number }}

@@ -75,7 +75,7 @@
 
       <div v-if="filteredOrders.length > 0" class="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
         <div
-          v-for="order in filteredOrders"
+          v-for="(order, idx) in filteredOrders"
           :key="order.id"
           @click="handleSelectOrder(order.id)"
           :class="[
@@ -86,14 +86,17 @@
           ]"
         >
           <div class="flex items-center justify-between gap-1.5 mb-1.5">
-            <span
-              :class="[
-                'font-mono font-black text-[10px] px-2 py-0.5 rounded-md',
-                selectedOrder?.id === order.id ? 'bg-white/15 text-white' : 'bg-purple-100 text-purple-900'
-              ]"
-            >
-              {{ order.spk_number }}
-            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">#{{ idx + 1 }}</span>
+              <span
+                :class="[
+                  'font-mono font-black text-[10px] px-2 py-0.5 rounded-md',
+                  selectedOrder?.id === order.id ? 'bg-white/15 text-white' : 'bg-purple-100 text-purple-900'
+                ]"
+              >
+                {{ order.spk_number }}
+              </span>
+            </div>
             <StatusBadge :status="order.status" />
           </div>
 
@@ -176,7 +179,7 @@
 
         <div v-else class="space-y-2 max-h-[600px] overflow-y-auto pr-1">
           <div
-            v-for="order in filteredOrders"
+            v-for="(order, idx) in filteredOrders"
             :key="order.id"
             @click="handleSelectOrder(order.id)"
             :class="[
@@ -187,9 +190,12 @@
             ]"
           >
             <div class="flex items-center justify-between">
-              <span class="font-mono font-bold text-[10px] text-purple-900 bg-purple-100/60 px-2 py-0.5 rounded">
-                {{ order.spk_number }}
-              </span>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">#{{ idx + 1 }}</span>
+                <span class="font-mono font-bold text-[10px] text-purple-900 bg-purple-100/60 px-2 py-0.5 rounded">
+                  {{ order.spk_number }}
+                </span>
+              </div>
               <StatusBadge :status="order.status" />
             </div>
 

@@ -155,12 +155,15 @@
 
       <div v-else class="space-y-2.5">
         <div
-          v-for="task in activeTasks"
+          v-for="(task, idx) in activeTasks"
           :key="task.id"
           class="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200 hover:border-indigo-200 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
         >
           <div class="space-y-1 flex-1">
             <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-mono text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                #{{ idx + 1 }}
+              </span>
               <span class="font-mono text-[11px] font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
                 {{ task.spk_number }}
               </span>

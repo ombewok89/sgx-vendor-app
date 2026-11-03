@@ -188,12 +188,15 @@
           <!-- Work Order Rows -->
           <div v-if="workOrders.length > 0" class="space-y-2.5">
             <div
-              v-for="wo in workOrders.slice(0, 5)"
+              v-for="(wo, index) in workOrders.slice(0, 5)"
               :key="wo.id"
               class="p-3.5 rounded-2xl bg-white border border-slate-100 hover:border-purple-200 transition-all flex items-center justify-between gap-3 shadow-xs"
             >
               <div class="min-w-0 space-y-0.5">
                 <div class="flex items-center gap-2">
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-200/80 text-slate-600">
+                    #{{ index + 1 }}
+                  </span>
                   <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700">
                     {{ wo.spk_number }}
                   </span>

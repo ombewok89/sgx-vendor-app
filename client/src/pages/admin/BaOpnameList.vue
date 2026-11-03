@@ -58,6 +58,7 @@
         <table class="w-full text-left text-xs">
           <thead class="bg-[#0E1117] text-slate-400 font-bold border-b border-[#232A36] uppercase text-[10px] tracking-wider">
             <tr>
+              <th class="py-3 px-3 w-12 text-center">// NO</th>
               <th class="py-3 px-4">Nomor BA</th>
               <th class="py-3 px-4">Nomor SPK & Pekerjaan</th>
               <th class="py-3 px-4">Mitra Vendor</th>
@@ -71,7 +72,7 @@
           <tbody class="divide-y divide-[#1C2028] text-slate-300">
             <template v-if="loading">
               <tr>
-                <td colspan="8" class="py-12 text-center text-slate-500 text-xs font-mono">
+                <td colspan="9" class="py-12 text-center text-slate-500 text-xs font-mono">
                   <div class="w-6 h-6 border-2 border-hazard border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                   <span>MEMUAT_BERITA_ACARA_OPNAME...</span>
                 </td>
@@ -79,10 +80,17 @@
             </template>
             <template v-else-if="filteredList.length > 0">
               <tr
-                v-for="ba in filteredList"
+                v-for="(ba, index) in filteredList"
                 :key="ba.id"
                 class="hover:bg-[#181D26] transition-colors"
               >
+                <!-- Nomor Urut -->
+                <td class="py-3.5 px-3 text-center">
+                  <span class="inline-flex items-center justify-center min-w-[24px] h-5 px-1 rounded-xs bg-[#0E1117] text-slate-300 font-bold text-[10px] border border-[#232A36]">
+                    {{ index + 1 }}
+                  </span>
+                </td>
+
                 <!-- Nomor BA -->
                 <td class="py-3.5 px-4 font-mono font-bold text-hazard text-xs">
                   {{ ba.ba_number }}

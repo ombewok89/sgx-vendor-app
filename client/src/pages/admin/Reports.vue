@@ -207,6 +207,7 @@
           <table class="w-full text-left text-xs font-mono">
             <thead class="bg-[#0E1117] text-slate-400 font-bold border-b border-[#232A36] uppercase text-[10px] tracking-wider">
               <tr>
+                <th class="py-3 px-3 w-12 text-center">// NO</th>
                 <th class="py-3 px-4">No. SPK</th>
                 <th class="py-3 px-4">Nama Proyek / Cabang</th>
                 <th class="py-3 px-4">Mitra Vendor</th>
@@ -219,14 +220,19 @@
             <tbody class="divide-y divide-[#1C2028] text-slate-300">
               <template v-if="loading">
                 <tr>
-                  <td colspan="7" class="py-12 text-center text-slate-500 font-medium">
+                  <td colspan="8" class="py-12 text-center text-slate-500 font-medium">
                     <div class="w-6 h-6 border-2 border-hazard border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                     <span>MEMUAT_DATA_LAPORAN_SPK...</span>
                   </td>
                 </tr>
               </template>
               <template v-else-if="filteredWorkOrders.length > 0">
-                <tr v-for="wo in filteredWorkOrders" :key="wo.id" class="hover:bg-[#181D26] transition-colors">
+                <tr v-for="(wo, index) in filteredWorkOrders" :key="wo.id" class="hover:bg-[#181D26] transition-colors">
+                  <td class="py-3.5 px-3 text-center">
+                    <span class="inline-flex items-center justify-center min-w-[24px] h-5 px-1 rounded-xs bg-[#0E1117] text-slate-300 font-bold text-[10px] border border-[#232A36]">
+                      {{ index + 1 }}
+                    </span>
+                  </td>
                   <td class="py-3.5 px-4 font-mono font-bold text-hazard text-xs">
                     {{ wo.spk_number }}
                   </td>
@@ -254,7 +260,7 @@
               </template>
               <template v-else>
                 <tr>
-                  <td colspan="7" class="py-12 text-center text-slate-500 font-medium border border-dashed border-[#232A36]">
+                  <td colspan="8" class="py-12 text-center text-slate-500 font-medium border border-dashed border-[#232A36]">
                     [ TIDAK ADA DATA PEKERJAAN YANG SESUAI FILTER ]
                   </td>
                 </tr>
