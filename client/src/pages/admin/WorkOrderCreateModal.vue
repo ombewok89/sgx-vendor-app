@@ -82,7 +82,7 @@
           <!-- Row 1: Judul Proyek Cabang (Primary Focus) -->
           <div>
             <label class="block font-bold text-slate-300 mb-1 text-xs uppercase tracking-wider">
-              Judul / Nama Proyek Cabang <span class="text-[#FACC15]">*</span>
+              // Judul / Nama Proyek Cabang <span class="text-[#FACC15]">*</span>
             </label>
             <input
               type="text"
@@ -96,22 +96,22 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">
-                Perusahaan Client (Pemberi Tugas) <span class="text-[#FACC15]">*</span>
+                // Perusahaan Client (Pemberi Tugas) <span class="text-[#FACC15]">*</span>
               </label>
               <select
                 v-model="formData.vendor_id"
-                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white font-mono focus:outline-none"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white font-mono focus:outline-none text-xs"
               >
                 <option v-for="v in vendors" :key="v.id" :value="v.id">{{ v.name }} ({{ v.code }})</option>
               </select>
             </div>
             <div>
               <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">
-                Area Operasional <span class="text-[#FACC15]">*</span>
+                // Area Operasional <span class="text-[#FACC15]">*</span>
               </label>
               <select
                 v-model="formData.area_id"
-                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white font-mono focus:outline-none"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white font-mono focus:outline-none text-xs"
               >
                 <option v-for="a in areas" :key="a.id" :value="a.id">{{ a.name }} ({{ a.city }})</option>
               </select>
@@ -121,7 +121,7 @@
           <!-- Row 3: Location Name & Full Address -->
           <div>
             <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">
-              Nama Cabang & Alamat Lokasi Lengkap <span class="text-[#FACC15]">*</span>
+              // Nama Cabang & Alamat Lokasi Lengkap <span class="text-[#FACC15]">*</span>
             </label>
             <input
               type="text"
@@ -134,31 +134,31 @@
           <!-- Row 4: PIC & Dates -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             <div>
-              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">PIC Teknisi Lapangan</label>
+              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">// PIC Teknisi Lapangan</label>
               <select
                 v-model="formData.pic_user_id"
-                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white font-mono focus:outline-none"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white font-mono focus:outline-none text-xs"
               >
                 <option value="">Pilih nanti (Status: READY)</option>
                 <option v-for="u in fieldUsers" :key="u.id" :value="u.id">{{ u.name }} ({{ u.phone }})</option>
               </select>
             </div>
             <div>
-              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">Tanggal Mulai</label>
+              <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">// Tanggal Mulai</label>
               <input
                 type="date"
                 v-model="formData.start_date"
-                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white font-mono focus:outline-none"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white font-mono focus:outline-none text-xs"
               />
             </div>
             <div>
               <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">
-                Target Selesai / Deadline <span class="text-[#FACC15]">*</span>
+                // Target Selesai / Deadline <span class="text-[#FACC15]">*</span>
               </label>
               <input
                 type="date"
                 v-model="formData.deadline"
-                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-[#FACC15] font-mono font-bold focus:outline-none"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-[#FACC15] font-mono font-bold focus:outline-none text-xs"
               />
             </div>
           </div>

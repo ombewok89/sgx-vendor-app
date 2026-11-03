@@ -1,413 +1,525 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-    <div class="glass-modal rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden my-6 flex flex-col max-h-[92vh] border border-white/90 animate-in fade-in zoom-in duration-200">
-      <!-- Modal Header -->
-      <div class="px-6 py-4 border-b border-slate-200/80 flex items-center justify-between bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shrink-0">
+  <div v-if="isOpen" class="fixed inset-0 z-50 bg-[#0B0C0E]/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto font-sans">
+    <div class="bg-[#13171F] border border-[#232A36] rounded-xs max-w-4xl w-full shadow-2xl overflow-hidden my-4 flex flex-col max-h-[92vh] font-mono text-white animate-fade-in">
+      <!-- Modal Header (Industrial CAD Standard) -->
+      <div class="px-6 py-4 border-b border-[#232A36] flex items-center justify-between bg-[#0E1117] shrink-0">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300">
-            <ShieldCheck class="w-5 h-5" />
+          <div class="w-9 h-9 rounded-xs bg-[#1C2028] border border-[#FACC15] text-[#FACC15] flex items-center justify-center font-mono">
+            <ShieldCheck class="w-4 h-4 text-[#FACC15]" />
           </div>
           <div>
-            <div class="flex items-center gap-2">
-              <span class="font-mono font-black text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-0.5 rounded-lg">
-                SUPERVISOR ACCESS
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-mono font-bold text-[10px] bg-[#1C2028] text-[#FACC15] border border-[#FACC15]/40 px-2 py-0.5 rounded-xs tracking-wider uppercase">
+                SUPERVISOR ACCESS // EDIT MODE
               </span>
-              <span class="text-xs text-slate-300 font-mono">{{ formData.spk_number }}</span>
+              <span class="text-xs text-slate-300 font-mono font-bold bg-[#0B0C0E] border border-[#232A36] px-2 py-0.5 rounded-xs">
+                SPK: {{ formData.spk_number }}
+              </span>
             </div>
-            <h3 class="font-black text-sm sm:text-base text-white mt-0.5">
-              Edit Data & Pengaturan SPK
+            <h3 class="font-bold text-sm sm:text-base text-white uppercase tracking-wider mt-0.5 font-mono">
+              EDIT DATA & PENGATURAN SPK
             </h3>
           </div>
         </div>
 
         <button
+          type="button"
           @click="$emit('close')"
-          class="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer"
+          class="p-1.5 text-slate-400 hover:text-white bg-[#1C2028] hover:bg-[#232A36] border border-[#232A36] rounded-xs transition-colors cursor-pointer"
         >
-          <X class="w-5 h-5" />
+          <X class="w-4 h-4" />
         </button>
       </div>
 
       <!-- Modal Body -->
-      <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-700 custom-scrollbar bg-slate-50/50">
+      <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-300 custom-scrollbar bg-[#13171F] flex-1">
         <!-- Loading State -->
-        <div v-if="loadingData" class="py-16 text-center text-slate-400 font-medium">
-          <Loader2 class="w-7 h-7 animate-spin mx-auto mb-2 text-purple-600" />
-          <span>Memuat data konfigurasi SPK...</span>
+        <div v-if="loadingData" class="py-16 text-center text-slate-400 font-mono">
+          <Loader2 class="w-6 h-6 animate-spin mx-auto mb-2 text-[#FACC15]" />
+          <span>MEMUAT DATA KONFIGURASI SPK...</span>
         </div>
 
         <form v-else @submit.prevent="handleSubmit" class="space-y-4">
-          <!-- Supervisor Banner Info -->
-          <div class="p-3.5 bg-gradient-to-r from-purple-900/15 via-indigo-900/10 to-purple-900/15 border border-purple-200 rounded-2xl flex items-center gap-2.5 text-xs text-purple-950 font-bold">
-            <Lock class="w-4 h-4 text-purple-700 shrink-0" />
-            <span>Fitur ini khusus Supervisor/Superuser untuk memperbarui data SPK, mengubah penugasan PIC & Tim, serta menyesuaikan parameter checklist dan GPS.</span>
+          <!-- Supervisor Alert Banner -->
+          <div class="p-3 bg-[#0E1117] border border-[#232A36] rounded-xs flex items-center gap-2.5 text-xs text-slate-300 font-mono">
+            <Lock class="w-4 h-4 text-[#FACC15] shrink-0" />
+            <span class="text-[11px]">
+              Otorisasi Supervisor Aktif: Anda berwenang memperbarui data SPK, mengubah penugasan PIC & Tim, serta mengatur parameter verifikasi lapangan.
+            </span>
           </div>
 
           <!-- Error Alert -->
-          <div v-if="error" class="p-3 bg-rose-500/10 border border-rose-300 text-rose-800 text-xs rounded-xl flex items-center gap-2 font-medium">
-            <AlertCircle class="w-4 h-4 shrink-0 text-rose-600" />
-            <span>{{ error }}</span>
+          <div v-if="error" class="p-3 bg-rose-950/40 border border-rose-500/50 text-rose-300 text-xs rounded-xs flex items-center justify-between gap-2 font-mono">
+            <div class="flex items-center gap-2">
+              <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
+              <span>{{ error }}</span>
+            </div>
+            <button type="button" @click="error = ''" class="text-rose-400 hover:text-rose-200 font-bold text-xs cursor-pointer">
+              ✕
+            </button>
           </div>
 
-          <!-- Section 1: Identitas & No SPK -->
-          <div class="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
-            <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <FileText class="w-3.5 h-3.5 text-purple-700" />
-              <span>1. Identitas & Judul Pekerjaan</span>
-            </h4>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Nomor SPK *</label>
-                <input
-                  type="text"
-                  required
-                  v-model="formData.spk_number"
-                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-xs focus:bg-white focus:ring-2 focus:ring-purple-500/20"
-                />
-              </div>
-              <div class="sm:col-span-2">
-                <label class="block font-bold text-slate-700 mb-1">Judul / Nama Proyek SPK *</label>
-                <input
-                  type="text"
-                  required
-                  v-model="formData.title"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-purple-500/20"
-                />
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Perusahaan Client *</label>
-                <select
-                  required
-                  v-model="formData.vendor_id"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-purple-500/20"
-                >
-                  <option v-for="v in vendors" :key="v.id" :value="v.id">{{ v.name }} ({{ v.code }})</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Area Operasional *</label>
-                <select
-                  required
-                  v-model="formData.area_id"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-purple-500/20"
-                >
-                  <option v-for="a in areas" :key="a.id" :value="a.id">{{ a.name }} ({{ a.city || a.province || 'Wilayah' }})</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Kategori Utama *</label>
-                <select
-                  required
-                  v-model="formData.job_type_id"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-purple-500/20"
-                >
-                  <option v-for="j in jobTypes" :key="j.id" :value="j.id">{{ j.name }}</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Nama Cabang & Alamat Lengkap *</label>
-              <input
-                type="text"
-                required
-                v-model="formData.location_name"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-purple-500/20"
-              />
-            </div>
-          </div>
-
-          <!-- Section 2: Penugasan Tim & Jadwal -->
-          <div class="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
-            <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <Users class="w-3.5 h-3.5 text-purple-700" />
-              <span>2. Penugasan Tim Lapangan & Jadwal Target</span>
-            </h4>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Ketua Tim / PIC Lapangan *</label>
-                <select
-                  v-model="formData.pic_user_id"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-purple-500/20"
-                >
-                  <option value="">-- Belum Ditugaskan --</option>
-                  <option v-for="u in fieldUsers" :key="u.id" :value="u.id">
-                    {{ u.name }} ({{ u.phone || 'No HP -' }})
-                  </option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Tanggal Mulai Pengerjaan *</label>
-                <input
-                  type="date"
-                  required
-                  v-model="formData.start_date"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono"
-                />
-              </div>
-
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Deadline Selesai *</label>
-                <input
-                  type="date"
-                  required
-                  v-model="formData.deadline"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono"
-                />
-              </div>
-            </div>
-
-            <!-- Anggota Tim Tambahan -->
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Anggota Tim Tambahan (Penugasan Multi-Teknisi)</label>
-              <div class="max-h-32 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                <label
-                  v-for="u in fieldUsers.filter(u => u.id !== formData.pic_user_id)"
-                  :key="u.id"
-                  class="flex items-center gap-2 p-1.5 hover:bg-white rounded-lg cursor-pointer text-xs"
-                >
-                  <input
-                    type="checkbox"
-                    :value="u.id"
-                    v-model="selectedMemberIds"
-                    class="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
-                  />
-                  <span>{{ u.name }} ({{ u.phone || 'No HP -' }})</span>
-                </label>
-                <div v-if="fieldUsers.filter(u => u.id !== formData.pic_user_id).length === 0" class="text-slate-400 text-[11px] p-1 italic">
-                  Pilih PIC terlebih dahulu untuk menentukan anggota lainnya.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 3: Sub Pekerjaan & Rincian Checklist -->
-          <div class="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <CheckSquare class="w-3.5 h-3.5 text-purple-700" />
-                <span>3. Rincian Sub Pekerjaan ({{ subItems.length }} Item Checklist)</span>
-              </h4>
+          <!-- Step Tabs (Industrial CAD Segmented) -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#232A36] pb-3">
+            <div class="flex items-center gap-1 p-1 bg-[#0E1117] border border-[#232A36] rounded-xs font-mono text-xs">
               <button
                 type="button"
-                @click="addSubItem"
-                class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold rounded-lg text-[10px] flex items-center gap-1 transition-all cursor-pointer"
+                @click="activeTab = 'info'"
+                :class="[
+                  'px-3 py-1.5 rounded-xs transition-colors cursor-pointer uppercase tracking-wider font-mono',
+                  activeTab === 'info'
+                    ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
+                ]"
               >
-                <Plus class="w-3 h-3" />
-                <span>Tambah Sub Item</span>
+                <span>1. Data Pokok & Tim Lapangan</span>
+              </button>
+              <button
+                type="button"
+                @click="activeTab = 'items'"
+                :class="[
+                  'px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-2 uppercase tracking-wider font-mono',
+                  activeTab === 'items'
+                    ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
+                ]"
+              >
+                <span>2. Sub-Pekerjaan & Parameter Lapangan</span>
+                <span class="px-1.5 py-0.2 rounded-xs bg-[#13171F] text-[#FACC15] border border-[#232A36] text-[10px] font-bold font-mono">
+                  {{ subItems.length }}
+                </span>
               </button>
             </div>
 
-            <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
-              <div
-                v-for="(item, idx) in subItems"
-                :key="idx"
-                class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
-              >
-                <span class="w-5 h-5 rounded-full bg-purple-100 text-purple-900 font-bold text-[10px] flex items-center justify-center shrink-0">
-                  {{ idx + 1 }}
-                </span>
+            <div class="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-xs bg-[#0E1117] border border-[#232A36] text-[10px] font-mono text-slate-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#FACC15] animate-pulse"></span>
+              <span>MODE: SPV OVERRIDE</span>
+            </div>
+          </div>
 
+          <!-- TAB 1: DATA POKOK & TIM LAPANGAN -->
+          <div v-show="activeTab === 'info'" class="space-y-4 font-mono">
+            <!-- Section 1: Identitas & No SPK -->
+            <div class="p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
+              <h4 class="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-[#232A36] pb-2">
+                <FileText class="w-3.5 h-3.5 text-[#FACC15]" />
+                <span>// IDENTITAS & JUDUL PEKERJAAN</span>
+              </h4>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                    Nomor SPK <span class="text-[#FACC15]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    v-model="formData.spk_number"
+                    class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs font-mono font-bold text-xs text-[#FACC15] focus:outline-none"
+                  />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                    Judul / Nama Proyek SPK <span class="text-[#FACC15]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    v-model="formData.title"
+                    class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs font-bold text-xs text-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                    Perusahaan Client <span class="text-[#FACC15]">*</span>
+                  </label>
+                  <select
+                    required
+                    v-model="formData.vendor_id"
+                    class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs font-bold text-xs text-white focus:outline-none"
+                  >
+                    <option v-for="v in vendors" :key="v.id" :value="v.id">{{ v.name }} ({{ v.code }})</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                    Area Operasional <span class="text-[#FACC15]">*</span>
+                  </label>
+                  <select
+                    required
+                    v-model="formData.area_id"
+                    class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs font-bold text-xs text-white focus:outline-none"
+                  >
+                    <option v-for="a in areas" :key="a.id" :value="a.id">{{ a.name }} ({{ a.city || a.province || 'Wilayah' }})</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                    Kategori Utama <span class="text-[#FACC15]">*</span>
+                  </label>
+                  <select
+                    required
+                    v-model="formData.job_type_id"
+                    class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs font-bold text-xs text-white focus:outline-none"
+                  >
+                    <option v-for="j in jobTypes" :key="j.id" :value="j.id">{{ j.name }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  Nama Cabang & Alamat Lengkap <span class="text-[#FACC15]">*</span>
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="Nama item pekerjaan (misal: Pasang Rangka Hollo 4x4)"
-                  v-model="item.item_name"
-                  class="flex-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:ring-1 focus:ring-purple-500"
+                  v-model="formData.location_name"
+                  class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs text-white focus:outline-none"
                 />
+              </div>
+            </div>
 
-                <select
-                  v-model="item.doc_mode"
-                  class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold"
-                >
-                  <option value="BEFORE_PROCESS_AFTER">3 Tahap (Before/Process/After)</option>
-                  <option value="AFTER_ONLY">1 Tahap (After Saja)</option>
-                </select>
+            <!-- Section 2: Penugasan Tim & Jadwal -->
+            <div class="p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
+              <h4 class="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-[#232A36] pb-2">
+                <Users class="w-3.5 h-3.5 text-[#FACC15]" />
+                <span>// PENUGASAN TIM LAPANGAN & JADWAL TARGET</span>
+              </h4>
 
-                <button
-                  type="button"
-                  @click="removeSubItem(idx)"
-                  :disabled="subItems.length <= 1"
-                  class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg disabled:opacity-30 cursor-pointer"
-                  title="Hapus Item"
-                >
-                  <Trash2 class="w-3.5 h-3.5" />
-                </button>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                    Ketua Tim / PIC Lapangan <span class="text-[#FACC15]">*</span>
+                  </label>
+                  <select
+                    v-model="formData.pic_user_id"
+                    class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs font-bold text-xs text-white focus:outline-none"
+                  >
+                    <option value="">-- Belum Ditugaskan --</option>
+                    <option v-for="u in fieldUsers" :key="u.id" :value="u.id">
+                      {{ u.name }} ({{ u.phone || 'No HP -' }})
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                    Tanggal Mulai <span class="text-[#FACC15]">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    v-model="formData.start_date"
+                    class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                    Deadline Target <span class="text-[#FACC15]">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    v-model="formData.deadline"
+                    class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-[#FACC15] font-bold focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <!-- Anggota Tim Tambahan -->
+              <div>
+                <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  Anggota Tim Tambahan (Penugasan Multi-Teknisi)
+                </label>
+                <div class="max-h-36 overflow-y-auto p-2.5 bg-[#0B0C0E] border border-[#232A36] rounded-xs space-y-1 custom-scrollbar">
+                  <label
+                    v-for="u in fieldUsers.filter(u => u.id !== formData.pic_user_id)"
+                    :key="u.id"
+                    class="flex items-center gap-2 p-1.5 hover:bg-[#181D26] rounded-xs cursor-pointer text-xs"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="u.id"
+                      v-model="selectedMemberIds"
+                      class="rounded-xs border-[#232A36] accent-[#FACC15] cursor-pointer"
+                    />
+                    <span class="text-slate-300 font-mono">{{ u.name }}</span>
+                    <span class="text-slate-500 text-[10px]">({{ u.phone || 'No HP -' }})</span>
+                  </label>
+                  <div v-if="fieldUsers.filter(u => u.id !== formData.pic_user_id).length === 0" class="text-slate-500 text-[11px] p-1 italic font-mono">
+                    Pilih PIC terlebih dahulu untuk menentukan anggota lainnya.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Section 4: Pengaturan Forensik, GPS, & Status Override -->
-          <div class="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
-            <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
-              <Settings class="w-3.5 h-3.5 text-purple-700" />
-              <span>4. Pengaturan Forensik, GPS & Status SPK</span>
-            </h4>
-
-            <!-- GPS Target Location -->
-            <div class="p-3 bg-purple-50/40 border border-purple-200/70 rounded-xl space-y-2">
-              <div class="flex items-center justify-between">
-                <label class="block font-bold text-slate-800 text-xs flex items-center gap-1">
-                  <MapPin class="w-3.5 h-3.5 text-purple-700" />
-                  <span>Titik Target Koordinat GPS Lokasi</span>
-                </label>
+          <!-- TAB 2: SUB-PEKERJAAN & PARAMETER LAPANGAN -->
+          <div v-show="activeTab === 'items'" class="space-y-4 font-mono">
+            <!-- Section 3: Sub Pekerjaan & Rincian Checklist -->
+            <div class="p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
+              <div class="flex items-center justify-between border-b border-[#232A36] pb-2">
+                <div>
+                  <h4 class="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <CheckSquare class="w-3.5 h-3.5 text-[#FACC15]" />
+                    <span>// RINCIAN SUB-PEKERJAAN ({{ subItems.length }} ITEM CHECKLIST)</span>
+                  </h4>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Item lingkup tugas yang harus didokumentasikan teknisi di lapangan.</p>
+                </div>
                 <button
                   type="button"
-                  @click="detectCurrentLocation"
-                  :disabled="detectingGps"
-                  class="px-2 py-0.5 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                  @click="addSubItem"
+                  class="px-2.5 py-1 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 font-bold rounded-xs text-[10px] flex items-center gap-1 transition-colors cursor-pointer uppercase tracking-wider"
                 >
-                  <Navigation class="w-3 h-3" />
-                  <span>{{ detectingGps ? 'Mendeteksi...' : '📍 Ambil GPS Saat Ini' }}</span>
+                  <Plus class="w-3 h-3 stroke-[2.5]" />
+                  <span>+ Tambah Sub-Item</span>
                 </button>
               </div>
 
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <span class="block text-[10px] text-slate-500 font-bold mb-0.5">Latitude:</span>
-                  <input
-                    type="number"
-                    step="any"
-                    v-model="formData.target_lat"
-                    placeholder="-3.79284"
-                    class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono"
-                  />
-                </div>
-                <div>
-                  <span class="block text-[10px] text-slate-500 font-bold mb-0.5">Longitude:</span>
-                  <input
-                    type="number"
-                    step="any"
-                    v-model="formData.target_lng"
-                    placeholder="102.2607"
-                    class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Checkin Requirement Toggle & Status Override -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div class="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                <input
-                  type="checkbox"
-                  id="edit_require_checkin"
-                  v-model="formData.require_checkin"
-                  class="w-4 h-4 text-purple-600 rounded cursor-pointer"
-                />
-                <label for="edit_require_checkin" class="font-bold text-slate-800 cursor-pointer text-xs">
-                  Wajib Check-In GPS di lokasi sebelum teknisi upload foto
-                </label>
-              </div>
-
-              <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                <label class="block font-bold text-slate-800 text-xs mb-1">Override Status SPK (Supervisor Only)</label>
-                <select
-                  v-model="formData.status"
-                  class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold"
+              <div class="space-y-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                <div
+                  v-for="(item, idx) in subItems"
+                  :key="idx"
+                  class="flex items-center gap-2 p-2.5 bg-[#13171F] border border-[#232A36] rounded-xs"
                 >
-                  <option value="DRAFT">DRAFT — Draft Baru</option>
-                  <option value="ASSIGNED">ASSIGNED — Tim Ditugaskan</option>
-                  <option value="IN_PROGRESS">IN_PROGRESS — Sedang Dikerjakan</option>
-                  <option value="SUBMITTED">SUBMITTED — Siap Direview</option>
-                  <option value="REVISION">REVISION — Permintaan Revisi</option>
-                  <option value="APPROVED">APPROVED — Disetujui</option>
-                  <option value="BA_OPNAME">BA_OPNAME — BA Opname Terbit</option>
-                  <option value="COMPLETED">COMPLETED — Selesai 100%</option>
-                  <option value="CANCELLED">CANCELLED — Dibatalkan</option>
-                </select>
-              </div>
-            </div>
+                  <span class="min-w-[24px] h-6 rounded-xs bg-[#0E1117] text-[#FACC15] border border-[#232A36] font-bold text-[10px] flex items-center justify-center shrink-0">
+                    #{{ idx + 1 }}
+                  </span>
 
-            <!-- Timestamp Camera Option (Use Timestamp vs Upload Bebas) -->
-            <div class="p-3 bg-purple-50/50 border border-purple-200/80 rounded-xl space-y-1.5">
-              <div class="flex items-start gap-2.5">
-                <input
-                  type="checkbox"
-                  id="edit_use_timestamp"
-                  v-model="formData.use_timestamp"
-                  class="w-4 h-4 mt-0.5 text-purple-600 rounded cursor-pointer accent-purple-700"
-                />
-                <div class="space-y-0.5">
-                  <label for="edit_use_timestamp" class="font-bold text-slate-900 cursor-pointer text-xs flex items-center gap-1.5">
-                    <span>📷 Wajib Dokumentasi Menggunakan Kamera Timestamp GPS (Stempel Otomatis)</span>
-                  </label>
-                  <p class="text-[11px] text-slate-500">
-                    <span v-if="formData.use_timestamp" class="text-purple-900 font-medium">
-                      ✓ <strong>Aktif:</strong> Foto evidence dicetak stempel jam & GPS satelit.
-                    </span>
-                    <span v-else class="text-amber-800 font-bold">
-                      ⚠️ <strong>Nonaktif:</strong> Mode upload bebas tanpa stempel timeslipe pada foto.
-                    </span>
-                  </p>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Nama item pekerjaan (misal: Pasang Rangka Hollo 4x4)"
+                    v-model="item.item_name"
+                    class="flex-1 px-3 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-semibold text-white focus:outline-none"
+                  />
+
+                  <select
+                    v-model="item.doc_mode"
+                    class="px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-[10px] font-bold text-slate-200 focus:outline-none font-mono"
+                  >
+                    <option value="BEFORE_PROCESS_AFTER">3 Tahap (Before/Process/After)</option>
+                    <option value="AFTER_ONLY">1 Tahap (After Saja)</option>
+                  </select>
+
+                  <button
+                    type="button"
+                    @click="removeSubItem(idx)"
+                    :disabled="subItems.length <= 1"
+                    class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-xs disabled:opacity-30 cursor-pointer transition-colors"
+                    title="Hapus Item"
+                  >
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>
 
-            <!-- BA Opname Physical Document Requirement -->
-            <div class="p-3 bg-amber-50/50 border border-amber-200/80 rounded-xl space-y-1.5">
-              <div class="flex items-start gap-2.5">
-                <input
-                  type="checkbox"
-                  id="edit_require_ba_doc"
-                  v-model="formData.require_ba_doc"
-                  class="w-4 h-4 mt-0.5 text-amber-600 rounded cursor-pointer accent-amber-600"
-                />
-                <div class="space-y-0.5">
-                  <label for="edit_require_ba_doc" class="font-bold text-slate-900 cursor-pointer text-xs flex items-center gap-1.5">
-                    <span>📄 Wajib Upload Foto Berkas Fisik BA Opname</span>
+            <!-- Section 4: Pengaturan Forensik, GPS, & Status Override -->
+            <div class="p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
+              <h4 class="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-[#232A36] pb-2">
+                <Settings class="w-3.5 h-3.5 text-[#FACC15]" />
+                <span>// TELEMETRI GPS & PARAMETER KONTROL LAPANGAN</span>
+              </h4>
+
+              <!-- GPS Target Location -->
+              <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="block font-bold text-slate-200 text-xs flex items-center gap-1 uppercase tracking-wider">
+                    <MapPin class="w-3.5 h-3.5 text-sky-400" />
+                    <span>Titik Target Koordinat GPS Lokasi</span>
                   </label>
-                  <p class="text-[11px] text-slate-500">
-                    <span v-if="formData.require_ba_doc" class="text-amber-900 font-medium">
-                      ✓ <strong>Wajib:</strong> Teknisi harus mengunggah foto lembar BA Opname bertandatangan sebelum SPK dapat diajukan.
-                    </span>
-                    <span v-else class="text-slate-500">
-                      Bebas / Opsional: SPK dapat diajukan tanpa foto berkas fisik BA Opname.
-                    </span>
-                  </p>
+                  <button
+                    type="button"
+                    @click="detectCurrentLocation"
+                    :disabled="detectingGps"
+                    class="px-2.5 py-1 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 rounded-xs text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors uppercase tracking-wider"
+                  >
+                    <Navigation class="w-3 h-3 text-[#FACC15]" />
+                    <span>{{ detectingGps ? 'Mendeteksi...' : '📍 Ambil GPS Saat Ini' }}</span>
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <span class="block text-[10px] text-slate-400 font-bold mb-0.5 uppercase tracking-wider">Latitude:</span>
+                    <input
+                      type="number"
+                      step="any"
+                      v-model="formData.target_lat"
+                      placeholder="-3.79284"
+                      class="w-full px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <span class="block text-[10px] text-slate-400 font-bold mb-0.5 uppercase tracking-wider">Longitude:</span>
+                    <input
+                      type="number"
+                      step="any"
+                      v-model="formData.target_lng"
+                      placeholder="102.2607"
+                      class="w-full px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Notes -->
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Catatan / Instruksi Khusus Supervisor</label>
-              <textarea
-                rows="2"
-                v-model="formData.notes"
-                placeholder="Catatan pengerjaan, instruksi K3, atau persyaratan khusus..."
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-              ></textarea>
+              <!-- Check-In, Timestamp, BA Doc, & Status Override Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <!-- 1. Checkin Requirement -->
+                <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs space-y-1">
+                  <div class="flex items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      id="edit_require_checkin"
+                      v-model="formData.require_checkin"
+                      class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer"
+                    />
+                    <div>
+                      <label for="edit_require_checkin" class="font-bold text-white cursor-pointer text-xs uppercase tracking-wider">
+                        Wajib 1x Check-In GPS
+                      </label>
+                      <p class="text-[10px] text-slate-400 mt-0.5">
+                        Teknisi harus check-in koordinat lokasi cabang saat tiba.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Status Override -->
+                <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs space-y-1">
+                  <label class="block font-bold text-white text-xs uppercase tracking-wider">
+                    Override Status SPK (Supervisor)
+                  </label>
+                  <select
+                    v-model="formData.status"
+                    class="w-full px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-bold text-[#FACC15] focus:outline-none font-mono"
+                  >
+                    <option value="DRAFT">DRAFT — Draft Baru</option>
+                    <option value="ASSIGNED">ASSIGNED — Tim Ditugaskan</option>
+                    <option value="IN_PROGRESS">IN_PROGRESS — Sedang Dikerjakan</option>
+                    <option value="SUBMITTED">SUBMITTED — Siap Direview</option>
+                    <option value="REVISION">REVISION — Permintaan Revisi</option>
+                    <option value="APPROVED">APPROVED — Disetujui</option>
+                    <option value="BA_OPNAME">BA_OPNAME — BA Opname Terbit</option>
+                    <option value="COMPLETED">COMPLETED — Selesai 100%</option>
+                    <option value="CANCELLED">CANCELLED — Dibatalkan</option>
+                  </select>
+                </div>
+
+                <!-- 3. Timestamp Camera Option -->
+                <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs space-y-1">
+                  <div class="flex items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      id="edit_use_timestamp"
+                      v-model="formData.use_timestamp"
+                      class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer"
+                    />
+                    <div>
+                      <label for="edit_use_timestamp" class="font-bold text-white cursor-pointer text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                        <span>📷 Wajib Kamera Timestamp GPS</span>
+                      </label>
+                      <p class="text-[10px] text-slate-400 mt-0.5">
+                        <span v-if="formData.use_timestamp" class="text-[#FACC15] font-bold">
+                          ✓ Aktif (Stempel satelit & map pada foto).
+                        </span>
+                        <span v-else class="text-amber-400 font-bold">
+                          ⚠️ Nonaktif (Mode upload bebas tanpa stempel).
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 4. BA Opname Physical Document Requirement -->
+                <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs space-y-1">
+                  <div class="flex items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      id="edit_require_ba_doc"
+                      v-model="formData.require_ba_doc"
+                      class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer"
+                    />
+                    <div>
+                      <label for="edit_require_ba_doc" class="font-bold text-white cursor-pointer text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                        <span>📄 Wajib Upload Berkas BA Opname</span>
+                      </label>
+                      <p class="text-[10px] text-slate-400 mt-0.5">
+                        <span v-if="formData.require_ba_doc" class="text-[#FACC15] font-bold">
+                          ✓ Wajib (Harus upload bukti fisik BA bertandatangan).
+                        </span>
+                        <span v-else class="text-slate-400">
+                          Bebas / Opsional (Dapat diajukan tanpa berkas BA).
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div>
+                <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  Catatan / Instruksi Khusus Supervisor
+                </label>
+                <textarea
+                  rows="2"
+                  v-model="formData.notes"
+                  placeholder="Catatan pengerjaan, instruksi K3, atau persyaratan khusus..."
+                  class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs text-white focus:outline-none font-mono"
+                ></textarea>
+              </div>
             </div>
           </div>
 
-          <!-- Modal Footer -->
-          <div class="pt-4 border-t border-slate-200 flex items-center justify-between">
-            <button
-              type="button"
-              @click="$emit('close')"
-              class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all cursor-pointer"
-            >
-              Batal
-            </button>
+          <!-- Modal Footer (Industrial CAD Actions) -->
+          <div class="pt-4 border-t border-[#232A36] flex items-center justify-between gap-3 font-mono">
+            <div class="flex items-center gap-2">
+              <button
+                v-if="activeTab === 'items'"
+                type="button"
+                @click="activeTab = 'info'"
+                class="px-3.5 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider"
+              >
+                ← Data Pokok
+              </button>
+              <button
+                v-if="activeTab === 'info'"
+                type="button"
+                @click="activeTab = 'items'"
+                class="px-3.5 py-2 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 font-bold rounded-xs transition-colors cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1"
+              >
+                <span>Sub-Pekerjaan & Parameter →</span>
+              </button>
+            </div>
 
-            <button
-              type="submit"
-              :disabled="submitting"
-              class="px-6 py-2.5 bg-gradient-to-r from-purple-800 via-indigo-900 to-slate-900 hover:from-purple-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-md flex items-center gap-2 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-            >
-              <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
-              <Save v-else class="w-4 h-4" />
-              <span>{{ submitting ? 'Menyimpan Perubahan...' : 'Simpan Perubahan SPK' }}</span>
-            </button>
+            <div class="flex items-center gap-2.5">
+              <button
+                type="button"
+                @click="$emit('close')"
+                class="px-4 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider"
+              >
+                Batal
+              </button>
+
+              <button
+                type="submit"
+                :disabled="submitting"
+                class="px-6 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold rounded-xs flex items-center gap-2 border border-[#FACC15] shadow-xs active:scale-95 transition-all disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
+              >
+                <Loader2 v-if="submitting" class="w-4 h-4 animate-spin text-[#0B0C0E]" />
+                <Save v-else class="w-4 h-4 stroke-[2.5]" />
+                <span>{{ submitting ? 'Menyimpan...' : 'Simpan Perubahan SPK' }}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -448,6 +560,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'updated']);
 
+const activeTab = ref('info'); // 'info' | 'items'
 const loadingData = ref(false);
 const submitting = ref(false);
 const error = ref('');
