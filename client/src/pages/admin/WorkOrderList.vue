@@ -897,9 +897,9 @@ function getStatusTextColor(status) {
     case 'CHECKED_IN':
       return 'text-teal-400';
     case 'ASSIGNED':
-      return 'text-amber-300';
+      return 'text-sky-300';
     case 'READY':
-      return 'text-sky-400';
+      return 'text-slate-300';
     case 'DRAFT':
     default:
       return 'text-slate-400';
@@ -924,12 +924,12 @@ function getProgressBarColor(status) {
     case 'CHECKED_IN':
       return 'bg-teal-500';
     case 'ASSIGNED':
-      return 'bg-amber-400';
-    case 'READY':
       return 'bg-sky-500';
+    case 'READY':
+      return 'bg-slate-600';
     case 'DRAFT':
     default:
-      return 'bg-slate-500';
+      return 'bg-slate-600';
   }
 }
 

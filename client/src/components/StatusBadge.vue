@@ -37,17 +37,17 @@ const STATUS_CONFIG = {
   },
   READY: {
     label: 'SIAP PENUGASAN',
-    bg: 'bg-[#0C1E2E]',
-    text: 'text-sky-400',
-    border: 'border-sky-500/50',
-    dot: 'bg-sky-400'
+    bg: 'bg-[#18202A]',
+    text: 'text-slate-300',
+    border: 'border-slate-500/60',
+    dot: 'bg-slate-400'
   },
   ASSIGNED: {
     label: 'TIM DITUGASKAN',
-    bg: 'bg-[#241F0E]',
-    text: 'text-amber-300',
-    border: 'border-amber-400/50',
-    dot: 'bg-amber-400 animate-pulse'
+    bg: 'bg-[#08203E]',
+    text: 'text-sky-300',
+    border: 'border-sky-500/70',
+    dot: 'bg-sky-400 animate-pulse'
   },
   CHECKED_IN: {
     label: 'GPS CHECK-IN',
@@ -58,9 +58,9 @@ const STATUS_CONFIG = {
   },
   IN_PROGRESS: {
     label: 'PROSES LAPANGAN',
-    bg: 'bg-[#261E08]',
+    bg: 'bg-[#2A2206]',
     text: 'text-[#FACC15]',
-    border: 'border-[#FACC15]/70',
+    border: 'border-[#FACC15]',
     dot: 'bg-[#FACC15] animate-pulse'
   },
   SUBMITTED: {
