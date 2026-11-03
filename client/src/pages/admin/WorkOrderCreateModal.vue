@@ -1,69 +1,70 @@
 <template>
-  <div class="fixed inset-0 z-50 bg-[#0B0C0E]/80 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto font-sans">
-    <div class="bg-[#13171F] border border-[#232A36] rounded-xs max-w-4xl w-full shadow-2xl overflow-hidden my-6 animate-fade-in font-mono text-white">
-      <!-- Modal Header (Industrial CAD) -->
-      <div class="px-6 py-4 border-b border-[#232A36] flex items-center justify-between bg-[#0E1117]">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xs bg-[#1C2028] border border-[#FACC15] text-[#FACC15] flex items-center justify-center font-mono">
+  <div class="fixed inset-0 z-50 bg-[#0B0C0E]/85 backdrop-blur-xs flex items-center justify-center p-0 sm:p-4 overflow-y-auto font-sans">
+    <div class="bg-[#13171F] border-0 sm:border border-[#232A36] rounded-none sm:rounded-xs max-w-4xl w-full shadow-2xl overflow-hidden my-0 sm:my-4 flex flex-col h-full sm:h-auto sm:max-h-[92vh] animate-fade-in font-mono text-white">
+      <!-- Modal Header (Industrial CAD - Mobile Optimized) -->
+      <div class="px-3.5 py-3 sm:px-6 sm:py-4 border-b border-[#232A36] flex items-center justify-between bg-[#0E1117] shrink-0 sticky top-0 z-20">
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xs bg-[#1C2028] border border-[#FACC15] text-[#FACC15] flex items-center justify-center font-mono shrink-0">
             <FileText class="w-4 h-4 text-[#FACC15]" />
           </div>
-          <div>
-            <h3 class="font-bold text-sm sm:text-base text-white flex items-center gap-2 uppercase tracking-wider font-mono">
-              <span>TERBITKAN SPK / WORK ORDER LOKASI CABANG</span>
+          <div class="min-w-0">
+            <h3 class="font-bold text-xs sm:text-base text-white flex items-center gap-1.5 uppercase tracking-wider font-mono truncate">
+              <span>TERBITKAN SPK WORK ORDER</span>
             </h3>
-            <p class="text-[11px] text-slate-400 mt-0.5 font-mono">Formulir penerbitan SPK baru dengan lingkup sub-pekerjaan multi-item & target lokasi.</p>
+            <p class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 font-mono truncate">Penerbitan SPK baru dengan rincian sub-pekerjaan & target lokasi.</p>
           </div>
         </div>
 
         <button
           type="button"
           @click="$emit('close')"
-          class="p-1.5 text-slate-400 hover:text-white bg-[#1C2028] hover:bg-[#232A36] border border-[#232A36] rounded-xs transition-colors cursor-pointer"
+          class="p-2 sm:p-1.5 text-slate-400 hover:text-white bg-[#1C2028] hover:bg-[#232A36] active:bg-[#232A36] border border-[#232A36] rounded-xs transition-colors cursor-pointer shrink-0 ml-2"
+          title="Tutup Modal"
         >
           <X class="w-4 h-4" />
         </button>
       </div>
 
-      <!-- Error / Validation Banner -->
-      <div v-if="error" class="mx-6 mt-4 p-3 bg-rose-950/40 border border-rose-500/50 text-rose-300 text-xs rounded-xs flex items-center justify-between gap-2 font-mono">
-        <div class="flex items-center gap-2">
-          <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
-          <span>{{ error }}</span>
+      <!-- Scrollable Form Body -->
+      <div class="p-3.5 sm:p-6 overflow-y-auto space-y-4 text-xs custom-scrollbar bg-[#13171F] flex-1 min-h-0">
+        <!-- Error / Validation Banner -->
+        <div v-if="error" class="p-2.5 sm:p-3 bg-rose-950/40 border border-rose-500/50 text-rose-300 text-xs rounded-xs flex items-center justify-between gap-2 font-mono">
+          <div class="flex items-center gap-2">
+            <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
+            <span class="text-[11px]">{{ error }}</span>
+          </div>
+          <button type="button" @click="error = null" class="text-rose-400 hover:text-rose-200 font-bold text-xs cursor-pointer p-1">
+            ✕
+          </button>
         </div>
-        <button type="button" @click="error = null" class="text-rose-400 hover:text-rose-200 font-bold text-xs cursor-pointer">
-          ✕
-        </button>
-      </div>
 
-      <!-- Form Body with Flexible 2-Tab Layout -->
-      <div class="p-6 space-y-5 text-xs">
-        
-        <!-- Step Tabs (Industrial CAD Segmented) -->
+        <!-- Step Tabs (Industrial CAD Segmented - Mobile 50/50 Grid) -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#232A36] pb-3">
-          <div class="flex items-center gap-1 p-1 bg-[#0E1117] border border-[#232A36] rounded-xs font-mono text-xs">
+          <div class="grid grid-cols-2 gap-1 w-full sm:w-auto p-1 bg-[#0E1117] border border-[#232A36] rounded-xs font-mono text-xs">
             <button
               type="button"
               @click="activeTab = 'info'"
               :class="[
-                'px-3 py-1.5 rounded-xs transition-colors cursor-pointer uppercase tracking-wider font-mono',
+                'px-2 sm:px-3 py-2 sm:py-1.5 rounded-xs transition-colors cursor-pointer uppercase tracking-wider font-mono text-center flex items-center justify-center gap-1.5 text-[11px] sm:text-xs',
                 activeTab === 'info'
                   ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
               ]"
             >
-              <span>1. Data Pokok & Cabang Toko</span>
+              <span>1. Data Pokok</span>
+              <span class="hidden sm:inline">& Cabang</span>
             </button>
             <button
               type="button"
               @click="activeTab = 'items'"
               :class="[
-                'px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-2 uppercase tracking-wider font-mono',
+                'px-2 sm:px-3 py-2 sm:py-1.5 rounded-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 uppercase tracking-wider font-mono text-center text-[11px] sm:text-xs',
                 activeTab === 'items'
                   ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
               ]"
             >
-              <span>2. Sub-Pekerjaan & GPS</span>
+              <span>2. Sub-Pekerjaan</span>
               <span class="px-1.5 py-0.2 rounded-xs bg-[#13171F] text-[#FACC15] border border-[#232A36] text-[10px] font-bold font-mono">
                 {{ subItems.length }}
               </span>
@@ -317,23 +318,23 @@
           </div>
 
           <!-- GPS Coordinates & Auto-Detect (Industrial Telemetry Box) -->
-          <div class="p-4 bg-[#0E1117] border border-[#232A36] rounded-xs space-y-2.5 font-mono">
-            <div class="flex items-center justify-between">
+          <div class="p-3 sm:p-4 bg-[#0E1117] border border-[#232A36] rounded-xs space-y-2.5 font-mono">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label class="block font-bold text-white text-xs flex items-center gap-1.5 uppercase tracking-wider">
-                <MapPin class="w-3.5 h-3.5 text-blue-400" />
+                <MapPin class="w-3.5 h-3.5 text-blue-400 shrink-0" />
                 <span>Titik Target Koordinat GPS Cabang (Opsional)</span>
               </label>
               <button
                 type="button"
                 @click="detectCurrentLocation"
                 :disabled="detectingGps"
-                class="px-2.5 py-1 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 rounded-xs text-[10px] font-bold flex items-center gap-1 cursor-pointer active:scale-95 transition-colors uppercase tracking-wider"
+                class="w-full sm:w-auto justify-center px-2.5 py-1.5 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 rounded-xs text-[10px] font-bold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-colors uppercase tracking-wider"
               >
                 <Navigation class="w-3 h-3 text-[#FACC15]" />
                 <span>{{ detectingGps ? 'Mendeteksi...' : '📍 Ambil GPS Saya' }}</span>
               </button>
             </div>
-            <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div>
                 <span class="block text-[10px] text-slate-400 font-bold mb-0.5 uppercase tracking-wider">Latitude:</span>
                 <input
@@ -341,7 +342,7 @@
                   step="any"
                   v-model="formData.target_lat"
                   placeholder="-3.79284"
-                  class="w-full px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
+                  class="w-full px-2.5 py-2 sm:py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
                 />
               </div>
               <div>
@@ -351,7 +352,7 @@
                   step="any"
                   v-model="formData.target_lng"
                   placeholder="102.2607"
-                  class="w-full px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
+                  class="w-full px-2.5 py-2 sm:py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
                 />
               </div>
             </div>
@@ -434,7 +435,7 @@
 
           <!-- Notes -->
           <div>
-            <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[11px]">Catatan & Instruksi Tambahan</label>
+            <label class="block font-bold text-slate-300 mb-1 uppercase tracking-wider text-[10px] sm:text-[11px]">Catatan & Instruksi Tambahan</label>
             <textarea
               rows="2"
               placeholder="Tambahkan catatan khusus untuk tim lapangan..."
@@ -443,33 +444,37 @@
             ></textarea>
           </div>
         </div>
+      </div>
 
-        <!-- Action Buttons (Industrial CAD Actions) -->
-        <div class="pt-4 border-t border-[#232A36] flex items-center justify-between gap-3 font-mono">
-          <div class="flex items-center gap-2">
+      <!-- Action Buttons (Industrial CAD Actions - Mobile Ergonomic Layout) -->
+      <div class="p-3 sm:px-6 sm:py-4 bg-[#0E1117] border-t border-[#232A36] shrink-0 font-mono sticky bottom-0 z-20">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <!-- Step toggle button (Full width on mobile) -->
+          <div class="w-full sm:w-auto">
             <button
               v-if="activeTab === 'items'"
               type="button"
               @click="activeTab = 'info'"
-              class="px-4 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider"
+              class="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 bg-[#1C2028] hover:bg-[#232A36] active:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1.5"
             >
-              ← Data Pokok
+              <span>← Kembali ke Data Pokok</span>
             </button>
             <button
               v-if="activeTab === 'info'"
               type="button"
               @click="activeTab = 'items'"
-              class="px-4 py-2 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 font-bold rounded-xs transition-colors cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1"
+              class="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 bg-[#1C2028] hover:bg-[#232A36] active:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 font-bold rounded-xs transition-colors cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1.5"
             >
-              <span>Sub-Pekerjaan & GPS →</span>
+              <span>Lanjut: Sub-Pekerjaan ({{ subItems.length }}) →</span>
             </button>
           </div>
 
-          <div class="flex items-center gap-2.5">
+          <!-- Action buttons (Cancel & Submit) -->
+          <div class="flex items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               @click="$emit('close')"
-              class="px-4 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider"
+              class="w-1/3 sm:w-auto justify-center px-4 py-2.5 sm:py-2 bg-[#1C2028] hover:bg-[#232A36] active:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider text-center"
             >
               Batal
             </button>
@@ -477,11 +482,11 @@
               type="button"
               @click="handleSubmit"
               :disabled="loading"
-              class="px-6 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold rounded-xs flex items-center gap-2 border border-[#FACC15] shadow-xs active:scale-95 transition-all disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
+              class="w-2/3 sm:w-auto justify-center flex-1 sm:flex-initial px-5 py-2.5 sm:py-2 bg-[#FACC15] hover:bg-[#FFE033] active:bg-[#EAB308] text-[#0B0C0E] font-bold rounded-xs flex items-center gap-2 border border-[#FACC15] shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider text-center"
             >
               <Loader2 v-if="loading" class="w-4 h-4 animate-spin text-[#0B0C0E]" />
               <FileCheck2 v-else class="w-4 h-4 stroke-[2.5]" />
-              <span>{{ loading ? 'Menerbitkan SPK...' : 'Terbitkan SPK Sekarang' }}</span>
+              <span class="truncate">{{ loading ? 'Menerbitkan...' : 'Terbitkan SPK' }}</span>
             </button>
           </div>
         </div>

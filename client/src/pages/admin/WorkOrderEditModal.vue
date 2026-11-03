@@ -1,22 +1,22 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 bg-[#0B0C0E]/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto font-sans">
-    <div class="bg-[#13171F] border border-[#232A36] rounded-xs max-w-4xl w-full shadow-2xl overflow-hidden my-4 flex flex-col max-h-[92vh] font-mono text-white animate-fade-in">
-      <!-- Modal Header (Industrial CAD Standard) -->
-      <div class="px-6 py-4 border-b border-[#232A36] flex items-center justify-between bg-[#0E1117] shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xs bg-[#1C2028] border border-[#FACC15] text-[#FACC15] flex items-center justify-center font-mono">
+  <div v-if="isOpen" class="fixed inset-0 z-50 bg-[#0B0C0E]/85 backdrop-blur-xs flex items-center justify-center p-0 sm:p-4 overflow-y-auto font-sans">
+    <div class="bg-[#13171F] border-0 sm:border border-[#232A36] rounded-none sm:rounded-xs max-w-4xl w-full shadow-2xl overflow-hidden my-0 sm:my-4 flex flex-col h-full sm:h-auto sm:max-h-[92vh] font-mono text-white animate-fade-in">
+      <!-- Modal Header (Industrial CAD Standard - Mobile Optimized) -->
+      <div class="px-3.5 py-3 sm:px-6 sm:py-4 border-b border-[#232A36] flex items-center justify-between bg-[#0E1117] shrink-0 sticky top-0 z-20">
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xs bg-[#1C2028] border border-[#FACC15] text-[#FACC15] flex items-center justify-center font-mono shrink-0">
             <ShieldCheck class="w-4 h-4 text-[#FACC15]" />
           </div>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-mono font-bold text-[10px] bg-[#1C2028] text-[#FACC15] border border-[#FACC15]/40 px-2 py-0.5 rounded-xs tracking-wider uppercase">
-                SUPERVISOR ACCESS // EDIT MODE
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-mono font-bold text-[9px] sm:text-[10px] bg-[#1C2028] text-[#FACC15] border border-[#FACC15]/40 px-1.5 py-0.5 rounded-xs tracking-wider uppercase">
+                SPV // EDIT
               </span>
-              <span class="text-xs text-slate-300 font-mono font-bold bg-[#0B0C0E] border border-[#232A36] px-2 py-0.5 rounded-xs">
-                SPK: {{ formData.spk_number }}
+              <span class="text-[11px] sm:text-xs text-slate-300 font-mono font-bold bg-[#0B0C0E] border border-[#232A36] px-1.5 sm:px-2 py-0.5 rounded-xs truncate max-w-[170px] sm:max-w-none">
+                {{ formData.spk_number }}
               </span>
             </div>
-            <h3 class="font-bold text-sm sm:text-base text-white uppercase tracking-wider mt-0.5 font-mono">
+            <h3 class="font-bold text-xs sm:text-base text-white uppercase tracking-wider mt-0.5 font-mono truncate">
               EDIT DATA & PENGATURAN SPK
             </h3>
           </div>
@@ -25,66 +25,69 @@
         <button
           type="button"
           @click="$emit('close')"
-          class="p-1.5 text-slate-400 hover:text-white bg-[#1C2028] hover:bg-[#232A36] border border-[#232A36] rounded-xs transition-colors cursor-pointer"
+          class="p-2 sm:p-1.5 text-slate-400 hover:text-white bg-[#1C2028] hover:bg-[#232A36] active:bg-[#232A36] border border-[#232A36] rounded-xs transition-colors cursor-pointer shrink-0 ml-2"
+          title="Tutup Modal"
         >
           <X class="w-4 h-4" />
         </button>
       </div>
 
-      <!-- Modal Body -->
-      <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-300 custom-scrollbar bg-[#13171F] flex-1">
-        <!-- Loading State -->
-        <div v-if="loadingData" class="py-16 text-center text-slate-400 font-mono">
-          <Loader2 class="w-6 h-6 animate-spin mx-auto mb-2 text-[#FACC15]" />
-          <span>MEMUAT DATA KONFIGURASI SPK...</span>
-        </div>
+      <!-- Loading State -->
+      <div v-if="loadingData" class="py-24 text-center text-slate-400 font-mono flex-1 flex flex-col items-center justify-center">
+        <Loader2 class="w-7 h-7 animate-spin mb-3 text-[#FACC15]" />
+        <span class="text-xs uppercase tracking-wider">MEMUAT DATA KONFIGURASI SPK...</span>
+      </div>
 
-        <form v-else @submit.prevent="handleSubmit" class="space-y-4">
+      <!-- Main Form Wrapper (Sticky Footer Pattern) -->
+      <form v-else @submit.prevent="handleSubmit" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <!-- Modal Body (Scrollable) -->
+        <div class="p-3 sm:p-6 overflow-y-auto space-y-4 text-xs text-slate-300 custom-scrollbar bg-[#13171F] flex-1 min-h-0">
           <!-- Supervisor Alert Banner -->
-          <div class="p-3 bg-[#0E1117] border border-[#232A36] rounded-xs flex items-center gap-2.5 text-xs text-slate-300 font-mono">
+          <div class="p-2.5 sm:p-3 bg-[#0E1117] border border-[#232A36] rounded-xs flex items-center gap-2.5 text-xs text-slate-300 font-mono">
             <Lock class="w-4 h-4 text-[#FACC15] shrink-0" />
-            <span class="text-[11px]">
-              Otorisasi Supervisor Aktif: Anda berwenang memperbarui data SPK, mengubah penugasan PIC & Tim, serta mengatur parameter verifikasi lapangan.
+            <span class="text-[10px] sm:text-[11px] leading-relaxed">
+              Otorisasi Supervisor Aktif: Berwenang memperbarui data SPK, mengubah penugasan PIC & Tim, serta mengatur parameter verifikasi.
             </span>
           </div>
 
           <!-- Error Alert -->
-          <div v-if="error" class="p-3 bg-rose-950/40 border border-rose-500/50 text-rose-300 text-xs rounded-xs flex items-center justify-between gap-2 font-mono">
+          <div v-if="error" class="p-2.5 sm:p-3 bg-rose-950/40 border border-rose-500/50 text-rose-300 text-xs rounded-xs flex items-center justify-between gap-2 font-mono">
             <div class="flex items-center gap-2">
               <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
-              <span>{{ error }}</span>
+              <span class="text-[11px]">{{ error }}</span>
             </div>
-            <button type="button" @click="error = ''" class="text-rose-400 hover:text-rose-200 font-bold text-xs cursor-pointer">
+            <button type="button" @click="error = ''" class="text-rose-400 hover:text-rose-200 font-bold text-xs cursor-pointer p-1">
               ✕
             </button>
           </div>
 
-          <!-- Step Tabs (Industrial CAD Segmented) -->
+          <!-- Step Tabs (Industrial CAD Segmented - Mobile 50/50 Grid) -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#232A36] pb-3">
-            <div class="flex items-center gap-1 p-1 bg-[#0E1117] border border-[#232A36] rounded-xs font-mono text-xs">
+            <div class="grid grid-cols-2 gap-1 w-full sm:w-auto p-1 bg-[#0E1117] border border-[#232A36] rounded-xs font-mono text-xs">
               <button
                 type="button"
                 @click="activeTab = 'info'"
                 :class="[
-                  'px-3 py-1.5 rounded-xs transition-colors cursor-pointer uppercase tracking-wider font-mono',
+                  'px-2 sm:px-3 py-2 sm:py-1.5 rounded-xs transition-colors cursor-pointer uppercase tracking-wider font-mono text-center flex items-center justify-center gap-1.5 text-[11px] sm:text-xs',
                   activeTab === 'info'
                     ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
                 ]"
               >
-                <span>1. Data Pokok & Tim Lapangan</span>
+                <span>1. Data Pokok</span>
+                <span class="hidden sm:inline">& Tim</span>
               </button>
               <button
                 type="button"
                 @click="activeTab = 'items'"
                 :class="[
-                  'px-3 py-1.5 rounded-xs transition-colors cursor-pointer flex items-center gap-2 uppercase tracking-wider font-mono',
+                  'px-2 sm:px-3 py-2 sm:py-1.5 rounded-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 uppercase tracking-wider font-mono text-center text-[11px] sm:text-xs',
                   activeTab === 'items'
                     ? 'bg-[#1C2028] text-[#FACC15] border-l-[3px] border-[#FACC15] font-bold'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-[#1A202C]/60 border-l-[3px] border-transparent'
                 ]"
               >
-                <span>2. Sub-Pekerjaan & Parameter Lapangan</span>
+                <span>2. Sub-Pekerjaan</span>
                 <span class="px-1.5 py-0.2 rounded-xs bg-[#13171F] text-[#FACC15] border border-[#232A36] text-[10px] font-bold font-mono">
                   {{ subItems.length }}
                 </span>
@@ -98,17 +101,17 @@
           </div>
 
           <!-- TAB 1: DATA POKOK & TIM LAPANGAN -->
-          <div v-show="activeTab === 'info'" class="space-y-4 font-mono">
+          <div v-show="activeTab === 'info'" class="space-y-3.5 sm:space-y-4 font-mono">
             <!-- Section 1: Identitas & No SPK -->
-            <div class="p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
+            <div class="p-3 sm:p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
               <h4 class="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-[#232A36] pb-2">
                 <FileText class="w-3.5 h-3.5 text-[#FACC15]" />
                 <span>// IDENTITAS & JUDUL PEKERJAAN</span>
               </h4>
 
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                 <div>
-                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                     Nomor SPK <span class="text-[#FACC15]">*</span>
                   </label>
                   <input
@@ -119,7 +122,7 @@
                   />
                 </div>
                 <div class="sm:col-span-2">
-                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                     Judul / Nama Proyek SPK <span class="text-[#FACC15]">*</span>
                   </label>
                   <input
@@ -131,9 +134,9 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                 <div>
-                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                     Perusahaan Client <span class="text-[#FACC15]">*</span>
                   </label>
                   <select
@@ -146,7 +149,7 @@
                 </div>
 
                 <div>
-                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                     Area Operasional <span class="text-[#FACC15]">*</span>
                   </label>
                   <select
@@ -159,7 +162,7 @@
                 </div>
 
                 <div>
-                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                     Kategori Utama <span class="text-[#FACC15]">*</span>
                   </label>
                   <select
@@ -173,7 +176,7 @@
               </div>
 
               <div>
-                <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                   Nama Cabang & Alamat Lengkap <span class="text-[#FACC15]">*</span>
                 </label>
                 <input
@@ -186,15 +189,15 @@
             </div>
 
             <!-- Section 2: Penugasan Tim & Jadwal -->
-            <div class="p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
+            <div class="p-3 sm:p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
               <h4 class="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-[#232A36] pb-2">
                 <Users class="w-3.5 h-3.5 text-[#FACC15]" />
                 <span>// PENUGASAN TIM LAPANGAN & JADWAL TARGET</span>
               </h4>
 
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                 <div>
-                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                     Ketua Tim / PIC Lapangan <span class="text-[#FACC15]">*</span>
                   </label>
                   <select
@@ -209,7 +212,7 @@
                 </div>
 
                 <div>
-                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                     Tanggal Mulai <span class="text-[#FACC15]">*</span>
                   </label>
                   <input
@@ -221,7 +224,7 @@
                 </div>
 
                 <div>
-                  <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                  <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                     Deadline Target <span class="text-[#FACC15]">*</span>
                   </label>
                   <input
@@ -235,25 +238,25 @@
 
               <!-- Anggota Tim Tambahan -->
               <div>
-                <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                   Anggota Tim Tambahan (Penugasan Multi-Teknisi)
                 </label>
-                <div class="max-h-36 overflow-y-auto p-2.5 bg-[#0B0C0E] border border-[#232A36] rounded-xs space-y-1 custom-scrollbar">
+                <div class="max-h-40 overflow-y-auto p-2 bg-[#0B0C0E] border border-[#232A36] rounded-xs space-y-1 custom-scrollbar">
                   <label
                     v-for="u in fieldUsers.filter(u => u.id !== formData.pic_user_id)"
                     :key="u.id"
-                    class="flex items-center gap-2 p-1.5 hover:bg-[#181D26] rounded-xs cursor-pointer text-xs"
+                    class="flex items-center gap-2.5 p-2 hover:bg-[#181D26] active:bg-[#1C2028] rounded-xs cursor-pointer text-xs transition-colors"
                   >
                     <input
                       type="checkbox"
                       :value="u.id"
                       v-model="selectedMemberIds"
-                      class="rounded-xs border-[#232A36] accent-[#FACC15] cursor-pointer"
+                      class="w-4 h-4 rounded-xs border-[#232A36] accent-[#FACC15] cursor-pointer shrink-0"
                     />
-                    <span class="text-slate-300 font-mono">{{ u.name }}</span>
+                    <span class="text-slate-300 font-mono font-medium">{{ u.name }}</span>
                     <span class="text-slate-500 text-[10px]">({{ u.phone || 'No HP -' }})</span>
                   </label>
-                  <div v-if="fieldUsers.filter(u => u.id !== formData.pic_user_id).length === 0" class="text-slate-500 text-[11px] p-1 italic font-mono">
+                  <div v-if="fieldUsers.filter(u => u.id !== formData.pic_user_id).length === 0" class="text-slate-500 text-[11px] p-2 italic font-mono">
                     Pilih PIC terlebih dahulu untuk menentukan anggota lainnya.
                   </div>
                 </div>
@@ -262,68 +265,86 @@
           </div>
 
           <!-- TAB 2: SUB-PEKERJAAN & PARAMETER LAPANGAN -->
-          <div v-show="activeTab === 'items'" class="space-y-4 font-mono">
+          <div v-show="activeTab === 'items'" class="space-y-3.5 sm:space-y-4 font-mono">
             <!-- Section 3: Sub Pekerjaan & Rincian Checklist -->
-            <div class="p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
+            <div class="p-3 sm:p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
               <div class="flex items-center justify-between border-b border-[#232A36] pb-2">
                 <div>
                   <h4 class="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
                     <CheckSquare class="w-3.5 h-3.5 text-[#FACC15]" />
-                    <span>// RINCIAN SUB-PEKERJAAN ({{ subItems.length }} ITEM CHECKLIST)</span>
+                    <span>// RINCIAN SUB-PEKERJAAN ({{ subItems.length }})</span>
                   </h4>
-                  <p class="text-[10px] text-slate-400 mt-0.5">Item lingkup tugas yang harus didokumentasikan teknisi di lapangan.</p>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Item lingkup tugas yang didokumentasikan di lapangan.</p>
                 </div>
                 <button
                   type="button"
                   @click="addSubItem"
-                  class="px-2.5 py-1 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 font-bold rounded-xs text-[10px] flex items-center gap-1 transition-colors cursor-pointer uppercase tracking-wider"
+                  class="px-2.5 py-1.5 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 font-bold rounded-xs text-[10px] sm:text-xs flex items-center gap-1 transition-colors cursor-pointer uppercase tracking-wider shrink-0"
                 >
-                  <Plus class="w-3 h-3 stroke-[2.5]" />
+                  <Plus class="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>+ Tambah Sub-Item</span>
                 </button>
               </div>
 
-              <div class="space-y-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+              <!-- Sub-items List (Mobile Responsive Cards) -->
+              <div class="space-y-2.5 max-h-64 sm:max-h-56 overflow-y-auto pr-0.5 custom-scrollbar">
                 <div
                   v-for="(item, idx) in subItems"
                   :key="idx"
-                  class="flex items-center gap-2 p-2.5 bg-[#13171F] border border-[#232A36] rounded-xs"
+                  class="p-2.5 bg-[#13171F] border border-[#232A36] rounded-xs space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2"
                 >
-                  <span class="min-w-[24px] h-6 rounded-xs bg-[#0E1117] text-[#FACC15] border border-[#232A36] font-bold text-[10px] flex items-center justify-center shrink-0">
-                    #{{ idx + 1 }}
-                  </span>
+                  <!-- Mobile top row / Desktop item tag -->
+                  <div class="flex items-center justify-between sm:justify-start gap-2">
+                    <span class="min-w-[26px] h-6 px-1.5 rounded-xs bg-[#0E1117] text-[#FACC15] border border-[#232A36] font-bold text-[10px] flex items-center justify-center shrink-0">
+                      #{{ idx + 1 }}
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-mono sm:hidden">Item Checklist</span>
+                    <button
+                      type="button"
+                      @click="removeSubItem(idx)"
+                      :disabled="subItems.length <= 1"
+                      class="sm:hidden p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-xs disabled:opacity-30 cursor-pointer"
+                      title="Hapus Item"
+                    >
+                      <Trash2 class="w-4 h-4 text-rose-400" />
+                    </button>
+                  </div>
 
+                  <!-- Item Name Input (Full width on mobile, flex-1 on desktop) -->
                   <input
                     type="text"
                     required
-                    placeholder="Nama item pekerjaan (misal: Pasang Rangka Hollo 4x4)"
+                    placeholder="Nama item pekerjaan (misal: Pasang Rangka Hollo)..."
                     v-model="item.item_name"
-                    class="flex-1 px-3 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-semibold text-white focus:outline-none"
+                    class="w-full sm:flex-1 px-3 py-2 sm:py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-semibold text-white focus:outline-none"
                   />
 
-                  <select
-                    v-model="item.doc_mode"
-                    class="px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-[10px] font-bold text-slate-200 focus:outline-none font-mono"
-                  >
-                    <option value="BEFORE_PROCESS_AFTER">3 Tahap (Before/Process/After)</option>
-                    <option value="AFTER_ONLY">1 Tahap (After Saja)</option>
-                  </select>
+                  <!-- Stage dropdown & desktop delete button -->
+                  <div class="flex items-center gap-2">
+                    <select
+                      v-model="item.doc_mode"
+                      class="w-full sm:w-auto px-2.5 py-2 sm:py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-[10px] font-bold text-slate-200 focus:outline-none font-mono"
+                    >
+                      <option value="BEFORE_PROCESS_AFTER">3 Tahap (Before/Process/After)</option>
+                      <option value="AFTER_ONLY">1 Tahap (After Saja)</option>
+                    </select>
 
-                  <button
-                    type="button"
-                    @click="removeSubItem(idx)"
-                    :disabled="subItems.length <= 1"
-                    class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-xs disabled:opacity-30 cursor-pointer transition-colors"
-                    title="Hapus Item"
-                  >
-                    <Trash2 class="w-3.5 h-3.5" />
-                  </button>
+                    <button
+                      type="button"
+                      @click="removeSubItem(idx)"
+                      :disabled="subItems.length <= 1"
+                      class="hidden sm:block p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-xs disabled:opacity-30 cursor-pointer transition-colors shrink-0"
+                      title="Hapus Item"
+                    >
+                      <Trash2 class="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Section 4: Pengaturan Forensik, GPS, & Status Override -->
-            <div class="p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
+            <div class="p-3 sm:p-4 bg-[#0E1117] rounded-xs border border-[#232A36] space-y-3">
               <h4 class="font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-[#232A36] pb-2">
                 <Settings class="w-3.5 h-3.5 text-[#FACC15]" />
                 <span>// TELEMETRI GPS & PARAMETER KONTROL LAPANGAN</span>
@@ -331,23 +352,23 @@
 
               <!-- GPS Target Location -->
               <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs space-y-2">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label class="block font-bold text-slate-200 text-xs flex items-center gap-1 uppercase tracking-wider">
-                    <MapPin class="w-3.5 h-3.5 text-sky-400" />
+                    <MapPin class="w-3.5 h-3.5 text-sky-400 shrink-0" />
                     <span>Titik Target Koordinat GPS Lokasi</span>
                   </label>
                   <button
                     type="button"
                     @click="detectCurrentLocation"
                     :disabled="detectingGps"
-                    class="px-2.5 py-1 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 rounded-xs text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors uppercase tracking-wider"
+                    class="w-full sm:w-auto justify-center px-2.5 py-1.5 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 rounded-xs text-[10px] font-bold flex items-center gap-1.5 cursor-pointer transition-colors uppercase tracking-wider"
                   >
                     <Navigation class="w-3 h-3 text-[#FACC15]" />
                     <span>{{ detectingGps ? 'Mendeteksi...' : '📍 Ambil GPS Saat Ini' }}</span>
                   </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <span class="block text-[10px] text-slate-400 font-bold mb-0.5 uppercase tracking-wider">Latitude:</span>
                     <input
@@ -355,7 +376,7 @@
                       step="any"
                       v-model="formData.target_lat"
                       placeholder="-3.79284"
-                      class="w-full px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
+                      class="w-full px-2.5 py-2 sm:py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
                     />
                   </div>
                   <div>
@@ -365,14 +386,14 @@
                       step="any"
                       v-model="formData.target_lng"
                       placeholder="102.2607"
-                      class="w-full px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
+                      class="w-full px-2.5 py-2 sm:py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-mono text-white focus:outline-none"
                     />
                   </div>
                 </div>
               </div>
 
               <!-- Check-In, Timestamp, BA Doc, & Status Override Grid -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1">
                 <!-- 1. Checkin Requirement -->
                 <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs space-y-1">
                   <div class="flex items-start gap-2.5">
@@ -380,7 +401,7 @@
                       type="checkbox"
                       id="edit_require_checkin"
                       v-model="formData.require_checkin"
-                      class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer"
+                      class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer shrink-0"
                     />
                     <div>
                       <label for="edit_require_checkin" class="font-bold text-white cursor-pointer text-xs uppercase tracking-wider">
@@ -400,7 +421,7 @@
                   </label>
                   <select
                     v-model="formData.status"
-                    class="w-full px-2.5 py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-bold text-[#FACC15] focus:outline-none font-mono"
+                    class="w-full px-2.5 py-2 sm:py-1.5 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-xs font-bold text-[#FACC15] focus:outline-none font-mono"
                   >
                     <option value="DRAFT">DRAFT — Draft Baru</option>
                     <option value="ASSIGNED">ASSIGNED — Tim Ditugaskan</option>
@@ -421,7 +442,7 @@
                       type="checkbox"
                       id="edit_use_timestamp"
                       v-model="formData.use_timestamp"
-                      class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer"
+                      class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer shrink-0"
                     />
                     <div>
                       <label for="edit_use_timestamp" class="font-bold text-white cursor-pointer text-xs flex items-center gap-1.5 uppercase tracking-wider">
@@ -446,7 +467,7 @@
                       type="checkbox"
                       id="edit_require_ba_doc"
                       v-model="formData.require_ba_doc"
-                      class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer"
+                      class="w-4 h-4 mt-0.5 rounded-xs accent-[#FACC15] cursor-pointer shrink-0"
                     />
                     <div>
                       <label for="edit_require_ba_doc" class="font-bold text-white cursor-pointer text-xs flex items-center gap-1.5 uppercase tracking-wider">
@@ -467,7 +488,7 @@
 
               <!-- Notes -->
               <div>
-                <label class="block font-bold text-slate-400 mb-1 text-[11px] uppercase tracking-wider">
+                <label class="block font-bold text-slate-400 mb-1 text-[10px] sm:text-[11px] uppercase tracking-wider">
                   Catatan / Instruksi Khusus Supervisor
                 </label>
                 <textarea
@@ -479,33 +500,37 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Modal Footer (Industrial CAD Actions) -->
-          <div class="pt-4 border-t border-[#232A36] flex items-center justify-between gap-3 font-mono">
-            <div class="flex items-center gap-2">
+        <!-- Modal Sticky Footer (Industrial CAD Actions - Mobile Ergonomic Layout) -->
+        <div class="p-3 sm:px-6 sm:py-4 bg-[#0E1117] border-t border-[#232A36] shrink-0 font-mono sticky bottom-0 z-20">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <!-- Step toggle button (Full width on mobile) -->
+            <div class="w-full sm:w-auto">
               <button
                 v-if="activeTab === 'items'"
                 type="button"
                 @click="activeTab = 'info'"
-                class="px-3.5 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider"
+                class="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 bg-[#1C2028] hover:bg-[#232A36] active:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1.5"
               >
-                ← Data Pokok
+                <span>← Kembali ke Data Pokok</span>
               </button>
               <button
                 v-if="activeTab === 'info'"
                 type="button"
                 @click="activeTab = 'items'"
-                class="px-3.5 py-2 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 font-bold rounded-xs transition-colors cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1"
+                class="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 bg-[#1C2028] hover:bg-[#232A36] active:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15]/40 font-bold rounded-xs transition-colors cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1.5"
               >
-                <span>Sub-Pekerjaan & Parameter →</span>
+                <span>Lanjut: Sub-Pekerjaan ({{ subItems.length }}) →</span>
               </button>
             </div>
 
-            <div class="flex items-center gap-2.5">
+            <!-- Action buttons (Cancel & Save) -->
+            <div class="flex items-center gap-2 w-full sm:w-auto">
               <button
                 type="button"
                 @click="$emit('close')"
-                class="px-4 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider"
+                class="w-1/3 sm:w-auto justify-center px-4 py-2.5 sm:py-2 bg-[#1C2028] hover:bg-[#232A36] active:bg-[#232A36] text-slate-300 hover:text-white font-bold rounded-xs border border-[#232A36] transition-colors cursor-pointer text-xs uppercase tracking-wider text-center"
               >
                 Batal
               </button>
@@ -513,16 +538,16 @@
               <button
                 type="submit"
                 :disabled="submitting"
-                class="px-6 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold rounded-xs flex items-center gap-2 border border-[#FACC15] shadow-xs active:scale-95 transition-all disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider"
+                class="w-2/3 sm:w-auto justify-center flex-1 sm:flex-initial px-5 py-2.5 sm:py-2 bg-[#FACC15] hover:bg-[#FFE033] active:bg-[#EAB308] text-[#0B0C0E] font-bold rounded-xs flex items-center gap-2 border border-[#FACC15] shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer text-xs uppercase tracking-wider text-center"
               >
                 <Loader2 v-if="submitting" class="w-4 h-4 animate-spin text-[#0B0C0E]" />
                 <Save v-else class="w-4 h-4 stroke-[2.5]" />
-                <span>{{ submitting ? 'Menyimpan...' : 'Simpan Perubahan SPK' }}</span>
+                <span class="truncate">{{ submitting ? 'Menyimpan...' : 'Simpan SPK' }}</span>
               </button>
             </div>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   </div>
 </template>
