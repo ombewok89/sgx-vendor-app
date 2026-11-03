@@ -54,11 +54,46 @@
       </div>
     </div>
 
+    <!-- Mobile Dual Mode Switcher (Visible on < lg screens) -->
+    <div class="lg:hidden grid grid-cols-2 gap-1.5 p-1 bg-[#13171F] border border-[#232A36] rounded-xs font-mono text-xs">
+      <button
+        type="button"
+        @click="mobileActiveTab = 'queue'"
+        :class="[
+          'py-2 px-3 rounded-xs flex items-center justify-center gap-2 font-bold uppercase transition-all cursor-pointer',
+          mobileActiveTab === 'queue'
+            ? 'bg-hazard text-carbon shadow-sm font-black'
+            : 'text-slate-400 hover:text-white bg-[#0B0C0E] border border-[#232A36]'
+        ]"
+      >
+        <ListFilter class="w-3.5 h-3.5" />
+        <span>Antrian ({{ filteredQueue.length }})</span>
+      </button>
+      <button
+        type="button"
+        @click="mobileActiveTab = 'detail'"
+        :class="[
+          'py-2 px-3 rounded-xs flex items-center justify-center gap-2 font-bold uppercase transition-all cursor-pointer',
+          mobileActiveTab === 'detail'
+            ? 'bg-hazard text-carbon shadow-sm font-black'
+            : 'text-slate-400 hover:text-white bg-[#0B0C0E] border border-[#232A36]'
+        ]"
+      >
+        <Camera class="w-3.5 h-3.5" />
+        <span class="truncate">{{ selectedOrder?.spk_number || 'Audit Detail' }}</span>
+      </button>
+    </div>
+
     <!-- Main Grid: Queue on Left, Forensic Inspection on Right -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
       
       <!-- LEFT: Queue Column (4 cols) -->
-      <div class="lg:col-span-4 bg-[#13171F] border border-[#232A36] rounded-xs p-3.5 space-y-3 flex flex-col">
+      <div
+        :class="[
+          'lg:col-span-4 bg-[#13171F] border border-[#232A36] rounded-xs p-3.5 space-y-3 flex-col',
+          mobileActiveTab === 'queue' ? 'flex' : 'hidden lg:flex'
+        ]"
+      >
         <!-- Header Queue -->
         <div class="flex items-center justify-between border-b border-[#232A36] pb-2 px-0.5">
           <div class="flex items-center gap-2">
@@ -118,18 +153,32 @@
 
         <!-- Queue Item List -->
         <div class="space-y-1.5 max-h-[calc(100vh-280px)] overflow-y-auto pr-1 custom-scrollbar flex-1">
-          <div v-if="loading" class="text-center py-12 text-slate-400 text-xs font-mono">
-            <Loader2 class="w-5 h-5 animate-spin mx-auto mb-2 text-hazard" />
-            <span>MEMUAT_ANTRIAN_DATA...</span>
+          <!-- Skeleton Loading State -->
+          <div v-if="loading && allWorkOrders.length === 0" class="space-y-2 py-1">
+            <div
+              v-for="i in 5"
+              :key="i"
+              class="p-3 rounded-xs border border-[#232A36] bg-[#0E1117] animate-pulse space-y-2"
+            >
+              <div class="flex justify-between items-center">
+                <div class="h-3 w-28 bg-[#1F2633] rounded-xs"></div>
+                <div class="h-3 w-16 bg-[#1F2633] rounded-xs"></div>
+              </div>
+              <div class="h-4 w-48 bg-[#283243] rounded-xs"></div>
+              <div class="flex justify-between pt-1 border-t border-[#1C2028]">
+                <div class="h-2.5 w-24 bg-[#1F2633] rounded-xs"></div>
+                <div class="h-2.5 w-14 bg-[#1F2633] rounded-xs"></div>
+              </div>
+            </div>
           </div>
 
           <template v-else-if="filteredQueue.length > 0">
             <div
-              v-for="(wo, index) in filteredQueue"
+              v-for="(wo, index) in visibleQueue"
               :key="wo.id"
               @click="handleSelectOrder(wo.id)"
               :class="[
-                'p-3 rounded-xs border text-xs cursor-pointer transition-all',
+                'p-3 rounded-xs border text-xs cursor-pointer transition-all active:scale-[0.99]',
                 selectedOrder?.id === wo.id
                   ? 'bg-[#181D26] border-l-4 border-l-hazard border-y border-r border-[#2A3342] shadow-md'
                   : 'bg-[#0E1117] border-[#232A36] hover:bg-[#141821] hover:border-slate-600'
@@ -155,6 +204,16 @@
                 </span>
               </div>
             </div>
+
+            <!-- Load More Queue Button if > queueLimit -->
+            <button
+              v-if="filteredQueue.length > queueLimit"
+              type="button"
+              @click="queueLimit += 20"
+              class="w-full py-2 bg-[#0B0C0E] hover:bg-[#181D26] text-hazard border border-[#232A36] hover:border-hazard/40 rounded-xs text-[11px] font-mono font-bold uppercase transition-colors cursor-pointer"
+            >
+              + Tampilkan Lebih Banyak ({{ filteredQueue.length - queueLimit }} Tersisa)
+            </button>
           </template>
 
           <div v-else class="text-center py-12 text-slate-500 text-xs font-mono space-y-2 border border-dashed border-[#232A36] rounded-xs p-4">
@@ -166,8 +225,34 @@
       </div>
 
       <!-- RIGHT: Detailed Forensic Inspection Workspace (8 cols) -->
-      <div class="lg:col-span-8 bg-[#13171F] border border-[#232A36] rounded-xs p-4 sm:p-5 space-y-4">
-        <template v-if="selectedOrder">
+      <div
+        :class="[
+          'lg:col-span-8 bg-[#13171F] border border-[#232A36] rounded-xs p-3.5 sm:p-5 space-y-4',
+          mobileActiveTab === 'detail' ? 'block' : 'hidden lg:block'
+        ]"
+      >
+        <!-- Mobile Top Navigation Bar -->
+        <div class="lg:hidden flex items-center justify-between pb-2.5 border-b border-[#232A36]">
+          <button
+            type="button"
+            @click="mobileActiveTab = 'queue'"
+            class="px-2.5 py-1.5 bg-[#0B0C0E] hover:bg-[#181D26] text-slate-300 border border-[#232A36] rounded-xs text-[11px] font-mono font-bold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+          >
+            <ChevronLeft class="w-3.5 h-3.5 text-hazard" />
+            <span>← Kembali ke Antrian</span>
+          </button>
+          <span v-if="selectedOrder" class="text-[10px] font-mono text-slate-400">
+            #{{ currentOrderIndex + 1 }} dari {{ filteredQueue.length }}
+          </span>
+        </div>
+
+        <!-- Loading State for Detail -->
+        <div v-if="loadingDetail" class="py-24 text-center text-slate-400 font-mono space-y-3">
+          <Loader2 class="w-6 h-6 animate-spin mx-auto text-hazard" />
+          <div class="text-xs uppercase tracking-wider text-slate-400 font-bold">MEMUAT BUKTI FORENSIK SPK...</div>
+        </div>
+
+        <template v-else-if="selectedOrder">
           
           <!-- Workspace Header: SPK Info & Primary Decisions -->
           <div class="border-b border-[#232A36] pb-4 space-y-3">
@@ -185,27 +270,29 @@
               </div>
 
               <!-- Action Decision Controls (Hazard Yellow + Safety Red + Industrial Emerald) -->
-              <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
                 <!-- Ready for Review -->
                 <template v-if="['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'].includes(selectedOrder.status)">
-                  <button
-                    type="button"
-                    @click="showRevisionModal = true"
-                    :disabled="actionLoading"
-                    class="px-3.5 py-2 bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-600 font-mono font-bold text-xs rounded-xs flex items-center gap-1.5 uppercase transition-all cursor-pointer active:scale-95"
-                  >
-                    <RotateCcw class="w-3.5 h-3.5" />
-                    <span>Minta Revisi</span>
-                  </button>
-                  <button
-                    type="button"
-                    @click="showApproveModal = true"
-                    :disabled="actionLoading"
-                    class="cad-btn-primary px-4 py-2 text-xs flex items-center gap-1.5 uppercase cursor-pointer active:scale-95 shadow-md"
-                  >
-                    <CheckCircle2 class="w-4 h-4" />
-                    <span>SETUJUI (APPROVE)</span>
-                  </button>
+                  <div class="grid grid-cols-2 gap-2 w-full sm:flex sm:items-center sm:w-auto">
+                    <button
+                      type="button"
+                      @click="showRevisionModal = true"
+                      :disabled="actionLoading"
+                      class="w-full sm:w-auto px-3.5 py-2.5 sm:py-2 bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-600 font-mono font-bold text-xs rounded-xs flex items-center justify-center gap-1.5 uppercase transition-all cursor-pointer active:scale-95 text-center"
+                    >
+                      <RotateCcw class="w-3.5 h-3.5 shrink-0" />
+                      <span>Minta Revisi</span>
+                    </button>
+                    <button
+                      type="button"
+                      @click="showApproveModal = true"
+                      :disabled="actionLoading"
+                      class="w-full sm:w-auto cad-btn-primary px-4 py-2.5 sm:py-2 text-xs flex items-center justify-center gap-1.5 uppercase cursor-pointer active:scale-95 shadow-md font-bold text-center"
+                    >
+                      <CheckCircle2 class="w-4 h-4 shrink-0" />
+                      <span>SETUJUI (APPROVE)</span>
+                    </button>
+                  </div>
                 </template>
 
                 <!-- Approved / Completed -->
@@ -431,7 +518,7 @@
                       >
                         <!-- Photo Viewer Optic -->
                         <div class="h-36 bg-[#000000] relative cursor-pointer overflow-hidden" @click="openLightbox(p)">
-                          <img :src="getFileUrl(p.file_path)" alt="Before" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                          <img :src="getFileUrl(p.file_path)" alt="Before" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
                           
                           <!-- Top Solid Tag -->
                           <div class="absolute top-2 left-2 z-10">
@@ -499,7 +586,7 @@
                       >
                         <!-- Photo Viewer Optic -->
                         <div class="h-36 bg-[#000000] relative cursor-pointer overflow-hidden" @click="openLightbox(p)">
-                          <img :src="getFileUrl(p.file_path)" alt="Process" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                          <img :src="getFileUrl(p.file_path)" alt="Process" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
                           
                           <!-- Top Solid Tag -->
                           <div class="absolute top-2 left-2 z-10">
@@ -567,7 +654,7 @@
                       >
                         <!-- Photo Viewer Optic -->
                         <div class="h-36 bg-[#000000] relative cursor-pointer overflow-hidden" @click="openLightbox(p)">
-                          <img :src="getFileUrl(p.file_path)" alt="After" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                          <img :src="getFileUrl(p.file_path)" alt="After" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
                           
                           <!-- Top Solid Tag -->
                           <div class="absolute top-2 left-2 z-10">
@@ -650,6 +737,8 @@
                       <img
                         :src="getFileUrl(photo.file_path)"
                         :alt="`Evidence ${stage}`"
+                        loading="lazy"
+                        decoding="async"
                         class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
                       />
 
@@ -942,7 +1031,9 @@ import {
   Store,
   RefreshCw,
   Clock,
-  Plus
+  Plus,
+  ListFilter,
+  ChevronLeft
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -957,9 +1048,16 @@ const emit = defineEmits(['approved-success', 'open-ba']);
 const allWorkOrders = ref([]);
 const selectedOrder = ref(null);
 const loading = ref(true);
+const loadingDetail = ref(false);
 const actionLoading = ref(false);
 const successToast = ref(null);
 const photoViewMode = ref('BY_ITEM'); // 'BY_ITEM' | 'ALL_STAGES'
+const mobileActiveTab = ref(props.selectedWorkOrderId ? 'detail' : 'queue');
+const queueLimit = ref(25);
+
+// In-Memory Fast Cache for Work Order Details & SessionStorage Key
+const detailCache = new Map();
+const CACHE_KEY = 'sgx_work_orders_cache';
 
 // Addendum Sub-Task Modal State for Reviewer
 const showAddendumModal = ref(false);
@@ -998,6 +1096,7 @@ async function handleSubmitAddendum() {
     if (res.success || res.data) {
       alert(`Pekerjaan tambahan '${addendumForm.value.itemName}' berhasil ditambahkan. Status SPK dialihkan ke pengerjaan.`);
       showAddendumModal.value = false;
+      detailCache.delete(selectedOrder.value.id);
       await loadQueue(selectedOrder.value.id);
     }
   } catch (err) {
@@ -1105,39 +1204,92 @@ const filteredQueue = computed(() => {
   });
 });
 
-async function loadQueue(targetIdToSelect = null) {
-  loading.value = true;
+const visibleQueue = computed(() => {
+  return filteredQueue.value.slice(0, queueLimit.value);
+});
+
+const currentOrderIndex = computed(() => {
+  if (!selectedOrder.value) return 0;
+  const idx = filteredQueue.value.findIndex(w => w.id === selectedOrder.value.id);
+  return idx >= 0 ? idx : 0;
+});
+
+async function loadQueue(targetIdToSelect = null, isSilent = false) {
+  // 1. Instant Cache Hydration from sessionStorage (0ms instant UI)
+  if (allWorkOrders.value.length === 0) {
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          allWorkOrders.value = parsed;
+          loading.value = false;
+          const initialId = targetIdToSelect || props.selectedWorkOrderId || parsed[0].id;
+          if (detailCache.has(initialId)) {
+            selectedOrder.value = detailCache.get(initialId);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (!isSilent && allWorkOrders.value.length === 0) {
+    loading.value = true;
+  }
+
   try {
     const res = await api.getWorkOrders();
-    allWorkOrders.value = res.data || [];
+    const data = res.data || [];
+    allWorkOrders.value = data;
+    try {
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    } catch (_) {}
 
-    const targetId = targetIdToSelect || props.selectedWorkOrderId || (allWorkOrders.value.length > 0 ? allWorkOrders.value[0].id : null);
+    const targetId = targetIdToSelect || props.selectedWorkOrderId || (data.length > 0 ? data[0].id : null);
     if (targetId) {
-      const detail = await api.getWorkOrderById(targetId);
-      selectedOrder.value = detail.data;
-    } else if (allWorkOrders.value.length > 0) {
-      const detail = await api.getWorkOrderById(allWorkOrders.value[0].id);
-      selectedOrder.value = detail.data;
+      if (detailCache.has(targetId)) {
+        selectedOrder.value = detailCache.get(targetId);
+      } else {
+        loadingDetail.value = true;
+        const detail = await api.getWorkOrderById(targetId);
+        selectedOrder.value = detail.data;
+        detailCache.set(targetId, detail.data);
+      }
     }
   } catch (err) {
     console.error('Failed to load review queue:', err);
   } finally {
     loading.value = false;
+    loadingDetail.value = false;
   }
 }
 
 watch(() => props.selectedWorkOrderId, (newId) => {
   if (newId) {
-    loadQueue(newId);
+    mobileActiveTab.value = 'detail';
+    handleSelectOrder(newId);
   }
 });
 
 async function handleSelectOrder(id) {
+  mobileActiveTab.value = 'detail';
+  if (selectedOrder.value?.id === id) return;
+
+  // Instant hit from memory cache
+  if (detailCache.has(id)) {
+    selectedOrder.value = detailCache.get(id);
+    return;
+  }
+
+  loadingDetail.value = true;
   try {
     const detail = await api.getWorkOrderById(id);
     selectedOrder.value = detail.data;
+    detailCache.set(id, detail.data);
   } catch (err) {
-    alert(err.message);
+    alert(err.message || 'Gagal memuat detail data SPK');
+  } finally {
+    loadingDetail.value = false;
   }
 }
 
@@ -1154,8 +1306,9 @@ async function handleApproveConfirm() {
 
     const updated = await api.getWorkOrderById(selectedOrder.value.id);
     selectedOrder.value = updated.data;
+    detailCache.set(selectedOrder.value.id, updated.data);
     emit('approved-success', selectedOrder.value.id);
-    loadQueue(selectedOrder.value.id);
+    loadQueue(selectedOrder.value.id, true);
   } catch (err) {
     alert(`Gagal menyetujui: ${err.message}`);
   } finally {
@@ -1182,7 +1335,8 @@ async function handleSendRevision() {
 
     const updated = await api.getWorkOrderById(selectedOrder.value.id);
     selectedOrder.value = updated.data;
-    loadQueue(selectedOrder.value.id);
+    detailCache.set(selectedOrder.value.id, updated.data);
+    loadQueue(selectedOrder.value.id, true);
   } catch (err) {
     alert(`Gagal request revision: ${err.message}`);
   } finally {
@@ -1199,7 +1353,8 @@ async function handleGenerateBa() {
 
     const updated = await api.getWorkOrderById(selectedOrder.value.id);
     selectedOrder.value = updated.data;
-    loadQueue(selectedOrder.value.id);
+    detailCache.set(selectedOrder.value.id, updated.data);
+    loadQueue(selectedOrder.value.id, true);
     emit('open-ba', res.data);
   } catch (err) {
     alert(`Gagal menerbitkan BA: ${err.message}`);
