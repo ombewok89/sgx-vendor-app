@@ -371,7 +371,10 @@
                   :checkInLat="selectedTask.check_ins?.[0]?.latitude"
                   :checkInLng="selectedTask.check_ins?.[0]?.longitude"
                   :useTimestamp="selectedTask.use_timestamp !== false"
+                  :taskStatus="selectedTask.status"
+                  :disabled="['APPROVED', 'VALID', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask?.status)"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
+                  @photoDeleted="() => handleSelectTask(selectedTask.id)"
                 />
                 <PhotoUploader
                   :workOrderId="selectedTask.id"
@@ -388,7 +391,10 @@
                   :checkInLat="selectedTask.check_ins?.[0]?.latitude"
                   :checkInLng="selectedTask.check_ins?.[0]?.longitude"
                   :useTimestamp="selectedTask.use_timestamp !== false"
+                  :taskStatus="selectedTask.status"
+                  :disabled="['APPROVED', 'VALID', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask?.status)"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
+                  @photoDeleted="() => handleSelectTask(selectedTask.id)"
                 />
                 <PhotoUploader
                   :workOrderId="selectedTask.id"
@@ -405,7 +411,10 @@
                   :checkInLat="selectedTask.check_ins?.[0]?.latitude"
                   :checkInLng="selectedTask.check_ins?.[0]?.longitude"
                   :useTimestamp="selectedTask.use_timestamp !== false"
+                  :taskStatus="selectedTask.status"
+                  :disabled="['APPROVED', 'VALID', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask?.status)"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
+                  @photoDeleted="() => handleSelectTask(selectedTask.id)"
                 />
               </div>
               <div v-else class="space-y-4">
@@ -424,7 +433,10 @@
                   :checkInLat="selectedTask.check_ins?.[0]?.latitude"
                   :checkInLng="selectedTask.check_ins?.[0]?.longitude"
                   :useTimestamp="selectedTask.use_timestamp !== false"
+                  :taskStatus="selectedTask.status"
+                  :disabled="['APPROVED', 'VALID', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask?.status)"
                   @uploadSuccess="() => handleSelectTask(selectedTask.id)"
+                  @photoDeleted="() => handleSelectTask(selectedTask.id)"
                 />
               </div>
             </div>
@@ -583,7 +595,10 @@
               :checkInLat="selectedTask.check_ins?.[0]?.latitude"
               :checkInLng="selectedTask.check_ins?.[0]?.longitude"
               :useTimestamp="false"
+              :taskStatus="selectedTask.status"
+              :disabled="['APPROVED', 'VALID', 'COMPLETED', 'BA_OPNAME'].includes(selectedTask?.status)"
               @uploadSuccess="() => handleSelectTask(selectedTask.id)"
+              @photoDeleted="() => handleSelectTask(selectedTask.id)"
             />
 
             <!-- Panel Khusus Generate Model Berkas Format PDF -->

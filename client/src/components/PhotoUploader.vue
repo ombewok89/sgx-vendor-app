@@ -47,57 +47,65 @@
 
       <!-- Dual Action Buttons: Direct Camera vs Multi-Photo Gallery -->
       <div class="flex items-center gap-2 shrink-0">
-        <!-- 1. Direct Camera Capture Input (Only if useTimestamp is active) -->
-        <template v-if="useTimestamp">
+        <template v-if="!isLocked">
+          <!-- 1. Direct Camera Capture Input (Only if useTimestamp is active) -->
+          <template v-if="useTimestamp">
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              ref="cameraInputRef"
+              @change="(e) => handleFilesSelected(e.target.files)"
+              class="hidden"
+              :id="`cam-input-${stage}-${workOrderId}-${itemId || 0}`"
+              :disabled="uploading"
+            />
+            <label
+              :for="`cam-input-${stage}-${workOrderId}-${itemId || 0}`"
+              :class="[
+                'inline-flex items-center gap-1.5 px-3 py-2 rounded-xs text-xs font-bold transition-all border uppercase tracking-wider',
+                uploading
+                  ? 'bg-[#1C2028] text-slate-500 border-[#232A36] cursor-not-allowed'
+                  : 'bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border-[#FACC15]/40 hover:border-[#FACC15] cursor-pointer shadow-xs active:scale-95'
+              ]"
+              title="Ambil foto langsung menggunakan kamera HP berstempel GPS satelit"
+            >
+              <Camera class="w-3.5 h-3.5" />
+              <span>Kamera GPS</span>
+            </label>
+          </template>
+
+          <!-- 2. Gallery / File Upload Input -->
           <input
             type="file"
             accept="image/*"
-            capture="environment"
-            ref="cameraInputRef"
+            multiple
+            ref="galleryInputRef"
             @change="(e) => handleFilesSelected(e.target.files)"
             class="hidden"
-            :id="`cam-input-${stage}-${workOrderId}-${itemId || 0}`"
+            :id="`gallery-input-${stage}-${workOrderId}-${itemId || 0}`"
             :disabled="uploading"
           />
           <label
-            :for="`cam-input-${stage}-${workOrderId}-${itemId || 0}`"
+            :for="`gallery-input-${stage}-${workOrderId}-${itemId || 0}`"
             :class="[
-              'inline-flex items-center gap-1.5 px-3 py-2 rounded-xs text-xs font-bold transition-all border uppercase tracking-wider',
+              'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xs text-xs font-bold transition-all border uppercase tracking-wider',
               uploading
                 ? 'bg-[#1C2028] text-slate-500 border-[#232A36] cursor-not-allowed'
-                : 'bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border-[#FACC15]/40 hover:border-[#FACC15] cursor-pointer shadow-xs active:scale-95'
+                : 'bg-[#0B0C0E] hover:bg-[#1C2028] text-slate-200 hover:text-white border-[#232A36] hover:border-[#FACC15]/40 cursor-pointer shadow-xs active:scale-95'
             ]"
-            title="Ambil foto langsung menggunakan kamera HP berstempel GPS satelit"
+            :title="useTimestamp ? 'Pilih foto dari memori galeri' : 'Unggah file foto hasil pekerjaan langsung dari penyimpanan'"
           >
-            <Camera class="w-3.5 h-3.5" />
-            <span>Kamera GPS</span>
+            <Images class="w-3.5 h-3.5 text-[#FACC15]" />
+            <span>{{ useTimestamp ? '+ Galeri Foto' : '📁 Unggah File' }}</span>
           </label>
         </template>
-
-        <!-- 2. Gallery / File Upload Input -->
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          ref="galleryInputRef"
-          @change="(e) => handleFilesSelected(e.target.files)"
-          class="hidden"
-          :id="`gallery-input-${stage}-${workOrderId}-${itemId || 0}`"
-          :disabled="uploading"
-        />
-        <label
-          :for="`gallery-input-${stage}-${workOrderId}-${itemId || 0}`"
-          :class="[
-            'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xs text-xs font-bold transition-all border uppercase tracking-wider',
-            uploading
-              ? 'bg-[#1C2028] text-slate-500 border-[#232A36] cursor-not-allowed'
-              : 'bg-[#0B0C0E] hover:bg-[#1C2028] text-slate-200 hover:text-white border-[#232A36] hover:border-[#FACC15]/40 cursor-pointer shadow-xs active:scale-95'
-          ]"
-          :title="useTimestamp ? 'Pilih foto dari memori galeri' : 'Unggah file foto hasil pekerjaan langsung dari penyimpanan'"
-        >
-          <Images class="w-3.5 h-3.5 text-[#FACC15]" />
-          <span>{{ useTimestamp ? '+ Galeri Foto' : '📁 Unggah File' }}</span>
-        </label>
+        <template v-else>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0B0C0E] border border-emerald-500/40 rounded-xs text-[11px] font-mono font-bold text-emerald-400 shadow-xs">
+            <Lock class="w-3.5 h-3.5" />
+            <span>SPK TERKUNCI</span>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -148,17 +156,25 @@
         />
 
         <!-- DYNAMIC FLOATING CORNER DELETE BUTTON (Top-Right) -->
-        <div class="absolute top-2 right-2 z-10">
+        <div v-if="!isLocked" class="absolute top-2 right-2 z-10">
           <button
             type="button"
             @click.stop="confirmDelete(photo)"
             :disabled="deletingId === photo.id"
-            class="w-7 h-7 rounded-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40"
+            class="w-7 h-7 rounded-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 active:scale-95"
             title="Hapus Foto Bukti Ini"
           >
             <Loader2 v-if="deletingId === photo.id" class="w-3.5 h-3.5 animate-spin" />
             <Trash2 v-else class="w-3.5 h-3.5" />
           </button>
+        </div>
+        <div v-else class="absolute top-2 right-2 z-10">
+          <span
+            class="w-6 h-6 rounded-xs bg-[#0B0C0E]/90 text-emerald-400 border border-emerald-500/50 shadow-md flex items-center justify-center"
+            title="Terkunci: SPK telah valid / disahkan"
+          >
+            <Lock class="w-3 h-3" />
+          </span>
         </div>
 
         <!-- DYNAMIC FLOATING CORNER DOWNLOAD BUTTON (Bottom-Right) -->
@@ -257,7 +273,8 @@ import {
   Loader2,
   Trash2,
   Download,
-  MapPin
+  MapPin,
+  Lock
 } from 'lucide-vue-next';
 import { api, getFileUrl } from '../services/api';
 import PhotoLightboxModal from './PhotoLightboxModal.vue';
@@ -278,7 +295,18 @@ const props = defineProps({
   targetLng: { type: [Number, String], default: null },
   checkInLat: { type: [Number, String], default: null },
   checkInLng: { type: [Number, String], default: null },
-  useTimestamp: { type: Boolean, default: true }
+  useTimestamp: { type: Boolean, default: true },
+  disabled: { type: Boolean, default: false },
+  taskStatus: { type: String, default: '' }
+});
+
+const isLocked = computed(() => {
+  if (props.disabled) return true;
+  const lockedStatuses = ['APPROVED', 'COMPLETED', 'BA_OPNAME', 'VALID'];
+  if (props.taskStatus && lockedStatuses.includes(String(props.taskStatus).toUpperCase())) {
+    return true;
+  }
+  return false;
 });
 
 const autoStampGps = ref(true);

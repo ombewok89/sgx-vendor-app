@@ -346,20 +346,20 @@ async function deletePhotoEvidence(photoId, currentUser, ipAddress) {
     throw new Error('Akses ditolak: Anda tidak memiliki akses ke pekerjaan vendor lain.');
   }
 
-  // 2. Field Team Assignment IDOR check (Point 1.4)
-  if (currentUser.role === 'FIELD_TEAM') {
+  // 2. Field Team / Operator Assignment IDOR check
+  if (['FIELD_TEAM', 'OPERATOR'].includes(currentUser.role)) {
     const assignment = await get(
       `SELECT * FROM work_order_assignments WHERE work_order_id = ? AND user_id = ?`,
       [photo.work_order_id, currentUser.id]
     );
-    if (!assignment && workOrder.pic_user_id !== currentUser.id) {
+    if (!assignment && workOrder.pic_user_id !== currentUser.id && photo.user_id !== currentUser.id) {
       throw new Error('Akses ditolak: Anda tidak ditugaskan pada pekerjaan ini.');
     }
   }
 
-  // Permissions check: Field team can only delete on non-completed work orders
-  if (currentUser.role === 'FIELD_TEAM' && ['COMPLETED', 'BA_OPNAME'].includes(workOrder.status)) {
-    throw new Error('Foto tidak dapat dihapus karena pekerjaan sudah berstatus selesai / terbit Berita Acara.');
+  // Permissions check: Field team can only delete before work order is valid/approved
+  if (['FIELD_TEAM', 'OPERATOR', 'VENDOR'].includes(currentUser.role) && ['COMPLETED', 'BA_OPNAME', 'APPROVED', 'VALID'].includes(workOrder.status)) {
+    throw new Error('Foto/berkas tidak dapat dihapus karena status pekerjaan sudah valid / disetujui / terbit Berita Acara.');
   }
 
   // Delete physical file from uploads directory if exists

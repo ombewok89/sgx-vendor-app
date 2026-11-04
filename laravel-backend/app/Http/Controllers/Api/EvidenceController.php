@@ -173,22 +173,50 @@ class EvidenceController extends Controller
     public function deletePhoto(Request $request, $id)
     {
         $user = $request->user();
-        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Akses Ditolak: Hanya Superuser dan Administrator yang berwenang menghapus foto bukti forensik.',
-            ], 403);
-        }
-
         $photo = EvidencePhoto::with('workOrder')->findOrFail($id);
         $workOrder = $photo->workOrder;
 
-        // Guardrail: Jika SPK sudah BA_OPNAME dan bukan Superuser, cegah kerusakan Berita Acara
-        if ($workOrder && in_array($workOrder->status, ['BA_OPNAME', 'APPROVED']) && !$user->hasRole('SUPERUSER')) {
+        // Status SPK yang sudah disahkan/valid (dokumen resmi terkunci)
+        $lockedStatuses = ['APPROVED', 'COMPLETED', 'BA_OPNAME', 'VALID'];
+
+        // Guardrail: Jika SPK sudah valid/disetujui/BA_OPNAME, hanya SUPERUSER yang dapat mengubah untuk menjaga integritas dokumen hukum
+        if ($workOrder && in_array(strtoupper($workOrder->status), $lockedStatuses) && !$user->hasRole('SUPERUSER')) {
             return response()->json([
                 'success' => false,
-                'message' => "Peringatan: SPK {$workOrder->spk_number} telah disetujui / diterbitkan Berita Acara (BA). Foto ini terkunci untuk menjaga keabsahan dokumen.",
+                'message' => "Peringatan: SPK {$workOrder->spk_number} telah disahkan / disetujui (Status: {$workOrder->status}). Foto dan berkas terkunci untuk menjaga keabsahan dokumen.",
             ], 422);
+        }
+
+        // Cek Otorisasi:
+        // - SUPERUSER & ADMIN: Berwenang menghapus
+        // - FIELD_TEAM & OPERATOR: Berwenang menghapus foto pada SPK tugasnya sebelum status berubah menjadi valid/disetujui
+        // - VENDOR: Berwenang menghapus foto pada SPK miliknya sebelum status berubah menjadi valid/disetujui
+        if ($user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            // Authorized
+        } elseif ($user->hasAnyRole(['FIELD_TEAM', 'OPERATOR'])) {
+            if ($workOrder) {
+                $isAssigned = $workOrder->pic_user_id === $user->id ||
+                    $workOrder->assignments()->where('users.id', $user->id)->exists() ||
+                    $photo->user_id === $user->id;
+                if (!$isAssigned) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Akses Ditolak: Anda tidak ditugaskan pada pekerjaan SPK ini.',
+                    ], 403);
+                }
+            }
+        } elseif ($user->hasRole('VENDOR')) {
+            if ($workOrder && $workOrder->vendor_id !== $user->vendor_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses Ditolak: Anda tidak berwenang mengelola pekerjaan vendor lain.',
+                ], 403);
+            }
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Anda tidak memiliki wewenang untuk menghapus foto bukti.',
+            ], 403);
         }
 
         // Delete physical file
@@ -209,17 +237,17 @@ class EvidenceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Foto bukti forensik berhasil dihapus dari sistem.',
+            'message' => 'Foto bukti/berkas berhasil dihapus dari sistem.',
         ]);
     }
 
     public function bulkDeletePhotos(Request $request)
     {
         $user = $request->user();
-        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN', 'FIELD_TEAM', 'OPERATOR', 'VENDOR'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Akses Ditolak: Hanya Superuser dan Administrator yang berwenang menghapus foto bukti secara massal.',
+                'message' => 'Akses Ditolak: Anda tidak berwenang menghapus foto bukti.',
             ], 403);
         }
 
@@ -233,12 +261,33 @@ class EvidenceController extends Controller
 
         $deletedCount = 0;
         $affectedWorkOrders = [];
+        $lockedStatuses = ['APPROVED', 'COMPLETED', 'BA_OPNAME', 'VALID'];
 
         foreach ($photos as $photo) {
             $workOrder = $photo->workOrder;
 
-            // Guardrail: Skip foto yang SPK-nya sudah BA_OPNAME jika bukan Superuser
-            if ($workOrder && in_array($workOrder->status, ['BA_OPNAME', 'APPROVED']) && !$user->hasRole('SUPERUSER')) {
+            // Guardrail: Skip foto yang SPK-nya sudah valid/approved/BA_OPNAME jika bukan Superuser
+            if ($workOrder && in_array(strtoupper($workOrder->status), $lockedStatuses) && !$user->hasRole('SUPERUSER')) {
+                continue;
+            }
+
+            // Otorisasi role per foto
+            if ($user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+                // Authorized
+            } elseif ($user->hasAnyRole(['FIELD_TEAM', 'OPERATOR'])) {
+                if ($workOrder) {
+                    $isAssigned = $workOrder->pic_user_id === $user->id ||
+                        $workOrder->assignments()->where('users.id', $user->id)->exists() ||
+                        $photo->user_id === $user->id;
+                    if (!$isAssigned) {
+                        continue;
+                    }
+                }
+            } elseif ($user->hasRole('VENDOR')) {
+                if ($workOrder && $workOrder->vendor_id !== $user->vendor_id) {
+                    continue;
+                }
+            } else {
                 continue;
             }
 
@@ -270,7 +319,7 @@ class EvidenceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Sebanyak {$deletedCount} foto bukti berhasil dihapus secara permanen.",
+            'message' => "Sebanyak {$deletedCount} foto bukti/berkas berhasil dihapus secara permanen.",
             'deleted_count' => $deletedCount,
         ]);
     }

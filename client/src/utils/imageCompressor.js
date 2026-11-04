@@ -102,3 +102,4 @@ export async function fastCompressImage(file, options = {}) {
     img.src = url;
   });
 }
+
