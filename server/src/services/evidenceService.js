@@ -14,7 +14,7 @@ async function uploadPhotoEvidence({ file, workOrderId, itemId, stage, sequence,
     throw new Error('File foto bukti wajib diunggah.');
   }
 
-  const validStages = ['BEFORE', 'PROCESS', 'AFTER', 'ISSUE'];
+  const validStages = ['BEFORE', 'PROCESS', 'AFTER', 'ISSUE', 'BA_OPNAME', 'BA'];
   const normalizedStage = (stage || 'AFTER').toUpperCase();
   if (!validStages.includes(normalizedStage)) {
     throw new Error(`Stage '${stage}' tidak valid. Pilihan: ${validStages.join(', ')}`);

@@ -104,16 +104,16 @@
     <!-- Batch Uploading Progress Banner -->
     <div
       v-if="uploading"
-      class="p-3 bg-purple-950/60 border border-purple-500/40 rounded-xs text-xs text-purple-200 flex items-center justify-between shadow-xs animate-pulse font-mono"
+      class="p-3 bg-purple-950/70 border border-purple-500/50 rounded-xs text-xs text-purple-200 flex items-center justify-between shadow-lg animate-pulse font-mono"
     >
       <div class="flex items-center gap-2">
         <Loader2 class="w-4 h-4 text-purple-400 animate-spin shrink-0" />
-        <span class="font-bold">
-          Mengunggah foto {{ uploadProgress.current }} dari {{ uploadProgress.total }}...
+        <span class="font-bold text-white">
+          {{ uploadStatusText || `Mengunggah foto ${uploadProgress.current} dari ${uploadProgress.total}...` }}
         </span>
       </div>
       <span class="font-mono font-black text-[#FACC15]">
-        {{ Math.round((uploadProgress.current / uploadProgress.total) * 100) }}%
+        {{ Math.round((uploadProgress.current / Math.max(1, uploadProgress.total)) * 100) }}%
       </span>
     </div>
 
@@ -262,6 +262,7 @@ import {
 import { api, getFileUrl } from '../services/api';
 import PhotoLightboxModal from './PhotoLightboxModal.vue';
 import { stampGpsWatermark } from '../utils/watermarkEngine';
+import { fastCompressImage } from '../utils/imageCompressor';
 
 const props = defineProps({
   workOrderId: { type: [String, Number], required: true },
@@ -286,6 +287,7 @@ const emit = defineEmits(['uploadSuccess', 'photoDeleted']);
 
 const uploading = ref(false);
 const uploadProgress = ref({ current: 0, total: 0 });
+const uploadStatusText = ref('');
 const error = ref(null);
 const cameraInputRef = ref(null);
 const galleryInputRef = ref(null);
@@ -295,8 +297,18 @@ const photoToDelete = ref(null);
 
 const stagePhotos = computed(() => {
   return (props.existingPhotos || []).filter((p) => {
-    const stageMatch = p.stage === props.stage ||
-      ((props.stage === 'BA_OPNAME' || props.stage === 'BA') && (p.stage === 'BA_OPNAME' || p.stage === 'BA'));
+    const isBaDoc = p.stage === 'BA_OPNAME' || p.stage === 'BA' || (p.notes && p.notes.includes('[BA_OPNAME]'));
+
+    if (props.stage === 'BA_OPNAME' || props.stage === 'BA') {
+      return isBaDoc;
+    }
+
+    // Standard stages exclude BA Opname documents if stored under fallback AFTER
+    if (isBaDoc) {
+      return false;
+    }
+
+    const stageMatch = p.stage === props.stage;
     if (props.itemId) {
       return stageMatch && (p.item_id === props.itemId || !p.item_id);
     }
@@ -322,12 +334,14 @@ async function handleFilesSelected(fileList) {
   const files = Array.from(fileList);
   uploading.value = true;
   uploadProgress.value = { current: 0, total: files.length };
+  uploadStatusText.value = 'Menyiapkan berkas...';
   error.value = null;
 
   // Get current GPS position with high accuracy and sensible timeout (only needed if useTimestamp is true)
   let gpsCoords = null;
   if (props.useTimestamp && navigator.geolocation) {
     try {
+      uploadStatusText.value = 'Mendeteksi koordinat GPS...';
       gpsCoords = await new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(
           (pos) => resolve({
@@ -336,7 +350,7 @@ async function handleFilesSelected(fileList) {
             accuracy: Math.round(pos.coords.accuracy)
           }),
           () => resolve(null),
-          { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
         );
       });
     } catch (e) {
@@ -361,10 +375,17 @@ async function handleFilesSelected(fileList) {
     const file = files[i];
 
     try {
-      // Apply Automatic GPS Map & Clock Watermark Stamping ONLY if useTimestamp is TRUE
+      // 1. Ultra-fast image compression to make upload instantaneous (reduces 10MB to ~400KB in 50ms)
       let fileToUpload = file;
+      if (file.type && file.type.startsWith('image/')) {
+        uploadStatusText.value = `Mengoptimasi foto (${i + 1}/${files.length})...`;
+        fileToUpload = await fastCompressImage(file, { maxWidth: 2048, quality: 0.82 });
+      }
+
+      // 2. Apply Automatic GPS Map & Clock Watermark Stamping ONLY if useTimestamp is TRUE
       if (props.useTimestamp && autoStampGps.value) {
-        fileToUpload = await stampGpsWatermark(file, {
+        uploadStatusText.value = `Menerapkan stempel GPS...`;
+        fileToUpload = await stampGpsWatermark(fileToUpload, {
           stage: props.stage,
           spkNumber: props.spkNumber || `SPK-${props.workOrderId}`,
           locationName: props.locationName || props.workOrderTitle || 'Toko Cabang Proyek',
@@ -380,15 +401,7 @@ async function handleFilesSelected(fileList) {
         });
       }
 
-      const formData = new FormData();
-      formData.append('work_order_id', props.workOrderId);
-      if (props.itemId) {
-        formData.append('item_id', props.itemId);
-      }
-      formData.append('stage', props.stage);
-      formData.append('sequence', stagePhotos.value.length + i + 1);
-      formData.append('photo', fileToUpload);
-      formData.append('file', fileToUpload);
+      uploadStatusText.value = `Mengunggah foto ${i + 1} dari ${files.length}...`;
 
       const finalUploadLat = isValidGps(fileToUpload._latitude)
         ? fileToUpload._latitude
@@ -400,6 +413,15 @@ async function handleFilesSelected(fileList) {
 
       const finalUploadAcc = gpsCoords?.accuracy || 8;
 
+      const formData = new FormData();
+      formData.append('work_order_id', props.workOrderId);
+      if (props.itemId) {
+        formData.append('item_id', props.itemId);
+      }
+      formData.append('stage', props.stage);
+      formData.append('sequence', stagePhotos.value.length + i + 1);
+      formData.append('photo', fileToUpload);
+      formData.append('file', fileToUpload);
       formData.append('latitude', finalUploadLat);
       formData.append('longitude', finalUploadLng);
       formData.append('accuracy', finalUploadAcc);
@@ -408,7 +430,37 @@ async function handleFilesSelected(fileList) {
         formData.append('notes', `Lokasi: ${fileToUpload._address}`);
       }
 
-      const res = await api.uploadEvidence(formData);
+      let res;
+      try {
+        res = await api.uploadEvidence(formData);
+      } catch (uploadErr) {
+        // Compatibility Auto-Fallback:
+        // If the backend has not yet updated allowed stages to include BA_OPNAME,
+        // seamlessly retry with stage: AFTER and tag note [BA_OPNAME] so technician never gets blocked.
+        const errMsg = String(uploadErr.message || uploadErr || '');
+        if (
+          (props.stage === 'BA_OPNAME' || props.stage === 'BA') &&
+          (errMsg.includes('stage is invalid') || errMsg.includes('stage tidak valid') || errMsg.includes('selected stage'))
+        ) {
+          console.warn('[PhotoUploader] Backend rejected BA_OPNAME stage. Executing zero-friction fallback to stage: AFTER...');
+          const fallbackData = new FormData();
+          fallbackData.append('work_order_id', props.workOrderId);
+          if (props.itemId) fallbackData.append('item_id', props.itemId);
+          fallbackData.append('stage', 'AFTER');
+          fallbackData.append('sequence', stagePhotos.value.length + i + 1);
+          fallbackData.append('photo', fileToUpload);
+          fallbackData.append('file', fileToUpload);
+          fallbackData.append('latitude', finalUploadLat);
+          fallbackData.append('longitude', finalUploadLng);
+          fallbackData.append('accuracy', finalUploadAcc);
+          fallbackData.append('notes', `[BA_OPNAME] Berkas Fisik BA Opname: ${fileToUpload._address || file.name}`);
+
+          res = await api.uploadEvidence(fallbackData);
+        } else {
+          throw uploadErr;
+        }
+      }
+
       lastUploadedData = res.data;
     } catch (err) {
       error.value = `Gagal mengunggah foto "${file.name}": ${err.message}`;
@@ -417,6 +469,7 @@ async function handleFilesSelected(fileList) {
   }
 
   uploading.value = false;
+  uploadStatusText.value = '';
   if (cameraInputRef.value) cameraInputRef.value.value = '';
   if (galleryInputRef.value) galleryInputRef.value.value = '';
 

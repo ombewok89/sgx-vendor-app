@@ -582,7 +582,7 @@
               :targetLng="selectedTask.target_lng"
               :checkInLat="selectedTask.check_ins?.[0]?.latitude"
               :checkInLng="selectedTask.check_ins?.[0]?.longitude"
-              :useTimestamp="selectedTask.use_timestamp !== false"
+              :useTimestamp="false"
               @uploadSuccess="() => handleSelectTask(selectedTask.id)"
             />
 
@@ -873,7 +873,11 @@ const activeItem = computed(() => {
 
 function isItemComplete(item) {
   const allPhotos = selectedTask.value?.evidence_photos || [];
-  const itemPhotos = allPhotos.filter(p => item.id ? p.item_id === item.id : true);
+  const itemPhotos = allPhotos.filter(p => {
+    const isBa = p.stage === 'BA_OPNAME' || p.stage === 'BA' || (p.notes && p.notes.includes('[BA_OPNAME]'));
+    if (isBa) return false;
+    return item.id ? p.item_id === item.id : true;
+  });
   const before = itemPhotos.filter(p => p.stage === 'BEFORE').length;
   const process = itemPhotos.filter(p => p.stage === 'PROCESS').length;
   const after = itemPhotos.filter(p => p.stage === 'AFTER').length;
@@ -986,7 +990,11 @@ const isCheckinSatisfied = computed(() => {
 
 const baPhotos = computed(() => {
   const photos = selectedTask.value?.evidence_photos || [];
-  return photos.filter(p => p.stage === 'BA_OPNAME' || p.stage === 'BA');
+  return photos.filter(p =>
+    p.stage === 'BA_OPNAME' ||
+    p.stage === 'BA' ||
+    (p.notes && p.notes.includes('[BA_OPNAME]'))
+  );
 });
 
 const hasBaPhotoUploaded = computed(() => {

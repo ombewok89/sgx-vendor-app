@@ -188,3 +188,4 @@ export async function generateBaOpnamePdf(task, baPhotos) {
     fileName
   };
 }
+
