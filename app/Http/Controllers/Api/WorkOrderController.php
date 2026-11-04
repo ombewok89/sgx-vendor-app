@@ -1,0 +1,700 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\WorkOrder;
+use App\Models\WorkOrderItem;
+use App\Services\AuditService;
+use App\Services\WorkOrderService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class WorkOrderController extends Controller
+{
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        
+        // Auto-normalize legacy 'REVIEW' status to standard 'SUBMITTED'
+        $this->ensureArchiveColumnsExist();
+
+        $query = WorkOrderService::getScopedQuery($user, false);
+
+        // Filter is_archived:
+        // Jika request archived=true / status=ARCHIVED dan user adalah SUPERUSER -> HANYA tampilkan yang is_archived = true
+        // Default -> HANYA tampilkan yang is_archived = false atau null (pekerjaan aktif)
+        $isArchivedRequest = $request->boolean('archived') || $request->status === 'ARCHIVED' || $request->input('archived') === 'true' || $request->input('archived') === '1';
+        if ($isArchivedRequest) {
+            if ($user->hasRole('SUPERUSER')) {
+                $query->where('is_archived', true);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+        } else {
+            $query->where(function ($q) {
+                $q->where('is_archived', false)
+                  ->orWhereNull('is_archived');
+            });
+        }
+
+        if ($request->filled('status') && $request->status !== 'ARCHIVED') {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('area_id')) {
+            $query->where('area_id', $request->area_id);
+        }
+        if ($request->filled('vendor_id')) {
+            $query->where('vendor_id', $request->vendor_id);
+        }
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('spk_number', 'LIKE', "%{$s}%")
+                  ->orWhere('title', 'LIKE', "%{$s}%")
+                  ->orWhere('location_name', 'LIKE', "%{$s}%");
+            });
+        }
+
+        $workOrders = $query->orderByDesc('id')->get();
+
+        // Calculate and normalize real progress for each work order only if missing
+        foreach ($workOrders as $wo) {
+            if ($wo->progress_percent === null) {
+                $calc = WorkOrderService::recalculateProgress($wo);
+                $wo->progress_percent = $calc;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $workOrders,
+        ]);
+    }
+
+    public function show(Request $request, $id)
+    {
+        $user = $request->user();
+        $workOrder = WorkOrderService::getScopedQuery($user, true)->find($id);
+
+        if (!$workOrder) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Surat Perintah Kerja (SPK) tidak ditemukan atau Anda tidak memiliki akses.',
+            ], 404);
+        }
+
+        $calc = WorkOrderService::recalculateProgress($workOrder);
+        $workOrder->progress_percent = $calc;
+
+        return response()->json([
+            'success' => true,
+            'data' => $workOrder,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang membuat SPK.',
+            ], 403);
+        }
+
+        $request->validate([
+            'title' => 'required|string',
+            'vendor_id' => 'required|exists:vendors,id',
+            'area_id' => 'required|exists:areas,id',
+            'job_type_id' => 'nullable|exists:job_types,id',
+            'location_name' => 'required|string',
+            'deadline' => 'required|date',
+            'items' => 'required|array|min:1',
+            'items.*.item_name' => 'required|string',
+        ]);
+
+        return DB::transaction(function () use ($user, $request) {
+            $spkNumber = $request->filled('spk_number') ? trim($request->spk_number) : WorkOrderService::generateSpkNumber();
+
+            $insertData = [
+                'spk_number' => $spkNumber,
+                'title' => $request->title,
+                'vendor_id' => $request->vendor_id,
+                'area_id' => $request->area_id,
+                'job_type_id' => $request->filled('job_type_id') ? $request->job_type_id : null,
+                'location_name' => $request->location_name,
+                'target_lat' => $request->filled('target_lat') ? $request->target_lat : null,
+                'target_lng' => $request->filled('target_lng') ? $request->target_lng : null,
+                'pic_user_id' => $request->filled('pic_user_id') ? $request->pic_user_id : null,
+                'start_date' => $request->filled('start_date') ? $request->start_date : now()->toDateString(),
+                'deadline' => $request->deadline,
+                'doc_mode' => $request->doc_mode ?? 'BEFORE_PROCESS_AFTER',
+                'require_checkin' => $request->boolean('require_checkin', true),
+                'status' => $request->filled('pic_user_id') ? 'ASSIGNED' : 'READY',
+                'progress_percent' => 0,
+                'notes' => $request->notes ?? null,
+                'created_by' => $user->id,
+            ];
+
+            // Safely assign use_timestamp if column exists in table
+            if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'use_timestamp')) {
+                $insertData['use_timestamp'] = $request->boolean('use_timestamp', true);
+            }
+
+            // Safely assign require_ba_doc if column exists in table
+            if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'require_ba_doc')) {
+                $insertData['require_ba_doc'] = $request->boolean('require_ba_doc', false);
+            }
+
+            $workOrder = WorkOrder::create($insertData);
+
+            // Save Items
+            $itemCount = count($request->items);
+            $weight = floor(100 / $itemCount);
+            foreach ($request->items as $idx => $item) {
+                WorkOrderItem::create([
+                    'work_order_id' => $workOrder->id,
+                    'item_name' => $item['item_name'],
+                    'job_type_id' => $item['job_type_id'] ?? $request->job_type_id,
+                    'doc_mode' => $item['doc_mode'] ?? $workOrder->doc_mode,
+                    'weight_percent' => ($idx === $itemCount - 1) ? (100 - ($weight * ($itemCount - 1))) : $weight,
+                    'status' => 'PENDING',
+                    'notes' => $item['notes'] ?? null,
+                ]);
+            }
+
+            // Assign PIC
+            if ($request->filled('pic_user_id')) {
+                $workOrder->assignments()->syncWithoutDetaching([
+                    $request->pic_user_id => ['role_in_team' => 'PIC', 'assigned_at' => now()]
+                ]);
+            }
+
+            // Assign Members
+            if ($request->has('member_ids') && is_array($request->member_ids)) {
+                $syncMembers = [];
+                foreach ($request->member_ids as $mId) {
+                    $syncMembers[$mId] = ['role_in_team' => 'MEMBER', 'assigned_at' => now()];
+                }
+                $workOrder->assignments()->syncWithoutDetaching($syncMembers);
+            }
+
+            try {
+                AuditService::log($user, 'CREATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, $workOrder->toArray());
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Audit log skipped: ' . $e->getMessage());
+            }
+
+            // Automated WhatsApp Notification to Field Team (Safe Dispatch)
+            try {
+                if ($workOrder->pic_user_id || ($request->has('member_ids') && count($request->member_ids) > 0)) {
+                    \App\Services\WhatsAppNotificationDispatcher::onSpkAssigned($workOrder);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('WhatsApp dispatch skipped: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Surat Perintah Kerja {$workOrder->spk_number} berhasil diterbitkan.",
+                'data' => $workOrder->load(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+            ], 201);
+        });
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'SUPERVISOR'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Pengguna Supervisor / Superuser yang memiliki wewenang untuk mengubah data dan pengaturan SPK.',
+            ], 403);
+        }
+
+        $workOrder = WorkOrder::with(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items'])->findOrFail($id);
+        $oldData = $workOrder->toArray();
+
+        return DB::transaction(function () use ($request, $user, $workOrder, $oldData) {
+            $data = $request->only([
+                'title', 'spk_number', 'vendor_id', 'area_id', 'job_type_id', 'location_name',
+                'target_lat', 'target_lng', 'start_date', 'deadline', 'notes',
+                'doc_mode', 'status'
+            ]);
+
+            if ($request->has('require_checkin')) {
+                $data['require_checkin'] = $request->boolean('require_checkin');
+            }
+
+            if ($request->has('use_timestamp')) {
+                $data['use_timestamp'] = $request->boolean('use_timestamp');
+            }
+
+            if ($request->has('require_ba_doc')) {
+                $data['require_ba_doc'] = $request->boolean('require_ba_doc');
+            }
+
+            if ($request->has('pic_user_id')) {
+                $data['pic_user_id'] = $request->pic_user_id ?: null;
+                // Update assignment pivot for PIC
+                if ($data['pic_user_id']) {
+                    $workOrder->assignments()->syncWithoutDetaching([
+                        $data['pic_user_id'] => ['role_in_team' => 'PIC', 'assigned_at' => now()]
+                    ]);
+                    if (in_array($workOrder->status, ['DRAFT', 'READY']) && empty($data['status'])) {
+                        $data['status'] = 'ASSIGNED';
+                    }
+                }
+            }
+
+            $workOrder->update($data);
+
+            // Sync additional team members if passed
+            if ($request->has('member_ids') && is_array($request->member_ids)) {
+                $syncAssignments = [];
+                if ($workOrder->pic_user_id) {
+                    $syncAssignments[$workOrder->pic_user_id] = ['role_in_team' => 'PIC', 'assigned_at' => now()];
+                }
+                foreach ($request->member_ids as $mId) {
+                    if ($mId != $workOrder->pic_user_id) {
+                        $syncAssignments[$mId] = ['role_in_team' => 'MEMBER', 'assigned_at' => now()];
+                    }
+                }
+                $workOrder->assignments()->sync($syncAssignments);
+            }
+
+            // Sync checklist items if passed
+            if ($request->has('items') && is_array($request->items) && count($request->items) > 0) {
+                $itemCount = count($request->items);
+                $weight = floor(100 / $itemCount);
+                
+                // Get existing item IDs that are kept
+                $keptItemIds = [];
+                foreach ($request->items as $idx => $itemData) {
+                    $itemWeight = ($idx === $itemCount - 1) ? (100 - ($weight * ($itemCount - 1))) : $weight;
+                    if (!empty($itemData['id'])) {
+                        $item = WorkOrderItem::where('work_order_id', $workOrder->id)->find($itemData['id']);
+                        if ($item) {
+                            $item->update([
+                                'item_name' => $itemData['item_name'],
+                                'job_type_id' => $itemData['job_type_id'] ?? $workOrder->job_type_id,
+                                'doc_mode' => $itemData['doc_mode'] ?? $workOrder->doc_mode,
+                                'weight_percent' => $itemWeight,
+                                'notes' => $itemData['notes'] ?? null,
+                            ]);
+                            $keptItemIds[] = $item->id;
+                            continue;
+                        }
+                    }
+
+                    // Create new item
+                    $newItem = WorkOrderItem::create([
+                        'work_order_id' => $workOrder->id,
+                        'item_name' => $itemData['item_name'],
+                        'job_type_id' => $itemData['job_type_id'] ?? $workOrder->job_type_id,
+                        'doc_mode' => $itemData['doc_mode'] ?? $workOrder->doc_mode,
+                        'weight_percent' => $itemWeight,
+                        'status' => 'PENDING',
+                        'notes' => $itemData['notes'] ?? null,
+                    ]);
+                    $keptItemIds[] = $newItem->id;
+                }
+
+                // Delete items that were removed
+                if (count($keptItemIds) > 0) {
+                    WorkOrderItem::where('work_order_id', $workOrder->id)
+                        ->whereNotIn('id', $keptItemIds)
+                        ->delete();
+                }
+            }
+
+            AuditService::log($user, 'UPDATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $oldData, $workOrder->toArray());
+
+            return response()->json([
+                'success' => true,
+                'message' => "Data dan pengaturan SPK {$workOrder->spk_number} berhasil diperbarui oleh Supervisor.",
+                'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+            ]);
+        });
+    }
+
+    public function updateLocation(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang mengubah lokasi SPK.',
+            ], 403);
+        }
+
+        $id = $request->input('work_order_id', $request->input('id'));
+        $workOrder = WorkOrder::findOrFail($id);
+
+        $workOrder->update([
+            'target_lat' => $request->target_lat,
+            'target_lng' => $request->target_lng,
+        ]);
+
+        AuditService::log($user, 'UPDATE_LOCATION', 'WORK_ORDER', $workOrder->id, null, [
+            'target_lat' => $request->target_lat,
+            'target_lng' => $request->target_lng,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Koordinat target GPS SPK berhasil disinkronkan.',
+            'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+        ]);
+    }
+
+    public function toggleCheckin(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang mengubah aturan check-in.',
+            ], 403);
+        }
+
+        $id = $request->input('work_order_id', $request->input('id'));
+        $workOrder = WorkOrder::findOrFail($id);
+
+        $requireCheckin = $request->boolean('require_checkin');
+        $workOrder->update([
+            'require_checkin' => $requireCheckin,
+        ]);
+
+        AuditService::log($user, 'TOGGLE_CHECKIN_REQUIREMENT', 'WORK_ORDER', $workOrder->id, null, [
+            'require_checkin' => $requireCheckin,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pengaturan wajib cek lokasi berhasil diperbarui.',
+            'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+        ]);
+    }
+
+    public function assignTeam(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Administrator yang berwenang menugaskan tim.',
+            ], 403);
+        }
+
+        $workOrder = WorkOrder::findOrFail($id);
+
+        $picId = $request->input('pic_user_id', $request->input('picUserId'));
+        $memberIds = $request->input('member_ids', $request->input('memberUserIds', []));
+
+        if (!$picId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'PIC tim lapangan wajib dipilih.',
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($user, $workOrder, $picId, $memberIds) {
+            $workOrder->update([
+                'pic_user_id' => $picId,
+                'status' => in_array($workOrder->status, ['READY', 'DRAFT']) ? 'ASSIGNED' : $workOrder->status,
+            ]);
+
+            $sync = [
+                $picId => ['role_in_team' => 'PIC', 'assigned_at' => now()]
+            ];
+
+            if (!empty($memberIds) && is_array($memberIds)) {
+                foreach ($memberIds as $mId) {
+                    if ($mId != $picId) {
+                        $sync[$mId] = ['role_in_team' => 'MEMBER', 'assigned_at' => now()];
+                    }
+                }
+            }
+
+            $workOrder->assignments()->sync($sync);
+
+            AuditService::log($user, 'ASSIGN_TEAM', 'WORK_ORDER', $workOrder->id, null, [
+                'pic_user_id' => $picId,
+                'member_ids' => $memberIds,
+            ]);
+
+            // Automated WhatsApp Notification to Field Team on reassignment
+            \App\Services\WhatsAppNotificationDispatcher::onSpkAssigned($workOrder);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Penugasan tim lapangan berhasil diperbarui.',
+                'data' => $workOrder->load(['pic', 'assignments', 'vendor', 'area', 'jobType']),
+            ]);
+        });
+    }
+
+    public function submit(Request $request, $id)
+    {
+        $user = $request->user();
+        $workOrder = WorkOrder::with(['evidencePhotos', 'jobType', 'items', 'vendor', 'area', 'pic'])->findOrFail($id);
+
+        if ($user->hasRole('FIELD_TEAM')) {
+            $isAssigned = $workOrder->pic_user_id === $user->id ||
+                $workOrder->assignments()->where('users.id', $user->id)->exists();
+            if (!$isAssigned) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses Ditolak: Anda tidak ditugaskan pada pekerjaan ini.',
+                ], 403);
+            }
+        }
+
+        // Validate Minimum Required Evidence Photos (M-01)
+        $isAfterOnly = $workOrder->doc_mode === 'AFTER_ONLY';
+        $minPhotos = 1;
+
+        $beforeCount = $workOrder->evidencePhotos()->where('stage', 'BEFORE')->count();
+        $processCount = $workOrder->evidencePhotos()->where('stage', 'PROCESS')->count();
+        $afterCount = $workOrder->evidencePhotos()->where('stage', 'AFTER')->count();
+
+        $missing = [];
+        if (!$isAfterOnly && $beforeCount < $minPhotos) {
+            $missing[] = "BEFORE (foto sebelum pengerjaan)";
+        }
+        if (!$isAfterOnly && $processCount < $minPhotos) {
+            $missing[] = "PROCESS (foto saat pengerjaan & APD)";
+        }
+        if ($afterCount < $minPhotos) {
+            $missing[] = "AFTER (foto hasil akhir pekerjaan)";
+        }
+
+        if (!empty($missing)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pekerjaan belum dapat diajukan: Foto bukti belum lengkap pada tahap: ' . implode(', ', $missing) . '.',
+            ], 422);
+        }
+
+        // Validate Physical BA Opname Document if required by SPK
+        if ($workOrder->require_ba_doc) {
+            $hasBaDoc = $workOrder->evidencePhotos()
+                ->whereIn('stage', ['BA_OPNAME', 'BA'])
+                ->exists();
+            if (!$hasBaDoc) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pekerjaan belum dapat diajukan: SPK ini mewajibkan unggah foto bukti berkas fisik Berita Acara (BA) Opname yang telah ditandatangani.',
+                ], 422);
+            }
+        }
+
+        $workOrder->update([
+            'status' => 'SUBMITTED',
+            'progress_percent' => 100,
+        ]);
+        AuditService::log($user, 'SUBMIT_FOR_REVIEW', 'WORK_ORDER', $workOrder->id);
+
+        // Automated WhatsApp Notification to Admin/Supervisor
+        \App\Services\WhatsAppNotificationDispatcher::onSpkSubmitted($workOrder, $user);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pekerjaan berhasil diajukan untuk review tim admin.',
+            'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos']),
+        ]);
+    }
+
+    public function addAddendumItem(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasAnyRole(['SUPERUSER', 'ADMIN', 'SUPERVISOR'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser, Admin, atau Supervisor yang dapat menambahkan pekerjaan pada SPK.',
+            ], 403);
+        }
+
+        $request->validate([
+            'item_name' => 'required|string|max:255',
+            'doc_mode' => 'nullable|string|in:BEFORE_PROCESS_AFTER,BEFORE_AFTER,AFTER_ONLY',
+            'notes' => 'nullable|string',
+        ]);
+
+        $this->ensureAddendumColumnExists();
+
+        $workOrder = WorkOrder::with(['items', 'assignments', 'pic'])->findOrFail($id);
+
+        if (in_array($workOrder->status, ['APPROVED', 'COMPLETED', 'BA_OPNAME'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'SPK ini sudah disetujui / selesai dan tidak dapat ditambahkan pekerjaan baru secara langsung.',
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($user, $workOrder, $request) {
+            // 1. Buat Sub-Pekerjaan Baru (Addendum)
+            $newItem = WorkOrderItem::create([
+                'work_order_id' => $workOrder->id,
+                'item_name' => $request->item_name,
+                'job_type_id' => $workOrder->job_type_id,
+                'doc_mode' => $request->doc_mode ?? $workOrder->doc_mode ?? 'BEFORE_PROCESS_AFTER',
+                'weight_percent' => 0,
+                'status' => 'PENDING',
+                'is_addendum' => true,
+                'notes' => $request->notes,
+            ]);
+
+            // 2. Hitung Ulang Bobot Seluruh Items
+            $allItems = WorkOrderItem::where('work_order_id', $workOrder->id)->get();
+            $totalCount = $allItems->count();
+            if ($totalCount > 0) {
+                $baseWeight = floor(100 / $totalCount);
+                $remainder = 100 - ($baseWeight * $totalCount);
+
+                foreach ($allItems as $idx => $itm) {
+                    $w = ($idx === $totalCount - 1) ? ($baseWeight + $remainder) : $baseWeight;
+                    $itm->update(['weight_percent' => $w]);
+                }
+            }
+
+            // 3. Jika SPK sedang review atau submitted, kembalikan ke IN_PROGRESS agar teknisi dapat melengkapi foto item baru
+            $oldStatus = $workOrder->status;
+            if (in_array($oldStatus, ['SUBMITTED', 'UNDER_REVIEW', 'REVIEW'])) {
+                $workOrder->update(['status' => 'IN_PROGRESS']);
+            }
+
+            // 4. Hitung ulang progres
+            $calc = WorkOrderService::recalculateProgress($workOrder);
+            $workOrder->update(['progress_percent' => $calc]);
+
+            // 5. Audit Log
+            AuditService::log($user, 'ADD_ADDENDUM_ITEM', 'WORK_ORDER', $workOrder->id, null, [
+                'item_id' => $newItem->id,
+                'item_name' => $newItem->item_name,
+                'is_addendum' => true,
+                'previous_status' => $oldStatus,
+            ]);
+
+            // 6. WhatsApp Dispatcher to Field Team if assigned
+            try {
+                if ($workOrder->pic_user_id) {
+                    \App\Services\WhatsAppNotificationDispatcher::onCustomAlert(
+                        $workOrder,
+                        "🔔 *Penambahan Pekerjaan (Addendum)* pada SPK {$workOrder->spk_number}\nItem Baru: *{$newItem->item_name}*\nMohon lengkapi dokumentasi foto di lokasi."
+                    );
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Addendum WA notification failed: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Pekerjaan tambahan '{$newItem->item_name}' berhasil ditambahkan ke SPK {$workOrder->spk_number}.",
+                'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos']),
+            ], 201);
+        });
+    }
+
+    private function ensureArchiveColumnsExist()
+    {
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'is_archived')) {
+                \Illuminate\Support\Facades\Schema::table('work_orders', function ($table) {
+                    $table->boolean('is_archived')->default(false)->after('progress_percent');
+                });
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'archived_at')) {
+                \Illuminate\Support\Facades\Schema::table('work_orders', function ($table) {
+                    $table->timestamp('archived_at')->nullable()->after('is_archived');
+                });
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Auto-migration for archive columns: ' . $e->getMessage());
+        }
+    }
+
+    private function ensureAddendumColumnExists()
+    {
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('work_order_items', 'is_addendum')) {
+                \Illuminate\Support\Facades\Schema::table('work_order_items', function ($table) {
+                    $table->boolean('is_addendum')->default(false)->after('status');
+                });
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Auto-migration for addendum column: ' . $e->getMessage());
+        }
+    }
+
+    public function archive(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser yang berwenang mengarsipkan SPK.',
+            ], 403);
+        }
+
+        $this->ensureArchiveColumnsExist();
+
+        $workOrder = WorkOrder::findOrFail($id);
+
+        if (!in_array($workOrder->status, ['APPROVED', 'COMPLETED', 'BA_OPNAME', 'CANCELLED'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya SPK yang sudah selesai (BA Opname / Approved / Completed / Cancelled) yang dapat diarsipkan.',
+            ], 422);
+        }
+
+        $workOrder->update([
+            'is_archived' => true,
+            'archived_at' => now(),
+        ]);
+
+        AuditService::log($user, 'ARCHIVE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, [
+            'spk_number' => $workOrder->spk_number,
+            'title' => $workOrder->title,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "SPK {$workOrder->spk_number} berhasil diarsipkan.",
+            'data' => $workOrder->fresh(),
+        ]);
+    }
+
+    public function unarchive(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('SUPERUSER')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak: Hanya Superuser yang berwenang memulihkan SPK dari arsip.',
+            ], 403);
+        }
+
+        $this->ensureArchiveColumnsExist();
+
+        $workOrder = WorkOrder::findOrFail($id);
+
+        $workOrder->update([
+            'is_archived' => false,
+            'archived_at' => null,
+        ]);
+
+        AuditService::log($user, 'UNARCHIVE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, null, [
+            'spk_number' => $workOrder->spk_number,
+            'title' => $workOrder->title,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "SPK {$workOrder->spk_number} berhasil dipulihkan dari arsip ke daftar aktif.",
+            'data' => $workOrder->fresh(),
+        ]);
+    }
+}
