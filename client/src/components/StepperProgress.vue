@@ -1,16 +1,16 @@
 <template>
-  <div class="w-full py-3">
+  <div class="w-full py-2 font-mono text-slate-100">
     <!-- Percentage Progress Bar -->
-    <div class="mb-4">
-      <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
-        <span class="text-slate-600 font-medium">Progress Penyelesaian Sistem:</span>
-        <span class="text-brand-700 font-bold font-mono">{{ effectiveProgressPercent }}%</span>
+    <div class="mb-3">
+      <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+        <span class="text-slate-400 uppercase tracking-wider text-[11px]">// PROGRES PENYELESAIAN SPK:</span>
+        <span class="text-[#FACC15] font-bold text-xs">{{ effectiveProgressPercent }}%</span>
       </div>
-      <div class="w-full h-2.5 bg-slate-100/90 rounded-full overflow-hidden border border-slate-200/80 p-0.5 backdrop-blur-xs">
+      <div class="w-full h-2 bg-[#0B0C0E] rounded-xs overflow-hidden border border-[#232A36]">
         <div
           :class="[
-            'h-full transition-all duration-700 ease-out rounded-full shadow-xs',
-            isRevision ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-gradient-to-r from-brand-600 via-indigo-500 to-emerald-500'
+            'h-full transition-all duration-500 ease-out',
+            isRevision ? 'bg-rose-500' : 'bg-gradient-to-r from-[#FACC15] via-teal-400 to-emerald-400'
           ]"
           :style="{ width: `${effectiveProgressPercent}%` }"
         />
@@ -18,7 +18,7 @@
     </div>
 
     <!-- Horizontal Stepper — 7 canonical steps -->
-    <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
+    <div class="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
       <div
         v-for="(step, idx) in STEPS"
         :key="step.id"
@@ -26,34 +26,34 @@
       >
         <div
           :class="[
-            'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 mb-1.5 shadow-sm',
+            'w-6 h-6 rounded-xs flex items-center justify-center text-[10px] font-bold transition-all mb-1 border',
             isStepDone(idx)
-              ? 'bg-emerald-500 text-white shadow-emerald-500/20'
+              ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/60 shadow-xs'
               : idx === currentIndex
               ? isRevision
-                ? 'bg-rose-500 text-white ring-4 ring-rose-100 shadow-rose-500/30'
-                : 'bg-brand-600 text-white ring-4 ring-brand-100 shadow-brand-600/30 animate-pulse'
-              : 'bg-slate-100 text-slate-400 border border-slate-200/80'
+                ? 'bg-rose-950 text-rose-400 border-rose-500 ring-2 ring-rose-500/30'
+                : 'bg-[#1C2028] text-[#FACC15] border-[#FACC15] ring-2 ring-[#FACC15]/20 animate-pulse'
+              : 'bg-[#0B0C0E] text-slate-500 border-[#232A36]'
           ]"
         >
-          <CheckCircle2 v-if="isStepDone(idx)" class="w-4 h-4" />
-          <AlertCircle v-else-if="idx === currentIndex && isRevision" class="w-4 h-4" />
-          <Clock v-else-if="idx === currentIndex" class="w-4 h-4" />
-          <span v-else class="text-[11px]">{{ idx + 1 }}</span>
+          <CheckCircle2 v-if="isStepDone(idx)" class="w-3.5 h-3.5" />
+          <AlertCircle v-else-if="idx === currentIndex && isRevision" class="w-3.5 h-3.5" />
+          <Clock v-else-if="idx === currentIndex" class="w-3.5 h-3.5" />
+          <span v-else>{{ idx + 1 }}</span>
         </div>
         <span
           :class="[
-            'text-[10px] leading-tight transition-colors duration-200',
+            'text-[9px] sm:text-[10px] leading-tight transition-colors font-bold uppercase tracking-wider',
             isStepDone(idx)
-              ? 'text-slate-800 font-semibold'
+              ? 'text-emerald-400'
               : idx === currentIndex && isRevision
-              ? 'text-rose-600 font-bold'
+              ? 'text-rose-400'
               : idx === currentIndex
-              ? 'text-brand-700 font-bold'
-              : 'text-slate-400 font-medium'
+              ? 'text-[#FACC15]'
+              : 'text-slate-500'
           ]"
         >
-          {{ idx === currentIndex && isRevision ? 'Perlu Revisi' : step.label }}
+          {{ idx === currentIndex && isRevision ? 'Revisi' : step.label }}
         </span>
       </div>
     </div>

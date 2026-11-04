@@ -1,42 +1,42 @@
 <template>
-  <div class="glass-card rounded-2xl p-4 shadow-glass border border-white/70 space-y-3.5">
+  <div class="bg-[#13171F] rounded-xs p-4 border border-[#232A36] space-y-3.5 text-slate-100 font-mono shadow-md">
     <!-- Header & Action Buttons -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#232A36] pb-3">
       <div>
-        <h4 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+        <h4 class="font-bold text-sm text-white flex items-center gap-2 flex-wrap uppercase tracking-wider">
           <span>Tahap: {{ stage === 'BA_OPNAME' || stage === 'BA' ? 'BERKAS FISIK BA OPNAME' : stage }}</span>
           <span
             v-if="isSatisfied"
-            class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-300"
+            class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-xs border border-emerald-500/40"
           >
-            <CheckCircle2 class="w-3 h-3 text-emerald-600" />
+            <CheckCircle2 class="w-3 h-3 text-emerald-400" />
             Lengkap ({{ stagePhotos.length }}/{{ requiredCount }})
           </span>
           <span
             v-else
-            class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-300"
+            class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded-xs border border-amber-500/40"
           >
-            <AlertCircle class="w-3 h-3 text-amber-600" />
+            <AlertCircle class="w-3 h-3 text-amber-400" />
             Wajib Min. {{ requiredCount }} Foto ({{ stagePhotos.length }}/{{ requiredCount }})
           </span>
           <span
             v-if="useTimestamp"
-            class="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-800 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-300/80 shadow-2xs"
+            class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-[#0B0C0E] px-2.5 py-0.5 rounded-xs border border-emerald-500/40"
             title="Sistem otomatis mencetak jam, koordinat GPS, peta satelit, dan logo perusahaan ke foto"
           >
-            <MapPin class="w-3 h-3 text-emerald-600 animate-pulse" />
+            <MapPin class="w-3 h-3 text-emerald-400 animate-pulse" />
             Auto GPS Map Stamp
           </span>
           <span
             v-else
-            class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-300 shadow-2xs"
+            class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-[#0B0C0E] px-2.5 py-0.5 rounded-xs border border-[#232A36]"
             title="Mode Upload Bebas: Foto diunggah murni tanpa stempel timestamp/GPS"
           >
-            <FileText class="w-3 h-3 text-slate-600" />
-            Mode Upload Bebas (Tanpa Timestamp)
+            <FileText class="w-3 h-3 text-slate-500" />
+            Upload Bebas (Tanpa Timestamp)
           </span>
         </h4>
-        <p class="text-xs text-slate-500 mt-1">
+        <p class="text-xs text-slate-400 mt-1 font-sans">
           <span v-if="stage === 'BEFORE'">Foto kondisi aset/lokasi sebelum pekerjaan dimulai.</span>
           <span v-else-if="stage === 'PROCESS'">Foto tim saat proses pengerjaan lapangan & penggunaan APD.</span>
           <span v-else-if="stage === 'AFTER'">Foto hasil akhir pekerjaan yang telah selesai dan rapi.</span>
@@ -46,7 +46,7 @@
       </div>
 
       <!-- Dual Action Buttons: Direct Camera vs Multi-Photo Gallery -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 shrink-0">
         <!-- 1. Direct Camera Capture Input (Only if useTimestamp is active) -->
         <template v-if="useTimestamp">
           <input
@@ -62,15 +62,15 @@
           <label
             :for="`cam-input-${stage}-${workOrderId}-${itemId || 0}`"
             :class="[
-              'inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs active:scale-95',
+              'inline-flex items-center gap-1.5 px-3 py-2 rounded-xs text-xs font-bold transition-all border uppercase tracking-wider',
               uploading
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-purple-900 to-indigo-800 hover:from-purple-800 hover:to-indigo-700 text-white cursor-pointer shadow-purple-900/20'
+                ? 'bg-[#1C2028] text-slate-500 border-[#232A36] cursor-not-allowed'
+                : 'bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border-[#FACC15]/40 hover:border-[#FACC15] cursor-pointer shadow-xs active:scale-95'
             ]"
             title="Ambil foto langsung menggunakan kamera HP berstempel GPS satelit"
           >
             <Camera class="w-3.5 h-3.5" />
-            <span class="hidden sm:inline">Kamera GPS</span>
+            <span>Kamera GPS</span>
           </label>
         </template>
 
@@ -88,17 +88,15 @@
         <label
           :for="`gallery-input-${stage}-${workOrderId}-${itemId || 0}`"
           :class="[
-            'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 shadow-xs active:scale-95',
+            'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xs text-xs font-bold transition-all border uppercase tracking-wider',
             uploading
-              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              : (useTimestamp
-                  ? 'bg-gradient-to-r from-brand-900 to-brand-700 hover:from-brand-800 hover:to-brand-600 text-white cursor-pointer shadow-brand-900/20'
-                  : 'bg-gradient-to-r from-purple-800 to-indigo-700 hover:from-purple-700 hover:to-indigo-600 text-white cursor-pointer shadow-md')
+              ? 'bg-[#1C2028] text-slate-500 border-[#232A36] cursor-not-allowed'
+              : 'bg-[#0B0C0E] hover:bg-[#1C2028] text-slate-200 hover:text-white border-[#232A36] hover:border-[#FACC15]/40 cursor-pointer shadow-xs active:scale-95'
           ]"
           :title="useTimestamp ? 'Pilih foto dari memori galeri' : 'Unggah file foto hasil pekerjaan langsung dari penyimpanan'"
         >
-          <Images class="w-3.5 h-3.5" />
-          <span>{{ useTimestamp ? '+ Galeri (Banyak Foto)' : '📁 Unggah Foto Bukti (Galeri / File)' }}</span>
+          <Images class="w-3.5 h-3.5 text-[#FACC15]" />
+          <span>{{ useTimestamp ? '+ Galeri Foto' : '📁 Unggah File' }}</span>
         </label>
       </div>
     </div>
@@ -106,15 +104,15 @@
     <!-- Batch Uploading Progress Banner -->
     <div
       v-if="uploading"
-      class="p-3 bg-purple-50 border border-purple-200 rounded-xl text-xs text-purple-950 flex items-center justify-between shadow-xs animate-pulse"
+      class="p-3 bg-purple-950/60 border border-purple-500/40 rounded-xs text-xs text-purple-200 flex items-center justify-between shadow-xs animate-pulse font-mono"
     >
       <div class="flex items-center gap-2">
-        <Loader2 class="w-4 h-4 text-purple-700 animate-spin shrink-0" />
+        <Loader2 class="w-4 h-4 text-purple-400 animate-spin shrink-0" />
         <span class="font-bold">
           Mengunggah foto {{ uploadProgress.current }} dari {{ uploadProgress.total }}...
         </span>
       </div>
-      <span class="font-mono font-black text-purple-900">
+      <span class="font-mono font-black text-[#FACC15]">
         {{ Math.round((uploadProgress.current / uploadProgress.total) * 100) }}%
       </span>
     </div>
@@ -122,13 +120,13 @@
     <!-- Error Banner -->
     <div
       v-if="error"
-      class="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between gap-2"
+      class="p-2.5 bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs rounded-xs flex items-center justify-between gap-2 font-mono"
     >
       <div class="flex items-center gap-2">
-        <AlertCircle class="w-4 h-4 shrink-0 text-rose-600" />
+        <AlertCircle class="w-4 h-4 shrink-0 text-rose-400" />
         <span>{{ error }}</span>
       </div>
-      <button @click="error = null" class="text-rose-500 hover:text-rose-800 font-bold text-xs cursor-pointer">
+      <button @click="error = null" class="text-rose-400 hover:text-white font-bold text-xs cursor-pointer">
         ✕
       </button>
     </div>
@@ -139,13 +137,13 @@
         v-for="(photo, idx) in stagePhotos"
         :key="photo.id || idx"
         @click="openLightbox(idx)"
-        class="group relative bg-slate-900 rounded-2xl overflow-hidden border border-slate-200/90 aspect-4/3 flex flex-col shadow-xs hover:shadow-md transition-all duration-300 cursor-pointer"
+        class="group relative bg-[#0B0C0E] rounded-xs overflow-hidden border border-[#232A36] hover:border-[#FACC15] aspect-4/3 flex flex-col shadow-md transition-all duration-200 cursor-pointer"
       >
         <!-- Photo Image Thumbnail -->
         <img
           :src="getFileUrl(photo.file_path)"
           :alt="`Evidence ${stage} ${idx + 1}`"
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
 
@@ -155,7 +153,7 @@
             type="button"
             @click.stop="confirmDelete(photo)"
             :disabled="deletingId === photo.id"
-            class="w-7 h-7 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/80"
+            class="w-7 h-7 rounded-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40"
             title="Hapus Foto Bukti Ini"
           >
             <Loader2 v-if="deletingId === photo.id" class="w-3.5 h-3.5 animate-spin" />
@@ -168,7 +166,7 @@
           <button
             type="button"
             @click.stop="triggerDirectDownload(photo, idx)"
-            class="w-7 h-7 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/40 backdrop-blur-xs"
+            class="w-7 h-7 rounded-xs bg-[#0B0C0E]/90 hover:bg-[#1C2028] text-[#FACC15] shadow-md flex items-center justify-center transition-all cursor-pointer border border-[#232A36]"
             title="Unduh Foto Resolusi Asli"
           >
             <Download class="w-3.5 h-3.5" />
@@ -176,18 +174,18 @@
         </div>
 
         <!-- Bottom Forensic Stamp Info -->
-        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-2.5 pr-10 text-white text-[10px] backdrop-blur-xs pointer-events-none">
+        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-2 text-white text-[9px] font-mono pointer-events-none">
           <div class="font-bold flex items-center justify-between">
-            <span class="text-amber-300">Foto #{{ photo.sequence || idx + 1 }}</span>
-            <span class="font-mono text-[9px] text-emerald-400 bg-emerald-950/90 px-1.5 py-0.5 rounded border border-emerald-500/40">SHA-256 ✓</span>
+            <span class="text-[#FACC15]">FOTO #{{ photo.sequence || idx + 1 }}</span>
+            <span class="text-[8px] text-emerald-400 bg-emerald-950/90 px-1 py-0.2 rounded-xs border border-emerald-500/40">SHA-256 ✓</span>
           </div>
-          <div class="text-[10px] text-emerald-300 font-mono mt-0.5 flex items-center gap-1 font-bold">
+          <div class="text-[9px] text-emerald-300 mt-0.5 flex items-center gap-1 font-bold">
             <span>📍</span>
             <span v-if="isValidGps(photo.latitude)">{{ Number(photo.latitude).toFixed(5) }}, {{ Number(photo.longitude).toFixed(5) }}</span>
             <span v-else-if="isValidGps(targetLat)">{{ Number(targetLat).toFixed(5) }}, {{ Number(targetLng).toFixed(5) }}</span>
             <span v-else class="text-slate-300">GPS Terverifikasi</span>
           </div>
-          <div class="text-[9px] text-slate-300 font-mono mt-0.5 flex items-center gap-1">
+          <div class="text-[8px] text-slate-300 mt-0.5 flex items-center gap-1">
             <span>🕒 {{ photo.server_timestamp ? new Date(photo.server_timestamp).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }) : '-' }}</span>
           </div>
         </div>
@@ -195,25 +193,25 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else class="border-2 border-dashed border-slate-200/80 rounded-2xl p-6 text-center text-slate-400 bg-white/40 backdrop-blur-xs">
-      <ImageIcon class="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-400" />
-      <p class="text-xs font-medium">Belum ada foto bukti pada tahap {{ stage }}.</p>
-      <p class="text-[11px] text-slate-400 mt-0.5">Gunakan tombol kamera atau pilih banyak foto dari galeri sekaligus.</p>
+    <div v-else class="border-2 border-dashed border-[#232A36] rounded-xs p-6 text-center text-slate-400 bg-[#0B0C0E] font-mono">
+      <ImageIcon class="w-8 h-8 mx-auto mb-2 opacity-40 text-slate-500" />
+      <p class="text-xs font-bold uppercase tracking-wider text-slate-300">Belum ada foto bukti pada tahap {{ stage }}.</p>
+      <p class="text-[11px] text-slate-500 mt-0.5 font-sans">Gunakan tombol kamera GPS atau pilih banyak foto dari galeri sekaligus.</p>
     </div>
 
     <!-- Delete Confirmation Modal Dialog -->
     <div
       v-if="photoToDelete"
-      class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-[#0B0C0E]/80 backdrop-blur-xs flex items-center justify-center p-4 font-mono"
     >
-      <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 space-y-4 animate-fade-in">
-        <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
-          <Trash2 class="w-6 h-6" />
+      <div class="bg-[#13171F] rounded-xs p-6 max-w-sm w-full shadow-2xl border border-[#232A36] space-y-4">
+        <div class="w-10 h-10 rounded-xs bg-rose-950/80 border border-rose-500/50 text-rose-400 flex items-center justify-center mx-auto">
+          <Trash2 class="w-5 h-5" />
         </div>
         <div class="text-center space-y-1">
-          <h4 class="font-black text-sm text-slate-900">Hapus Foto Bukti?</h4>
-          <p class="text-xs text-slate-500">
-            Foto bukti #{{ photoToDelete.sequence || '' }} pada tahap <strong>{{ stage }}</strong> akan dihapus permanen dari server dan database.
+          <h4 class="font-bold text-sm text-white uppercase tracking-wider">Hapus Foto Bukti?</h4>
+          <p class="text-xs text-slate-400 font-sans">
+            Foto bukti #{{ photoToDelete.sequence || '' }} pada tahap <strong class="text-white">{{ stage }}</strong> akan dihapus permanen dari server dan database.
           </p>
         </div>
         <div class="flex items-center gap-2 pt-2">
@@ -221,7 +219,7 @@
             type="button"
             @click="photoToDelete = null"
             :disabled="deletingId !== null"
-            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+            class="flex-1 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 font-bold text-xs rounded-xs border border-[#232A36] transition-colors cursor-pointer uppercase tracking-wider"
           >
             Batal
           </button>
@@ -229,7 +227,7 @@
             type="button"
             @click="executeDelete"
             :disabled="deletingId !== null"
-            class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-600/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+            class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider active:scale-95"
           >
             <Loader2 v-if="deletingId !== null" class="w-3.5 h-3.5 animate-spin" />
             <span>{{ deletingId !== null ? 'Menghapus...' : 'Ya, Hapus' }}</span>
