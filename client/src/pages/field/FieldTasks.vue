@@ -430,68 +430,12 @@
             </div>
           </div>
 
-          <!-- Langkah Khusus: Upload Foto Berkas Fisik BA Opname -->
-          <div
-            v-if="selectedTask?.require_ba_doc || hasBaPhotoUploaded"
-            class="bg-[#0E1117] rounded-xs p-4 sm:p-5 space-y-4 border text-xs transition-all font-mono"
-            :class="selectedTask?.require_ba_doc ? 'border-amber-500/60' : 'border-[#232A36]'"
-          >
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#232A36] pb-3">
-              <div>
-                <h4 class="font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                  <FileText class="w-4 h-4 text-[#FACC15]" />
-                  <span>BERKAS FISIK: Foto Berita Acara (BA) Opname</span>
-                  <span
-                    v-if="selectedTask?.require_ba_doc"
-                    class="px-2 py-0.5 rounded-xs text-[10px] font-bold bg-amber-950/60 text-amber-300 border border-amber-500/50 uppercase"
-                  >
-                    WAJIB SEBELUM SUBMIT
-                  </span>
-                  <span
-                    v-else
-                    class="px-2 py-0.5 rounded-xs text-[10px] font-bold bg-[#1C2028] text-slate-300 border border-[#232A36] uppercase"
-                  >
-                    OPSIONAL
-                  </span>
-                </h4>
-                <p class="text-[11px] text-slate-400 mt-1 font-sans">
-                  Unggah foto bukti lembar fisik dokumen Berita Acara (BA) Opname yang telah ditandatangani dan dicap oleh Kepala Toko / PIC Cabang.
-                </p>
-              </div>
-
-              <div v-if="hasBaPhotoUploaded" class="self-start sm:self-auto">
-                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded-xs border border-emerald-500/40 uppercase">
-                  <CheckCircle2 class="w-3.5 h-3.5 text-emerald-400" />
-                  Berkas BA Terlampir ✓
-                </span>
-              </div>
-            </div>
-
-            <PhotoUploader
-              :workOrderId="selectedTask.id"
-              :itemId="null"
-              stage="BA_OPNAME"
-              :requiredCount="1"
-              :existingPhotos="selectedTask.evidence_photos || []"
-              :spkNumber="selectedTask.spk_number"
-              :locationName="selectedTask.location_name"
-              :workOrderTitle="selectedTask.title"
-              :address="selectedTask.address_note || selectedTask.location_name"
-              :targetLat="selectedTask.target_lat"
-              :targetLng="selectedTask.target_lng"
-              :checkInLat="selectedTask.check_ins?.[0]?.latitude"
-              :checkInLng="selectedTask.check_ins?.[0]?.longitude"
-              :useTimestamp="selectedTask.use_timestamp !== false"
-              @uploadSuccess="() => handleSelectTask(selectedTask.id)"
-            />
-          </div>
-
           <!-- Step 3: Kendala Teknis Lapangan -->
           <div class="bg-[#0E1117] rounded-xs p-4 sm:p-5 space-y-4 border border-[#232A36] text-xs font-mono">
             <div class="flex items-center justify-between border-b border-[#232A36] pb-3">
               <h4 class="font-bold text-white flex items-center gap-2 uppercase tracking-wider">
                 <AlertTriangle class="w-4 h-4 text-[#FACC15]" />
-                <span>LANGKAH 3: Laporan Kendala Teknis Cabang</span>
+                <span>LANGKAH 3: Laporan Kendala Teknis Cabang (Opsional)</span>
               </h4>
               <span
                 v-if="selectedTask.issues && selectedTask.issues.length > 0"
@@ -587,15 +531,132 @@
             </div>
           </div>
 
-          <!-- Step 4: Submission Validation Gate -->
+          <!-- Step 4: Upload Foto Berkas Fisik BA Opname & Generate Model Berkas PDF -->
+          <div
+            class="bg-[#0E1117] rounded-xs p-4 sm:p-5 space-y-4 border text-xs transition-all font-mono"
+            :class="selectedTask?.require_ba_doc ? 'border-amber-500/60' : 'border-[#232A36]'"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#232A36] pb-3">
+              <div>
+                <h4 class="font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                  <FileText class="w-4 h-4 text-[#FACC15]" />
+                  <span>LANGKAH 4: Upload Foto Berkas & Generate PDF BA Opname</span>
+                  <span
+                    v-if="selectedTask?.require_ba_doc"
+                    class="px-2 py-0.5 rounded-xs text-[10px] font-bold bg-amber-950/60 text-amber-300 border border-amber-500/50 uppercase"
+                  >
+                    Wajib Sebelum Submit
+                  </span>
+                  <span
+                    v-else
+                    class="px-2 py-0.5 rounded-xs text-[10px] font-bold bg-[#1C2028] text-slate-300 border border-[#232A36] uppercase"
+                  >
+                    Standar Resmi
+                  </span>
+                </h4>
+                <p class="text-[11px] text-slate-400 mt-1 font-sans">
+                  Unggah foto bukti lembar fisik dokumen Berita Acara (BA) Opname resmi yang telah ditandatangani dan dicap oleh Kepala Toko / PIC Cabang, lalu generate berkas model format PDF.
+                </p>
+              </div>
+
+              <div v-if="hasBaPhotoUploaded" class="self-start sm:self-auto flex items-center gap-2">
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded-xs border border-emerald-500/40 uppercase">
+                  <CheckCircle2 class="w-3.5 h-3.5 text-emerald-400" />
+                  {{ baPhotos.length }} Foto Berkas Terlampir ✓
+                </span>
+              </div>
+            </div>
+
+            <!-- Foto Uploader untuk Lembar BA Opname -->
+            <PhotoUploader
+              :workOrderId="selectedTask.id"
+              :itemId="null"
+              stage="BA_OPNAME"
+              :requiredCount="1"
+              :existingPhotos="selectedTask.evidence_photos || []"
+              :spkNumber="selectedTask.spk_number"
+              :locationName="selectedTask.location_name"
+              :workOrderTitle="selectedTask.title"
+              :address="selectedTask.address_note || selectedTask.location_name"
+              :targetLat="selectedTask.target_lat"
+              :targetLng="selectedTask.target_lng"
+              :checkInLat="selectedTask.check_ins?.[0]?.latitude"
+              :checkInLng="selectedTask.check_ins?.[0]?.longitude"
+              :useTimestamp="selectedTask.use_timestamp !== false"
+              @uploadSuccess="() => handleSelectTask(selectedTask.id)"
+            />
+
+            <!-- Panel Khusus Generate Model Berkas Format PDF -->
+            <div
+              v-if="hasBaPhotoUploaded"
+              class="p-4 bg-[#0B0C0E] border border-[#232A36] rounded-xs space-y-3"
+            >
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="font-bold text-white text-xs uppercase tracking-wider">
+                      MODEL BERKAS DIGITAL (FORMAT PDF RESMI)
+                    </span>
+                    <span v-if="generatedPdfData" class="px-1.5 py-0.2 rounded-xs bg-emerald-950 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold">
+                      PDF SIAP ✓
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 font-sans mt-0.5">
+                    Kompilasi foto fisik lembar BA Opname ke dalam format dokumen A4 resmi standar SGX lengkap dengan kop, nomor SPK, dan stempel verifikasi digital.
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap font-mono">
+                  <!-- Generate PDF Button -->
+                  <button
+                    type="button"
+                    @click="handleGeneratePdf"
+                    :disabled="generatingPdf"
+                    class="px-3.5 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold text-xs rounded-xs flex items-center gap-2 transition-all cursor-pointer active:scale-95 disabled:opacity-50 uppercase tracking-wider shadow-xs"
+                    title="Generate foto berkas menjadi dokumen PDF format A4"
+                  >
+                    <FileText class="w-3.5 h-3.5 text-[#0B0C0E]" />
+                    <span>{{ generatingPdf ? 'Membuat PDF...' : (generatedPdfData ? 'Generate Ulang PDF' : 'Generate Berkas PDF (A4)') }}</span>
+                  </button>
+
+                  <!-- Preview PDF Button -->
+                  <button
+                    v-if="generatedPdfData"
+                    type="button"
+                    @click="showPdfPreviewModal = true"
+                    class="px-3 py-2 bg-[#1C2028] hover:bg-[#232A36] text-white border border-[#232A36] font-bold text-xs rounded-xs flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+                    title="Lihat lembar pratinjau PDF"
+                  >
+                    <Eye class="w-3.5 h-3.5 text-sky-400" />
+                    <span>Pratinjau</span>
+                  </button>
+
+                  <!-- Download PDF Button -->
+                  <button
+                    v-if="generatedPdfData"
+                    type="button"
+                    @click="handleDownloadPdf"
+                    class="px-3 py-2 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/50 font-bold text-xs rounded-xs flex items-center gap-1.5 cursor-pointer uppercase tracking-wider active:scale-95"
+                    title="Unduh file dokumen PDF ke perangkat"
+                  >
+                    <Download class="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Unduh PDF</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5: Submission Validation Gate -->
           <div class="bg-[#0B0C0E] rounded-xs p-5 sm:p-6 space-y-4 border border-[#232A36] font-mono">
             <div>
               <h4 class="font-bold text-sm text-white flex items-center gap-2 uppercase tracking-wider">
                 <CheckSquare class="w-4 h-4 text-emerald-400" />
-                <span>LANGKAH 4: Submit Seluruh Pekerjaan Cabang</span>
+                <span>LANGKAH 5: Submit Seluruh Pekerjaan Cabang</span>
               </h4>
               <p class="text-xs text-slate-400 mt-1 font-sans">
-                Server validation gate akan memeriksa 1x Check-In GPS dan kelengkapan foto dari seluruh sub-pekerjaan di cabang ini.
+                Server validation gate akan memeriksa 1x Check-In GPS, kelengkapan foto dari seluruh sub-pekerjaan, serta berkas fisik BA Opname di cabang ini.
               </p>
             </div>
 
@@ -637,10 +698,10 @@
               >
                 <CheckCircle2 :class="['w-4 h-4 shrink-0', isBaPhotoSatisfied ? 'text-emerald-400' : 'text-amber-400']" />
                 <div>
-                  <div class="font-bold text-white uppercase">Foto Berkas BA Opname</div>
+                  <div class="font-bold text-white uppercase">Berkas BA & PDF</div>
                   <div class="text-[10px] opacity-80">
                     {{ isBaPhotoSatisfied
-                      ? (hasBaPhotoUploaded ? 'Sudah Diunggah ✓' : 'Bebas / Opsional ✓')
+                      ? (hasBaPhotoUploaded ? 'Foto BA Terlampir ✓' : 'Bebas / Opsional ✓')
                       : 'Wajib Diunggah (Belum Ada)' }}
                   </div>
                 </div>
@@ -683,12 +744,66 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Pratinjau Model Berkas PDF BA Opname -->
+    <div
+      v-if="showPdfPreviewModal && generatedPdfData"
+      class="fixed inset-0 z-50 bg-[#0B0C0E]/85 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 font-mono"
+    >
+      <div class="bg-[#13171F] border border-[#232A36] rounded-xs max-w-4xl w-full h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+        <!-- Modal Header -->
+        <div class="p-3.5 sm:px-5 border-b border-[#232A36] flex items-center justify-between bg-[#0E1117] shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xs bg-[#0B0C0E] border border-[#FACC15] flex items-center justify-center text-[#FACC15]">
+              <FileText class="w-4 h-4" />
+            </div>
+            <div>
+              <h3 class="font-bold text-xs sm:text-sm text-white uppercase tracking-wider">
+                PRATINJAU MODEL BERKAS PDF BA OPNAME (A4)
+              </h3>
+              <p class="text-[10px] text-slate-400">
+                SPK: <span class="text-[#FACC15] font-bold">{{ selectedTask?.spk_number }}</span> • {{ generatedPdfData.fileName }}
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="handleDownloadPdf"
+              class="px-3.5 py-1.5 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold text-xs rounded-xs flex items-center gap-1.5 uppercase cursor-pointer active:scale-95 transition-all shadow-xs"
+              title="Unduh file dokumen PDF resmi"
+            >
+              <Download class="w-3.5 h-3.5" />
+              <span>Unduh PDF</span>
+            </button>
+            <button
+              type="button"
+              @click="showPdfPreviewModal = false"
+              class="p-1.5 text-slate-400 hover:text-white bg-[#1C2028] hover:bg-[#232A36] border border-[#232A36] rounded-xs transition-colors cursor-pointer"
+              title="Tutup Modal"
+            >
+              <X class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Embedded PDF Viewer / Object -->
+        <div class="flex-1 bg-[#0B0C0E] p-1 overflow-hidden relative flex flex-col">
+          <iframe
+            :src="generatedPdfData.dataUrl"
+            class="w-full h-full border-none rounded-none"
+            title="Pratinjau PDF Berita Acara"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { api } from '../../services/api';
+import { generateBaOpnamePdf } from '../../utils/baPdfGenerator';
 import StatusBadge from '../../components/StatusBadge.vue';
 import GeolocationCapture from '../../components/GeolocationCapture.vue';
 import PhotoUploader from '../../components/PhotoUploader.vue';
@@ -706,7 +821,10 @@ import {
   CheckSquare,
   RefreshCw,
   Layers,
-  FileText
+  FileText,
+  Download,
+  Eye,
+  X
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -796,6 +914,7 @@ async function handleSelectTask(id) {
     const detail = await api.getWorkOrderById(id);
     selectedTask.value = detail.data;
     activeItemIndex.value = 0;
+    generatedPdfData.value = null;
     hasIssue.value = detail.data.issues?.length > 0 && detail.data.issues[0].has_issue === 1;
     if (hasIssue.value) {
       issueType.value = detail.data.issues[0].issue_type || 'Cuaca / Hujan';
@@ -865,10 +984,41 @@ const isCheckinSatisfied = computed(() => {
   return !selectedTask.value?.require_checkin || isCheckedIn.value;
 });
 
-const hasBaPhotoUploaded = computed(() => {
+const baPhotos = computed(() => {
   const photos = selectedTask.value?.evidence_photos || [];
-  return photos.some(p => p.stage === 'BA_OPNAME' || p.stage === 'BA');
+  return photos.filter(p => p.stage === 'BA_OPNAME' || p.stage === 'BA');
 });
+
+const hasBaPhotoUploaded = computed(() => {
+  return baPhotos.value.length > 0;
+});
+
+// BA Opname PDF Generation State & Methods
+const generatingPdf = ref(false);
+const generatedPdfData = ref(null);
+const showPdfPreviewModal = ref(false);
+
+async function handleGeneratePdf() {
+  if (baPhotos.value.length === 0) {
+    alert('Unggah minimal 1 foto lembar fisik Berita Acara (BA) terlebih dahulu sebelum generate PDF.');
+    return;
+  }
+  generatingPdf.value = true;
+  try {
+    const res = await generateBaOpnamePdf(selectedTask.value, baPhotos.value);
+    generatedPdfData.value = res;
+    showPdfPreviewModal.value = true;
+  } catch (err) {
+    alert(`Gagal generate PDF: ${err.message}`);
+  } finally {
+    generatingPdf.value = false;
+  }
+}
+
+function handleDownloadPdf() {
+  if (!generatedPdfData.value) return;
+  generatedPdfData.value.doc.save(generatedPdfData.value.fileName);
+}
 
 const isBaPhotoSatisfied = computed(() => {
   if (!selectedTask.value?.require_ba_doc) return true;
