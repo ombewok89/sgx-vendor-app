@@ -188,37 +188,40 @@
           <!-- Info & Assignment Grid -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Information Card -->
-            <div class="glass-card rounded-2xl p-4 space-y-2.5 border border-white/70">
-              <h4 class="font-bold text-slate-900 border-b border-slate-200/80 pb-2">Informasi Pekerjaan</h4>
-              <div class="space-y-2 text-slate-600">
-                <div class="flex justify-between">
-                  <span>Perusahaan Client:</span>
-                  <span class="font-bold text-slate-900">{{ workOrder.vendor?.name || workOrder.vendor_name || 'Client' }} {{ (workOrder.vendor?.code || workOrder.vendor_code) ? `(${workOrder.vendor?.code || workOrder.vendor_code})` : '' }}</span>
+            <div class="cad-surface p-4 space-y-2.5 rounded-xs border border-[#232A36]">
+              <h4 class="font-bold text-white border-b border-[#232A36] pb-2 font-mono uppercase tracking-wider flex items-center justify-between">
+                <span>Informasi Pekerjaan</span>
+                <span class="text-[10px] text-slate-400 font-normal">SPK DATA</span>
+              </h4>
+              <div class="space-y-2 text-slate-300">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Perusahaan Client:</span>
+                  <span class="font-bold text-white text-right">{{ workOrder.vendor?.name || workOrder.vendor_name || 'Client' }} {{ (workOrder.vendor?.code || workOrder.vendor_code) ? `(${workOrder.vendor?.code || workOrder.vendor_code})` : '' }}</span>
                 </div>
-                <div class="flex justify-between">
-                  <span>Area Operasional:</span>
-                  <span class="font-bold text-slate-900">{{ workOrder.area?.name || workOrder.area_name || '-' }}</span>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Area Operasional:</span>
+                  <span class="font-bold text-white">{{ workOrder.area?.name || workOrder.area_name || '-' }}</span>
                 </div>
-                <div v-if="canViewFinancial" class="flex justify-between">
-                  <span>Nilai Kontrak (Rp):</span>
-                  <span class="font-bold font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                <div v-if="canViewFinancial" class="flex justify-between items-center">
+                  <span class="text-slate-400">Nilai Kontrak (Rp):</span>
+                  <span class="font-bold font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-xs border border-emerald-600/50">
                     Rp {{ Number(workOrder.contract_value || 0).toLocaleString('id-ID') }}
                   </span>
                 </div>
-                <div class="flex justify-between">
-                  <span>Titik Lokasi:</span>
-                  <span class="font-bold text-slate-900 text-right max-w-[200px]">{{ workOrder.location_name }}</span>
+                <div class="flex justify-between items-start">
+                  <span class="text-slate-400 shrink-0">Titik Lokasi:</span>
+                  <span class="font-bold text-white text-right max-w-[240px]">{{ workOrder.location_name }}</span>
                 </div>
-                <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100">
-                  <span class="text-slate-500">Target GPS:</span>
+                <div class="flex items-center justify-between text-[11px] pt-1 border-t border-[#232A36]">
+                  <span class="text-slate-400">Target GPS:</span>
                   <div class="flex items-center gap-1.5">
-                    <span class="font-mono text-slate-800 font-bold">
+                    <span class="font-mono text-[#FACC15] font-bold">
                       {{ workOrder.target_lat ? `${Number(workOrder.target_lat).toFixed(4)}, ${Number(workOrder.target_lng).toFixed(4)}` : 'Belum di-set' }}
                     </span>
                     <button
                       type="button"
                       @click="syncCurrentGpsToSpk"
-                      class="px-2 py-0.5 bg-brand-100 hover:bg-brand-200 text-brand-900 text-[10px] font-bold rounded-md transition-all active:scale-95 cursor-pointer"
+                      class="px-2 py-0.5 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15] text-[10px] font-bold rounded-xs transition-colors cursor-pointer"
                       title="Update target koordinat SPK ini sesuai posisi GPS saya saat ini"
                     >
                       📍 Set GPS Saya
@@ -226,67 +229,67 @@
                   </div>
                 </div>
                 <div class="flex justify-between items-center text-[11px]">
-                  <span class="text-slate-500">Wajib Cek Lokasi:</span>
+                  <span class="text-slate-400">Wajib Cek Lokasi:</span>
                   <button
                     type="button"
                     @click="toggleRequireCheckin"
-                    class="px-2 py-0.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer"
-                    :class="workOrder.require_checkin ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-slate-100 text-slate-600 border-slate-300'"
+                    class="px-2 py-0.5 rounded-xs text-[10px] font-bold border transition-colors cursor-pointer"
+                    :class="workOrder.require_checkin ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500' : 'bg-[#1C2028] text-slate-400 border-[#232A36]'"
                   >
                     {{ workOrder.require_checkin ? 'AKTIF (Wajib Check-In)' : 'NONAKTIF (Bebas Lokasi)' }}
                   </button>
                 </div>
                 <div class="flex justify-between items-center text-[11px]">
-                  <span class="text-slate-500">Berkas Fisik BA Opname:</span>
+                  <span class="text-slate-400">Berkas Fisik BA Opname:</span>
                   <span
-                    class="px-2 py-0.5 rounded-md text-[10px] font-bold border"
-                    :class="workOrder.require_ba_doc ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-100 text-slate-600 border-slate-300'"
+                    class="px-2 py-0.5 rounded-xs text-[10px] font-bold border"
+                    :class="workOrder.require_ba_doc ? 'bg-amber-950/60 text-amber-300 border-amber-500' : 'bg-[#1C2028] text-slate-400 border-[#232A36]'"
                   >
                     {{ workOrder.require_ba_doc ? 'WAJIB (Diunggah Sebelum Submit)' : 'BEBAS (Opsional)' }}
                   </span>
                 </div>
-                <div class="flex justify-between">
-                  <span>Periode:</span>
-                  <span class="font-mono text-slate-900 font-bold">{{ workOrder.start_date }} s/d {{ workOrder.deadline }}</span>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Periode:</span>
+                  <span class="font-mono text-white font-bold">{{ workOrder.start_date }} s/d {{ workOrder.deadline }}</span>
                 </div>
-                <div class="flex justify-between">
-                  <span>Mode Evidence:</span>
-                  <span class="font-bold text-brand-700">{{ workOrder.doc_mode }}</span>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Mode Evidence:</span>
+                  <span class="font-bold text-[#FACC15]">{{ workOrder.doc_mode }}</span>
                 </div>
               </div>
             </div>
 
             <!-- Team Assignment Card -->
-            <div class="glass-card rounded-2xl p-4 space-y-3 border border-white/70">
-              <div class="flex items-center justify-between border-b border-slate-200/80 pb-2">
-                <h4 class="font-bold text-slate-900">Penugasan Tim Lapangan</h4>
+            <div class="cad-surface p-4 space-y-3 rounded-xs border border-[#232A36]">
+              <div class="flex items-center justify-between border-b border-[#232A36] pb-2">
+                <h4 class="font-bold text-white font-mono uppercase tracking-wider">Penugasan Tim Lapangan</h4>
                 <span class="text-[10px] text-slate-400 font-bold uppercase">PIC & ANGGOTA</span>
               </div>
 
               <div>
-                <label class="block font-bold text-slate-700 mb-1">PIC Utama (Wajib):</label>
+                <label class="block font-bold text-slate-200 mb-1">PIC Utama (Wajib):</label>
                 <select
                   v-model="selectedPic"
-                  class="w-full px-3 py-2 bg-white/90 border border-slate-200/80 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none text-xs"
+                  class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] text-white rounded-xs focus:outline-none text-xs"
                 >
-                  <option value="">-- Pilih PIC Lapangan --</option>
-                  <option v-for="u in fieldUsers" :key="u.id" :value="u.id">{{ u.name }} ({{ u.phone }})</option>
+                  <option value="" class="bg-[#0B0C0E] text-slate-400">-- Pilih PIC Lapangan --</option>
+                  <option v-for="u in fieldUsers" :key="u.id" :value="u.id" class="bg-[#0B0C0E] text-white">{{ u.name }} ({{ u.phone }})</option>
                 </select>
               </div>
 
               <div>
-                <label class="block font-bold text-slate-700 mb-1">Anggota Tim Tambahan:</label>
-                <div class="space-y-1.5 max-h-24 overflow-y-auto bg-white/90 p-2.5 border border-slate-200/80 rounded-xl custom-scrollbar">
+                <label class="block font-bold text-slate-200 mb-1">Anggota Tim Tambahan:</label>
+                <div class="space-y-1.5 max-h-24 overflow-y-auto bg-[#0B0C0E] p-2.5 border border-[#232A36] rounded-xs custom-scrollbar">
                   <label
                     v-for="u in fieldUsers.filter(u => String(u.id) !== String(selectedPic))"
                     :key="u.id"
-                    class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer"
+                    class="flex items-center gap-2 text-xs text-slate-200 cursor-pointer hover:text-white"
                   >
                     <input
                       type="checkbox"
                       :value="u.id"
                       v-model="selectedMembers"
-                      class="rounded text-brand-600 focus:ring-brand-500"
+                      class="rounded text-[#FACC15] focus:ring-[#FACC15]"
                     />
                     <span>{{ u.name }}</span>
                   </label>
@@ -297,7 +300,7 @@
                 type="button"
                 @click="handleSaveAssignment"
                 :disabled="assigning"
-                class="w-full py-2 bg-gradient-to-r from-brand-900 to-brand-700 hover:from-brand-800 hover:to-brand-600 text-white font-bold rounded-xl transition-all shadow-xs active:scale-95 disabled:opacity-50"
+                class="w-full py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold rounded-xs transition-colors shadow-xs active:scale-95 disabled:opacity-50 uppercase tracking-wider cursor-pointer"
               >
                 {{ assigning ? 'Menyimpan...' : 'Simpan Penugasan Tim' }}
               </button>
@@ -305,26 +308,26 @@
           </div>
 
           <!-- Check-In History -->
-          <div class="glass-card rounded-2xl p-4 space-y-2 border border-white/70">
-            <h4 class="font-bold text-slate-900 flex items-center gap-2">
-              <Navigation class="w-4 h-4 text-brand-600" />
+          <div class="cad-surface p-4 space-y-2.5 rounded-xs border border-[#232A36]">
+            <h4 class="font-bold text-white flex items-center gap-2 font-mono uppercase tracking-wider">
+              <Navigation class="w-4 h-4 text-[#FACC15]" />
               <span>Riwayat Check-In GPS Lapangan</span>
             </h4>
             <div v-if="(workOrder.check_ins || workOrder.checkIns || []).length > 0" class="space-y-2">
               <div
                 v-for="ci in (workOrder.check_ins || workOrder.checkIns || [])"
                 :key="ci.id"
-                class="p-3 bg-white/90 border border-slate-200/80 rounded-xl flex items-center justify-between shadow-xs"
+                class="p-3 bg-[#1C2028] border border-[#232A36] rounded-xs flex items-center justify-between"
               >
                 <div>
-                  <div class="font-bold text-slate-900">{{ ci.user_name || ci.user?.name || 'Teknisi Lapangan' }}</div>
-                  <div class="text-[11px] text-slate-500 font-mono mt-0.5">
+                  <div class="font-bold text-white">{{ ci.user_name || ci.user?.name || 'Teknisi Lapangan' }}</div>
+                  <div class="text-[11px] text-slate-300 font-mono mt-0.5">
                     GPS: {{ Number(ci.latitude || 0).toFixed(6) }}, {{ Number(ci.longitude || 0).toFixed(6) }} (±{{ ci.accuracy || 0 }}m)
                   </div>
                   <div v-if="ci.address_note" class="text-[10px] text-slate-400 italic mt-0.5">"{{ ci.address_note }}"</div>
                 </div>
                 <div class="text-right">
-                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-300">
+                  <span class="px-2.5 py-0.5 rounded-xs text-[10px] font-bold bg-emerald-950/60 text-emerald-300 border border-emerald-500">
                     TERVERIFIKASI ✓
                   </span>
                   <div class="text-[10px] text-slate-400 font-mono mt-1">
@@ -337,16 +340,16 @@
           </div>
 
           <!-- Technical Issues / Kendala Lapangan Log -->
-          <div class="glass-card rounded-2xl p-4 space-y-3 border border-white/70">
+          <div class="cad-surface p-4 space-y-3 rounded-xs border border-[#232A36]">
             <div class="flex items-center justify-between">
-              <h4 class="font-bold text-slate-900 flex items-center gap-2">
-                <AlertTriangle class="w-4 h-4 text-amber-600" />
+              <h4 class="font-bold text-white flex items-center gap-2 font-mono uppercase tracking-wider">
+                <AlertTriangle class="w-4 h-4 text-amber-400" />
                 <span>Riwayat Kendala Teknis & Mitigasi Lapangan</span>
               </h4>
               <span
                 v-if="workOrder.issues && workOrder.issues.length > 0"
-                class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                :class="workOrder.issues.some(i => i.status === 'OPEN') ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'"
+                class="px-2 py-0.5 rounded-xs text-[10px] font-bold border"
+                :class="workOrder.issues.some(i => i.status === 'OPEN') ? 'bg-rose-950/80 text-rose-300 border-rose-500' : 'bg-emerald-950/80 text-emerald-300 border-emerald-500'"
               >
                 {{ workOrder.issues.filter(i => i.status === 'OPEN').length > 0 ? `${workOrder.issues.filter(i => i.status === 'OPEN').length} Perlu Tindakan` : 'Semua Kendala Teratasi ✓' }}
               </span>
@@ -356,35 +359,34 @@
               <div
                 v-for="iss in workOrder.issues"
                 :key="iss.id"
-                class="p-3.5 rounded-xl border space-y-2 text-xs shadow-xs"
-                :class="iss.status === 'OPEN' ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50/60 border-slate-200'"
+                class="p-3.5 rounded-xs border border-[#232A36] bg-[#1C2028] space-y-2 text-xs"
               >
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <span
                       :class="[
-                        'px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider',
+                        'px-2 py-0.5 rounded-xs text-[9px] font-black uppercase tracking-wider',
                         iss.status === 'OPEN' ? 'bg-rose-600 text-white animate-pulse' : 'bg-emerald-600 text-white'
                       ]"
                     >
                       {{ iss.status === 'OPEN' ? 'OPEN / BUTUH TINDAKAN' : 'RESOLVED ✓' }}
                     </span>
-                    <span class="font-bold text-slate-800">{{ iss.issue_type || 'Kendala Teknis' }}</span>
+                    <span class="font-bold text-white">{{ iss.issue_type || 'Kendala Teknis' }}</span>
                   </div>
                   <span class="text-[10px] font-mono text-slate-400">
                     {{ new Date(iss.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) }}
                   </span>
                 </div>
 
-                <p class="text-slate-800 leading-relaxed font-medium">
+                <p class="text-slate-200 leading-relaxed font-medium">
                   "{{ iss.notes }}"
                 </p>
 
                 <!-- Solution note if resolved -->
-                <div v-if="iss.resolution_notes" class="p-2.5 bg-emerald-50 rounded-lg text-[11px] text-emerald-950 border border-emerald-200/80">
-                  <div class="font-bold text-emerald-800 flex items-center justify-between mb-0.5">
+                <div v-if="iss.resolution_notes" class="p-2.5 bg-[#13171F] rounded-xs text-[11px] text-slate-200 border border-emerald-500/50">
+                  <div class="font-bold text-emerald-400 flex items-center justify-between mb-0.5">
                     <span>Tindakan Solusi Pengawas:</span>
-                    <span class="font-mono text-[9px] text-emerald-700">Oleh: {{ iss.resolver_name || 'Pengawas SGX' }}</span>
+                    <span class="font-mono text-[9px] text-emerald-300">Oleh: {{ iss.resolver_name || 'Pengawas SGX' }}</span>
                   </div>
                   <p>{{ iss.resolution_notes }}</p>
                 </div>
@@ -397,11 +399,11 @@
           <div class="space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
-                  <CheckSquare class="w-4 h-4 text-purple-700" />
+                <h4 class="font-black text-sm text-white flex items-center gap-2 font-mono uppercase tracking-wider">
+                  <CheckSquare class="w-4 h-4 text-[#FACC15]" />
                   <span>Lingkup Sub-Pekerjaan & Evidensi Fisik ({{ displayItems.length }} Item)</span>
                 </h4>
-                <p class="text-[11px] text-slate-500">Dokumentasi foto disusun dan dikelompokkan secara terstruktur per sub-lingkup pekerjaan.</p>
+                <p class="text-[11px] text-slate-400">Dokumentasi foto disusun dan dikelompokkan secara terstruktur per sub-lingkup pekerjaan.</p>
               </div>
 
               <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
@@ -410,7 +412,7 @@
                   v-if="!['APPROVED', 'COMPLETED', 'BA_OPNAME'].includes(workOrder.status) && isSupervisor"
                   type="button"
                   @click="openAddendumModal"
-                  class="px-3 py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  class="px-3 py-1.5 bg-[#1C2028] hover:bg-[#232A36] text-amber-300 border border-amber-500/60 rounded-xs text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-colors cursor-pointer uppercase"
                   title="Tambah lingkup pekerjaan baru pada SPK ini"
                 >
                   <Plus class="w-3.5 h-3.5" />
@@ -422,7 +424,7 @@
                   v-if="isSuperuser || isSupervisor"
                   type="button"
                   @click="openSuperuserUploadModal"
-                  class="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  class="px-3 py-1.5 bg-[#1C2028] hover:bg-[#232A36] text-emerald-300 border border-emerald-500/60 rounded-xs text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-colors cursor-pointer uppercase"
                   title="Upload foto evidensi atau dokumen fisik sebagai Superuser / Pengawas"
                 >
                   <Upload class="w-3.5 h-3.5" />
@@ -430,13 +432,13 @@
                 </button>
 
                 <!-- Toggle View Mode: By Item vs All Stages -->
-                <div class="bg-slate-200/80 p-0.5 rounded-xl flex items-center text-[10px] font-bold">
+                <div class="bg-[#0B0C0E] border border-[#232A36] p-0.5 rounded-xs flex items-center text-[10px] font-bold">
                   <button
                     type="button"
                     @click="photoViewMode = 'BY_ITEM'"
                     :class="[
-                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                      photoViewMode === 'BY_ITEM' ? 'bg-white text-purple-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      'px-2.5 py-1 rounded-xs transition-colors cursor-pointer',
+                      photoViewMode === 'BY_ITEM' ? 'bg-[#FACC15] text-[#0B0C0E] font-black shadow-2xs' : 'text-slate-400 hover:text-white'
                     ]"
                   >
                     Per Sub-Item
@@ -445,8 +447,8 @@
                     type="button"
                     @click="photoViewMode = 'ALL_STAGES'"
                     :class="[
-                      'px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                      photoViewMode === 'ALL_STAGES' ? 'bg-white text-purple-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                      'px-2.5 py-1 rounded-xs transition-colors cursor-pointer',
+                      photoViewMode === 'ALL_STAGES' ? 'bg-[#FACC15] text-[#0B0C0E] font-black shadow-2xs' : 'text-slate-400 hover:text-white'
                     ]"
                   >
                     Semua Tahap
@@ -457,7 +459,7 @@
                   v-if="workOrder.evidence_photos && workOrder.evidence_photos.length > 0"
                   type="button"
                   @click="downloadAllPhotos"
-                  class="px-3 py-1.5 bg-gradient-to-r from-purple-800 to-indigo-600 hover:from-purple-700 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  class="px-3 py-1.5 bg-[#1C2028] hover:bg-[#232A36] text-[#FACC15] border border-[#232A36] hover:border-[#FACC15] rounded-xs text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-colors cursor-pointer uppercase"
                   title="Unduh semua foto bukti SPK ini"
                 >
                   <Download class="w-3.5 h-3.5" />
@@ -471,30 +473,30 @@
               <div
                 v-for="(item, itmIdx) in displayItems"
                 :key="item.id || itmIdx"
-                class="glass-card rounded-2xl p-4 sm:p-5 border border-white/80 space-y-3.5 shadow-xs"
+                class="cad-surface p-4 sm:p-5 border border-[#232A36] space-y-3.5 shadow-xs rounded-xs"
               >
                 <!-- Sub-Task Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#232A36] pb-3">
                   <div class="flex items-center gap-2.5">
-                    <span class="w-6 h-6 rounded-lg bg-purple-900 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                    <span class="w-6 h-6 rounded-xs bg-[#FACC15] text-[#0B0C0E] font-black text-xs flex items-center justify-center shrink-0">
                       {{ itmIdx + 1 }}
                     </span>
                     <div>
                       <div class="flex items-center gap-2">
-                        <h5 class="font-black text-slate-900 text-xs sm:text-sm">
+                        <h5 class="font-black text-white text-xs sm:text-sm font-sans tracking-wide">
                           {{ item.item_name }}
                         </h5>
                         <span
                           v-if="item.is_addendum"
-                          class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs animate-pulse"
+                          class="px-2 py-0.5 rounded-xs text-[9px] font-black uppercase tracking-wider bg-amber-500 text-[#0B0C0E] animate-pulse"
                         >
                           + ADDENDUM / TAMBAHAN
                         </span>
                       </div>
-                      <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                        <span class="bg-slate-100 px-1.5 py-0.5 rounded font-mono">Bobot: {{ item.weight_percent || 100 }}%</span>
+                      <div class="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                        <span class="bg-[#1C2028] border border-[#232A36] text-slate-300 px-1.5 py-0.5 rounded-xs font-mono">Bobot: {{ item.weight_percent || 100 }}%</span>
                         <span>•</span>
-                        <span>Mode: <strong class="text-purple-900">{{ item.doc_mode || workOrder.doc_mode }}</strong></span>
+                        <span>Mode: <strong class="text-[#FACC15]">{{ item.doc_mode || workOrder.doc_mode }}</strong></span>
                       </div>
                     </div>
                   </div>
@@ -503,10 +505,10 @@
                   <div class="flex items-center gap-2">
                     <span
                       :class="[
-                        'px-2.5 py-1 rounded-full text-[10px] font-bold border',
+                        'px-2.5 py-1 rounded-xs text-[10px] font-bold border',
                         isItemFullyDocumented(item)
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                          : 'bg-amber-50 text-amber-800 border-amber-300'
+                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500'
+                          : 'bg-amber-950/80 text-amber-300 border-amber-500'
                       ]"
                     >
                       {{ isItemFullyDocumented(item) ? 'Evidensi Lengkap ✓' : 'Dalam Pengerjaan ⏳' }}
@@ -525,9 +527,9 @@
                   ]"
                 >
                   <!-- BEFORE Column (Disembunyikan jika AFTER_ONLY) -->
-                  <div v-if="!isAfterOnly(item)" class="p-3 bg-amber-50/40 rounded-xl border border-amber-200/70 space-y-2">
+                  <div v-if="!isAfterOnly(item)" class="p-3 bg-[#1A1811] rounded-xs border border-amber-600/40 space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-2xs">
+                      <span class="px-2 py-0.5 rounded-xs text-[9px] font-black uppercase tracking-wider bg-amber-500 text-[#0B0C0E]">
                         KONDISI AWAL (BEFORE)
                       </span>
                       <span class="text-[9px] font-mono text-slate-400">
@@ -540,7 +542,7 @@
                         v-for="(p, pIdx) in getPhotosForItemStage(item.id, 'BEFORE')"
                         :key="p.id"
                         @click="openLightbox(p)"
-                        class="h-32 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs border border-white/60"
+                        class="h-32 rounded-xs overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs border border-[#232A36]"
                       >
                         <img
                           :src="getFileUrl(p.file_path)"
@@ -550,24 +552,24 @@
                         <button
                           type="button"
                           @click.stop="downloadSinglePhoto(p)"
-                          class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                          class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-xs bg-[#0B0C0E]/90 hover:bg-[#FACC15] text-white hover:text-[#0B0C0E] shadow-md flex items-center justify-center transition-colors cursor-pointer border border-[#232A36] z-10"
                         >
                           <Download class="w-3 h-3" />
                         </button>
-                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
-                          <div class="truncate text-emerald-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
+                          <div class="truncate text-emerald-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
                         </div>
                       </div>
                     </div>
-                    <div v-else class="h-28 rounded-lg border-2 border-dashed border-amber-200/80 flex flex-col items-center justify-center text-slate-400 text-[10px] text-center p-2">
+                    <div v-else class="h-28 rounded-xs border-2 border-dashed border-[#232A36] flex flex-col items-center justify-center text-slate-500 text-[10px] text-center p-2">
                       <span>Belum ada foto Before</span>
                     </div>
                   </div>
 
                   <!-- PROCESS Column (Disembunyikan jika AFTER_ONLY atau TWO_STAGES) -->
-                  <div v-if="!isAfterOnly(item) && !isTwoStages(item)" class="p-3 bg-blue-50/40 rounded-xl border border-blue-200/70 space-y-2">
+                  <div v-if="!isAfterOnly(item) && !isTwoStages(item)" class="p-3 bg-[#111927] rounded-xs border border-blue-600/40 space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-2xs">
+                      <span class="px-2 py-0.5 rounded-xs text-[9px] font-black uppercase tracking-wider bg-blue-500 text-white">
                         PROSES KERJA (PROCESS)
                       </span>
                       <span class="text-[9px] font-mono text-slate-400">
@@ -580,7 +582,7 @@
                         v-for="(p, pIdx) in getPhotosForItemStage(item.id, 'PROCESS')"
                         :key="p.id"
                         @click="openLightbox(p)"
-                        class="h-32 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs border border-white/60"
+                        class="h-32 rounded-xs overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs border border-[#232A36]"
                       >
                         <img
                           :src="getFileUrl(p.file_path)"
@@ -590,24 +592,24 @@
                         <button
                           type="button"
                           @click.stop="downloadSinglePhoto(p)"
-                          class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                          class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-xs bg-[#0B0C0E]/90 hover:bg-[#FACC15] text-white hover:text-[#0B0C0E] shadow-md flex items-center justify-center transition-colors cursor-pointer border border-[#232A36] z-10"
                         >
                           <Download class="w-3 h-3" />
                         </button>
-                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
-                          <div class="truncate text-emerald-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
+                          <div class="truncate text-emerald-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
                         </div>
                       </div>
                     </div>
-                    <div v-else class="h-28 rounded-lg border-2 border-dashed border-blue-200/80 flex flex-col items-center justify-center text-slate-400 text-[10px] text-center p-2">
+                    <div v-else class="h-28 rounded-xs border-2 border-dashed border-[#232A36] flex flex-col items-center justify-center text-slate-500 text-[10px] text-center p-2">
                       <span>Belum ada foto Process</span>
                     </div>
                   </div>
 
                   <!-- AFTER Column (Hasil Akhir) -->
-                  <div class="p-3 bg-emerald-50/40 rounded-xl border border-emerald-200/70 space-y-2">
+                  <div class="p-3 bg-[#10221C] rounded-xs border border-emerald-600/40 space-y-2">
                     <div class="flex items-center justify-between">
-                      <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-2xs">
+                      <span class="px-2 py-0.5 rounded-xs text-[9px] font-black uppercase tracking-wider bg-emerald-500 text-[#0B0C0E]">
                         {{ isAfterOnly(item) ? 'DOKUMENTASI HASIL PEKERJAAN (AFTER)' : 'HASIL AKHIR (AFTER)' }}
                       </span>
                       <span class="text-[9px] font-mono text-slate-400">
@@ -620,7 +622,7 @@
                         v-for="(p, pIdx) in getPhotosForItemStage(item.id, 'AFTER')"
                         :key="p.id"
                         @click="openLightbox(p)"
-                        class="h-32 sm:h-36 rounded-lg overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs border border-white/60"
+                        class="h-32 sm:h-36 rounded-xs overflow-hidden bg-slate-900 relative group cursor-pointer shadow-xs border border-[#232A36]"
                       >
                         <img
                           :src="getFileUrl(p.file_path)"
@@ -630,16 +632,16 @@
                         <button
                           type="button"
                           @click.stop="downloadSinglePhoto(p)"
-                          class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all cursor-pointer border border-white/40 z-10"
+                          class="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-xs bg-[#0B0C0E]/90 hover:bg-[#FACC15] text-white hover:text-[#0B0C0E] shadow-md flex items-center justify-center transition-colors cursor-pointer border border-[#232A36] z-10"
                         >
                           <Download class="w-3 h-3" />
                         </button>
-                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
-                          <div class="truncate text-emerald-300">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent p-1.5 text-[9px] text-white font-mono pointer-events-none">
+                          <div class="truncate text-emerald-400">📍 {{ p.latitude ? `${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}` : 'GPS Valid' }}</div>
                         </div>
                       </div>
                     </div>
-                    <div v-else class="h-28 rounded-lg border-2 border-dashed border-emerald-200/80 flex flex-col items-center justify-center text-slate-400 text-[10px] text-center p-2">
+                    <div v-else class="h-28 rounded-xs border-2 border-dashed border-[#232A36] flex flex-col items-center justify-center text-slate-500 text-[10px] text-center p-2">
                       <span>Belum ada foto After</span>
                     </div>
                   </div>
@@ -652,10 +654,10 @@
               <template v-for="stage in ['BEFORE', 'PROCESS', 'AFTER', 'ISSUE']" :key="stage">
                 <div
                   v-if="!(workOrder.evidence_photos?.filter(p => p.stage === stage).length === 0 && workOrder.doc_mode === 'AFTER_ONLY' && stage !== 'AFTER')"
-                  class="glass-card rounded-2xl p-3.5 border border-white/70"
+                  class="cad-surface p-3.5 border border-[#232A36] rounded-xs"
                 >
-                  <div class="font-bold text-xs text-slate-800 mb-2.5 flex items-center justify-between">
-                    <span>TAHAP: {{ stage }}</span>
+                  <div class="font-bold text-xs text-white mb-2.5 flex items-center justify-between font-mono">
+                    <span class="text-[#FACC15]">TAHAP: {{ stage }}</span>
                     <span class="text-slate-400 font-normal">({{ workOrder.evidence_photos?.filter(p => p.stage === stage).length || 0 }} foto)</span>
                   </div>
                   <div
@@ -666,12 +668,12 @@
                       v-for="(p, pIdx) in workOrder.evidence_photos.filter(p => p.stage === stage)"
                       :key="p.id"
                       @click="openLightbox(p)"
-                      class="bg-slate-900 rounded-xl overflow-hidden p-1 shadow-xs group relative cursor-pointer hover:shadow-md transition-all"
+                      class="bg-[#1C2028] border border-[#232A36] rounded-xs overflow-hidden p-1 shadow-xs group relative cursor-pointer hover:border-[#FACC15] transition-all"
                     >
                       <img
                         :src="getFileUrl(p.file_path)"
                         :alt="p.file_name"
-                        class="w-full h-24 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                        class="w-full h-24 object-cover rounded-xs group-hover:scale-105 transition-transform duration-300"
                         @error="$event.target.src = 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=400&auto=format&fit=crop&q=60'"
                       />
 
@@ -679,7 +681,7 @@
                       <button
                         type="button"
                         @click.stop="downloadSinglePhoto(p)"
-                        class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-slate-900/90 hover:bg-purple-700 text-white shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer border border-white/40 backdrop-blur-xs z-10"
+                        class="absolute bottom-2 right-2 w-6 h-6 rounded-xs bg-[#0B0C0E]/90 hover:bg-[#FACC15] text-white hover:text-[#0B0C0E] shadow-md flex items-center justify-center transition-colors cursor-pointer border border-[#232A36] z-10"
                         title="Unduh Foto Resolusi Asli"
                       >
                         <Download class="w-3 h-3" />
@@ -691,7 +693,7 @@
                       </div>
                     </div>
                   </div>
-                  <div v-else class="text-slate-400 text-xs italic">Belum ada foto pada tahap {{ stage }}.</div>
+                  <div v-else class="text-slate-500 text-xs italic">Belum ada foto pada tahap {{ stage }}.</div>
                 </div>
               </template>
             </div>
@@ -727,64 +729,64 @@
     <Teleport to="body">
       <div
         v-if="showAddendumModal"
-        class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+        class="fixed inset-0 z-50 bg-[#0B0C0E]/85 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
       >
-        <div class="glass-modal rounded-3xl max-w-md w-full shadow-2xl p-6 space-y-4 text-xs border border-white/80">
-          <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
-            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <Plus class="w-4 h-4 text-amber-600" />
+        <div class="bg-[#13171F] border border-[#FACC15] rounded-xs max-w-md w-full shadow-2xl p-6 space-y-4 text-xs text-slate-100 font-sans">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-3">
+            <h3 class="font-black text-sm text-white flex items-center gap-2 font-mono uppercase tracking-wider">
+              <Plus class="w-4 h-4 text-[#FACC15]" />
               <span>Tambah Sub-Pekerjaan (Addendum)</span>
             </h3>
-            <button @click="showAddendumModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+            <button @click="showAddendumModal = false" class="text-slate-400 hover:text-white cursor-pointer">
               <X class="w-5 h-5" />
             </button>
           </div>
 
-          <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-[11px] space-y-1">
-            <p class="font-bold">Penambahan lingkup kerja pada SPK berjalan:</p>
-            <p class="font-mono text-[10px]">{{ workOrder?.spk_number }} - {{ workOrder?.title }}</p>
-            <p class="text-amber-800 text-[10px]">Item baru akan otomatis muncul di tugas teknisi lapangan dan portal klien dengan status pekerjaan tambahan.</p>
+          <div class="p-3 bg-[#1C2028] border border-amber-500/40 rounded-xs text-amber-200 text-[11px] space-y-1 font-mono">
+            <p class="font-bold text-amber-300">Penambahan lingkup kerja pada SPK berjalan:</p>
+            <p class="text-[10px] text-white">{{ workOrder?.spk_number }} - {{ workOrder?.title }}</p>
+            <p class="text-slate-400 text-[10px]">Item baru akan otomatis muncul di tugas teknisi lapangan dan portal klien dengan status pekerjaan tambahan.</p>
           </div>
 
           <div class="space-y-3">
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Nama Lingkup / Sub-Pekerjaan Tambahan <span class="text-rose-500">*</span>:</label>
+              <label class="block font-bold text-slate-200 mb-1 text-xs">Nama Lingkup / Sub-Pekerjaan Tambahan <span class="text-rose-500">*</span>:</label>
               <input
                 type="text"
                 v-model="addendumForm.itemName"
                 placeholder="Contoh: Pemasangan Stiker Sandblast Kaca Depan (12 m²)"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white focus:outline-none text-xs"
               />
             </div>
 
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Mode Dokumentasi Foto:</label>
+              <label class="block font-bold text-slate-200 mb-1 text-xs">Mode Dokumentasi Foto:</label>
               <select
                 v-model="addendumForm.docMode"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white focus:outline-none text-xs"
               >
-                <option value="BEFORE_PROCESS_AFTER">BEFORE ➔ PROCESS ➔ AFTER (Standar Lengkap)</option>
-                <option value="BEFORE_AFTER">BEFORE ➔ AFTER (Tanpa Foto Proses)</option>
-                <option value="AFTER_ONLY">AFTER ONLY (Hanya Foto Hasil Akhir)</option>
+                <option value="BEFORE_PROCESS_AFTER" class="bg-[#0B0C0E] text-white">BEFORE ➔ PROCESS ➔ AFTER (Standar Lengkap)</option>
+                <option value="BEFORE_AFTER" class="bg-[#0B0C0E] text-white">BEFORE ➔ AFTER (Tanpa Foto Proses)</option>
+                <option value="AFTER_ONLY" class="bg-[#0B0C0E] text-white">AFTER ONLY (Hanya Foto Hasil Akhir)</option>
               </select>
             </div>
 
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Catatan / Spesifikasi Tambahan:</label>
+              <label class="block font-bold text-slate-200 mb-1 text-xs">Catatan / Spesifikasi Tambahan:</label>
               <textarea
                 rows="2"
                 v-model="addendumForm.notes"
                 placeholder="Spesifikasi material, ukuran, atau instruksi khusus dari klien/pengawas..."
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white focus:outline-none text-xs"
               />
             </div>
           </div>
 
-          <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <div class="pt-2 flex items-center justify-end gap-2 border-t border-[#232A36]">
             <button
               type="button"
               @click="showAddendumModal = false"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
+              class="px-4 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 font-bold rounded-xs border border-[#232A36] cursor-pointer"
             >
               Batal
             </button>
@@ -792,7 +794,7 @@
               type="button"
               @click="handleSubmitAddendum"
               :disabled="submittingAddendum"
-              class="px-5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+              class="px-5 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-black rounded-xs shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 uppercase tracking-wider"
             >
               <Plus class="w-3.5 h-3.5" />
               <span>{{ submittingAddendum ? 'Menyimpan...' : 'Simpan & Terbitkan Item' }}</span>
@@ -806,30 +808,30 @@
     <Teleport to="body">
       <div
         v-if="showSuperuserUploadModal"
-        class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+        class="fixed inset-0 z-50 bg-[#0B0C0E]/85 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in font-sans"
       >
-        <div class="glass-modal rounded-3xl max-w-lg w-full shadow-2xl p-6 space-y-4 text-xs border border-white/80 max-h-[92vh] overflow-y-auto">
-          <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
-            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
-              <Upload class="w-4 h-4 text-emerald-600" />
+        <div class="bg-[#13171F] border border-[#FACC15] rounded-xs max-w-lg w-full shadow-2xl p-6 space-y-4 text-xs text-slate-100 max-h-[92vh] overflow-y-auto">
+          <div class="flex items-center justify-between border-b border-[#232A36] pb-3">
+            <h3 class="font-black text-sm text-white flex items-center gap-2 font-mono uppercase tracking-wider">
+              <Upload class="w-4 h-4 text-[#FACC15]" />
               <span>Upload Evidensi / Berkas Fisik (Superuser)</span>
             </h3>
-            <button @click="closeSuperuserUploadModal" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+            <button @click="closeSuperuserUploadModal" class="text-slate-400 hover:text-white cursor-pointer">
               <X class="w-5 h-5" />
             </button>
           </div>
 
-          <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-[11px] space-y-1">
-            <p class="font-bold flex items-center gap-1.5">
-              <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <div class="p-3 bg-[#1C2028] border border-emerald-500/50 rounded-xs text-emerald-300 text-[11px] space-y-1">
+            <p class="font-bold flex items-center gap-1.5 text-emerald-400">
+              <CheckCircle2 class="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>Akses Khusus Superuser & Administrator</span>
             </p>
-            <p class="text-emerald-800 text-[10px]">
+            <p class="text-slate-300 text-[10px]">
               Anda dapat mengunggah foto pengerjaan (BEFORE / PROCESS / AFTER), foto kendala (ISSUE), atau berkas fisik Berita Acara (BA Opname) secara manual ke SPK ini dengan verifikasi SHA-256 otomatis dan tanpa blokir jarak/geofence teknisi.
             </p>
           </div>
 
-          <div v-if="suUploadError" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-start gap-2">
+          <div v-if="suUploadError" class="p-3 bg-rose-950/80 border border-rose-500 rounded-xs text-rose-300 text-xs flex items-start gap-2">
             <AlertTriangle class="w-4 h-4 shrink-0 mt-0.5" />
             <span>{{ suUploadError }}</span>
           </div>
@@ -837,16 +839,17 @@
           <div class="space-y-3">
             <!-- Sub-Task Selector -->
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Pilih Lingkup Sub-Pekerjaan:</label>
+              <label class="block font-bold text-slate-200 mb-1 text-xs">Pilih Lingkup Sub-Pekerjaan:</label>
               <select
                 v-model="suUploadForm.item_id"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-xs"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] text-white rounded-xs focus:outline-none text-xs font-medium"
               >
-                <option :value="null">-- Umum (Seluruh SPK / Lembar BA Opname) --</option>
+                <option :value="null" class="bg-[#0B0C0E] text-slate-300">-- Umum (Seluruh SPK / Lembar BA Opname) --</option>
                 <option
                   v-for="item in (workOrder?.items || [])"
                   :key="item.id"
                   :value="item.id"
+                  class="bg-[#0B0C0E] text-white font-semibold"
                 >
                   {{ item.item_name }} {{ item.doc_mode ? `(${item.doc_mode})` : '' }}
                 </option>
@@ -855,26 +858,26 @@
 
             <!-- Stage Selector -->
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Tahap Evidensi <span class="text-rose-500">*</span>:</label>
+              <label class="block font-bold text-slate-200 mb-1 text-xs">Tahap Evidensi <span class="text-rose-500">*</span>:</label>
               <select
                 v-model="suUploadForm.stage"
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-xs font-semibold"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] text-white rounded-xs focus:outline-none text-xs font-semibold"
               >
-                <option value="BEFORE">BEFORE (Kondisi Awal / 0%)</option>
-                <option value="PROCESS">PROCESS (Proses Pengerjaan / 50%)</option>
-                <option value="AFTER">AFTER (Hasil Selesai / 100%)</option>
-                <option value="BA_OPNAME">BA_OPNAME (Foto Berkas Lembar Fisik BA Opname Resmi)</option>
-                <option value="ISSUE">ISSUE (Kendala / Masalah Lapangan)</option>
+                <option value="BEFORE" class="bg-[#0B0C0E] text-amber-300 font-semibold">BEFORE (Kondisi Awal / 0%)</option>
+                <option value="PROCESS" class="bg-[#0B0C0E] text-blue-300 font-semibold">PROCESS (Proses Pengerjaan / 50%)</option>
+                <option value="AFTER" class="bg-[#0B0C0E] text-emerald-300 font-semibold">AFTER (Hasil Selesai / 100%)</option>
+                <option value="BA_OPNAME" class="bg-[#0B0C0E] text-[#FACC15] font-semibold">BA_OPNAME (Foto Berkas Lembar Fisik BA Opname Resmi)</option>
+                <option value="ISSUE" class="bg-[#0B0C0E] text-rose-300 font-semibold">ISSUE (Kendala / Masalah Lapangan)</option>
               </select>
             </div>
 
             <!-- File Upload Box -->
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Pilih File Foto atau PDF <span class="text-rose-500">*</span>:</label>
-              <div class="mt-1 flex justify-center px-4 pt-4 pb-4 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl bg-slate-50/50 transition-colors">
+              <label class="block font-bold text-slate-200 mb-1 text-xs">Pilih File Foto atau PDF <span class="text-rose-500">*</span>:</label>
+              <div class="mt-1 flex justify-center px-4 pt-4 pb-4 border-2 border-dashed border-[#232A36] hover:border-[#FACC15] rounded-xs bg-[#0E1117] transition-colors">
                 <div class="space-y-2 text-center w-full">
                   <div v-if="suUploadForm.previewUrl" class="relative inline-block max-w-[200px] mx-auto">
-                    <img :src="suUploadForm.previewUrl" class="h-32 w-auto object-cover rounded-xl shadow-md border border-slate-200 mx-auto" alt="Preview" />
+                    <img :src="suUploadForm.previewUrl" class="h-32 w-auto object-cover rounded-xs shadow-md border border-[#232A36] mx-auto" alt="Preview" />
                     <button
                       type="button"
                       @click="removeSuFile"
@@ -882,28 +885,28 @@
                     >
                       <X class="w-3 h-3" />
                     </button>
-                    <p class="text-[10px] text-slate-500 mt-1 truncate max-w-[200px]">{{ suUploadForm.file?.name }}</p>
+                    <p class="text-[10px] text-slate-300 mt-1 truncate max-w-[200px]">{{ suUploadForm.file?.name }}</p>
                   </div>
-                  <div v-else-if="suUploadForm.file" class="flex items-center justify-center gap-2 p-3 bg-white rounded-xl border border-slate-200">
-                    <FileText class="w-6 h-6 text-emerald-600 shrink-0" />
+                  <div v-else-if="suUploadForm.file" class="flex items-center justify-center gap-2 p-3 bg-[#1C2028] rounded-xs border border-[#232A36]">
+                    <FileText class="w-6 h-6 text-[#FACC15] shrink-0" />
                     <div class="text-left text-xs truncate max-w-[240px]">
-                      <p class="font-bold text-slate-800 truncate">{{ suUploadForm.file.name }}</p>
+                      <p class="font-bold text-white truncate">{{ suUploadForm.file.name }}</p>
                       <p class="text-slate-400 text-[10px]">{{ (suUploadForm.file.size / 1024).toFixed(1) }} KB</p>
                     </div>
                     <button
                       type="button"
                       @click="removeSuFile"
-                      class="p-1 text-slate-400 hover:text-rose-600 ml-auto cursor-pointer"
+                      class="p-1 text-slate-400 hover:text-rose-400 ml-auto cursor-pointer"
                     >
                       <X class="w-4 h-4" />
                     </button>
                   </div>
                   <div v-else>
                     <Upload class="mx-auto h-8 w-8 text-slate-400" />
-                    <div class="text-xs text-slate-600 mt-1">
+                    <div class="text-xs text-slate-300 mt-1">
                       <label
                         for="su-evidence-file"
-                        class="relative cursor-pointer bg-white px-3 py-1 rounded-md font-bold text-emerald-600 hover:text-emerald-500 border border-emerald-200 shadow-2xs hover:bg-emerald-50 inline-block"
+                        class="relative cursor-pointer bg-[#1C2028] hover:bg-[#232A36] px-3.5 py-1.5 rounded-xs font-bold text-[#FACC15] border border-[#232A36] hover:border-[#FACC15] shadow-2xs inline-block transition-colors"
                       >
                         <span>Pilih Foto / Dokumen</span>
                         <input
@@ -915,7 +918,7 @@
                           @change="handleSuFileChange"
                         />
                       </label>
-                      <p class="text-[10px] text-slate-500 mt-1.5">Mendukung format JPG, PNG, WEBP, atau PDF</p>
+                      <p class="text-[10px] text-slate-400 mt-1.5">Mendukung format JPG, PNG, WEBP, atau PDF (Otomatis kompresi cepat)</p>
                     </div>
                   </div>
                 </div>
@@ -924,28 +927,28 @@
 
             <!-- Notes -->
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Catatan / Keterangan Dokumen:</label>
+              <label class="block font-bold text-slate-200 mb-1 text-xs">Catatan / Keterangan Dokumen:</label>
               <textarea
                 rows="2"
                 v-model="suUploadForm.notes"
                 placeholder="Catatan tambahan (misal: 'Foto BA Opname cap basah toko dikirim via WA, diupload oleh Superuser')..."
-                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-xs"
+                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] rounded-xs text-white focus:outline-none text-xs"
               />
             </div>
 
             <!-- Target Location Info -->
-            <div class="p-2.5 bg-slate-100 rounded-xl text-slate-600 text-[10px] flex items-center gap-2">
-              <MapPin class="w-3.5 h-3.5 text-slate-500 shrink-0" />
-              <span class="truncate">Lokasi Target SPK: <strong>{{ workOrder?.location_name || 'Lokasi Terdaftar' }}</strong> (Lat: {{ workOrder?.target_lat || '-' }}, Lng: {{ workOrder?.target_lng || '-' }})</span>
+            <div class="p-2.5 bg-[#1C2028] border border-[#232A36] rounded-xs text-slate-300 text-[10px] flex items-center gap-2">
+              <MapPin class="w-3.5 h-3.5 text-[#FACC15] shrink-0" />
+              <span class="truncate">Lokasi Target SPK: <strong class="text-white">{{ workOrder?.location_name || 'Lokasi Terdaftar' }}</strong> (Lat: {{ workOrder?.target_lat || '-' }}, Lng: {{ workOrder?.target_lng || '-' }})</span>
             </div>
           </div>
 
-          <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+          <div class="pt-2 flex items-center justify-end gap-2 border-t border-[#232A36]">
             <button
               type="button"
               @click="closeSuperuserUploadModal"
               :disabled="suUploading"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer disabled:opacity-50"
+              class="px-4 py-2 bg-[#1C2028] hover:bg-[#232A36] text-slate-300 font-bold rounded-xs border border-[#232A36] cursor-pointer disabled:opacity-50"
             >
               Batal
             </button>
@@ -953,7 +956,7 @@
               type="button"
               @click="submitSuperuserUpload"
               :disabled="suUploading || !suUploadForm.file"
-              class="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+              class="px-5 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-black rounded-xs shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50 uppercase tracking-wider"
             >
               <Upload class="w-3.5 h-3.5" />
               <span>{{ suUploading ? (suUploadStatusText || 'Mengunggah...') : 'Upload Sekarang' }}</span>
