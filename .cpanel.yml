@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/sinargra/vendor.sinargrafika.my.id/
+    - /bin/cp -u index.html $DEPLOYPATH
+    - /bin/cp -R -u assets $DEPLOYPATH
+    - /bin/cp -u index.php $DEPLOYPATH
+    - /bin/cp -R -u app $DEPLOYPATH
+    - /bin/cp -R -u bootstrap $DEPLOYPATH
+    - /bin/cp -R -u routes $DEPLOYPATH
