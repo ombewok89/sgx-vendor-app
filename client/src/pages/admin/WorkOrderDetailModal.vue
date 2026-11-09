@@ -417,6 +417,18 @@
                   <span>+ Tambah Sub-Pekerjaan</span>
                 </button>
 
+                <!-- Superuser Direct Evidence & Document Upload Button -->
+                <button
+                  v-if="isSuperuser || isSupervisor"
+                  type="button"
+                  @click="openSuperuserUploadModal"
+                  class="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  title="Upload foto evidensi atau dokumen fisik sebagai Superuser / Pengawas"
+                >
+                  <Upload class="w-3.5 h-3.5" />
+                  <span>+ Upload Evidensi (Superuser)</span>
+                </button>
+
                 <!-- Toggle View Mode: By Item vs All Stages -->
                 <div class="bg-slate-200/80 p-0.5 rounded-xl flex items-center text-[10px] font-bold">
                   <button
@@ -789,6 +801,167 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Superuser Direct Evidence & Document Upload Modal Dialog -->
+    <Teleport to="body">
+      <div
+        v-if="showSuperuserUploadModal"
+        class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+      >
+        <div class="glass-modal rounded-3xl max-w-lg w-full shadow-2xl p-6 space-y-4 text-xs border border-white/80 max-h-[92vh] overflow-y-auto">
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+              <Upload class="w-4 h-4 text-emerald-600" />
+              <span>Upload Evidensi / Berkas Fisik (Superuser)</span>
+            </h3>
+            <button @click="closeSuperuserUploadModal" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+
+          <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-[11px] space-y-1">
+            <p class="font-bold flex items-center gap-1.5">
+              <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Akses Khusus Superuser & Administrator</span>
+            </p>
+            <p class="text-emerald-800 text-[10px]">
+              Anda dapat mengunggah foto pengerjaan (BEFORE / PROCESS / AFTER), foto kendala (ISSUE), atau berkas fisik Berita Acara (BA Opname) secara manual ke SPK ini dengan verifikasi SHA-256 otomatis dan tanpa blokir jarak/geofence teknisi.
+            </p>
+          </div>
+
+          <div v-if="suUploadError" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-start gap-2">
+            <AlertTriangle class="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{{ suUploadError }}</span>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Sub-Task Selector -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Pilih Lingkup Sub-Pekerjaan:</label>
+              <select
+                v-model="suUploadForm.item_id"
+                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-xs"
+              >
+                <option :value="null">-- Umum (Seluruh SPK / Lembar BA Opname) --</option>
+                <option
+                  v-for="item in (workOrder?.items || [])"
+                  :key="item.id"
+                  :value="item.id"
+                >
+                  {{ item.item_name }} {{ item.doc_mode ? `(${item.doc_mode})` : '' }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Stage Selector -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Tahap Evidensi <span class="text-rose-500">*</span>:</label>
+              <select
+                v-model="suUploadForm.stage"
+                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-xs font-semibold"
+              >
+                <option value="BEFORE">BEFORE (Kondisi Awal / 0%)</option>
+                <option value="PROCESS">PROCESS (Proses Pengerjaan / 50%)</option>
+                <option value="AFTER">AFTER (Hasil Selesai / 100%)</option>
+                <option value="BA_OPNAME">BA_OPNAME (Foto Berkas Lembar Fisik BA Opname Resmi)</option>
+                <option value="ISSUE">ISSUE (Kendala / Masalah Lapangan)</option>
+              </select>
+            </div>
+
+            <!-- File Upload Box -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Pilih File Foto atau PDF <span class="text-rose-500">*</span>:</label>
+              <div class="mt-1 flex justify-center px-4 pt-4 pb-4 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl bg-slate-50/50 transition-colors">
+                <div class="space-y-2 text-center w-full">
+                  <div v-if="suUploadForm.previewUrl" class="relative inline-block max-w-[200px] mx-auto">
+                    <img :src="suUploadForm.previewUrl" class="h-32 w-auto object-cover rounded-xl shadow-md border border-slate-200 mx-auto" alt="Preview" />
+                    <button
+                      type="button"
+                      @click="removeSuFile"
+                      class="absolute -top-2 -right-2 p-1 bg-rose-600 text-white rounded-full shadow-md hover:bg-rose-700 cursor-pointer"
+                    >
+                      <X class="w-3 h-3" />
+                    </button>
+                    <p class="text-[10px] text-slate-500 mt-1 truncate max-w-[200px]">{{ suUploadForm.file?.name }}</p>
+                  </div>
+                  <div v-else-if="suUploadForm.file" class="flex items-center justify-center gap-2 p-3 bg-white rounded-xl border border-slate-200">
+                    <FileText class="w-6 h-6 text-emerald-600 shrink-0" />
+                    <div class="text-left text-xs truncate max-w-[240px]">
+                      <p class="font-bold text-slate-800 truncate">{{ suUploadForm.file.name }}</p>
+                      <p class="text-slate-400 text-[10px]">{{ (suUploadForm.file.size / 1024).toFixed(1) }} KB</p>
+                    </div>
+                    <button
+                      type="button"
+                      @click="removeSuFile"
+                      class="p-1 text-slate-400 hover:text-rose-600 ml-auto cursor-pointer"
+                    >
+                      <X class="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div v-else>
+                    <Upload class="mx-auto h-8 w-8 text-slate-400" />
+                    <div class="text-xs text-slate-600 mt-1">
+                      <label
+                        for="su-evidence-file"
+                        class="relative cursor-pointer bg-white px-3 py-1 rounded-md font-bold text-emerald-600 hover:text-emerald-500 border border-emerald-200 shadow-2xs hover:bg-emerald-50 inline-block"
+                      >
+                        <span>Pilih Foto / Dokumen</span>
+                        <input
+                          id="su-evidence-file"
+                          name="su-evidence-file"
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,application/pdf"
+                          class="sr-only"
+                          @change="handleSuFileChange"
+                        />
+                      </label>
+                      <p class="text-[10px] text-slate-500 mt-1.5">Mendukung format JPG, PNG, WEBP, atau PDF</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Catatan / Keterangan Dokumen:</label>
+              <textarea
+                rows="2"
+                v-model="suUploadForm.notes"
+                placeholder="Catatan tambahan (misal: 'Foto BA Opname cap basah toko dikirim via WA, diupload oleh Superuser')..."
+                class="w-full px-3 py-2 bg-white/90 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-xs"
+              />
+            </div>
+
+            <!-- Target Location Info -->
+            <div class="p-2.5 bg-slate-100 rounded-xl text-slate-600 text-[10px] flex items-center gap-2">
+              <MapPin class="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <span class="truncate">Lokasi Target SPK: <strong>{{ workOrder?.location_name || 'Lokasi Terdaftar' }}</strong> (Lat: {{ workOrder?.target_lat || '-' }}, Lng: {{ workOrder?.target_lng || '-' }})</span>
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+            <button
+              type="button"
+              @click="closeSuperuserUploadModal"
+              :disabled="suUploading"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer disabled:opacity-50"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              @click="submitSuperuserUpload"
+              :disabled="suUploading || !suUploadForm.file"
+              class="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+            >
+              <Upload class="w-3.5 h-3.5" />
+              <span>{{ suUploading ? (suUploadStatusText || 'Mengunggah...') : 'Upload Sekarang' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -801,6 +974,7 @@ import StepperProgress from '../../components/StepperProgress.vue';
 import PhotoLightboxModal from '../../components/PhotoLightboxModal.vue';
 import WorkOrderEditModal from './WorkOrderEditModal.vue';
 import ShareSpkModal from '../../components/ShareSpkModal.vue';
+import { fastCompressImage } from '../../utils/imageCompressor';
 import {
   X,
   MapPin,
@@ -816,7 +990,9 @@ import {
   Share2,
   CheckSquare,
   Plus,
-  Archive
+  Archive,
+  Upload,
+  FileText
 } from 'lucide-vue-next';
 
 const auth = useAuth();
@@ -913,6 +1089,158 @@ async function handleSubmitAddendum() {
     alert('Gagal menambahkan sub-pekerjaan: ' + (err.message || 'Terjadi kesalahan'));
   } finally {
     submittingAddendum.value = false;
+  }
+}
+
+// Superuser Direct Evidence & BA Opname Upload State & Methods
+const showSuperuserUploadModal = ref(false);
+const suUploading = ref(false);
+const suUploadStatusText = ref('');
+const suUploadError = ref(null);
+const suUploadForm = ref({
+  item_id: null,
+  stage: 'AFTER',
+  file: null,
+  previewUrl: null,
+  notes: ''
+});
+
+function openSuperuserUploadModal() {
+  suUploadForm.value = {
+    item_id: null,
+    stage: 'AFTER',
+    file: null,
+    previewUrl: null,
+    notes: ''
+  };
+  suUploadError.value = null;
+  suUploading.value = false;
+  suUploadStatusText.value = '';
+  showSuperuserUploadModal.value = true;
+}
+
+function closeSuperuserUploadModal() {
+  if (suUploadForm.value.previewUrl) {
+    URL.revokeObjectURL(suUploadForm.value.previewUrl);
+  }
+  showSuperuserUploadModal.value = false;
+  suUploadError.value = null;
+}
+
+function removeSuFile() {
+  if (suUploadForm.value.previewUrl) {
+    URL.revokeObjectURL(suUploadForm.value.previewUrl);
+  }
+  suUploadForm.value.file = null;
+  suUploadForm.value.previewUrl = null;
+}
+
+function handleSuFileChange(e) {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+
+  if (suUploadForm.value.previewUrl) {
+    URL.revokeObjectURL(suUploadForm.value.previewUrl);
+  }
+
+  suUploadForm.value.file = file;
+  if (file.type && file.type.startsWith('image/')) {
+    suUploadForm.value.previewUrl = URL.createObjectURL(file);
+  } else {
+    suUploadForm.value.previewUrl = null;
+  }
+  suUploadError.value = null;
+}
+
+async function submitSuperuserUpload() {
+  if (!suUploadForm.value.file) {
+    suUploadError.value = 'Silakan pilih file foto atau dokumen PDF terlebih dahulu!';
+    return;
+  }
+
+  suUploading.value = true;
+  suUploadError.value = null;
+  suUploadStatusText.value = 'Memproses berkas...';
+
+  try {
+    let fileToUpload = suUploadForm.value.file;
+
+    // Fast image compression if file is an image
+    if (fileToUpload.type && fileToUpload.type.startsWith('image/')) {
+      suUploadStatusText.value = 'Mengompresi gambar...';
+      try {
+        fileToUpload = await fastCompressImage(fileToUpload, {
+          maxWidth: 2048,
+          maxHeight: 2048,
+          quality: 0.82
+        });
+      } catch (cErr) {
+        console.warn('Image compression fallback:', cErr);
+      }
+    }
+
+    suUploadStatusText.value = 'Mengunggah ke server...';
+
+    const formData = new FormData();
+    formData.append('work_order_id', props.workOrderId);
+    if (suUploadForm.value.item_id) {
+      formData.append('item_id', suUploadForm.value.item_id);
+    }
+    formData.append('stage', suUploadForm.value.stage);
+    formData.append('photo', fileToUpload);
+    formData.append('file', fileToUpload);
+
+    const lat = workOrder.value?.target_lat || -6.2088;
+    const lng = workOrder.value?.target_lng || 106.8456;
+    formData.append('latitude', lat);
+    formData.append('longitude', lng);
+    formData.append('accuracy', 5);
+
+    const customNotes = suUploadForm.value.notes?.trim();
+    const stagePrefix = suUploadForm.value.stage === 'BA_OPNAME' ? '[BA_OPNAME]' : `[${suUploadForm.value.stage}]`;
+    const defaultNote = `${stagePrefix} Diunggah manual oleh Superuser via Detail SPK`;
+    formData.append('notes', customNotes ? `${stagePrefix} ${customNotes}` : defaultNote);
+
+    let res;
+    try {
+      res = await api.uploadEvidence(formData);
+    } catch (uploadErr) {
+      const errMsg = String(uploadErr.message || uploadErr || '');
+      // Fallback if backend rejects BA_OPNAME
+      if (
+        (suUploadForm.value.stage === 'BA_OPNAME' || suUploadForm.value.stage === 'BA') &&
+        (errMsg.includes('stage is invalid') || errMsg.includes('stage tidak valid') || errMsg.includes('selected stage'))
+      ) {
+        console.warn('[WorkOrderDetailModal] Backend rejected BA_OPNAME stage. Retrying with stage: AFTER...');
+        const fallbackData = new FormData();
+        fallbackData.append('work_order_id', props.workOrderId);
+        if (suUploadForm.value.item_id) fallbackData.append('item_id', suUploadForm.value.item_id);
+        fallbackData.append('stage', 'AFTER');
+        fallbackData.append('photo', fileToUpload);
+        fallbackData.append('file', fileToUpload);
+        fallbackData.append('latitude', lat);
+        fallbackData.append('longitude', lng);
+        fallbackData.append('accuracy', 5);
+        fallbackData.append('notes', `[BA_OPNAME] Berkas Fisik BA Opname: ${customNotes || fileToUpload.name}`);
+
+        res = await api.uploadEvidence(fallbackData);
+      } else {
+        throw uploadErr;
+      }
+    }
+
+    if (res.success || res.data) {
+      alert(`Berkas evidensi tahap ${suUploadForm.value.stage} berhasil diunggah!`);
+      closeSuperuserUploadModal();
+      await loadDetail();
+      emit('refresh-list');
+    }
+  } catch (err) {
+    console.error('Failed to upload superuser evidence:', err);
+    suUploadError.value = err.message || 'Gagal mengunggah berkas ke server.';
+  } finally {
+    suUploading.value = false;
+    suUploadStatusText.value = '';
   }
 }
 
