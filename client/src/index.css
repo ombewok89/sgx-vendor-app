@@ -6,6 +6,16 @@
   body {
     @apply bg-[#0B0C0E] text-slate-100 selection:bg-[#FACC15] selection:text-[#0B0C0E] font-sans antialiased;
   }
+  select {
+    color-scheme: dark;
+  }
+  option {
+    background-color: #13171F;
+    color: #F1F5F9;
+  }
+  option:disabled {
+    color: #64748B;
+  }
 }
 
 /* 24px Industrial Blueprint Dot Grid Canvas */

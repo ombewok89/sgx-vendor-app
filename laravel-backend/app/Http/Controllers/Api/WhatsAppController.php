@@ -19,7 +19,9 @@ class WhatsAppController extends Controller
             'message' => 'nullable|string',
         ]);
 
-        $msg = $request->message ?: "🔔 *SGX Work Evidence System Test*\n\nUji coba konektivitas WhatsApp Gateway Fonnte berhasil terhubung secara normal pada " . now()->format('d/m/Y H:i:s') . " WIB.";
+        $activeProvider = FonnteService::getProvider();
+        $providerName = ($activeProvider === 'WAGATE') ? 'WaGate (wa.printpro.my.id)' : 'Fonnte';
+        $msg = $request->message ?: "🔔 *SGX Work Evidence System Test*\n\nUji coba konektivitas WhatsApp Gateway ({$providerName}) berhasil terhubung secara normal pada " . now()->format('d/m/Y H:i:s') . " WIB.";
 
         $result = FonnteService::sendMessage($request->phone, $msg, 'TEST_MESSAGE');
 
@@ -33,7 +35,7 @@ class WhatsAppController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $result['message'] ?? 'Pesan WhatsApp berhasil dikirim ke antrean Fonnte.',
+            'message' => $result['message'] ?? "Pesan WhatsApp berhasil dikirim ke antrean {$providerName}.",
             'data' => $result,
         ]);
     }

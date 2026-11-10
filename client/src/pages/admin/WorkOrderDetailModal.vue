@@ -194,6 +194,14 @@
                 <span class="text-[10px] text-slate-400 font-normal">SPK DATA</span>
               </h4>
               <div class="space-y-2 text-slate-300">
+                <div class="flex justify-between items-start">
+                  <span class="text-slate-400 shrink-0">Judul Pekerjaan:</span>
+                  <span class="font-bold text-white text-right max-w-[240px] text-[#FACC15]">{{ workOrder.title || '-' }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Jenis Pekerjaan:</span>
+                  <span class="font-bold text-white">{{ workOrder.job_type?.name || workOrder.job_type_name || '-' }}</span>
+                </div>
                 <div class="flex justify-between items-center">
                   <span class="text-slate-400">Perusahaan Client:</span>
                   <span class="font-bold text-white text-right">{{ workOrder.vendor?.name || workOrder.vendor_name || 'Client' }} {{ (workOrder.vendor?.code || workOrder.vendor_code) ? `(${workOrder.vendor?.code || workOrder.vendor_code})` : '' }}</span>
@@ -842,14 +850,16 @@
               <label class="block font-bold text-slate-200 mb-1 text-xs">Pilih Lingkup Sub-Pekerjaan:</label>
               <select
                 v-model="suUploadForm.item_id"
-                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] text-white rounded-xs focus:outline-none text-xs font-medium"
+                style="background-color: #13171F; color: #FFFFFF;"
+                class="w-full px-3 py-2 bg-[#13171F] border border-[#232A36] focus:border-[#FACC15] text-white rounded-xs focus:outline-none text-xs font-medium"
               >
-                <option :value="null" class="bg-[#0B0C0E] text-slate-300">-- Umum (Seluruh SPK / Lembar BA Opname) --</option>
+                <option :value="null" style="background-color: #13171F; color: #E2E8F0;" class="bg-[#13171F] text-slate-200">-- Umum (Seluruh SPK / Lembar BA Opname) --</option>
                 <option
                   v-for="item in (workOrder?.items || [])"
                   :key="item.id"
                   :value="item.id"
-                  class="bg-[#0B0C0E] text-white font-semibold"
+                  style="background-color: #13171F; color: #FFFFFF;"
+                  class="bg-[#13171F] text-white font-semibold"
                 >
                   {{ item.item_name }} {{ item.doc_mode ? `(${item.doc_mode})` : '' }}
                 </option>
@@ -861,13 +871,14 @@
               <label class="block font-bold text-slate-200 mb-1 text-xs">Tahap Evidensi <span class="text-rose-500">*</span>:</label>
               <select
                 v-model="suUploadForm.stage"
-                class="w-full px-3 py-2 bg-[#0B0C0E] border border-[#232A36] focus:border-[#FACC15] text-white rounded-xs focus:outline-none text-xs font-semibold"
+                style="background-color: #13171F; color: #FFFFFF;"
+                class="w-full px-3 py-2 bg-[#13171F] border border-[#232A36] focus:border-[#FACC15] text-white rounded-xs focus:outline-none text-xs font-semibold"
               >
-                <option value="BEFORE" class="bg-[#0B0C0E] text-amber-300 font-semibold">BEFORE (Kondisi Awal / 0%)</option>
-                <option value="PROCESS" class="bg-[#0B0C0E] text-blue-300 font-semibold">PROCESS (Proses Pengerjaan / 50%)</option>
-                <option value="AFTER" class="bg-[#0B0C0E] text-emerald-300 font-semibold">AFTER (Hasil Selesai / 100%)</option>
-                <option value="BA_OPNAME" class="bg-[#0B0C0E] text-[#FACC15] font-semibold">BA_OPNAME (Foto Berkas Lembar Fisik BA Opname Resmi)</option>
-                <option value="ISSUE" class="bg-[#0B0C0E] text-rose-300 font-semibold">ISSUE (Kendala / Masalah Lapangan)</option>
+                <option value="BEFORE" style="background-color: #13171F; color: #FCD34D;" class="bg-[#13171F] text-amber-300 font-semibold">BEFORE (Kondisi Awal / 0%)</option>
+                <option value="PROCESS" style="background-color: #13171F; color: #93C5FD;" class="bg-[#13171F] text-blue-300 font-semibold">PROCESS (Proses Pengerjaan / 50%)</option>
+                <option value="AFTER" style="background-color: #13171F; color: #86EFAC;" class="bg-[#13171F] text-emerald-300 font-semibold">AFTER (Hasil Selesai / 100%)</option>
+                <option value="BA_OPNAME" style="background-color: #13171F; color: #FACC15;" class="bg-[#13171F] text-[#FACC15] font-semibold">BA_OPNAME (Foto Berkas Lembar Fisik BA Opname Resmi)</option>
+                <option value="ISSUE" style="background-color: #13171F; color: #FCA5A5;" class="bg-[#13171F] text-rose-300 font-semibold">ISSUE (Kendala / Masalah Lapangan)</option>
               </select>
             </div>
 

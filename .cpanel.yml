@@ -8,3 +8,4 @@ deployment:
     - /bin/cp -R -u app $DEPLOYPATH
     - /bin/cp -R -u bootstrap $DEPLOYPATH
     - /bin/cp -R -u routes $DEPLOYPATH
+

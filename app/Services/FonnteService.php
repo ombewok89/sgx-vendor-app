@@ -38,6 +38,72 @@ class FonnteService
     }
 
     /**
+     * Resolves the active WhatsApp Gateway provider.
+     * Options: 'WAGATE' (wa.printpro.my.id) | 'FONNTE' (api.fonnte.com)
+     * Default: 'WAGATE'
+     */
+    public static function getProvider(): string
+    {
+        try {
+            $p = SystemSetting::whereIn('key', ['wa_provider', 'WA_PROVIDER'])->value('value');
+            if (!empty($p)) {
+                return strtoupper(trim((string)$p));
+            }
+        } catch (\Throwable $e) {
+            // Fallback
+        }
+
+        return strtoupper((string)env('WA_PROVIDER', 'WAGATE'));
+    }
+
+    /**
+     * Resolves WaGate Product Key / API Key.
+     */
+    public static function getWagateApiKey(): ?string
+    {
+        try {
+            $key = SystemSetting::whereIn('key', ['wagate_api_key', 'WAGATE_API_KEY'])->value('value');
+            if (!empty($key)) {
+                return trim((string)$key);
+            }
+        } catch (\Throwable $e) {}
+
+        $k = env('WAGATE_API_KEY', 'wg_e187053c1c9b48df991d8a0491e01cfa');
+        return !empty($k) ? trim((string)$k) : null;
+    }
+
+    /**
+     * Resolves WaGate Device ID.
+     */
+    public static function getWagateDeviceId(): ?string
+    {
+        try {
+            $dev = SystemSetting::whereIn('key', ['wagate_device_id', 'WAGATE_DEVICE_ID'])->value('value');
+            if (!empty($dev)) {
+                return trim((string)$dev);
+            }
+        } catch (\Throwable $e) {}
+
+        $d = env('WAGATE_DEVICE_ID', '68865734-16ca-42f7-bb59-282b59756898');
+        return !empty($d) ? trim((string)$d) : null;
+    }
+
+    /**
+     * Resolves WaGate API Endpoint URL.
+     */
+    public static function getWagateApiUrl(): string
+    {
+        try {
+            $url = SystemSetting::whereIn('key', ['wagate_api_url', 'WAGATE_API_URL'])->value('value');
+            if (!empty($url)) {
+                return trim((string)$url);
+            }
+        } catch (\Throwable $e) {}
+
+        return (string)env('WAGATE_API_URL', 'https://wa.printpro.my.id/api/v1/messages/send');
+    }
+
+    /**
      * Resolves the active Fonnte API Token.
      * Single Source of Truth Hierarchy:
      * 1. Primary: Database `system_settings.fonnte_api_key` (Runtime UI configurable)
@@ -263,7 +329,145 @@ class FonnteService
             ];
         }
 
-        // 2. Unconfigured / Missing Token -> EXPLICIT FAILURE (No silent mock)
+        // Anti-Flood / Deduplication Check (Max 1 duplicate message per phone every 60 seconds)
+        if (!in_array($messageType, ['TEST_MESSAGE', 'TEST', 'CUSTOM'])) {
+            $cacheKey = 'wa_flood_' . md5($normalizedPhone . '_' . $messageType . '_' . substr($message, 0, 40));
+            if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                return [
+                    'success' => true,
+                    'skipped' => true,
+                    'status' => 'SKIPPED',
+                    'message' => 'Pengiriman dilewati untuk mencegah spam berulang dalam waktu singkat (Anti-Flood Guard).'
+                ];
+            }
+            \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addSeconds(60));
+        }
+
+        $provider = self::getProvider();
+
+        // =========================================================================
+        // PROVIDER 1: WaGate SaaS (wa.printpro.my.id)
+        // =========================================================================
+        if ($provider === 'WAGATE') {
+            $apiKey = self::getWagateApiKey();
+            $deviceId = self::getWagateDeviceId();
+            $apiUrl = self::getWagateApiUrl();
+
+            if (empty($apiKey) || empty($deviceId)) {
+                $err = 'WaGate Product Key atau Device ID belum dikonfigurasi di pengaturan sistem / .env';
+                self::recordLog(
+                    $notificationFeedId,
+                    $normalizedPhone,
+                    $messageType,
+                    $message,
+                    'FAILED',
+                    null,
+                    $err,
+                    null
+                );
+
+                return [
+                    'success' => false,
+                    'mock' => false,
+                    'provider' => 'WAGATE',
+                    'status' => 'FAILED',
+                    'error' => $err,
+                    'message' => 'Gagal mengirim pesan: ' . $err
+                ];
+            }
+
+            try {
+                $payload = [
+                    'deviceId' => $deviceId,
+                    'receiver' => $normalizedPhone,
+                    'message'  => $message,
+                ];
+
+                $response = Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])->timeout(20)->post($apiUrl, $payload);
+
+                $body = $response->json();
+                if (!$body && $response->body()) {
+                    $body = ['raw' => $response->body()];
+                }
+
+                if (!$response->successful() || (isset($body['success']) && $body['success'] === false)) {
+                    $reason = $body['message'] ?? $body['error'] ?? ('HTTP Error ' . $response->status());
+                    self::recordLog(
+                        $notificationFeedId,
+                        $normalizedPhone,
+                        $messageType,
+                        $message,
+                        'FAILED',
+                        null,
+                        $reason,
+                        $body
+                    );
+
+                    return [
+                        'success' => false,
+                        'mock' => false,
+                        'provider' => 'WAGATE',
+                        'status' => 'FAILED',
+                        'error' => $reason,
+                        'data' => $body,
+                        'message' => 'WaGate Error: ' . $reason
+                    ];
+                }
+
+                $wagateId = $body['id'] ?? ('WAGATE-' . uniqid());
+
+                self::recordLog(
+                    $notificationFeedId,
+                    $normalizedPhone,
+                    $messageType,
+                    $message,
+                    'SENT',
+                    $wagateId,
+                    null,
+                    $body
+                );
+
+                return [
+                    'success' => true,
+                    'mock' => false,
+                    'provider' => 'WAGATE',
+                    'status' => 'SENT',
+                    'response_id' => $wagateId,
+                    'data' => $body,
+                    'message' => 'Pesan WhatsApp berhasil dikirim via WaGate (' . ($body['message'] ?? 'Antrean Terjadwal') . ').'
+                ];
+            } catch (\Throwable $e) {
+                $err = 'Koneksi ke gateway WaGate gagal: ' . $e->getMessage();
+                self::recordLog(
+                    $notificationFeedId,
+                    $normalizedPhone,
+                    $messageType,
+                    $message,
+                    'FAILED',
+                    null,
+                    $err,
+                    null
+                );
+
+                return [
+                    'success' => false,
+                    'mock' => false,
+                    'provider' => 'WAGATE',
+                    'status' => 'FAILED',
+                    'error' => $err,
+                    'message' => $err
+                ];
+            }
+        }
+
+        // =========================================================================
+        // PROVIDER 2: Fonnte API (api.fonnte.com)
+        // =========================================================================
+        $token = self::getToken();
         if (empty($token)) {
             $err = 'FONNTE_TOKEN belum dikonfigurasi di dashboard maupun .env';
             self::recordLog(
@@ -280,27 +484,14 @@ class FonnteService
             return [
                 'success' => false,
                 'mock' => false,
+                'provider' => 'FONNTE',
                 'status' => 'FAILED',
                 'error' => $err,
                 'message' => 'Gagal mengirim pesan: ' . $err
             ];
         }
 
-        // Anti-Flood / Deduplication Check (Max 1 duplicate message per phone every 60 seconds)
-        if (!in_array($messageType, ['TEST_MESSAGE', 'TEST', 'CUSTOM'])) {
-            $cacheKey = 'wa_flood_' . md5($normalizedPhone . '_' . $messageType . '_' . substr($message, 0, 40));
-            if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
-                return [
-                    'success' => true,
-                    'skipped' => true,
-                    'status' => 'SKIPPED',
-                    'message' => 'Pengiriman dilewati untuk mencegah spam berulang dalam waktu singkat (Anti-Flood Guard).'
-                ];
-            }
-            \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addSeconds(60));
-        }
-
-        // 3. Live Fonnte API Dispatch with Natural Delay (Anti-Ban Safe Guard)
+        // Live Fonnte API Dispatch with Natural Delay (Anti-Ban Safe Guard)
         try {
             $url = config('services.fonnte.url', 'https://api.fonnte.com/send');
             $randomDelaySeconds = rand(4, 9); // Natural jitter delay
@@ -434,16 +625,28 @@ class FonnteService
      */
     public static function getGatewayStatus(): array
     {
-        $token = self::getToken();
+        $provider = self::getProvider();
         $isMock = self::isMockEnabled();
         $isEnabled = self::isGatewayEnabled();
+
+        $token = self::getToken();
+        $wagateKey = self::getWagateApiKey();
+        $wagateDevice = self::getWagateDeviceId();
+        $wagateUrl = self::getWagateApiUrl();
+
+        $isConfigured = false;
+        if ($provider === 'WAGATE') {
+            $isConfigured = !empty($wagateKey) && !empty($wagateDevice);
+        } else {
+            $isConfigured = !empty($token);
+        }
 
         $state = 'UNCONFIGURED';
         if (!$isEnabled) {
             $state = 'DISABLED';
         } elseif ($isMock) {
             $state = 'MOCK';
-        } elseif (!empty($token)) {
+        } elseif ($isConfigured) {
             $state = 'ACTIVE';
         }
 
@@ -465,20 +668,26 @@ class FonnteService
         }
 
         $maskedToken = null;
-        if (!empty($token)) {
-            $len = strlen($token);
-            if ($len > 8) {
-                $maskedToken = substr($token, 0, 4) . '••••' . substr($token, -4);
-            } else {
-                $maskedToken = '••••••••';
+        if ($provider === 'WAGATE') {
+            if (!empty($wagateKey)) {
+                $len = strlen($wagateKey);
+                $maskedToken = ($len > 8) ? substr($wagateKey, 0, 5) . '••••' . substr($wagateKey, -4) : '••••••••';
+            }
+        } else {
+            if (!empty($token)) {
+                $len = strlen($token);
+                $maskedToken = ($len > 8) ? substr($token, 0, 4) . '••••' . substr($token, -4) : '••••••••';
             }
         }
 
         return [
             'state' => $state, // 'ACTIVE' | 'DISABLED' | 'MOCK' | 'UNCONFIGURED'
+            'provider' => $provider, // 'WAGATE' | 'FONNTE'
             'is_enabled' => $isEnabled,
-            'token_configured' => !empty($token),
+            'token_configured' => $isConfigured,
             'masked_token' => $maskedToken,
+            'wagate_device_id' => $wagateDevice,
+            'wagate_api_url' => $wagateUrl,
             'mock_enabled' => $isMock,
             'total_sent' => $totalSent,
             'total_failed' => $totalFailed,

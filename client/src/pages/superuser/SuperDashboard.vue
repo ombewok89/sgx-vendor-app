@@ -261,8 +261,8 @@
               <MessageSquare class="w-4 h-4" />
             </div>
             <div>
-              <h3 class="font-bold text-sm text-white font-mono uppercase tracking-wider">WhatsApp Gateway (Fonnte API)</h3>
-              <p class="text-[11px] text-slate-400 font-mono">Integrasi pengiriman pesan notifikasi otomatis untuk SPK, Check-In, dan Berita Acara.</p>
+              <h3 class="font-bold text-sm text-white font-mono uppercase tracking-wider">WhatsApp Gateway (Multi-Provider)</h3>
+              <p class="text-[11px] text-slate-400 font-mono">Pilih dan konfigurasi provider WhatsApp: WaGate (wa.printpro.my.id) atau Fonnte API.</p>
             </div>
           </div>
           <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap font-mono">
@@ -309,7 +309,7 @@
                 ]"
               ></span>
               <span>
-                {{ gatewayInfo.state === 'ACTIVE' ? 'Fonnte Aktif' : gatewayInfo.state === 'DISABLED' ? 'Dimatikan (OFF)' : gatewayInfo.state === 'MOCK' ? 'Mode Mock (Testing)' : 'Belum Terkonfigurasi' }}
+                {{ gatewayInfo.state === 'ACTIVE' ? ((waProvider === 'WAGATE' ? 'WaGate' : 'Fonnte') + ' Aktif') : gatewayInfo.state === 'DISABLED' ? 'Dimatikan (OFF)' : gatewayInfo.state === 'MOCK' ? 'Mode Mock (Testing)' : 'Belum Terkonfigurasi' }}
               </span>
             </span>
 
@@ -321,6 +321,53 @@
               class="p-1.5 bg-[#1C2028] hover:bg-[#232A36] border border-[#232A36] hover:border-[#FACC15]/50 rounded-xs text-slate-300 hover:text-white cursor-pointer text-[10px] font-bold flex items-center gap-1"
             >
               <RefreshCw :class="['w-3 h-3', refreshingGateway ? 'animate-spin text-[#FACC15]' : '']" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Provider Switcher Selector Bar -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-[#0E1117] border border-[#232A36] rounded-xs font-mono">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span class="text-[#FACC15]">⚡</span>
+              <span>Provider Aktif:</span>
+            </span>
+            <span class="text-xs font-black px-2 py-0.5 rounded-xs" :class="waProvider === 'WAGATE' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'">
+              {{ waProvider === 'WAGATE' ? 'WaGate (wa.printpro.my.id)' : 'Fonnte API' }}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="switchWaProvider('WAGATE')"
+              :disabled="savingSetting"
+              :class="[
+                'px-3.5 py-1.5 rounded-xs text-xs font-bold transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider border',
+                waProvider === 'WAGATE'
+                  ? 'bg-[#FACC15] text-[#0B0C0E] border-[#FACC15] shadow-xs'
+                  : 'bg-[#1C2028] text-slate-300 hover:text-white border-[#232A36]'
+              ]"
+            >
+              <span class="w-2 h-2 rounded-full" :class="waProvider === 'WAGATE' ? 'bg-[#0B0C0E]' : 'bg-slate-500'"></span>
+              <span>WaGate SaaS</span>
+              <span v-if="waProvider === 'WAGATE'" class="text-[9px] bg-emerald-950 text-emerald-300 px-1 py-0.2 rounded-xs border border-emerald-500/40">AKTIF</span>
+            </button>
+
+            <button
+              type="button"
+              @click="switchWaProvider('FONNTE')"
+              :disabled="savingSetting"
+              :class="[
+                'px-3.5 py-1.5 rounded-xs text-xs font-bold transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider border',
+                waProvider === 'FONNTE'
+                  ? 'bg-[#FACC15] text-[#0B0C0E] border-[#FACC15] shadow-xs'
+                  : 'bg-[#1C2028] text-slate-300 hover:text-white border-[#232A36]'
+              ]"
+            >
+              <span class="w-2 h-2 rounded-full" :class="waProvider === 'FONNTE' ? 'bg-[#0B0C0E]' : 'bg-slate-500'"></span>
+              <span>Fonnte API</span>
+              <span v-if="waProvider === 'FONNTE'" class="text-[9px] bg-emerald-950 text-emerald-300 px-1 py-0.2 rounded-xs border border-emerald-500/40">AKTIF</span>
             </button>
           </div>
         </div>
@@ -361,53 +408,96 @@
         >
           <ShieldCheck class="w-5 h-5 text-emerald-400 shrink-0" />
           <div class="flex-1">
-            <div class="font-bold flex items-center gap-2 uppercase tracking-wider">
-              <span>WhatsApp Gateway Siap & Terhubung Normal</span>
+            <div class="font-bold flex items-center gap-2 uppercase tracking-wider flex-wrap">
+              <span>WhatsApp Gateway Siap & Terhubung ({{ waProvider === 'WAGATE' ? 'WaGate wa.printpro.my.id' : 'Fonnte' }})</span>
               <span v-if="gatewayInfo.masked_token" class="font-mono text-[10px] bg-emerald-950/60 text-emerald-300 px-2 py-0.5 border border-emerald-500/30 rounded-xs">
-                Token: {{ gatewayInfo.masked_token }}
+                Key: {{ gatewayInfo.masked_token }}
+              </span>
+              <span v-if="waProvider === 'WAGATE' && gatewayInfo.wagate_device_id" class="font-mono text-[10px] bg-emerald-950/60 text-emerald-300 px-2 py-0.5 border border-emerald-500/30 rounded-xs">
+                Device: {{ gatewayInfo.wagate_device_id }}
               </span>
             </div>
             <p class="text-[11px] text-emerald-400/80 mt-0.5">
-              Notifikasi otomatis pengerjaan SPK, presensi GPS, dan Berita Acara siap dikirimkan ke nomor WhatsApp penerima.
+              Notifikasi otomatis pengerjaan SPK, presensi GPS, dan Berita Acara siap dikirimkan melalui provider {{ waProvider === 'WAGATE' ? 'WaGate' : 'Fonnte' }}.
             </p>
           </div>
         </div>
 
-        <!-- Banner 2: Token sudah diisi tapi belum disimpan / Belum Dikonfigurasi -->
-        <div
-          v-else-if="gatewayInfo.state === 'UNCONFIGURED' && fonnteApiKey && fonnteApiKey.trim().length > 5"
-          class="p-4 bg-amber-950/20 border border-amber-500/40 rounded-xs flex items-center gap-3 text-amber-300 text-xs font-mono"
-        >
-          <AlertTriangle class="w-5 h-5 text-amber-400 shrink-0" />
-          <div class="flex-1">
-            <div class="font-bold uppercase tracking-wider">Token Fonnte telah dimasukkan</div>
-            <p class="text-[11px] text-amber-400/80 mt-0.5">
-              Klik tombol <span class="font-bold underline text-[#FACC15]">"Simpan Token"</span> di bawah untuk mengaktifkan koneksi WhatsApp Gateway ke sistem.
-            </p>
-          </div>
-        </div>
-
-        <!-- Banner 3: Token Kosong (Merah) -->
+        <!-- Banner 2: Belum Dikonfigurasi (Merah) -->
         <div
           v-else-if="gatewayInfo.state === 'UNCONFIGURED'"
           class="p-4 bg-rose-950/20 border border-rose-500/40 rounded-xs flex items-center gap-3 text-rose-300 text-xs font-mono"
         >
           <ShieldAlert class="w-5 h-5 text-rose-400 shrink-0" />
           <div class="flex-1">
-            <div class="font-bold uppercase tracking-wider">WhatsApp Gateway belum terkonfigurasi</div>
+            <div class="font-bold uppercase tracking-wider">Konfigurasi {{ waProvider === 'WAGATE' ? 'WaGate' : 'Fonnte' }} Belum Lengkap</div>
             <p class="text-[11px] text-rose-400/80 mt-0.5">
-              API Token Fonnte masih kosong atau bernilai placeholder. Silakan masukkan token resmi dari dashboard Fonnte Anda di bawah ini lalu klik Simpan Token.
+              {{ waProvider === 'WAGATE' ? 'Product Key atau Device ID WaGate masih kosong. Lengkapi kredensial di bawah lalu klik Simpan Konfigurasi.' : 'API Token Fonnte masih kosong. Masukkan token resmi lalu klik Simpan Token.' }}
             </p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1">
-          <!-- Left: API Key Configuration -->
-          <div class="p-4 bg-[#0E1117] border border-[#232A36] rounded-xs space-y-3">
+          <!-- Left 1: WaGate Configuration Form (When WaGate selected) -->
+          <div v-if="waProvider === 'WAGATE'" class="p-4 bg-[#0E1117] border border-[#232A36] rounded-xs space-y-3 font-mono">
             <div>
-              <label class="block font-bold text-white text-xs mb-1 font-mono uppercase tracking-wider">Fonnte API Token / Secret Key</label>
+              <div class="flex items-center justify-between">
+                <label class="block font-bold text-white text-xs mb-1 uppercase tracking-wider">WaGate Product Key (x-api-key)</label>
+                <span class="text-[10px] text-emerald-400 font-bold">API v1</span>
+              </div>
+              <input
+                type="text"
+                v-model="wagateApiKey"
+                placeholder="wg_e187053c1c9b48df991d8a0491e01cfa"
+                class="w-full px-3 py-2 border border-[#232A36] focus:border-[#FACC15] rounded-xs bg-[#13171F] text-white focus:outline-none text-xs"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-white text-xs mb-1 uppercase tracking-wider">ID Device</label>
+              <input
+                type="text"
+                v-model="wagateDeviceId"
+                placeholder="68865734-16ca-42f7-bb59-282b59756898"
+                class="w-full px-3 py-2 border border-[#232A36] focus:border-[#FACC15] rounded-xs bg-[#13171F] text-white focus:outline-none text-xs"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-300 text-xs mb-1 uppercase tracking-wider">Endpoint API URL</label>
+              <input
+                type="text"
+                v-model="wagateApiUrl"
+                placeholder="https://wa.printpro.my.id/api/v1/messages/send"
+                class="w-full px-3 py-2 border border-[#232A36] focus:border-[#FACC15] rounded-xs bg-[#13171F] text-white focus:outline-none text-xs"
+              />
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                @click="saveWagateConfig"
+                :disabled="savingSetting"
+                class="px-4 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold rounded-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1.5"
+              >
+                <span>{{ savingSetting ? 'Menyimpan...' : 'Simpan Konfigurasi WaGate' }}</span>
+              </button>
+            </div>
+
+            <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs text-[11px] text-slate-400 space-y-1">
+              <div class="font-bold text-slate-200 uppercase tracking-wider">// Spesifikasi WaGate:</div>
+              <div>Host: <span class="text-emerald-400 font-semibold">https://wa.printpro.my.id</span></div>
+              <div>Auth Header: <span class="text-amber-300 font-semibold">x-api-key</span></div>
+              <div>Payload: <span class="text-slate-300">{ deviceId, receiver, message }</span></div>
+            </div>
+          </div>
+
+          <!-- Left 2: Fonnte Configuration Form (When Fonnte selected) -->
+          <div v-else class="p-4 bg-[#0E1117] border border-[#232A36] rounded-xs space-y-3 font-mono">
+            <div>
+              <label class="block font-bold text-white text-xs mb-1 uppercase tracking-wider">Fonnte API Token / Secret Key</label>
               <p class="text-[11px] text-slate-400 mb-2 font-mono">Token API resmi dari akun Fonnte Anda untuk otorisasi pengiriman pesan WhatsApp.</p>
-              <div class="flex items-center gap-2 font-mono">
+              <div class="flex items-center gap-2">
                 <input
                   type="text"
                   v-model="fonnteApiKey"
@@ -415,7 +505,7 @@
                   class="w-full px-3.5 py-2 border border-[#232A36] focus:border-[#FACC15] rounded-xs bg-[#13171F] text-white focus:outline-none text-xs"
                 />
                 <button
-                  @click="saveFonnteKey"
+                  @click="saveFonnteApiKey"
                   :disabled="savingSetting"
                   class="px-4 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold rounded-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer text-xs uppercase tracking-wider"
                 >
@@ -424,21 +514,27 @@
               </div>
             </div>
 
-            <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs text-[11px] text-slate-400 space-y-1 font-mono">
+            <div class="p-3 bg-[#13171F] border border-[#232A36] rounded-xs text-[11px] text-slate-400 space-y-1">
               <div class="font-bold text-slate-200 uppercase tracking-wider">// Info Endpoint Fonnte:</div>
               <div>URL: <span class="text-emerald-400 font-semibold">https://api.fonnte.com/send</span></div>
+              <div>Auth Header: <span class="text-amber-300 font-semibold">Authorization</span></div>
               <div>Format Target: 628xxxxxxxxxx</div>
             </div>
           </div>
 
           <!-- Right: Test Send WhatsApp Message Panel -->
           <div class="p-4 bg-[#0E1117] border border-[#232A36] rounded-xs space-y-3 font-mono">
-            <div>
-              <h4 class="font-bold text-white text-xs flex items-center gap-1.5 uppercase tracking-wider">
-                <Send class="w-3.5 h-3.5 text-[#FACC15]" />
-                <span>Uji Coba Pengiriman Notifikasi WhatsApp</span>
-              </h4>
-              <p class="text-[11px] text-slate-400 mt-0.5">Kirim pesan pengujian langsung ke nomor tujuan untuk memastikan gateway berfungsi.</p>
+            <div class="flex items-start justify-between">
+              <div>
+                <h4 class="font-bold text-white text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                  <Send class="w-3.5 h-3.5 text-[#FACC15]" />
+                  <span>Uji Coba Pengiriman Notifikasi WhatsApp</span>
+                </h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">Kirim pesan pengujian langsung ke nomor tujuan untuk memastikan gateway berfungsi.</p>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-xs font-bold border uppercase" :class="waProvider === 'WAGATE' ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40' : 'bg-blue-950/60 text-blue-300 border-blue-500/40'">
+                Via: {{ waProvider === 'WAGATE' ? 'WaGate' : 'Fonnte' }}
+              </span>
             </div>
 
             <div class="space-y-2 text-xs">
@@ -478,7 +574,7 @@
                   class="px-4 py-2 bg-[#FACC15] hover:bg-[#FFE033] text-[#0B0C0E] font-bold rounded-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 text-xs ml-auto uppercase tracking-wider"
                 >
                   <Send :class="['w-3.5 h-3.5', testingWa ? 'animate-spin' : '']" />
-                  <span>{{ testingWa ? 'Mengirim...' : 'Kirim Test WA' }}</span>
+                  <span>{{ testingWa ? 'Mengirim...' : ('Kirim Test via ' + (waProvider === 'WAGATE' ? 'WaGate' : 'Fonnte')) }}</span>
                 </button>
               </div>
             </div>
@@ -1040,16 +1136,23 @@ const vendors = ref([]);
 const loading = ref(true);
 const savingSetting = ref(false);
 
-// WhatsApp Testing States
+// WhatsApp Multi-Provider States
+const waProvider = ref('WAGATE'); // 'WAGATE' | 'FONNTE'
+const wagateApiKey = ref('wg_e187053c1c9b48df991d8a0491e01cfa');
+const wagateDeviceId = ref('68865734-16ca-42f7-bb59-282b59756898');
+const wagateApiUrl = ref('https://wa.printpro.my.id/api/v1/messages/send');
 const fonnteApiKey = ref('');
 const waGatewayEnabled = ref('1');
 const testWaPhone = ref('');
-const testWaMessage = ref('🔔 SGX System Test: Uji coba gateway WhatsApp Fonnte terkoneksi dengan sukses.');
+const testWaMessage = ref('🔔 SGX System Test: Uji coba gateway WhatsApp terkoneksi dengan sukses.');
 const testingWa = ref(false);
 const testWaStatus = ref(null);
 const gatewayInfo = ref({
   state: 'UNCONFIGURED',
+  provider: 'WAGATE',
   token_configured: false,
+  masked_token: null,
+  wagate_device_id: null,
   mock_enabled: false,
   total_sent: 0,
   total_failed: 0,
@@ -1127,6 +1230,10 @@ function parseSettings() {
     const item = settings.value.find(s => s.key === key);
     return item ? item.value : fallback;
   };
+  waProvider.value = String(getVal('wa_provider', 'WAGATE')).toUpperCase();
+  wagateApiKey.value = getVal('wagate_api_key', 'wg_e187053c1c9b48df991d8a0491e01cfa');
+  wagateDeviceId.value = getVal('wagate_device_id', '68865734-16ca-42f7-bb59-282b59756898');
+  wagateApiUrl.value = getVal('wagate_api_url', 'https://wa.printpro.my.id/api/v1/messages/send');
   fonnteApiKey.value = getVal('fonnte_api_key', '');
   waGatewayEnabled.value = String(getVal('wa_gateway_enabled', '1'));
   geofenceRadius.value = getVal('geofence_default_radius_meters', '200');
@@ -1193,6 +1300,42 @@ async function saveSetting(key, value) {
     loadData();
   } catch (err) {
     alert(`Gagal menyimpan pengaturan: ${err.message}`);
+  } finally {
+    savingSetting.value = false;
+  }
+}
+
+async function switchWaProvider(prov) {
+  waProvider.value = prov;
+  savingSetting.value = true;
+  try {
+    await api.updateSetting('wa_provider', prov);
+    await refreshGatewayStatus();
+  } catch (err) {
+    alert(`Gagal mengubah provider: ${err.message}`);
+  } finally {
+    savingSetting.value = false;
+  }
+}
+
+async function saveWagateConfig() {
+  if (!wagateApiKey.value || !wagateDeviceId.value) {
+    alert('Product Key dan ID Device WaGate wajib diisi!');
+    return;
+  }
+  savingSetting.value = true;
+  try {
+    await api.updateSetting('wagate_api_key', wagateApiKey.value.trim());
+    await api.updateSetting('wagate_device_id', wagateDeviceId.value.trim());
+    if (wagateApiUrl.value) {
+      await api.updateSetting('wagate_api_url', wagateApiUrl.value.trim());
+    }
+    await api.updateSetting('wa_provider', 'WAGATE');
+    await loadData();
+    await refreshGatewayStatus();
+    alert(`Konfigurasi WaGate (wa.printpro.my.id) berhasil disimpan! Status Gateway: ${gatewayInfo.value.state === 'ACTIVE' ? 'ONLINE' : 'TERSIMPAN'}`);
+  } catch (err) {
+    alert(`Gagal menyimpan konfigurasi WaGate: ${err.message}`);
   } finally {
     savingSetting.value = false;
   }

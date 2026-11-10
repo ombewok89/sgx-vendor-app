@@ -376,6 +376,41 @@ class MasterDataController extends Controller
         if ($deny = $this->checkAdminAuth($request)) return $deny;
 
         // Auto-seed default settings if empty
+        if (SystemSetting::where('key', 'wa_provider')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'wa_provider',
+                'value' => 'WAGATE',
+                'description' => 'Provider aktif WhatsApp Gateway (WAGATE atau FONNTE)',
+            ]);
+        }
+        if (SystemSetting::where('key', 'wagate_api_key')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'wagate_api_key',
+                'value' => 'wg_e187053c1c9b48df991d8a0491e01cfa',
+                'description' => 'Product Key / API Key resmi WaGate (wa.printpro.my.id)',
+            ]);
+        }
+        if (SystemSetting::where('key', 'wagate_device_id')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'wagate_device_id',
+                'value' => '68865734-16ca-42f7-bb59-282b59756898',
+                'description' => 'ID Device terhubung WaGate',
+            ]);
+        }
+        if (SystemSetting::where('key', 'wagate_api_url')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'wagate_api_url',
+                'value' => 'https://wa.printpro.my.id/api/v1/messages/send',
+                'description' => 'Endpoint API WaGate untuk kirim pesan',
+            ]);
+        }
+        if (SystemSetting::where('key', 'wagate_session_token')->doesntExist()) {
+            SystemSetting::create([
+                'key' => 'wagate_session_token',
+                'value' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZhZWNmOTY4LWQ5MjYtNDNjMC1iNTAzLTJkZGIxM2RlOTQ2ZiIsImVtYWlsIjoic2luYXJncmFmaWthMDA3QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzkzODE5Mjk1LCJleHAiOjE3OTQ0MjQwOTV9.Kqm6KDCwE4oJ1WC14Px-o7ukcfEH4vOitAWV_WunYOA',
+                'description' => 'Session Token JWT WaGate',
+            ]);
+        }
         if (SystemSetting::where('key', 'fonnte_api_key')->doesntExist()) {
             SystemSetting::create([
                 'key' => 'fonnte_api_key',
@@ -454,7 +489,9 @@ class MasterDataController extends Controller
             'message' => 'nullable|string',
         ]);
 
-        $msg = $request->message ?: "🔔 *SGX Work Evidence System Test*\n\nUji coba konektivitas WhatsApp Gateway Fonnte berhasil terhubung secara normal pada " . now()->format('d/m/Y H:i:s') . " WIB.";
+        $activeProvider = \App\Services\FonnteService::getProvider();
+        $providerName = ($activeProvider === 'WAGATE') ? 'WaGate (wa.printpro.my.id)' : 'Fonnte';
+        $msg = $request->message ?: "🔔 *SGX Work Evidence System Test*\n\nUji coba konektivitas WhatsApp Gateway ({$providerName}) berhasil terhubung secara normal pada " . now()->format('d/m/Y H:i:s') . " WIB.";
 
         $result = \App\Services\FonnteService::sendMessage($request->phone, $msg, 'TEST_MESSAGE');
 
@@ -475,7 +512,7 @@ class MasterDataController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $result['message'] ?? 'Pesan WhatsApp berhasil dikirim ke antrean Fonnte.',
+            'message' => $result['message'] ?? "Pesan WhatsApp berhasil dikirim ke antrean {$providerName}.",
             'data' => $result,
         ]);
     }
