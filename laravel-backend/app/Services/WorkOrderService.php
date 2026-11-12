@@ -74,7 +74,32 @@ class WorkOrderService
         return DB::transaction(function () use ($user, $data) {
             $spkNumber = self::generateSpkNumber();
 
-            $workOrder = WorkOrder::create([
+            $docMode = $data['doc_mode'] ?? null;
+            if (empty($docMode) && !empty($data['job_type_id'])) {
+                try {
+                    $jt = \App\Models\JobType::find($data['job_type_id']);
+                    if ($jt && !empty($jt->doc_mode)) {
+                        $docMode = $jt->doc_mode;
+                    }
+                } catch (\Throwable $e) {}
+            }
+            if (empty($docMode) && !empty($data['items']) && is_array($data['items'])) {
+                $allAfter = true;
+                foreach ($data['items'] as $itm) {
+                    if (($itm['doc_mode'] ?? '') !== 'AFTER_ONLY') {
+                        $allAfter = false;
+                        break;
+                    }
+                }
+                if ($allAfter) {
+                    $docMode = 'AFTER_ONLY';
+                }
+            }
+            if (empty($docMode)) {
+                $docMode = 'BEFORE_PROCESS_AFTER';
+            }
+
+            $insertData = [
                 'spk_number' => $spkNumber,
                 'title' => $data['title'],
                 'vendor_id' => $data['vendor_id'],
@@ -84,16 +109,24 @@ class WorkOrderService
                 'target_lat' => $data['target_lat'] ?? null,
                 'target_lng' => $data['target_lng'] ?? null,
                 'pic_user_id' => $data['pic_user_id'] ?? null,
-                'start_date' => $data['start_date'],
+                'start_date' => $data['start_date'] ?? now()->toDateString(),
                 'deadline' => $data['deadline'],
-                'doc_mode' => $data['doc_mode'] ?? 'BEFORE_PROCESS_AFTER',
+                'doc_mode' => $docMode,
                 'require_checkin' => $data['require_checkin'] ?? true,
-                'use_timestamp' => $data['use_timestamp'] ?? true,
-                'require_ba_doc' => $data['require_ba_doc'] ?? false,
                 'status' => !empty($data['pic_user_id']) ? 'ASSIGNED' : 'DRAFT',
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $user->id,
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'use_timestamp')) {
+                $insertData['use_timestamp'] = $data['use_timestamp'] ?? true;
+            }
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'require_ba_doc')) {
+                $insertData['require_ba_doc'] = $data['require_ba_doc'] ?? false;
+            }
+
+            $workOrder = WorkOrder::create($insertData);
 
             // Assign PIC & Members
             $assignments = [];

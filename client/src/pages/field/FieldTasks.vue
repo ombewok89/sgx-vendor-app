@@ -343,7 +343,7 @@
                 <span v-if="activeItem.is_addendum" class="px-2 py-0.5 rounded-xs text-[9px] font-black uppercase bg-amber-500 text-slate-950 animate-pulse">
                   + ADDENDUM
                 </span>
-                <span class="text-[11px] text-slate-400">({{ activeItem.doc_mode }})</span>
+                <span class="text-[11px] text-slate-400">({{ getItemDocMode(activeItem) === 'AFTER_ONLY' ? 'AFTER ONLY' : '3 FASE' }})</span>
               </div>
               <span v-if="isItemComplete(activeItem)" class="px-2 py-0.5 rounded-xs text-[10px] font-bold bg-emerald-950/60 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider">
                 Foto Lengkap ✓
@@ -355,7 +355,7 @@
 
             <!-- Photo Uploaders for Active Item -->
             <div v-if="activeItem">
-              <div v-if="activeItem.doc_mode === 'BEFORE_PROCESS_AFTER'" class="space-y-4">
+              <div v-if="getItemDocMode(activeItem) !== 'AFTER_ONLY'" class="space-y-4">
                 <PhotoUploader
                   :workOrderId="selectedTask.id"
                   :itemId="activeItem.id"
@@ -886,7 +886,15 @@ const activeItem = computed(() => {
   return taskItems.value[activeItemIndex.value] || taskItems.value[0];
 });
 
+function getItemDocMode(item) {
+  if (item?.doc_mode) return item.doc_mode;
+  if (selectedTask.value?.doc_mode) return selectedTask.value.doc_mode;
+  if (selectedTask.value?.job_type?.doc_mode) return selectedTask.value.job_type.doc_mode;
+  return 'BEFORE_PROCESS_AFTER';
+}
+
 function isItemComplete(item) {
+  if (!item) return false;
   const allPhotos = selectedTask.value?.evidence_photos || [];
   const itemPhotos = allPhotos.filter(p => {
     const isBa = p.stage === 'BA_OPNAME' || p.stage === 'BA' || (p.notes && p.notes.includes('[BA_OPNAME]'));
@@ -897,7 +905,8 @@ function isItemComplete(item) {
   const process = itemPhotos.filter(p => p.stage === 'PROCESS').length;
   const after = itemPhotos.filter(p => p.stage === 'AFTER').length;
 
-  if (item.doc_mode === 'AFTER_ONLY') {
+  const mode = getItemDocMode(item);
+  if (mode === 'AFTER_ONLY') {
     return after >= 1;
   }
   return before >= 1 && process >= 1 && after >= 1;

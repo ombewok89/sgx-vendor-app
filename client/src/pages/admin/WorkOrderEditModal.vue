@@ -748,12 +748,16 @@ async function handleSubmit() {
     return;
   }
 
+  const allAfterOnly = validItems.length > 0 && validItems.every(i => i.doc_mode === 'AFTER_ONLY');
+  const resolvedDocMode = allAfterOnly ? 'AFTER_ONLY' : (formData.doc_mode || 'BEFORE_PROCESS_AFTER');
+
   submitting.value = true;
   error.value = '';
 
   try {
     const payload = {
       ...formData,
+      doc_mode: resolvedDocMode,
       vendor_id: Number(formData.vendor_id),
       area_id: Number(formData.area_id),
       job_type_id: formData.job_type_id ? Number(formData.job_type_id) : null,

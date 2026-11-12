@@ -117,19 +117,47 @@ class WorkOrderController extends Controller
         return DB::transaction(function () use ($user, $request) {
             $spkNumber = $request->filled('spk_number') ? trim($request->spk_number) : WorkOrderService::generateSpkNumber();
 
+            $this->ensureRequireBaDocColumnExists();
+
+            $jobTypeId = $request->filled('job_type_id') ? $request->job_type_id : null;
+            $docMode = $request->doc_mode;
+            if (empty($docMode) && $jobTypeId) {
+                try {
+                    $jt = \App\Models\JobType::find($jobTypeId);
+                    if ($jt && !empty($jt->doc_mode)) {
+                        $docMode = $jt->doc_mode;
+                    }
+                } catch (\Throwable $e) {}
+            }
+            if (empty($docMode) && $request->has('items') && is_array($request->items) && count($request->items) > 0) {
+                $allAfter = true;
+                foreach ($request->items as $itm) {
+                    if (($itm['doc_mode'] ?? '') !== 'AFTER_ONLY') {
+                        $allAfter = false;
+                        break;
+                    }
+                }
+                if ($allAfter) {
+                    $docMode = 'AFTER_ONLY';
+                }
+            }
+            if (empty($docMode)) {
+                $docMode = 'BEFORE_PROCESS_AFTER';
+            }
+
             $insertData = [
                 'spk_number' => $spkNumber,
                 'title' => $request->title,
                 'vendor_id' => $request->vendor_id,
                 'area_id' => $request->area_id,
-                'job_type_id' => $request->filled('job_type_id') ? $request->job_type_id : null,
+                'job_type_id' => $jobTypeId,
                 'location_name' => $request->location_name,
                 'target_lat' => $request->filled('target_lat') ? $request->target_lat : null,
                 'target_lng' => $request->filled('target_lng') ? $request->target_lng : null,
                 'pic_user_id' => $request->filled('pic_user_id') ? $request->pic_user_id : null,
                 'start_date' => $request->filled('start_date') ? $request->start_date : now()->toDateString(),
                 'deadline' => $request->deadline,
-                'doc_mode' => $request->doc_mode ?? 'BEFORE_PROCESS_AFTER',
+                'doc_mode' => $docMode,
                 'require_checkin' => $request->boolean('require_checkin', true),
                 'status' => $request->filled('pic_user_id') ? 'ASSIGNED' : 'READY',
                 'progress_percent' => 0,
@@ -256,11 +284,42 @@ class WorkOrderController extends Controller
                 }
 
                 if ($request->has('use_timestamp')) {
-                    $data['use_timestamp'] = $request->boolean('use_timestamp');
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'use_timestamp')) {
+                        $data['use_timestamp'] = $request->boolean('use_timestamp');
+                    }
                 }
 
                 if ($request->has('require_ba_doc')) {
-                    $data['require_ba_doc'] = $request->boolean('require_ba_doc');
+                    $this->ensureRequireBaDocColumnExists();
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'require_ba_doc')) {
+                        $data['require_ba_doc'] = $request->boolean('require_ba_doc');
+                    }
+                }
+
+                // Auto-resolve doc_mode if all items are AFTER_ONLY or Category is AFTER_ONLY
+                if ($request->has('items') && is_array($request->items) && count($request->items) > 0) {
+                    $allAfterOnly = true;
+                    foreach ($request->items as $itm) {
+                        if (($itm['doc_mode'] ?? '') !== 'AFTER_ONLY') {
+                            $allAfterOnly = false;
+                            break;
+                        }
+                    }
+                    if ($allAfterOnly) {
+                        $data['doc_mode'] = 'AFTER_ONLY';
+                    }
+                }
+
+                if (empty($data['doc_mode']) || $data['doc_mode'] === 'BEFORE_PROCESS_AFTER') {
+                    $checkJtId = $data['job_type_id'] ?? $workOrder->job_type_id;
+                    if ($checkJtId) {
+                        try {
+                            $jt = \App\Models\JobType::find($checkJtId);
+                            if ($jt && $jt->doc_mode === 'AFTER_ONLY') {
+                                $data['doc_mode'] = 'AFTER_ONLY';
+                            }
+                        } catch (\Throwable $e) {}
+                    }
                 }
 
                 if ($request->has('pic_user_id')) {
@@ -512,33 +571,90 @@ class WorkOrderController extends Controller
         }
 
         // Validate Minimum Required Evidence Photos (M-01)
-        $isAfterOnly = $workOrder->doc_mode === 'AFTER_ONLY';
-        $minPhotos = 1;
+        // Check if SPK is globally AFTER_ONLY or if its jobType is AFTER_ONLY
+        $isGlobalAfterOnly = ($workOrder->doc_mode === 'AFTER_ONLY') ||
+                             (optional($workOrder->jobType)->doc_mode === 'AFTER_ONLY');
 
-        $beforeCount = $workOrder->evidencePhotos()->where('stage', 'BEFORE')->count();
-        $processCount = $workOrder->evidencePhotos()->where('stage', 'PROCESS')->count();
-        $afterCount = $workOrder->evidencePhotos()->where('stage', 'AFTER')->count();
-
+        $items = $workOrder->items;
         $missing = [];
-        if (!$isAfterOnly && $beforeCount < $minPhotos) {
-            $missing[] = "BEFORE (foto sebelum pengerjaan)";
-        }
-        if (!$isAfterOnly && $processCount < $minPhotos) {
-            $missing[] = "PROCESS (foto saat pengerjaan & APD)";
-        }
-        if ($afterCount < $minPhotos) {
-            $missing[] = "AFTER (foto hasil akhir pekerjaan)";
+
+        if ($items->count() > 0) {
+            // Check if all items are AFTER_ONLY
+            $allItemsAfterOnly = true;
+            foreach ($items as $itm) {
+                $itmMode = $itm->doc_mode ?: ($isGlobalAfterOnly ? 'AFTER_ONLY' : $workOrder->doc_mode);
+                if ($itmMode !== 'AFTER_ONLY') {
+                    $allItemsAfterOnly = false;
+                    break;
+                }
+            }
+
+            if ($allItemsAfterOnly && $workOrder->doc_mode !== 'AFTER_ONLY') {
+                try {
+                    $workOrder->update(['doc_mode' => 'AFTER_ONLY']);
+                } catch (\Throwable $e) {}
+            }
+
+            foreach ($items as $itm) {
+                $itmMode = $itm->doc_mode ?: ($isGlobalAfterOnly ? 'AFTER_ONLY' : ($workOrder->doc_mode ?: 'BEFORE_PROCESS_AFTER'));
+                $photos = $workOrder->evidencePhotos()->where('item_id', $itm->id)->get();
+                // Fallback: if photos were uploaded without specific item_id tag
+                if ($photos->isEmpty()) {
+                    $photos = $workOrder->evidencePhotos;
+                }
+
+                $hasAfter = $photos->where('stage', 'AFTER')->count() >= 1;
+                $hasBefore = $photos->where('stage', 'BEFORE')->count() >= 1;
+                $hasProcess = $photos->where('stage', 'PROCESS')->count() >= 1;
+
+                if ($itmMode === 'AFTER_ONLY') {
+                    if (!$hasAfter) {
+                        $missing[] = "AFTER pada '{$itm->item_name}'";
+                    }
+                } else {
+                    if (!$hasBefore) {
+                        $missing[] = "BEFORE pada '{$itm->item_name}'";
+                    }
+                    if (!$hasProcess) {
+                        $missing[] = "PROCESS pada '{$itm->item_name}'";
+                    }
+                    if (!$hasAfter) {
+                        $missing[] = "AFTER pada '{$itm->item_name}'";
+                    }
+                }
+            }
+        } else {
+            // No sub-items, check overall photos
+            $beforeCount = $workOrder->evidencePhotos()->where('stage', 'BEFORE')->count();
+            $processCount = $workOrder->evidencePhotos()->where('stage', 'PROCESS')->count();
+            $afterCount = $workOrder->evidencePhotos()->where('stage', 'AFTER')->count();
+
+            if (!$isGlobalAfterOnly && $beforeCount < 1) {
+                $missing[] = "BEFORE (foto sebelum pengerjaan)";
+            }
+            if (!$isGlobalAfterOnly && $processCount < 1) {
+                $missing[] = "PROCESS (foto saat pengerjaan & APD)";
+            }
+            if ($afterCount < 1) {
+                $missing[] = "AFTER (foto hasil akhir pekerjaan)";
+            }
         }
 
         if (!empty($missing)) {
+            $missingText = implode(', ', array_unique($missing));
             return response()->json([
                 'success' => false,
-                'message' => 'Pekerjaan belum dapat diajukan: Foto bukti belum lengkap pada tahap: ' . implode(', ', $missing) . '.',
+                'message' => 'Pekerjaan belum dapat diajukan: Foto bukti belum lengkap pada: ' . $missingText . '.',
             ], 422);
         }
 
-        // Validate Physical BA Opname Document if required by SPK
-        if ($workOrder->require_ba_doc) {
+        // Validate Physical BA Opname Document if required by SPK (and if column exists)
+        $requireBaDoc = false;
+        try {
+            $requireBaDoc = (bool) $workOrder->getAttribute('require_ba_doc');
+        } catch (\Throwable $e) {}
+
+        if ($requireBaDoc) {
             $hasBaDoc = $workOrder->evidencePhotos()
                 ->whereIn('stage', ['BA_OPNAME', 'BA'])
                 ->exists();
@@ -655,6 +771,19 @@ class WorkOrderController extends Controller
                 'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items', 'evidencePhotos']),
             ], 201);
         });
+    }
+
+    private function ensureRequireBaDocColumnExists()
+    {
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'require_ba_doc')) {
+                \Illuminate\Support\Facades\Schema::table('work_orders', function ($table) {
+                    $table->boolean('require_ba_doc')->default(false)->after('require_checkin');
+                });
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Auto-migration for require_ba_doc column: ' . $e->getMessage());
+        }
     }
 
     private function ensureArchiveColumnsExist()

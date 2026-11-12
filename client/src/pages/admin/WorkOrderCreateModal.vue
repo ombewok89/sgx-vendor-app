@@ -682,6 +682,9 @@ async function handleSubmit() {
     }];
   }
 
+  const allAfterOnly = validItems.length > 0 && validItems.every(i => i.doc_mode === 'AFTER_ONLY');
+  const resolvedDocMode = allAfterOnly ? 'AFTER_ONLY' : (formData.doc_mode || 'BEFORE_PROCESS_AFTER');
+
   loading.value = true;
   try {
     const payload = {
@@ -697,6 +700,7 @@ async function handleSubmit() {
       pic_user_id: formData.pic_user_id || null,
       start_date: formData.start_date || undefined,
       deadline: formData.deadline,
+      doc_mode: resolvedDocMode,
       require_checkin: !!formData.require_checkin,
       use_timestamp: !!formData.use_timestamp,
       require_ba_doc: !!formData.require_ba_doc,
