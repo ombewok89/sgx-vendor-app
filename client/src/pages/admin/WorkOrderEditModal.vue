@@ -754,7 +754,13 @@ async function handleSubmit() {
   try {
     const payload = {
       ...formData,
-      member_ids: selectedMemberIds.value,
+      vendor_id: Number(formData.vendor_id),
+      area_id: Number(formData.area_id),
+      job_type_id: formData.job_type_id ? Number(formData.job_type_id) : null,
+      pic_user_id: formData.pic_user_id ? Number(formData.pic_user_id) : null,
+      target_lat: (formData.target_lat !== '' && formData.target_lat !== null && !isNaN(formData.target_lat)) ? Number(formData.target_lat) : null,
+      target_lng: (formData.target_lng !== '' && formData.target_lng !== null && !isNaN(formData.target_lng)) ? Number(formData.target_lng) : null,
+      member_ids: selectedMemberIds.value.map(id => Number(id)).filter(id => !isNaN(id) && id > 0),
       items: validItems
     };
 

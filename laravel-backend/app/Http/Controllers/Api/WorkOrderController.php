@@ -205,118 +205,177 @@ class WorkOrderController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = $request->user();
-        if (!$user->hasAnyRole(['SUPERUSER', 'SUPERVISOR'])) {
+        $user = $request->user() ?: auth('sanctum')->user();
+        if (!$user || !$user->hasAnyRole(['SUPERUSER', 'SUPERVISOR', 'ADMIN'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Akses Ditolak: Hanya Pengguna Supervisor / Superuser yang memiliki wewenang untuk mengubah data dan pengaturan SPK.',
+                'message' => 'Akses Ditolak: Hanya Pengguna Administrator / Supervisor / Superuser yang memiliki wewenang untuk mengubah data dan pengaturan SPK.',
             ], 403);
         }
 
-        $workOrder = WorkOrder::with(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items'])->findOrFail($id);
-        $oldData = $workOrder->toArray();
+        try {
+            $workOrder = WorkOrder::with(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items'])->findOrFail($id);
+            $oldData = $workOrder->toArray();
 
-        return DB::transaction(function () use ($request, $user, $workOrder, $oldData) {
-            $data = $request->only([
-                'title', 'spk_number', 'vendor_id', 'area_id', 'job_type_id', 'location_name',
-                'target_lat', 'target_lng', 'start_date', 'deadline', 'notes',
-                'doc_mode', 'status'
-            ]);
+            return DB::transaction(function () use ($request, $user, $workOrder, $oldData) {
+                $data = $request->only([
+                    'title', 'spk_number', 'vendor_id', 'area_id', 'job_type_id', 'location_name',
+                    'target_lat', 'target_lng', 'start_date', 'deadline', 'notes',
+                    'doc_mode', 'status'
+                ]);
 
-            if ($request->has('require_checkin')) {
-                $data['require_checkin'] = $request->boolean('require_checkin');
-            }
+                // Sanitize foreign keys against empty string values
+                if (array_key_exists('job_type_id', $data)) {
+                    $data['job_type_id'] = (!empty($data['job_type_id']) && is_numeric($data['job_type_id'])) ? (int)$data['job_type_id'] : null;
+                }
+                if (array_key_exists('vendor_id', $data)) {
+                    $data['vendor_id'] = (!empty($data['vendor_id']) && is_numeric($data['vendor_id'])) ? (int)$data['vendor_id'] : $workOrder->vendor_id;
+                }
+                if (array_key_exists('area_id', $data)) {
+                    $data['area_id'] = (!empty($data['area_id']) && is_numeric($data['area_id'])) ? (int)$data['area_id'] : $workOrder->area_id;
+                }
 
-            if ($request->has('use_timestamp')) {
-                $data['use_timestamp'] = $request->boolean('use_timestamp');
-            }
+                // Sanitize GPS coordinates against empty strings / non-numeric
+                if (array_key_exists('target_lat', $data)) {
+                    $data['target_lat'] = (isset($data['target_lat']) && $data['target_lat'] !== '' && is_numeric($data['target_lat'])) ? $data['target_lat'] : null;
+                }
+                if (array_key_exists('target_lng', $data)) {
+                    $data['target_lng'] = (isset($data['target_lng']) && $data['target_lng'] !== '' && is_numeric($data['target_lng'])) ? $data['target_lng'] : null;
+                }
 
-            if ($request->has('require_ba_doc')) {
-                $data['require_ba_doc'] = $request->boolean('require_ba_doc');
-            }
+                // Sanitize date strings
+                if (array_key_exists('start_date', $data) && empty($data['start_date'])) {
+                    $data['start_date'] = $workOrder->start_date ?: now()->toDateString();
+                }
+                if (array_key_exists('deadline', $data) && empty($data['deadline'])) {
+                    $data['deadline'] = $workOrder->deadline ?: now()->addDays(7)->toDateString();
+                }
 
-            if ($request->has('pic_user_id')) {
-                $data['pic_user_id'] = $request->pic_user_id ?: null;
-                // Update assignment pivot for PIC
-                if ($data['pic_user_id']) {
-                    $workOrder->assignments()->syncWithoutDetaching([
-                        $data['pic_user_id'] => ['role_in_team' => 'PIC', 'assigned_at' => now()]
-                    ]);
-                    if (in_array($workOrder->status, ['DRAFT', 'READY']) && empty($data['status'])) {
+                if ($request->has('require_checkin')) {
+                    $data['require_checkin'] = $request->boolean('require_checkin');
+                }
+
+                if ($request->has('use_timestamp')) {
+                    $data['use_timestamp'] = $request->boolean('use_timestamp');
+                }
+
+                if ($request->has('require_ba_doc')) {
+                    $data['require_ba_doc'] = $request->boolean('require_ba_doc');
+                }
+
+                if ($request->has('pic_user_id')) {
+                    $picId = (!empty($request->pic_user_id) && is_numeric($request->pic_user_id)) ? (int)$request->pic_user_id : null;
+                    $data['pic_user_id'] = $picId;
+                    if ($picId && in_array($workOrder->status, ['DRAFT', 'READY']) && empty($data['status'])) {
                         $data['status'] = 'ASSIGNED';
                     }
                 }
-            }
 
-            $workOrder->update($data);
+                $workOrder->update($data);
 
-            // Sync additional team members if passed
-            if ($request->has('member_ids') && is_array($request->member_ids)) {
+                // Sync assignments (PIC + additional members)
                 $syncAssignments = [];
-                if ($workOrder->pic_user_id) {
-                    $syncAssignments[$workOrder->pic_user_id] = ['role_in_team' => 'PIC', 'assigned_at' => now()];
+                $finalPicId = $data['pic_user_id'] ?? $workOrder->pic_user_id;
+                if ($finalPicId) {
+                    $syncAssignments[(int)$finalPicId] = ['role_in_team' => 'PIC', 'assigned_at' => now()];
                 }
-                foreach ($request->member_ids as $mId) {
-                    if ($mId != $workOrder->pic_user_id) {
-                        $syncAssignments[$mId] = ['role_in_team' => 'MEMBER', 'assigned_at' => now()];
+                if ($request->has('member_ids') && is_array($request->member_ids)) {
+                    foreach ($request->member_ids as $mId) {
+                        if (!empty($mId) && is_numeric($mId) && (int)$mId !== (int)$finalPicId) {
+                            $syncAssignments[(int)$mId] = ['role_in_team' => 'MEMBER', 'assigned_at' => now()];
+                        }
                     }
                 }
                 $workOrder->assignments()->sync($syncAssignments);
-            }
 
-            // Sync checklist items if passed
-            if ($request->has('items') && is_array($request->items) && count($request->items) > 0) {
-                $itemCount = count($request->items);
-                $weight = floor(100 / $itemCount);
-                
-                // Get existing item IDs that are kept
-                $keptItemIds = [];
-                foreach ($request->items as $idx => $itemData) {
-                    $itemWeight = ($idx === $itemCount - 1) ? (100 - ($weight * ($itemCount - 1))) : $weight;
-                    if (!empty($itemData['id'])) {
-                        $item = WorkOrderItem::where('work_order_id', $workOrder->id)->find($itemData['id']);
-                        if ($item) {
-                            $item->update([
-                                'item_name' => $itemData['item_name'],
-                                'job_type_id' => $itemData['job_type_id'] ?? $workOrder->job_type_id,
-                                'doc_mode' => $itemData['doc_mode'] ?? $workOrder->doc_mode,
-                                'weight_percent' => $itemWeight,
-                                'notes' => $itemData['notes'] ?? null,
-                            ]);
-                            $keptItemIds[] = $item->id;
-                            continue;
+                // Sync checklist items if passed
+                if ($request->has('items') && is_array($request->items) && count($request->items) > 0) {
+                    $itemCount = count($request->items);
+                    $weight = floor(100 / $itemCount);
+                    $keptItemIds = [];
+
+                    foreach ($request->items as $idx => $itemData) {
+                        $itemWeight = ($idx === $itemCount - 1) ? (100 - ($weight * ($itemCount - 1))) : $weight;
+                        $jobTypeId = !empty($itemData['job_type_id']) ? (int)$itemData['job_type_id'] : ($data['job_type_id'] ?? $workOrder->job_type_id);
+                        $docMode = !empty($itemData['doc_mode']) ? $itemData['doc_mode'] : ($data['doc_mode'] ?? $workOrder->doc_mode ?? 'BEFORE_PROCESS_AFTER');
+
+                        if (!empty($itemData['id'])) {
+                            $item = WorkOrderItem::where('work_order_id', $workOrder->id)->find($itemData['id']);
+                            if ($item) {
+                                $item->update([
+                                    'item_name' => trim((string)$itemData['item_name']),
+                                    'job_type_id' => $jobTypeId,
+                                    'doc_mode' => $docMode,
+                                    'weight_percent' => $itemWeight,
+                                    'notes' => $itemData['notes'] ?? null,
+                                ]);
+                                $keptItemIds[] = $item->id;
+                                continue;
+                            }
                         }
+
+                        // Create new item
+                        $newItem = WorkOrderItem::create([
+                            'work_order_id' => $workOrder->id,
+                            'item_name' => trim((string)$itemData['item_name']),
+                            'job_type_id' => $jobTypeId,
+                            'doc_mode' => $docMode,
+                            'weight_percent' => $itemWeight,
+                            'status' => 'PENDING',
+                            'notes' => $itemData['notes'] ?? null,
+                        ]);
+                        $keptItemIds[] = $newItem->id;
                     }
 
-                    // Create new item
-                    $newItem = WorkOrderItem::create([
-                        'work_order_id' => $workOrder->id,
-                        'item_name' => $itemData['item_name'],
-                        'job_type_id' => $itemData['job_type_id'] ?? $workOrder->job_type_id,
-                        'doc_mode' => $itemData['doc_mode'] ?? $workOrder->doc_mode,
-                        'weight_percent' => $itemWeight,
-                        'status' => 'PENDING',
-                        'notes' => $itemData['notes'] ?? null,
-                    ]);
-                    $keptItemIds[] = $newItem->id;
+                    // Safely delete or archive removed items (protect foreign keys)
+                    if (count($keptItemIds) > 0) {
+                        $itemsToDelete = WorkOrderItem::where('work_order_id', $workOrder->id)
+                            ->whereNotIn('id', $keptItemIds)
+                            ->get();
+
+                        foreach ($itemsToDelete as $delItem) {
+                            $hasPhotos = false;
+                            try {
+                                $hasPhotos = \App\Models\EvidencePhoto::where('item_id', $delItem->id)->exists();
+                            } catch (\Throwable $e) {}
+
+                            if ($hasPhotos) {
+                                $delItem->update(['status' => 'CANCELLED']);
+                            } else {
+                                try {
+                                    $delItem->delete();
+                                } catch (\Throwable $e) {
+                                    $delItem->update(['status' => 'CANCELLED']);
+                                }
+                            }
+                        }
+                    }
                 }
 
-                // Delete items that were removed
-                if (count($keptItemIds) > 0) {
-                    WorkOrderItem::where('work_order_id', $workOrder->id)
-                        ->whereNotIn('id', $keptItemIds)
-                        ->delete();
+                try {
+                    AuditService::log($user, 'UPDATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $oldData, $workOrder->fresh()->toArray());
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Audit logging failed: ' . $e->getMessage());
                 }
-            }
 
-            AuditService::log($user, 'UPDATE_WORK_ORDER', 'WORK_ORDER', $workOrder->id, $oldData, $workOrder->toArray());
+                return response()->json([
+                    'success' => true,
+                    'message' => "Data dan pengaturan SPK {$workOrder->spk_number} berhasil diperbarui.",
+                    'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
+                ]);
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[WorkOrderController@update] Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
 
             return response()->json([
-                'success' => true,
-                'message' => "Data dan pengaturan SPK {$workOrder->spk_number} berhasil diperbarui oleh Supervisor.",
-                'data' => $workOrder->fresh(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items']),
-            ]);
-        });
+                'success' => false,
+                'message' => 'Gagal memperbarui SPK: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], 422);
+        }
     }
 
     public function updateLocation(Request $request)

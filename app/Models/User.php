@@ -62,23 +62,44 @@ class User extends Authenticatable
     }
 
     /**
-     * Enhanced role check that handles Sanctum, Web, and memory caches safely.
+     * Enhanced role check that handles Sanctum, Web, column role, and memory caches safely.
      */
     public function hasRole($roles, string $guard = null): bool
     {
         $roleList = is_array($roles) ? $roles : [$roles];
         
-        // Get user role names from relation or eager-loaded collection
-        $userRoles = $this->relationLoaded('roles')
-            ? $this->roles->pluck('name')->toArray()
-            : $this->roles()->pluck('name')->toArray();
+        $userRoles = [];
+        // 1. Direct column on users table (Single Source of Truth)
+        if (!empty($this->role)) {
+            $userRoles[] = strtoupper(trim((string)$this->role));
+        }
+
+        // 2. Try Spatie roles relation safely (catch exception if table missing or corrupted)
+        try {
+            $relationRoles = $this->relationLoaded('roles')
+                ? $this->roles->pluck('name')->toArray()
+                : $this->roles()->pluck('name')->toArray();
+            if (!empty($relationRoles)) {
+                $userRoles = array_unique(array_merge($userRoles, array_map('strtoupper', $relationRoles)));
+            }
+        } catch (\Throwable $e) {
+            // Silently fall back to users.role column
+        }
 
         foreach ($roleList as $r) {
-            if (in_array($r, $userRoles, true)) {
+            $rUpper = strtoupper(trim((string)$r));
+            if (in_array($rUpper, $userRoles, true)) {
                 return true;
             }
-            // SUPERUSER is also SUPERVISOR and vice versa for system permissions
-            if (in_array($r, ['SUPERUSER', 'SUPERVISOR'], true) && (in_array('SUPERUSER', $userRoles, true) || in_array('SUPERVISOR', $userRoles, true))) {
+            // SUPERUSER has full supervisor & admin capabilities
+            if (in_array('SUPERUSER', $userRoles, true)) {
+                return true;
+            }
+            // SUPERVISOR / ADMIN interchangeability for management operations
+            if ($rUpper === 'SUPERVISOR' && in_array('ADMIN', $userRoles, true)) {
+                return true;
+            }
+            if ($rUpper === 'ADMIN' && in_array('SUPERVISOR', $userRoles, true)) {
                 return true;
             }
         }
