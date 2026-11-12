@@ -91,15 +91,12 @@ class User extends Authenticatable
             if (in_array($rUpper, $userRoles, true)) {
                 return true;
             }
-            // SUPERUSER has full supervisor & admin capabilities
-            if (in_array('SUPERUSER', $userRoles, true)) {
+            // SUPERUSER satisfies checks for SUPERVISOR or ADMIN
+            if (in_array('SUPERUSER', $userRoles, true) && in_array($rUpper, ['SUPERVISOR', 'ADMIN'], true)) {
                 return true;
             }
             // SUPERVISOR / ADMIN interchangeability for management operations
-            if ($rUpper === 'SUPERVISOR' && in_array('ADMIN', $userRoles, true)) {
-                return true;
-            }
-            if ($rUpper === 'ADMIN' && in_array('SUPERVISOR', $userRoles, true)) {
+            if (in_array($rUpper, ['SUPERVISOR', 'ADMIN'], true) && (in_array('SUPERVISOR', $userRoles, true) || in_array('ADMIN', $userRoles, true))) {
                 return true;
             }
         }
