@@ -114,10 +114,10 @@ class WorkOrderController extends Controller
             'items.*.item_name' => 'required|string',
         ]);
 
+        $this->ensureRequireBaDocColumnExists();
+
         return DB::transaction(function () use ($user, $request) {
             $spkNumber = $request->filled('spk_number') ? trim($request->spk_number) : WorkOrderService::generateSpkNumber();
-
-            $this->ensureRequireBaDocColumnExists();
 
             $jobTypeId = $request->filled('job_type_id') ? $request->job_type_id : null;
             $docMode = $request->doc_mode;
@@ -241,6 +241,8 @@ class WorkOrderController extends Controller
             ], 403);
         }
 
+        $this->ensureRequireBaDocColumnExists();
+
         try {
             $workOrder = WorkOrder::with(['vendor', 'area', 'jobType', 'pic', 'assignments', 'items'])->findOrFail($id);
             $oldData = $workOrder->toArray();
@@ -290,7 +292,6 @@ class WorkOrderController extends Controller
                 }
 
                 if ($request->has('require_ba_doc')) {
-                    $this->ensureRequireBaDocColumnExists();
                     if (\Illuminate\Support\Facades\Schema::hasColumn('work_orders', 'require_ba_doc')) {
                         $data['require_ba_doc'] = $request->boolean('require_ba_doc');
                     }
